@@ -695,7 +695,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </nav>
 </div>
 
-<script src="icons.js?v=11121636"></script>
+<script src="icons.js?v=11121746"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -928,7 +928,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121745'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121746'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2843,7 +2843,7 @@ function wheelPaint(R,a,big){const n=2*R+1,c=W_CANV[n]||(W_CANV[n]=mk(n,n)),x=c.
   x.putImageData(id,0,0);
   if(big){x.fillStyle='#1a1430';for(const g of WSEG){const m=a+TAU*(g.s0+g.s1)/2,lx2=R+Math.cos(m)*R*.66,ly2=R+Math.sin(m)*R*.66;
       if(g.kind==='c'){const s=String(g.v);pxText(x,s,Math.round(lx2-(s.length*4-1)/2),Math.round(ly2-2));}
-      else if(g.w>=6){const im=icImg('hanger');if(im.complete&&im.width)x.drawImage(im,Math.round(lx2-5),Math.round(ly2-5),10,10);}}}
+      else if(g.w>=6){const im=icImg('mystery');if(im.complete&&im.width)x.drawImage(im,Math.round(lx2-5),Math.round(ly2-5),10,10);}}}
   return c;}
 // the little wheel that stands on the stage: one picture per step of a turn, made the first time it is needed
 const WHEEL_SPR={};let WHEEL_SH=null;
