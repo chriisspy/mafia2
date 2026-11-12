@@ -350,7 +350,14 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .hwal{align-self:stretch;background:#fff;color:var(--text);border:3px solid var(--wood);border-radius:5px;padding:0 10px 2px;font-size:20px}
 .hunder{margin-top:8px;gap:8px;align-items:stretch}.hunder .gbtn{margin-top:0;flex:1}
 .hsq{flex:none;width:50px;display:flex;align-items:center;justify-content:center;padding:0 0 3px}
-#homeHud .btn.lob{font-size:17px;padding-top:7px;padding-bottom:10px;gap:8px}
+#homeHud .btn.lob{font-size:15px;padding-top:4px;padding-bottom:7px;gap:6px}
+/* compact (13 Nov, his call: the panels covered your character) */
+#homeHud .hpanel{padding:6px 8px 7px}#homeHud .hpanel+.hpanel{margin-top:6px}
+#homeHud .hname{padding:2px 8px 2px 4px;gap:8px}#homeHud .hname img{width:30px;height:30px}#homeHud .hname b{font-size:17px}#homeHud .hname small{font-size:9px}
+#homeHud .hwal{font-size:17px;padding:0 8px 2px}
+.hrow{display:flex;gap:8px}.hrow .hbig{flex:1;margin-top:0;font-size:17px;padding:6px 4px 10px;white-space:nowrap}
+#homeHud .hlink{margin-top:5px;font-size:12px}
+#homeHud .hunder{margin-top:6px;gap:6px}#homeHud .gbtn{font-size:14px;padding:4px 8px 7px}#homeHud .hsq{width:42px}
 .gbtn{pointer-events:auto;position:relative;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:10px;font:700 17px "Pixelify Sans";padding:8px 8px 11px;border-radius:6px;border:3px solid #1a1430;background:#fff;color:#1a1430;box-shadow:inset 0 -4px 0 #d9d4c4,0 3px 0 #0009;cursor:pointer;transition:transform .06s}
 .gbtn:active{transform:translateY(2px)}.gbtn small{font-size:12px;font-weight:600;opacity:.7;margin-left:4px}
 .gbtn.in{background:#dff5e3;border-color:#2f7a45;color:#1f5a31;box-shadow:inset 0 -4px 0 #b9e3c2,0 3px 0 #0009}
@@ -395,6 +402,14 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #howX{position:absolute;right:16px;top:calc(50px + env(safe-area-inset-top));z-index:10;display:none;padding:5px 9px}#howModal.on+#howX{display:block}   /* the close button sits above the panel, so it never scrolls away */#howModal h4{font-size:16px;margin:10px 0 2px;letter-spacing:1px}#howModal p{font-size:14px;line-height:1.3;margin:0 0 4px}
 #howModal .hr{display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-top:2px solid #0001;font-size:14px;line-height:1.25}#howModal .hr b{display:block;font-size:15px}
 #townStart{margin-top:8px}
+/* compact town lobby (13 Nov, his call: the host panel was too big): the five role switches in one row, icon over a small
+   name; smaller Start, Dance and Wave */
+.tpanel{padding:7px 9px 9px}#townHud .thead b{font-size:16px}#townHud .thead .small{font-size:11px}
+#townRoles{flex-wrap:nowrap!important;gap:4px!important;margin-top:6px!important}
+#townHud .rtog,#townHud .rtog.rand{flex:1 1 0!important;min-width:0!important;flex-direction:column;gap:1px;font-size:10px;padding:3px 1px 4px;border-width:2px}
+#townHud #townStart{margin-top:6px;font-size:19px;padding:6px 8px 10px}
+#townHud #townDev{margin-top:4px;font-size:12px}
+#townHud .tbtn{font-size:16px;padding:4px 6px 7px;gap:6px}#townHud .tpanel .row{margin-top:7px!important;gap:8px!important}
 #townDev{display:none}
 #townRoles{display:none;gap:6px;margin-top:8px;flex-wrap:wrap}#townRoles.on{display:flex}
 .rtog{flex:1 1 calc(50% - 3px);min-width:calc(50% - 3px)}.rtog.rand{flex-basis:100%}.rtog.rand.sel{background:var(--gold)}
@@ -433,8 +448,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
           <span class="wal hwal"><i data-ic="coin" data-s="3" data-c="solo"></i><span class="coinN">0</span></span></div>
       </div>
       <div class="panel hpanel">
-        <button class="hbig red" id="homeCreate" style="margin-top:0">Create lobby</button>
-        <button class="hbig" id="homeJoin">Join with code</button>
+        <div class="hrow"><button class="hbig red" id="homeCreate">Create lobby</button><button class="hbig" id="homeJoin">Join with code</button></div>
         <div id="homeMsg"></div>
         <button class="hlink" id="homeBots">Practice town with bots</button>
       </div>
@@ -492,9 +506,9 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div id="townMenu"><button class="btn" data-a="punch" title="Punch"><i data-ic="fist" data-s="3" data-c="solo"></i></button><button class="btn" data-a="five" title="High five"><i data-ic="hand" data-s="3" data-c="solo"></i></button></div>
     <div id="townToast"></div>
     <div id="wheelPop"></div>
-    <div class="bottom"><div class="panel" style="padding:10px 12px 12px">
+    <div class="bottom"><div class="panel tpanel">
       <div class="thead"><div class="tt"><b id="townLine">Waiting for the host</b><div class="small" id="townSub"></div></div></div>
-      <div id="townRoles"><button class="rtog" data-r="d"><i data-ic="detective" data-c="solo"></i>Detective</button><button class="rtog" data-r="b"><i data-ic="bodyguard" data-c="solo"></i>Bodyguard</button><button class="rtog" data-r="j"><i data-ic="jester" data-c="solo"></i>Jester</button><button class="rtog" data-r="f"><i data-ic="framer" data-c="solo"></i>Framer</button><button class="rtog rand" data-r="r"><i data-ic="dice" data-c="solo"></i>Randomise roles</button></div>
+      <div id="townRoles"><button class="rtog" data-r="d"><i data-ic="detective" data-c="solo"></i>Detective</button><button class="rtog" data-r="b"><i data-ic="bodyguard" data-c="solo"></i>Bodyguard</button><button class="rtog" data-r="j"><i data-ic="jester" data-c="solo"></i>Jester</button><button class="rtog" data-r="f"><i data-ic="framer" data-c="solo"></i>Framer</button><button class="rtog rand" data-r="r"><i data-ic="dice" data-c="solo"></i>Random</button></div>
       <button class="hbig red" id="townStart" style="display:none">Start the game</button>
       <button class="hlink" id="townDev">Start dev test (adds 3 bots)</button>
       <div class="row" style="margin-top:10px;gap:10px">
@@ -931,7 +945,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121944'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11130931'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
