@@ -346,8 +346,11 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .rlist{margin-top:8px;max-height:230px;overflow-y:auto}
 .rl{display:flex;align-items:center;gap:8px;padding:3px 0;border-top:2px solid #0001;font-size:16px;font-weight:600}.rl img{width:28px;height:28px;image-rendering:pixelated}.rl span{flex:1}.rl em{font-style:normal;font-weight:700;font-size:14px;letter-spacing:1px}
 .rl.dead{opacity:.5}.rl.dead span{text-decoration:line-through}
-#talkSkip{position:absolute;left:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
-#phone.game #talkMenu [data-a=msg]{display:none}
+#talkSkip{position:absolute;right:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
+#gameLeave{position:absolute;left:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:22;display:none}
+#phone.ingame #gameLeave{display:block}#gameLeave.sure{background:#e4544f;color:#fff;border-color:#6b1416}
+#howModal{bottom:calc(14px + env(safe-area-inset-bottom))}#howModal h4{font-size:16px;margin:10px 0 2px;letter-spacing:1px}#howModal p{font-size:14px;line-height:1.3;margin:0 0 4px}
+#howModal .hr{display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-top:2px solid #0001;font-size:14px;line-height:1.25}#howModal .hr b{display:block;font-size:15px}
 #townStart{margin-top:8px}
 #townDev{display:none}
 #townRoles{display:none;gap:6px;margin-top:8px;flex-wrap:wrap}#townRoles.on{display:flex}
@@ -391,8 +394,19 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
         <span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span>
       </div>
       <div id="homeMsg"></div>
+      <button class="hlink" id="homeHow">How to play</button>
       <button class="hlink" id="homeBots">Practice town with bots</button>
     </div></div>
+    <div class="modal big panel" id="howModal">
+      <div class="mhead"><b>HOW TO PLAY</b><button class="btn" id="howX"><i data-ic="cross" data-c="solo"></i></button></div>
+      <p>4 to 10 players. One of you makes a lobby and shares the code. Everyone gets a secret role.</p>
+      <h4>NIGHT</h4><p>You are alone in your cabin for 45 seconds. If your role has a job, pick someone and lock it in.</p>
+      <h4>DAWN</h4><p>Everyone watches what happened in the night. The host taps "To the square".</p>
+      <h4>DAY</h4><p>Talk it out for 5 minutes. Who is lying?</p>
+      <h4>VOTE</h4><p>One at a time, step up and vote. Most votes is out. A tie means nobody is out.</p>
+      <h4>WINNING</h4><p>The town wins when the Mafia are gone. The Mafia win when they match the town.</p>
+      <h4>ROLES</h4><div id="howRoles"></div>
+    </div>
     <div class="modal panel" id="nameModal"><h3>Your name</h3><div class="small">This is what your friends see.</div><input class="hin" id="nameIn" maxlength="10" autocomplete="off"><div class="row"><button class="btn" id="nameX">Back</button><button class="btn go" id="nameOk">Save</button></div></div>
     <div class="modal panel" id="joinModal"><h3>Join a lobby</h3><div class="small">Type the 4 letter code from the host.</div><input class="hin code" id="joinIn" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false"><div class="small" id="joinErr"></div><div class="row"><button class="btn" id="joinX">Back</button><button class="btn go" id="joinOk">Join</button></div></div>
   </div>
@@ -590,6 +604,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <div class="row" style="justify-content:center;margin-top:10px"><button class="btn red" id="caseOpen">Open</button><button class="btn" id="coinTest">+500 test coins</button></div>
     </div>
 
+  <button class="btn dark" id="gameLeave">Leave</button>
   <nav id="tabs">
     <button class="btn" data-s="home">Home</button>
     <button class="btn" data-s="lobby">Lobby</button>
@@ -659,7 +674,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121444'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121448'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -2054,7 +2069,7 @@ function ckDie(){if(CK.state==='dead')return;CK.state='dead';CK.deadAt=performan
   const prev=CK.best,m=CK_MEDALS.find(([s])=>CK.score>=s),nb=CK.score>prev&&CK.score>0;if(CK.score>CK.best){CK.best=CK.score;try{localStorage.setItem('cg_clicker_best',CK.best);}catch(e){}$('#clkBest').textContent=CK.best;}
   // coins go into a little pot that the main Chrispy Games app empties into your real coins when it next opens
   // (it applies the same 50-a-day cap there, and it is the only thing that ever writes your profile)
-  if(CK.coins){try{localStorage.setItem('cg_clicker_pending',String((+localStorage.getItem('cg_clicker_pending')||0)+CK.coins));}catch(e){}}
+  if(CK.coins){coins+=CK.coins;saveInv();paintCoins();}
   $('#clkMsg').textContent=(nb?'NEW BEST!':m?m[1]:'BUSTED')+'\nScore '+CK.score+' · Best '+CK.best+' · Level '+CK.level+(CK.coins?'\n+'+CK.coins+' coins for your wallet':'')+'\ntap to try again';CK.coins=0;}
 function ckTap(){if(CK.state==='dead'){if(performance.now()-CK.deadAt>450)ckReset();return;}
   if(CK.state==='ready'){CK.state='play';$('#clkMsg').textContent='';}
@@ -2367,9 +2382,9 @@ cv.addEventListener('pointerdown',e=>{if(scene!==scenes.talk)return;const r=cv.g
   for(const i in T.pos){const q=T.pos[i],dd=Math.hypot(q.x-x,q.y+16-y);if(dd<bd&&+i!==0){bd=dd;best=+i;}}T.sel=best===T.sel?-1:best;talkMenu();});
 document.querySelectorAll('#talkMenu .btn').forEach(b=>b.onclick=()=>{const i=T.sel;if(i<0)return;const n=PEOPLE[i].n;
   if(b.dataset.a==='mute'){if(T.muted.has(i))T.muted.delete(i);else T.muted.add(i);talkMenu();talkSay(T.muted.has(i)?`${n} is muted.`:`${n} is unmuted.`,T.muted.has(i)?'You won\'t hear them or see their messages.':'You can hear them again.');}
-  else if(b.dataset.a==='msg'){$('#dmTitle').innerHTML=ic('chat',3)+' Message '+esc(n);$('#dmIn').value='';$('#dmModal').classList.add('on');T.dm=i;T.sel=-1;talkMenu();setTimeout(()=>$('#dmIn').focus(),50);}
+  else if(b.dataset.a==='msg'){if(GAME.on&&GAME.meDead){talkSay('The dead cannot send messages.','You can only watch.');return;}$('#dmTitle').innerHTML=ic('chat',3)+' Message '+esc(n);$('#dmIn').value='';$('#dmModal').classList.add('on');T.dm=i;T.sel=-1;talkMenu();setTimeout(()=>$('#dmIn').focus(),50);}
   else{$('#pnTitle').innerHTML=ic('notes',3)+' Notes on '+esc(n);$('#pnIn').value=T.notes[i]||'';$('#pnModal').classList.add('on');T.pn=i;T.sel=-1;talkMenu();setTimeout(()=>$('#pnIn').focus(),50);}});
-$('#dmSend').onclick=()=>{const v=$('#dmIn').value.trim();$('#dmModal').classList.remove('on');if(v)talkSay(`Message sent to ${PEOPLE[T.dm].n}.`,'Only they can read it.');};
+$('#dmSend').onclick=()=>{const v=$('#dmIn').value.trim();$('#dmModal').classList.remove('on');if(v&&GAME.on)NET.ref.child('ev').push({k:'dm',by:NET.uid,to:GAME.ids[T.dm],text:v.slice(0,80),ts:TS()}).catch(()=>{});if(v)talkSay(`Message sent to ${PEOPLE[T.dm].n}.`,'Only they can read it.');};
 $('#dmCancel').onclick=()=>$('#dmModal').classList.remove('on');
 $('#pnSave').onclick=()=>{const v=$('#pnIn').value.trim();if(v)T.notes[T.pn]=v;else delete T.notes[T.pn];$('#pnModal').classList.remove('on');talkSay(v?`Note saved on ${PEOPLE[T.pn].n}.`:`Note cleared.`,'Only you can see your notes.');};
 $('#pnCancel').onclick=()=>$('#pnModal').classList.remove('on');
@@ -2660,7 +2675,7 @@ async function netEnter(code,pl){NET.code=code;NET.ref=NET.db.ref('lobbies/'+cod
   NET.ref.child('game').on('value',s=>gameSync(s.val()));
   try{history.replaceState(null,'','#'+code);}catch(e){}
   if(!GAME.on)go('town');}
-function netLeave(){if(NET.on){NET.on=false;try{NET.ref.child('players').off();NET.ref.child('ev').off();NET.ref.child('act').off();NET.ref.child('mchat').off();NET.ref.child('game').off();NET.me.onDisconnect().cancel();NET.me.remove();}catch(e){}}
+function netLeave(){$('#phone').classList.remove('ingame');if(NET.on){NET.on=false;try{NET.ref.child('players').off();NET.ref.child('ev').off();NET.ref.child('act').off();NET.ref.child('mchat').off();NET.ref.child('game').off();NET.me.onDisconnect().cancel();NET.me.remove();}catch(e){}}
   Object.assign(GAME,{on:false,id:null,g:null,key:''});V.dead=new Set();V.ring=[];viewRole='civilian';$('#townStart').style.display='none';
   NET.code=null;NET.ents.clear();NET.players=null;NET.sig=null;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
   PEOPLE.length=0;LAB_PEOPLE.forEach((p,i)=>PEOPLE.push(i?{...p}:{...p,skin:SKINS[skinIdx]&&OWNED.has(SKINS[skinIdx].id)?SKINS[skinIdx].id:p.skin}));CABIN_OF.length=0;CABIN_OF.push(...LAB_CABINS);buildTown();go('home');}
@@ -2694,6 +2709,7 @@ function netMove(){if(!NET.on||!WL.me)return;clearTimeout(NET.mt);const send=()=
   if(performance.now()-(NET.ml||0)>180)send();else NET.mt=setTimeout(send,180);}
 function netEv(k,to){if(!NET.on)return;const m=WL.me;NET.ref.child('ev').push({k,by:NET.uid,to:to||null,x:Math.round(m.x),y:Math.round(m.y),loc:m.loc,ts:TS()}).catch(()=>{});}
 function netEvent(s){const v=s.val();if(!NET.on||!v||v.by===NET.uid||!(v.ts>NET.t0))return;
+  if(v.k==='dm'){if(GAME.on&&v.to===NET.uid&&!GAME.meDead){const i=GAME.idx[v.by];if(i!=null&&!T.muted.has(i)&&scene===scenes.talk){talkSay(`${PEOPLE[i].n}: ${String(v.text).slice(0,80)}`,'A private message. Tap them to reply.');T.st=10;}}return;}
   if(v.k==='haunt'){if(GAME.on&&v.to===NET.uid&&!GAME.meDead)hauntFx(HAUNTS.includes(v.h)?v.h:'ghost');return;}   // a ghost haunts you: it swoops across your screen
   if(scene!==scenes.town)return;const e=NET.ents.get(v.by);if(!e)return;
   if(v.k==='spin'){wheelSpin(e,{k:v.res,f:v.fr,win:v.win});wheelUI();return;}                                      // somebody spun the Town Wheel
@@ -2748,7 +2764,7 @@ function gameLobbyUI(){const host=NET.on&&NET.host===NET.uid,busy=!!(GAME.g&&GAM
   if(NET.on&&busy&&!GAME.on&&scene===scenes.town&&WL.me&&WL.me.loc<0)wlHead('A game is on','You are in the next one');}
 
 // ---- every phone: the database says where the game is; show it ----
-function gameSync(g){
+function gameSync(g){$('#phone').classList.toggle('ingame',!!(NET.on&&g&&g.roles&&g.roles[NET.uid]));
   if(!g||!g.roles||!g.roles[NET.uid]){GAME.g=g||null;
     if(GAME.on){GAME.on=false;GAME.id=null;GAME.key='';V.dead=new Set();V.ring=[];viewRole='civilian';clearTimeout(GAME.dawnT);$('#phone').style.background='';if(NET.on)go('town');}
     gameLobbyUI();return;}
@@ -2819,8 +2835,8 @@ function hostDo(tag,fn){if(GAME.busy===tag)return;GAME.busy=tag;fn();}
 function hostWin(g,dead){const alive=Object.keys(g.pl).filter(u=>!dead[u]),maf=alive.filter(u=>g.roles[u]==='mafia').length,side=maf+alive.filter(u=>g.roles[u]==='framer').length;return!maf?'town':side>=alive.length-side?'mafia':null;}
 function hostTick(){const g=GAME.g;if(!NET.on||!NET.players||!g||!g.roles||NET.host!==NET.uid||g.phase==='over')return;const now=serverNow(),dead={...(g.dead||{})},alive=Object.keys(g.pl).filter(u=>!dead[u]);
   // somebody shut the game or lost their signal for 20 seconds: they are out, like a death
-  for(const u of alive){if(isBot(u)||(NET.players&&NET.players[u])){delete GAME.gone[u];continue;}GAME.gone[u]=GAME.gone[u]||now;
-    if(now-GAME.gone[u]>20000&&g.phase!=='film'){hostDo(GAME.key+':gone:'+u,()=>{dead[u]=true;const w=hostWin(g,dead);gRef().update(w?{['dead/'+u]:true,phase:'over',win:w,t0:now}:{['dead/'+u]:true});});return;}}
+  for(const u of alive){const left=!!(g.left&&g.left[u]);if(!left&&(isBot(u)||(NET.players&&NET.players[u]))){delete GAME.gone[u];continue;}GAME.gone[u]=GAME.gone[u]||now;   // left = they pressed Leave: out at once
+    if((left||now-GAME.gone[u]>20000)&&g.phase!=='film'){hostDo(GAME.key+':gone:'+u,()=>{dead[u]=true;const w=hostWin(g,dead);gRef().update(w?{['dead/'+u]:true,phase:'over',win:w,t0:now}:{['dead/'+u]:true});});return;}}
   const acted=u=>{const a=GAME.acts[u];return!!(a&&a.g===g.id&&a.r===g.round&&a.pick);};
   // the bots: each makes its night pick a few seconds in (a different moment each), and votes a few seconds into its turn
   if(g.phase==='night')for(const u of alive.filter(isBot)){const role=g.roles[u],k=+u.slice(3);if(!ROLES[role].pick||acted(u)||now<g.t0+5000+k*3500)continue;
@@ -2901,6 +2917,12 @@ $('#overBack').onclick=()=>{if(NET.on&&NET.host===NET.uid)gRef().remove().catch(
 $('#townStart').onclick=()=>gameStart();$('#townDev').onclick=()=>gameStart(true);
 document.querySelectorAll('#townRoles .rtog').forEach(b=>b.onclick=()=>{if(!NET.on||NET.host!==NET.uid)return;const o=roleOpt();o[b.dataset.r]=o[b.dataset.r]?0:1;NET.me.child('opt').set(o).catch(()=>{});});
 $('#talkSkip').onclick=hostVote;
+// Leave the game: the first tap asks, the second does it. The others carry on; you count as dead. If you were the only
+// real player (a dev test), the game is thrown away.
+$('#gameLeave').onclick=()=>{const b=$('#gameLeave');if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='Sure?';clearTimeout(b.t);b.t=setTimeout(()=>{b.classList.remove('sure');b.textContent='Leave';},3000);return;}
+  b.classList.remove('sure');b.textContent='Leave';if(!NET.on){go('home');return;}
+  const alone=!Object.keys(NET.players||{}).some(u=>u!==NET.uid);
+  (alone?gRef().remove():gRef().child('left/'+NET.uid).set(true)).catch(()=>{}).then(()=>netLeave());};
 
 /* ---- the welcome screen ---- */
 function homePaint(){if(!SP[PEOPLE[0].skin])return;$('#homeFace').src=face(PEOPLE[0].skin);$('#homeNameT').textContent=myName;}
@@ -2929,6 +2951,11 @@ $('#nameOk').onclick=()=>{const v=$('#nameIn').value.replace(/[<>]/g,'').trim().
 $('#nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#nameOk').click();});
 $('#homeShop').onclick=()=>openShop();$('#homeColl').onclick=()=>openColl();
 $('#homeBots').onclick=()=>go('town');
+const HOW_ROLES={mafia:'Picks one player to kill each night. Two Mafia from 7 players.',doctor:'Picks one player to save each night. Can save themself.',civilian:'No night job. Find the Mafia and vote them out.',
+  detective:'Watches up to two players. At dawn, learns if they left their house.',bodyguard:'Guards one player. If the Mafia come for them, the Bodyguard dies instead.',
+  jester:'Wants to be voted out. If they are, the Jester wins alone.',framer:'On the Mafia side. Frames one player so the Detective thinks they left the house.'};
+$('#homeHow').onclick=()=>{$('#howRoles').innerHTML=Object.entries(HOW_ROLES).map(([r,d])=>`<div class="hr">${ic(r,3,'solo')}<div><b style="color:${ROLES[r].accent}">${ROLES[r].name}</b>${d}</div></div>`).join('');$('#howModal').classList.add('on');};
+$('#howX').onclick=()=>$('#howModal').classList.remove('on');
 $('#townLeave').onclick=()=>{if(WL.fading)return;if(NET.on)netLeave();else go('home');};
 $('#townCode').onclick=()=>{if(!NET.on)return;const link=location.origin+location.pathname+'#'+NET.code;try{navigator.clipboard.writeText(link).then(()=>wlSay('Invite link copied.','good'),()=>wlSay('Code: '+NET.code));}catch(e){wlSay('Code: '+NET.code);}};
 
