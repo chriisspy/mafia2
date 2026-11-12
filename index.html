@@ -19,6 +19,10 @@ html,body{height:100%;background:#05040c;overflow:hidden;touch-action:manipulati
 @font-face{font-family:"Pixelify Sans";font-weight:500;font-display:block;src:url(assets/fonts/five-500.ttf) format("truetype");unicode-range:U+35}
 @font-face{font-family:"Pixelify Sans";font-weight:600;font-display:block;src:url(assets/fonts/five-600.ttf) format("truetype");unicode-range:U+35}
 @font-face{font-family:"Pixelify Sans";font-weight:700;font-display:block;src:url(assets/fonts/five-700.ttf) format("truetype");unicode-range:U+35}
+@font-face{font-family:"Pixelify Sans";font-weight:400;font-display:block;src:url(assets/fonts/two-400.ttf) format("truetype");unicode-range:U+32}
+@font-face{font-family:"Pixelify Sans";font-weight:500;font-display:block;src:url(assets/fonts/two-500.ttf) format("truetype");unicode-range:U+32}
+@font-face{font-family:"Pixelify Sans";font-weight:600;font-display:block;src:url(assets/fonts/two-600.ttf) format("truetype");unicode-range:U+32}
+@font-face{font-family:"Pixelify Sans";font-weight:700;font-display:block;src:url(assets/fonts/two-700.ttf) format("truetype");unicode-range:U+32}
 body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:none;font-feature-settings:"liga" 0,"clig" 0;color:#fff;display:flex;align-items:center;justify-content:center}
 #phone{position:relative;width:100vw;height:100dvh;overflow:hidden;background:#07060f;user-select:none}
 @media (min-width:520px){#phone{width:390px;height:844px;border-radius:36px;box-shadow:0 0 0 10px #191626,0 30px 80px #000}}
@@ -515,7 +519,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <div id="townRoles"><button class="rtog" data-r="d"><i data-ic="detective" data-c="solo"></i>Detective</button><button class="rtog" data-r="b"><i data-ic="bodyguard" data-c="solo"></i>Bodyguard</button><button class="rtog" data-r="j"><i data-ic="jester" data-c="solo"></i>Jester</button><button class="rtog" data-r="f"><i data-ic="framer" data-c="solo"></i>Framer</button><button class="rtog rand" data-r="r"><i data-ic="dice" data-c="solo"></i>Random</button></div>
       <div id="townMaf"><span class="mlbl"><i data-ic="mafia" data-c="solo"></i>MAFIA</span><button class="btn" id="mafMinus">-</button><b id="mafN">1</b><button class="btn" id="mafPlus">+</button><small id="mafMax"></small></div>
       <button class="hbig red" id="townStart" style="display:none">Start the game</button>
-      <button class="hlink" id="townDev">Start dev test (adds 3 bots)</button>
+      <button class="hlink" id="townDev">Start dev test (adds 5 bots)</button>
       <div class="row" style="margin-top:10px;gap:10px">
         <button class="tbtn dance" id="townDance"><i data-ic="note" data-s="3" data-c="solo"></i>Dance</button>
         <button class="tbtn wave" id="townWave"><i data-ic="heart" data-s="3" data-c="solo"></i>Wave</button>
@@ -950,7 +954,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11130936'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11130939'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3092,7 +3096,7 @@ const isBot=u=>String(u).startsWith('bot');
 function gameStart(dev){if(!NET.on||NET.host!==NET.uid||GAME.g)return;
   const all=Object.entries(NET.players||{}).filter(([u,p])=>p&&p.n&&p.m).sort((a,b)=>(a[1].at||0)-(b[1].at||0)).slice(0,10);
   if(dev===true){const used=new Set(all.map(([,p])=>p.slot)),free=[0,1,2,3,4,5,6,7,8,9].filter(s=>!used.has(s));
-    [['Ava','raincoat'],['Leo','curly'],['Sam','farmer']].slice(0,Math.min(3,10-all.length)).forEach(([n,skin],k)=>all.push(['bot'+(k+1),{n,skin,slot:free[k],v:BUILD,m:1}]));}
+    [['Ava','raincoat'],['Leo','curly'],['Sam','farmer'],['Mia','ponytail'],['Ben','redcap']].slice(0,Math.min(5,10-all.length)).forEach(([n,skin],k)=>all.push(['bot'+(k+1),{n,skin,slot:free[k],v:BUILD,m:1}]));}
   if(all.length<MINP){wlSay(`You need ${MINP} players to start.`);return;}
   const old=all.filter(([u,p])=>p.v!==BUILD);if(old.length){wlSay(`${old.map(([,p])=>p.n).join(', ')} must reload the page first.`,'bad');return;}
   const rs=window.FORCE_ROLES&&window.FORCE_ROLES.length===all.length?window.FORCE_ROLES:rolesFor(all.length,roleOpt()),pl={},roles={};/* FORCE_ROLES: for tests only */all.forEach(([u,p],k)=>{pl[u]={n:String(p.n).slice(0,10),skin:p.skin||'beanie',room:ROOM_BY[p.room]?p.room:'r_classic',slot:p.slot,o:k};roles[u]=rs[k];});
