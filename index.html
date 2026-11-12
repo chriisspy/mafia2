@@ -746,6 +746,8 @@ const SFX={
   thud(){tone(110,.2,{type:'triangle',vol:.35,to:45});hiss(.12,{vol:.2,lp:500});},
   rattle(){hiss(.03,{vol:.1,hp:3000});tone(1500,.02,{vol:.04});},
   pop(){hiss(.25,{vol:.22,hp:1500});tone(300,.35,{type:'sawtooth',vol:.1,to:1400});arp([523,659,784,1047],.06,{vol:.1,at:.12});},
+  sparkle(){[1568,1976,2349,2637,3136,3951].forEach((f,i)=>{tone(f,.5,{type:'triangle',vol:.07,at:.05+i*.045});tone(f*1.5,.22,{type:'sine',vol:.025,at:.05+i*.045});});
+    [3520,2637,4186,3136,3951,2794,4699,3322].forEach((f,i)=>tone(f,.28,{type:'sine',vol:.05*(1-i/9),at:.36+i*.11}));hiss(.9,{vol:.025,hp:7000,at:.05});},
   rare(){arp([523,659,784,1047,1319],.08,{vol:.13});tone(1568,.5,{type:'triangle',vol:.14,at:.42});},
   night(){tone(196,1.3,{type:'sine',vol:.22});tone(98,1.5,{type:'sine',vol:.22});tone(294,.9,{type:'sine',vol:.08,at:.25});},
   lock(){tone(440,.06,{vol:.1});tone(660,.12,{vol:.1,at:.07});},
@@ -890,7 +892,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121742'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121743'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1333,7 +1335,7 @@ function caseFilm(startReel){const el=$('#caseFx'),c=$('#caseCv'),x=c.getContext
     if(latch){const k=(t-T.latch)/(T.pop-T.latch);frame=Math.min(A.pop-1,Math.floor(k*A.pop));jx=Math.round(Math.sin(t*64)*(.6+k*2.6));sy=1+.03*Math.sin(t*40)*k;}
     const open=t>=T.pop?t-T.pop:-1;
     if(open>=0){frame=Math.min(NF-1,A.pop+Math.floor(open*16));
-      if(!popped){popped=true;flash=2;shake=6;sfx('pop');
+      if(!popped){popped=true;flash=2;shake=6;sfx('pop');setTimeout(()=>sfx('sparkle'),90);
         for(let i=0;i<64;i++)P({k:'conf',x:cx+rnd(-A.half,A.half)*.7,y:my-2,vx:rnd(-130,130),vy:rnd(-360,-150),g:430,col:CONF[i%CONF.length],w:i%3?2:3,t:0,l:rnd(1.3,2.4)});
         for(let i=0;i<8;i++)P({k:'star',x:cx+rnd(-74,74),y:my-rnd(20,120),r:2+i%3,t:-i*.04,l:.4,col:i%2?'#ffffff':'#ffd95e'});}
       if(Math.random()<dt*13)P({k:'star',x:cx+rnd(-80,80),y:my-rnd(8,LH*.5),r:1+Math.floor(rnd(0,3)),t:0,l:rnd(.3,.5),col:Math.random()<.5?'#ffffff':'#fff2a8'});
