@@ -123,15 +123,15 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .ccard{position:relative;background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-radius:6px;padding:10px;margin-top:10px;box-shadow:inset 0 -5px 0 #1b1532,0 3px 0 #0006;overflow:hidden}
 #ccMafia{border-color:#ffd25e;box-shadow:inset 0 -5px 0 #1b1532,0 0 0 3px #1a1430,0 4px 0 3px #0006}
 .ctop{display:flex;align-items:center;gap:10px}
-.ccv{width:192px;height:168px;flex:none;image-rendering:pixelated;margin:-10px -6px -8px -14px}
+.ccv{width:144px;height:126px;flex:none;image-rendering:pixelated;margin:-8px -4px -6px -10px}
 .cinfo{flex:1;min-width:0}.cinfo b{display:block;font-size:21px;letter-spacing:1px;line-height:1;color:#ffd25e}.cinfo .small{margin:5px 0 9px;line-height:1.2}
 .copen{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-size:20px;padding:8px 12px 12px;margin-top:4px;white-space:nowrap}
 .cin{margin-top:8px;border-top:3px solid #1b1532;padding-top:8px}.cin>small{display:block;font-size:11px;letter-spacing:2px;opacity:.75}
-.crow{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}.crow .rar{font-size:10px;padding:1px 5px;min-width:86px;text-align:center}
+.crow{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}.crow .rar{font-size:10px;padding:1px 5px;white-space:nowrap}
 .crow img{width:38px;height:38px;image-rendering:pixelated;border:2px solid var(--rc);border-radius:4px;background:#fff6df}.crow img.lock{filter:brightness(.45) saturate(.5)}
 .ccard.soon{background:#1d1936}.ccard.soon .ccv{filter:brightness(.38) saturate(.6)}.ccard.soon .ccv.dark{filter:brightness(0)}
 .ccard.soon .cinfo b{color:#b9b2d6}.ccard.soon .small{opacity:.6}
-.csoon{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:1px;white-space:nowrap;color:#1a1430;background:#b9b2d6;border-radius:4px;padding:3px 8px 5px}
+.csoon{display:flex;width:max-content;margin:8px auto 0;align-items:center;gap:6px;font-size:13px;font-weight:700;letter-spacing:1px;white-space:nowrap;color:#1a1430;background:#b9b2d6;border-radius:4px;padding:3px 8px 5px}
 #reelBox{display:none;position:absolute;left:12px;right:12px;top:21%;overflow:hidden;height:86px;border:3px solid var(--ink);border-radius:5px;background:#1a1430;z-index:3;box-shadow:0 0 0 3px #ffd25e,0 0 0 6px #1a1430,0 8px 0 6px #0b0918}
 #reelBox.on{animation:cfReel .5s cubic-bezier(.2,.9,.3,1)}
 @keyframes cfReel{0%{transform:translateY(70px) scale(.2)}70%{transform:translateY(-6px) scale(1.04)}100%{transform:none}}
@@ -638,9 +638,9 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
         <div class="cin"><small>WHAT'S INSIDE</small><div id="caseItems"></div></div>
       </div>
       <div class="ccard soon"><div class="ctop"><canvas class="ccv" id="ccvCabin" width="96" height="84"></canvas>
-          <div class="cinfo"><b>CABIN CASE</b><div class="small">New looks for your cabin.</div><span class="csoon"><i data-ic="lock" data-c="solo"></i>COMING SOON</span></div></div></div>
+          <div class="cinfo"><b>CABIN CASE</b><div class="small">New looks for your cabin.</div></div></div><span class="csoon"><i data-ic="lock" data-c="solo"></i>COMING SOON</span></div>
       <div class="ccard soon"><div class="ctop"><canvas class="ccv dark" id="ccvMyst" width="96" height="84"></canvas>
-          <div class="cinfo"><b>? ? ?</b><div class="small">Something else is on its way.</div><span class="csoon"><i data-ic="lock" data-c="solo"></i>COMING SOON</span></div></div></div>
+          <div class="cinfo"><b>? ? ?</b><div class="small">Something else is on its way.</div></div></div><span class="csoon"><i data-ic="lock" data-c="solo"></i>COMING SOON</span></div>
       <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="coinTest">+500 test coins</button></div>
     </div>
 
@@ -714,7 +714,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121511'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121514'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
