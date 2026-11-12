@@ -755,7 +755,7 @@ const SFX={
   heal(){arp([523,659,784,1047,1319],.11,{type:'triangle',vol:.16,len:.3});},
   dead(){tone(220,1.1,{type:'sawtooth',vol:.14,to:55});tone(110,1.3,{type:'triangle',vol:.2,to:40});},
   dawn(){arp([392,494,587,784],.14,{type:'triangle',vol:.14,len:.4});},
-  step_grass(){hiss(.2,{vol:.13,lp:3200,att:.045});hiss(.16,{vol:.1,bp:900,att:.04});},   /* more hiss, but it swells in softly: no sharp start, no crisp top (his call) */
+  step_grass(){hiss(.2,{vol:.095,lp:3200,att:.045});hiss(.16,{vol:.072,bp:900,att:.04});},   /* more hiss, but it swells in softly: no sharp start, no crisp top (his call) */
   step_stone(){tone(105,.055,{type:'triangle',vol:.14,to:62});hiss(.022,{vol:.06,bp:1200});},   /* lower than the wood step: a dull, heavy tap */
   step_wood(){tone(150,.06,{type:'triangle',vol:.1,to:95});hiss(.03,{vol:.03,lp:600});},
   type(){tone(760,.02,{vol:.035});},
@@ -890,7 +890,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121716'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121729'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1129,7 +1129,7 @@ const TOWN={
   // posts, lamps and bulb chains (assets/town3/props, made by tools/build_props.py): each is its own picture,
   // drawn in order with the people by where its foot is; the bulb strings hang overhead, so they go on last
   // his call: the side posts with lights (chain + lower post) are ALWAYS in front of people, the bare post behind them is always behind
-  occ:[{k:'post1',x:227,y:237,base:287},{k:'post2',x:322,y:237,base:287},{k:'lamp1',x:158,y:300,base:346},{k:'lamp3',x:393,y:300,base:346},{k:'post3',x:172,y:286,base:-1},{k:'post5',x:376,y:286,base:-1},{k:'chain3',x:175,y:315,base:1e9},{k:'chain5',x:379,y:315,base:1e9},{k:'post4',x:175,y:367,base:1e9},{k:'post6',x:379,y:367,base:1e9},{k:'lamp2',x:158,y:407,base:462},{k:'lamp4',x:391,y:407,base:462},{k:'post7',x:227,y:436,base:492},{k:'post8',x:322,y:436,base:492},
+  occ:[{k:'post1',x:227,y:237,base:287},{k:'post2',x:322,y:237,base:287},{k:'lamp1',x:158,y:300,base:346},{k:'lamp3',x:393,y:300,base:346},{k:'post3',x:172,y:286,base:347},{k:'post5',x:376,y:286,base:347},{k:'chain3',x:175,y:315,base:1e9},{k:'chain5',x:379,y:315,base:1e9},{k:'post4',x:173,y:367,base:419},{k:'post6',x:377,y:367,base:419},{k:'lamp2',x:158,y:407,base:462},{k:'lamp4',x:391,y:407,base:462},{k:'post7',x:227,y:436,base:492},{k:'post8',x:322,y:436,base:492},
     {k:'strings',x:176,y:244,base:1e9}],
 };
 const winFill=(x,y,i)=>i<2?lx.fillRect(X(x)-5,Y(y)-7,12,14):lx.fillRect(X(x)-6,Y(y)-5,13,10);   // the whole pane: the two by the door, then the one in the roof
@@ -2681,10 +2681,13 @@ function cabMask(ci){const k=cabinKey(ci);if(!CABMASK[k]){const im=IMG[k],c=mk(i
 // which hut is in front of someone standing at x,y (their feet); -1 = none. Tested on the hut's own shape, at their feet, middle and head.
 function behindCabin(x,y){for(let ci=0;ci<TOWN.cabins.length;ci++){const cb=TOWN.cabins[ci];if(y>cb.top+CABIN_BACK||Math.abs(x-cb.cx)>60)continue;const m=cabMask(ci);
     for(const dy of[-3,-12,-22]){const px=Math.round(x-cb.cx-CABIN_FRAME.dx),py=Math.round(y+dy-cb.top-CABIN_FRAME.dy);if(px>=0&&py>=0&&px<m.width&&py<m.height&&m.data[(py*m.width+px)*4+3]>0)return ci;}}return -1;}
+/* where each post and lamp stands: the middle of its foot, and its bottom row */
+const POST_FEET=[[233,288],[328,288],[233,493],[328,493],[179,348],[383,348],[179,420],[383,420],[163,347],[398,347],[164,463],[397,463]];
 function buildTownGrid(){TOWNG=new Uint8Array(TGW*TGH);   // you can walk anywhere but through a hut's floor or the wheel (puddles are fine)
   for(let gy=0;gy<TGH;gy++)for(let gx=0;gx<TGW;gx++){const px=gx*TG+3,py=gy*TG+3;let ok=px>18&&px<542&&py>58&&py<736;
     if(ok&&TOWN.cabins.some(cb=>px>cb.cx-50&&px<cb.cx+50&&py>cb.top+CABIN_BACK&&py<cb.top+31))ok=false;               // the floor of a hut
     if(ok&&((px-WHEEL_AT[0])/14)**2+((py-WHEEL_AT[1])/8)**2<1)ok=false;                                              // the wheel's stand
+    if(ok&&POST_FEET.some(([fx,fy])=>Math.abs(px-fx)<=7&&py>=fy-7&&py<=fy+2))ok=false;                                  /* the foot of a post or lamp: you can stand behind it, not in it */
     TOWNG[gy*TGW+gx]=ok?1:0;}}
 const townOk=(x,y)=>{const gx=Math.floor(x/TG),gy=Math.floor(y/TG);return gx>=0&&gy>=0&&gx<TGW&&gy<TGH&&!!TOWNG[gy*TGW+gx];};
 // a path over a walk grid, pulled straight wherever there is a clear line. null = no way there.
