@@ -19,10 +19,10 @@ html,body{height:100%;background:#05040c;overflow:hidden;touch-action:manipulati
 @font-face{font-family:"Pixelify Sans";font-weight:500;font-display:block;src:url(assets/fonts/five-500.ttf) format("truetype");unicode-range:U+35}
 @font-face{font-family:"Pixelify Sans";font-weight:600;font-display:block;src:url(assets/fonts/five-600.ttf) format("truetype");unicode-range:U+35}
 @font-face{font-family:"Pixelify Sans";font-weight:700;font-display:block;src:url(assets/fonts/five-700.ttf) format("truetype");unicode-range:U+35}
-@font-face{font-family:"Pixelify Sans";font-weight:400;font-display:block;src:url(assets/fonts/two-400.ttf) format("truetype");unicode-range:U+32}
-@font-face{font-family:"Pixelify Sans";font-weight:500;font-display:block;src:url(assets/fonts/two-500.ttf) format("truetype");unicode-range:U+32}
-@font-face{font-family:"Pixelify Sans";font-weight:600;font-display:block;src:url(assets/fonts/two-600.ttf) format("truetype");unicode-range:U+32}
-@font-face{font-family:"Pixelify Sans";font-weight:700;font-display:block;src:url(assets/fonts/two-700.ttf) format("truetype");unicode-range:U+32}
+@font-face{font-family:"Pixelify Sans";font-weight:400;font-display:block;src:url(assets/fonts/fix-400.ttf) format("truetype");unicode-range:U+32,U+43,U+48,U+5A}
+@font-face{font-family:"Pixelify Sans";font-weight:500;font-display:block;src:url(assets/fonts/fix-500.ttf) format("truetype");unicode-range:U+32,U+43,U+48,U+5A}
+@font-face{font-family:"Pixelify Sans";font-weight:600;font-display:block;src:url(assets/fonts/fix-600.ttf) format("truetype");unicode-range:U+32,U+43,U+48,U+5A}
+@font-face{font-family:"Pixelify Sans";font-weight:700;font-display:block;src:url(assets/fonts/fix-700.ttf) format("truetype");unicode-range:U+32,U+43,U+48,U+5A}
 body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:none;font-feature-settings:"liga" 0,"clig" 0;color:#fff;display:flex;align-items:center;justify-content:center}
 #phone{position:relative;width:100vw;height:100dvh;overflow:hidden;background:#07060f;user-select:none}
 @media (min-width:520px){#phone{width:390px;height:844px;border-radius:36px;box-shadow:0 0 0 10px #191626,0 30px 80px #000}}
@@ -954,7 +954,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11130939'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11130941'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
