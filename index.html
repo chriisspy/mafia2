@@ -929,7 +929,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121825'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121834'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2468,7 +2468,7 @@ const roleName=i=>ROLES[PEOPLE[i].role||'civilian'].name;
 const G_EMPTY={people:[],doors:[],lights:{}};
 const gAct=i=>{const a=GAME.acts[GAME.ids[i]];return a&&a.g===GAME.id?a:null;};
 function ghostLive(){PEOPLE.forEach((p,i)=>{if(!i)return;const a=gAct(i),st=a&&a.sr===GAME.g.round?a.st:null;G.acts[i]={bed:'bed',chair:'pc',arm:'arm'}[st]||'pace';G.log[i]='';});
-  $('#ghostTag').textContent='YOU ARE DEAD · NIGHT '+GAME.g.round+' · 0:'+String(Math.max(0,Math.ceil((GAME.g.ends-serverNow())/1000))).padStart(2,'0');}
+  $('#ghostTag').textContent=(GAME.watcher?'YOU JOINED LATE':'YOU ARE DEAD')+' · NIGHT '+GAME.g.round+' · 0:'+String(Math.max(0,Math.ceil((GAME.g.ends-serverNow())/1000))).padStart(2,'0');}
 function ghostTonight(i){const Ro=ROLES[PEOPLE[i].role||'civilian'];if(!Ro.pick)return'Nothing to do';
   if(GAME.on){const a=gAct(i);return a&&a.r===GAME.g.round&&a.pick?`${ic('lock',2)} ${Ro.lock}: ${a.pick.map(u=>u===NET.uid?'you':esc((GAME.g.pl[u]||{}).n||'?')).join(' & ')}`:'<span class="wait">Still choosing…</span>';}
   return N.t>=G.lockAt[i]?`${ic('lock',2)} ${Ro.lock}: ${esc(PEOPLE[G.pick[i]].n)}`:'<span class="wait">Still choosing…</span>';}
@@ -2530,7 +2530,7 @@ function ghostHud(){const ci=G.inCab,i=CABIN_OF.indexOf(ci);$('#haunts').classLi
   if(ci>=0&&i>=0&&!ghostAway(i)&&performance.now()>(G.subHold||0)){const kk=i===N.victim&&N.kind==='home'?N.t-(N.tCut-6):-1;
     $('#ghostLine').textContent=kk>3.2?(N.heal&&kk>11?`${PEOPLE[i].n} is alive. The Doctor made it.`:`${PEOPLE[i].n} has been attacked.`):kk>0?`Someone is in ${PEOPLE[i].n}'s cabin…`:`Watching ${PEOPLE[i].n}: ${G_ACTS[G.acts[i]]}.`;$('#ghostSub').textContent=`Earlier: ${G.log[i]}. Fly to the door to leave.`;return;}
   if(performance.now()<(G.subHold||0))return;
-  $('#ghostLine').textContent=ci<0?'You are a ghost. Fly anywhere.':i<0?'An empty cabin.':ghostAway(i)?`${PEOPLE[i].n}'s cabin. Nobody home.`:`Watching ${PEOPLE[i].n}: ${G_ACTS[G.acts[i]]}.`;
+  $('#ghostLine').textContent=ci<0?(GAME.watcher?'You are watching. Fly anywhere.':'You are a ghost. Fly anywhere.'):i<0?'An empty cabin.':ghostAway(i)?`${PEOPLE[i].n}'s cabin. Nobody home.`:`Watching ${PEOPLE[i].n}: ${G_ACTS[G.acts[i]]}.`;
   $('#ghostSub').textContent=ci<0?'Tap the map to fly. Tap a cabin to look inside.':'Tap to fly round the room. Fly to the door to leave.';}
 const ghostMe=(x,y,t)=>({name:looksLike(0),dir:G.dir,x,y,t,lift:13+Math.sin(t*.004)*2.5,alpha:.6,tint:'#bfe6ff|0.5',noShadow:true,sortY:1e7});
 scenes.ghost={hud:'#ghostHud',
@@ -3079,24 +3079,26 @@ function gameLobbyUI(){const host=NET.on&&NET.host===NET.uid,busy=!!(GAME.g&&GAM
   if(NET.on&&busy&&!GAME.on&&scene===scenes.town&&WL.me&&WL.me.loc<0)wlHead('A game is on','You are in the next one');}
 
 // ---- every phone: the database says where the game is; show it ----
-function gameSync(g){$('#phone').classList.toggle('ingame',!!(NET.on&&g&&g.roles&&g.roles[NET.uid]));
-  if(!g||!g.roles||!g.roles[NET.uid]){GAME.g=g||null;
+function gameSync(g){const mine=!!(g&&g.roles&&g.roles[NET.uid]),watch=!!(NET.on&&g&&g.roles&&g.pl&&!mine&&!g.pl[NET.uid]);   /* watch: you joined after it started (12 Nov) */
+  $('#phone').classList.toggle('ingame',NET.on&&(mine||watch));
+  if(!g||!g.roles||(!mine&&!watch)){GAME.g=g||null;GAME.watcher=false;
     if(GAME.on){GAME.on=false;GAME.id=null;GAME.key='';V.dead=new Set();V.ring=[];viewRole='civilian';clearTimeout(GAME.dawnT);$('#phone').style.background='';if(NET.on)go('town');}
     gameLobbyUI();return;}
   GAME.g=g;GAME.acts={...(GAME.racts||{}),...(g.bact||{})};   // the bots' choices sit in the game itself
-  if(!GAME.on||GAME.id!==g.id){GAME.on=true;GAME.id=g.id;GAME.key='';GAME.gone={};GAME.busy='';GAME.filmDone=true;gameCast(g);}
-  GAME.meDead=!!(g.dead&&g.dead[NET.uid]);
-  V.dead=new Set(Object.keys(g.dead||{}).map(u=>GAME.idx[u]).filter(i=>i!=null));
+  if(!GAME.on||GAME.id!==g.id){GAME.on=true;GAME.id=g.id;GAME.key='';GAME.gone={};GAME.busy='';GAME.filmDone=true;GAME.watcher=watch;gameCast(g);
+    if(watch)toast(ic('eye')+'A game is on. You can watch it. You are in the next one.');}
+  GAME.meDead=watch||!!(g.dead&&g.dead[NET.uid]);
+  V.dead=new Set(Object.keys(g.dead||{}).map(u=>GAME.idx[u]).filter(i=>i!=null));if(watch)V.dead.add(0);
   const key=g.id+'|'+g.round+'|'+g.phase;if(key===GAME.key)return;GAME.key=key;
   if(g.phase!=='film'&&!GAME.filmDone&&[scenes.night,scenes.mydeath,scenes.dawn].includes(scene))return;   // still watching the night: carry on when it ends
   gRoute(g);}
 function gRoute(g){const f={night:gNight,film:gFilm,day:gDay,vote:gVote,over:gOver}[g.phase];if(f)f(g);}
 // who is who on this phone: you first, then the others in the order they joined
-function gameCast(g){const others=Object.entries(g.pl).filter(([u])=>u!==NET.uid).sort((a,b)=>a[1].o-b[1].o),me=g.pl[NET.uid],my=PEOPLE[0];
+function gameCast(g){const others=Object.entries(g.pl).filter(([u])=>u!==NET.uid).sort((a,b)=>a[1].o-b[1].o),me=g.pl[NET.uid]||{slot:NET.slot},my=PEOPLE[0];
   GAME.ids=[NET.uid,...others.map(([u])=>u)];GAME.idx={};GAME.ids.forEach((u,i)=>GAME.idx[u]=i);
-  PEOPLE.length=0;PEOPLE.push({n:'You',skin:my.skin,role:g.roles[NET.uid]});CABIN_OF.length=0;CABIN_OF.push(me.slot);
+  PEOPLE.length=0;PEOPLE.push({n:'You',skin:my.skin,role:g.roles[NET.uid]||null});CABIN_OF.length=0;CABIN_OF.push(me.slot);
   others.forEach(([u,p])=>{PEOPLE.push({n:p.n,skin:SP[p.skin]?p.skin:'beanie',room:p.room,role:g.roles[u],uid:u});CABIN_OF.push(p.slot);});
-  viewRole=g.roles[NET.uid];NOTE.mine='';NOTE.of={};T.notes={};T.muted.clear();V.ring=[];NIGHT.mateN=null;buildTown();}
+  viewRole=g.roles[NET.uid]||'civilian';NOTE.mine='';NOTE.of={};T.notes={};T.muted.clear();V.ring=[];NIGHT.mateN=null;buildTown();}
 function gNight(g){sfx('night');GAME.filmDone=true;$('#dawnGo').disabled=false;CAB.sentSt=null;CAB.spTxt=null;resetNight();NOTE.mine='';Object.assign(CAB,{state:'stand',x:98,y:200,tgt:null,path:null,dir:'back',walk:false,anim:null});
   if(GAME.meDead){go('ghost');return;}
   CAB.keep=true;go('cabin',()=>{if(g.round===1)toast(ic(viewRole)+'You are '+roleA(viewRole));});}
@@ -3126,9 +3128,9 @@ function dawnUI(){const g=GAME.g,b=$('#dawnGo');if(!GAME.on||!g)return;const hos
 function hostToSquare(){const g=GAME.g;if(!g||NET.host!==NET.uid||g.phase!=='film'||!filmAllDone(g))return;
   hostDo(GAME.key+':day',()=>{const now=serverNow(),w=hostWin(g,g.dead||{});gRef().update(w?{phase:'over',win:w,t0:now}:{phase:'day',t0:now,ends:now+DAY_MS});});}
 function gDay(g){$('#talkDay').textContent='DAY '+g.round;go('talk',()=>{if(spyOn())setTimeout(spyShow,400);   // never opened the binoculars: the notes still reach them
-  $('#talkSub').textContent=GAME.meDead?'You are dead. You can only watch.':'Talk it out. Then the vote.';$('#talkSkip').style.display=NET.host===NET.uid?'':'none';});}
+  $('#talkSub').textContent=GAME.watcher?'You joined late. Watch this one, you are in the next.':GAME.meDead?'You are dead. You can only watch.':'Talk it out. Then the vote.';$('#talkSkip').style.display=NET.host===NET.uid?'':'none';});}
 function gVote(g){sfx('gavel');$('#dayTag').textContent='DAY '+g.round;go('vote');}
-function gOver(g){sfx(gWon(g,g.roles[NET.uid])?'win':'lose');overPaint(g);go('over');}
+function gOver(g){sfx(GAME.watcher?'dawn':gWon(g,g.roles[NET.uid])?'win':'lose');overPaint(g);go('over');}
 // the vote, as the database has it
 const gCast=i=>{const v=GAME.g&&GAME.g.vote,c=v&&v.cast&&v.cast[GAME.ids[i]];return c==null?undefined:c==='none'?-1:(GAME.idx[c]??-1);};
 function gameVote(i){gRef().child('vote').update({['cast/'+NET.uid]:i<0?'none':GAME.ids[i],t:serverNow()}).catch(()=>{});}
@@ -3190,14 +3192,14 @@ scenes.limbo={hud:'#limboHud',frame(dt,t){const a=t*.00016;view(IMG.town,280+Mat
   lx.fillStyle='rgba(6,8,30,.38)';lx.fillRect(0,0,cam.lw,cam.lh);townLights(t,{dim:.85});fireflies(t,[150,250,260,230]);rain(dt);vignette(.7);present();
   if(GAME.g)$('#limboClock').textContent='0:'+String(Math.max(0,Math.ceil((GAME.g.ends-serverNow())/1000))).padStart(2,'0');}};
 // ---- the end ----
-const gWon=(g,r)=>g.win==='town'?r!=='mafia'&&r!=='jester'&&r!=='framer':g.win==='mafia'?r==='mafia'||r==='framer':g.win===r;   // did someone with this role win?
+const gWon=(g,r)=>!r?false:g.win==='town'?r!=='mafia'&&r!=='jester'&&r!=='framer':g.win==='mafia'?r==='mafia'||r==='framer':g.win===r;   // did someone with this role win?
 function overPaint(g){const won=gWon(g,g.roles[NET.uid]);
   $('#overTitle').textContent={town:'THE TOWN WINS',mafia:'MAFIA WINS',jester:'THE JESTER WINS'}[g.win]||'GAME OVER';
   $('#overTitle').style.color={town:'#9fe8b0',mafia:'#ff8a8a',jester:'#d9a8ff'}[g.win]||'#fff';
   $('#overNames').textContent=PEOPLE.map((p,i)=>gWon(g,p.role)?(i===0?'You':p.n):null).filter(Boolean).join(' · ');
-  const pay=won?250:100;if(GAME.paid!==g.id){GAME.paid=g.id;coins+=pay;saveInv();paintCoins();}
-  $('#overLine').innerHTML=(won?'You won!':'You lost.')+` <span class="wal">+${pay} ${ic('coin',2,'solo')}</span>`;
-  $('#overList').innerHTML=PEOPLE.map((p,i)=>roleRow(i)).join('');
+  const pay=won?250:100;if(!GAME.watcher&&GAME.paid!==g.id){GAME.paid=g.id;coins+=pay;saveInv();paintCoins();}
+  $('#overLine').innerHTML=GAME.watcher?'You watched this one. You are in the next game.':(won?'You won!':'You lost.')+` <span class="wal">+${pay} ${ic('coin',2,'solo')}</span>`;
+  $('#overList').innerHTML=PEOPLE.map((p,i)=>GAME.watcher&&!i?'':roleRow(i)).join('');
   const host=NET.host===NET.uid;$('#overBack').style.display=host?'':'none';$('#overWait').textContent=host?'':'Waiting for the host to go back to the lobby…';}
 // THE WIN (his call, 12 Nov: make it a big deal). Every phone shows the same thing: the winners up on the round stage,
 // bouncing, under a spotlight, confetti coming down round them; the losers stand back in the dark and watch.
@@ -3205,7 +3207,7 @@ const OV={t:0,conf:[],acc:0};
 const OV_COL=['#7bc96f','#6fb5ff','#c58bff','#ffcf4a','#f07ab0','#ffffff','#ff6a5e'];
 scenes.over={hud:'#overHud',enter(){document.documentElement.style.setProperty('--accent','#4a7bd0');OV.t=0;OV.conf=[];OV.acc=0;},
   frame(dt,t){OV.t+=dt;const g=GAME.g,st=TOWN.stage,R=(a,b)=>a+Math.random()*(b-a);view(IMG.town,280,st.y+34,200,{loose:true});townLights(t,{},'win');
-    const W=[],L=[];PEOPLE.forEach((p,i)=>(g&&gWon(g,p.role)?W:L).push(i));
+    const W=[],L=[];PEOPLE.forEach((p,i)=>{if(GAME.watcher&&!i)return;(g&&gWon(g,p.role)?W:L).push(i);});
     const per=W.length>5?Math.ceil(W.length/2):Math.max(1,W.length),people=[];
     W.forEach((i,k)=>{const row=Math.floor(k/per),inRow=Math.min(per,W.length-row*per),col=k%per,p=PEOPLE[i];
       people.push({i,win:1,name:ROLE_SPR[p.role]||p.skin,x:st.x+(col-(inRow-1)/2)*15,y:st.y-3+row*12,t,phase:i*377,dir:'front',lift:Math.abs(Math.sin(t*.008+k*1.3))*6});});
