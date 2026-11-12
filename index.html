@@ -52,7 +52,7 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #clkMsg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:16px;padding:0 8px;font-weight:700;color:#fff;text-shadow:0 2px 0 #1a1430;pointer-events:none;white-space:pre-line;line-height:1.5}
 #loader{position:absolute;inset:0;z-index:40;background:#04040e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .3s}
 #loader.off{opacity:0;pointer-events:none}
-#loader canvas{width:156px;height:81px;image-rendering:pixelated}
+#loader canvas{width:156px;height:117px;image-rendering:pixelated}
 #loader span{font:600 14px "Pixelify Sans",monospace;letter-spacing:4px;margin-right:-4px;color:#f6dfae}
 /* wood + parchment panel, the game's UI frame */
 .panel{background:var(--paper);color:var(--text);border:4px solid var(--wood);border-radius:6px;
@@ -683,17 +683,17 @@ const cv=$('#c'), ctx=cv.getContext('2d');
 // slide past to the right. The Mafia's knife run is a PixelLab animation (assets/loader/mafia-run.png, 4 frames of 48 x 46).
 // Everything goes through his Photoshop gradient map, so it is two colours: near-black and cream, and the darkest pixels
 // (the outlines) come out light, which is what rims the dark figures. Kept small, like the old loader (his call).
-(function(){const c=document.getElementById('loaderC'),x=c.getContext('2d',{willReadFrequently:true}),el=document.getElementById('loader'),W=c.width=104,H=c.height=54,GY=45;
+(function(){const c=document.getElementById('loaderC'),x=c.getContext('2d',{willReadFrequently:true}),el=document.getElementById('loader'),W=c.width=104,H=c.height=78,GY=69;
   const im={},L=(k,src)=>{const i=new Image();i.src=src;im[k]=i;};
   L('v','assets/loader/farmer-run.png');L('m','assets/loader/mafia-run.png');   // both runs are PixelLab animations: the farmer's is 6 frames of 48 x 50
   const STOPS=[[0,[246,223,174]],[.115,[4,4,14]],[.665,[246,223,174]],[1,[246,223,174]]],LUT=new Uint8Array(768);   // his gradient map: brightness -> colour
   for(let l=0;l<256;l++){const p=l/255;let k=0;while(k<STOPS.length-2&&p>STOPS[k+1][0])k++;const a=STOPS[k],b=STOPS[k+1],q=Math.min(1,Math.max(0,(p-a[0])/(b[0]-a[0])));for(let j=0;j<3;j++)LUT[l*3+j]=Math.round(a[1][j]+(b[1][j]-a[1][j])*q);}
   const ok=i=>i&&i.complete&&i.naturalWidth,BOB=[0,-1,-2,-1];
-  for(let k=0;k<8;k++)L('b'+k,'assets/loader/bush'+k+'.png');   // PixelLab plants in the style he picked: five shrubs (0-4), a tree (5), a thin tree (6), a small pointed shrub (7)
+  for(let k=0;k<8;k++)L('b'+k,'assets/loader/bush'+k+'.png');   // PixelLab plants in the style he picked: five shrubs (0-4), a TALL tree (5), a thin tree (6), a small pointed shrub (7)
   // They come past at random (his call: 'too perfect' in a neat row): a random plant, a random gap, some sunk into the
   // ground so they stand at different heights, some mirrored. Trees turn up less often.
-  const BSZ=[[20, 23], [24, 25], [23, 23], [16, 23], [24, 22], [28, 36], [16, 32], [14, 22]],PICK=[0,1,2,3,4,7,0,2,4,7,5,6,5],plants=[];let gap=0,lastT=0;
-  function spawn(px){const k=PICK[Math.floor(Math.random()*PICK.length)],tree=k===5||k===6;const p={k,x:px,sink:tree?0:Math.floor(Math.random()*Math.random()*13),flip:Math.random()<.5};
+  const BSZ=[[20, 23], [24, 25], [23, 23], [16, 23], [24, 22], [32, 65], [16, 32], [14, 22]],PICK=[0,2,3,4,7,0,2,4,7,3,5,6,5],plants=[];/* plant 1, the spiky one, is out: his call */let gap=0,lastT=0;
+  function spawn(px){const k=PICK[Math.floor(Math.random()*PICK.length)],tree=k===5||k===6;const p={k,x:px,sink:k===5?5:k===6?3:5+Math.floor(Math.random()*Math.random()*10),flip:Math.random()<.5};/* always sunk past its base: no plant shows its foot or ground patch (his call) */
     if(px==null)p.x=-BSZ[k][0];plants.push(p);gap=(tree?10:2)+Math.floor(Math.random()*Math.random()*70);return p;}
   for(let px=W-10;px>-20;){const p=spawn(px);px-=BSZ[p.k][0]+gap;p.x=px;}                                   // some already there when it opens
   function tick(t){if(el.classList.contains('off')&&getComputedStyle(el).opacity==='0')return setTimeout(()=>requestAnimationFrame(tick),300);
@@ -737,7 +737,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121606'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121610'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
