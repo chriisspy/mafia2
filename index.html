@@ -685,16 +685,17 @@ const cv=$('#c'), ctx=cv.getContext('2d');
 // (the outlines) come out light, which is what rims the dark figures. Kept small, like the old loader (his call).
 (function(){const c=document.getElementById('loaderC'),x=c.getContext('2d',{willReadFrequently:true}),el=document.getElementById('loader'),W=c.width=104,H=c.height=54,GY=45;
   const im={},L=(k,src)=>{const i=new Image();i.src=src;im[k]=i;};
-  for(let f=0;f<8;f++)L('v'+f,'assets/final/farmer/poses/walk_left_'+f+'.png');L('m','assets/loader/mafia-run.png');L('g','assets/town3/stone.png');
+  L('v','assets/loader/farmer-run.png');L('m','assets/loader/mafia-run.png');   // both runs are PixelLab animations: the farmer's is 6 frames of 48 x 50
   const STOPS=[[0,[246,223,174]],[.115,[4,4,14]],[.665,[246,223,174]],[1,[246,223,174]]],LUT=new Uint8Array(768);   // his gradient map: brightness -> colour
   for(let l=0;l<256;l++){const p=l/255;let k=0;while(k<STOPS.length-2&&p>STOPS[k+1][0])k++;const a=STOPS[k],b=STOPS[k+1],q=Math.min(1,Math.max(0,(p-a[0])/(b[0]-a[0])));for(let j=0;j<3;j++)LUT[l*3+j]=Math.round(a[1][j]+(b[1][j]-a[1][j])*q);}
   const ok=i=>i&&i.complete&&i.naturalWidth,BOB=[0,-1,-2,-1];
   function tick(t){if(el.classList.contains('off')&&getComputedStyle(el).opacity==='0')return setTimeout(()=>requestAnimationFrame(tick),300);
-    x.clearRect(0,0,W,H);const f=Math.floor(t/80),g=im.g,v=im['v'+f%8],m=im.m;
-    if(ok(g)){const off=Math.floor(t*.06)%36;for(let gx=off-36;gx<W;gx+=36)x.drawImage(g,0,4,36,7,gx,GY,36,7);
-      x.fillStyle='rgba(0,0,12,.62)';x.fillRect(0,GY,W,7);}                                                  // night stones: dark cobbles, pale joints (after the map)
-    if(ok(v))x.drawImage(v,22-Math.round(v.width/2),GY-v.height+1+BOB[f%4]);
-    if(ok(m))x.drawImage(m,(Math.floor(t/95)%4)*48,0,48,46,48,GY-45+BOB[(f+2)%4],48,46);
+    x.clearRect(0,0,W,H);const f=Math.floor(t/80),v=im.v,m=im.m;
+    // the road (his sketch): two plain lines and a dashed one between them, sliding right because they are running left
+    x.fillStyle='#ffffff';x.fillRect(0,GY,W,1);x.fillRect(0,GY+6,W,1);{const off=Math.floor(t*.07)%20;for(let gx=off-20;gx<W;gx+=20)x.fillRect(gx,GY+3,9,1);}
+    if(ok(v)){const fx=Math.floor(t/70)%6,by=BOB[f%4];x.drawImage(v,fx*48,0,48,50,0,GY-46+by,48,50);                 // the farmer, running scared: faster feet, and sweat flying off behind him
+      for(let k=0;k<3;k++){const q=((t/260)+k/3)%1;x.fillRect(Math.round(36+q*12),Math.round(GY-28-q*5+k*4+by),q<.6?2:1,1);}}
+    if(ok(m))x.drawImage(m,(Math.floor(t/95)%4)*48,0,48,46,52,GY-44+BOB[(f+2)%4],48,46);
     const id=x.getImageData(0,0,W,H),d=id.data;
     for(let i=0;i<d.length;i+=4){if(d[i+3]<40){d[i+3]=0;continue;}const l=Math.round(.299*d[i]+.587*d[i+1]+.114*d[i+2])*3;d[i]=LUT[l];d[i+1]=LUT[l+1];d[i+2]=LUT[l+2];d[i+3]=255;}
     x.putImageData(id,0,0);requestAnimationFrame(tick);}
@@ -725,7 +726,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121551'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121555'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
