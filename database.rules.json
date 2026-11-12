@@ -21,6 +21,19 @@
           "$id": {
             ".write": "auth != null && !data.exists()"
           }
+        },
+        "game": {
+          ".write": "auth != null && root.child('lobbies').child($code).child('players').child(auth.uid).exists()"
+        },
+        "act": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "mchat": {
+          "$id": {
+            ".write": "auth != null && !data.exists()"
+          }
         }
       }
     }
