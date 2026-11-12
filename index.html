@@ -645,7 +645,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121248'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121302'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -2362,7 +2362,7 @@ const SPIN_PRICE=500;   // every spin costs this (his call, 12 Nov)
 const wheelFree=()=>!WL.wheel.busy&&!$('#wheelModal').classList.contains('on');   // nobody is using the wheel
 const wlEnt=(i,x,y)=>({i,x,y,dir:'front',path:[],walk:false,loc:-1,act:null,ko:null,todo:null,wait:.5+Math.random()*3,phase:i*377,grudge:null,stay:0});
 const wlAll=()=>[WL.me,...WL.bots];
-const wlName=(e,obj)=>e.i===0?(obj?'you':'You'):PEOPLE[e.i].n;
+const wlName=(e,obj)=>e.i===0?(obj?'you':'You'):(PEOPLE[e.i]&&PEOPLE[e.i].n)||e.n||'Someone';   // a bot can be mid-spin when real players arrive
 const wlOk=(loc,x,y)=>loc<0?townOk(x,y):canStand(x,y);
 // a toast for something that happens to YOU (what the bots do to each other is their business); the bar itself says where you are
 function wlSay(a,tone){const e=$('#townToast');e.textContent=a;e.className='';void e.offsetWidth;e.className='on'+(tone?' '+tone:'');clearTimeout(wlSay.t);wlSay.t=setTimeout(()=>e.classList.remove('on'),2600);}
@@ -2473,7 +2473,7 @@ function wheelTick(dt){const W=WL.wheel;if(!W.busy){W.a+=dt*.12;return;}
   if(k>=1){W.busy=false;W.a%=Math.PI*2;wheelPrize(W.by,WSEG[W.res]);}}
 function wheelPrize(who,g){
   const pool=g.kind==='o'?SKINS.filter(s=>s.rar===g.v):null,win=pool&&pool[Math.floor(Math.random()*pool.length)];
-  $('#wheelPop').innerHTML=`<img class="f" src="${face(win?win.id:PEOPLE[who.i].skin)}" alt=""><div><small>${esc(wlName(who).toUpperCase())} WON</small><b${win?` style="color:${RAR_COL[win.rar]}"`:''}>${win?esc(win.name):ic('coin',2)+' '+g.v+' coins'}</b></div>`;
+  $('#wheelPop').innerHTML=`<img class="f" src="${face(win?win.id:(PEOPLE[who.i]||PEOPLE[0]).skin)}" alt=""><div><small>${esc(wlName(who).toUpperCase())} WON</small><b${win?` style="color:${RAR_COL[win.rar]}"`:''}>${win?esc(win.name):ic('coin',2)+' '+g.v+' coins'}</b></div>`;
   $('#wheelPop').style.borderColor=win?RAR_COL[win.rar]:'#ffd25e';WL.pop=3.4;
   if(who.i!==0)return;
   if(g.kind==='c'){coins+=g.v;saveInv();paintCoins();$('#wheelRes').innerHTML=`${ic('coin',3)} +${g.v} coins`;}
@@ -2551,6 +2551,13 @@ const NET={on:false,code:null,uid:null,db:null,ref:null,me:null,slot:0,host:null
 const LAB_PEOPLE=PEOPLE.map(p=>({...p})),LAB_CABINS=[...CABIN_OF];
 let myName=ME_NAME==='Chris'?'Player':ME_NAME;try{const n=localStorage.getItem('m2_name');if(n&&n.trim())myName=n.trim().slice(0,10);}catch(e){}
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
+async function freshCheck(){if(LAB||freshCheck.busy||GAME.on)return false;freshCheck.busy=true;
+  try{const h=await (await fetch(location.pathname+'?fresh='+Date.now(),{cache:'no-store'})).text(),m=h.match(/const BUILD='(\d+)'/);
+    if(m&&m[1]!==BUILD){let tried='';try{tried=sessionStorage.getItem('m2_fresh')||'';}catch(e){}
+      if(tried!==m[1]){try{sessionStorage.setItem('m2_fresh',m[1]);if(NET.on)sessionStorage.setItem('m2_rejoin',NET.code);}catch(e){}
+        const u=new URL(location.href);u.searchParams.set('b',m[1]);u.hash=NET.on?NET.code:u.hash.replace('#','');location.replace(u.toString());return true;}}}catch(e){}
+  freshCheck.busy=false;return false;}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')freshCheck();});
 
 function netLoad(){if(NET.ready)return NET.ready;
   NET.ready=(async()=>{
@@ -2576,7 +2583,7 @@ const freeSlot=pl=>{const used=new Set(Object.entries(pl).filter(([u])=>u!==NET.
 async function netEnter(code,pl){NET.code=code;NET.ref=NET.db.ref('lobbies/'+code);NET.slot=freeSlot(pl);NET.me=NET.ref.child('players/'+NET.uid);
   const c=TOWN.cabins[NET.slot];
   await NET.me.onDisconnect().remove();
-  await NET.me.set({n:myName,skin:PEOPLE[0].skin,slot:NET.slot,at:TS(),m:{x:c.cx,y:c.top+40,tx:c.cx,ty:c.top+40,loc:-1,dir:'front',s:0}});
+  await NET.me.set({n:myName,skin:PEOPLE[0].skin,slot:NET.slot,v:BUILD,at:TS(),m:{x:c.cx,y:c.top+40,tx:c.cx,ty:c.top+40,loc:-1,dir:'front',s:0}});
   NET.on=true;NET.t0=Date.now()+NET.off-1500;NET.players=null;NET.sig=null;NET.ents.clear();
   NET.ref.child('players').on('value',s=>{NET.players=s.val()||{};netApply();});
   NET.ref.child('ev').limitToLast(1).on('child_added',netEvent);
@@ -2591,8 +2598,9 @@ function netLeave(){if(NET.on){NET.on=false;try{NET.ref.child('players').off();N
   PEOPLE.length=0;LAB_PEOPLE.forEach((p,i)=>PEOPLE.push(i?{...p}:{...p,skin:SKINS[skinIdx]&&OWNED.has(SKINS[skinIdx].id)?SKINS[skinIdx].id:p.skin}));CABIN_OF.length=0;CABIN_OF.push(...LAB_CABINS);buildTown();go('home');}
 // the list of players changed, or somebody moved: make this phone's town match
 function netApply(){if(!NET.on)return;const pl=NET.players||{},mine=pl[NET.uid],c0=TOWN.cabins[NET.slot];
+  if(Object.values(pl).some(p=>p&&p.v&&p.v!==BUILD&&+p.v>+BUILD))freshCheck();   // a friend has a newer version than me
   if(!mine){NET.me.onDisconnect().remove().catch(()=>{});       // we dropped off for a moment: go back in
-    NET.me.set({n:myName,skin:PEOPLE[0].skin,slot:NET.slot,at:TS(),m:WL.me&&!GAME.on?netM():{x:c0.cx,y:c0.top+40,tx:c0.cx,ty:c0.top+40,loc:-1,dir:'front',s:++NET.seq}}).catch(()=>{});return;}
+    NET.me.set({n:myName,skin:PEOPLE[0].skin,slot:NET.slot,v:BUILD,at:TS(),m:WL.me&&!GAME.on?netM():{x:c0.cx,y:c0.top+40,tx:c0.cx,ty:c0.top+40,loc:-1,dir:'front',s:++NET.seq}}).catch(()=>{});return;}
   const older=(a,ua,b,ub)=>(a.at||0)<(b.at||0)||((a.at||0)===(b.at||0)&&ua<ub);
   {const a0=Object.entries(pl).filter(([u,p])=>p&&p.n&&p.m).sort((a,b)=>older(a[1],a[0],b[1],b[0])?-1:1);NET.host=a0.length?a0[0][0]:NET.uid;}
   if(GAME.on||!WL.me||scene!==scenes.town){gameLobbyUI();return;}
@@ -2644,6 +2652,7 @@ function rolesFor(n){const r=['mafia','doctor'];if(n>=7)r.push('mafia');if(n>=5)
 function gameStart(){if(!NET.on||NET.host!==NET.uid||GAME.g)return;
   const all=Object.entries(NET.players||{}).filter(([u,p])=>p&&p.n&&p.m).sort((a,b)=>(a[1].at||0)-(b[1].at||0)).slice(0,10);
   if(all.length<MINP){wlSay(`You need ${MINP} players to start.`);return;}
+  const old=all.filter(([u,p])=>p.v!==BUILD);if(old.length){wlSay(`${old.map(([,p])=>p.n).join(', ')} must reload the page first.`,'bad');return;}
   const rs=rolesFor(all.length),pl={},roles={};all.forEach(([u,p],k)=>{pl[u]={n:String(p.n).slice(0,10),skin:p.skin||'beanie',slot:p.slot,o:k};roles[u]=rs[k];});
   const now=serverNow();gRef().set({id:now.toString(36),phase:'night',round:1,t0:now,ends:now+NIGHT_MS,pl,roles}).catch(e=>{console.warn('start',e);wlSay('Could not start. The server rules need the new update.','bad');});}
 // the lobby's own buttons: the host gets Start; a late joiner is told a game is on
@@ -2843,6 +2852,9 @@ let OBJ_META={};
   buildRoom();resetNight();
   let start='home';if(LAB)try{start=localStorage.getItem('m2lab_scene')||'cabin';}catch(e){}
   go(scenes[start]&&start!=='watch'&&start!=='dawn'?start:'home',()=>{loading(false);
+    let rj='';try{rj=sessionStorage.getItem('m2_rejoin')||'';sessionStorage.removeItem('m2_rejoin');}catch(e){}
+    if(!LAB&&/^[A-Z]{4}$/.test(rj)){homeDo(()=>netJoin(rj));return;}
+    freshCheck();
     const h=location.hash.replace('#','').toUpperCase();if(!LAB&&/^[A-Z]{4}$/.test(h)){$('#joinIn').value=h;$('#joinErr').textContent='';$('#joinModal').classList.add('on');}});   // an invite link: the code is already typed in
   requestAnimationFrame(loop);
 })();
