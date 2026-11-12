@@ -322,7 +322,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #homeHud .bottom{animation:hUp .55s .35s cubic-bezier(.2,1.2,.4,1) both}
 @keyframes hUp{0%{transform:translateY(120%)}100%{transform:none}}
 .hpanel{padding:10px 12px 8px}
-.hname{display:flex;align-items:center;gap:10px;width:100%;background:#fff7;border:3px solid var(--wood);border-radius:5px;padding:4px 10px 4px 6px;font:inherit;color:var(--text);text-align:left;cursor:pointer}
+.hname{display:flex;align-items:center;gap:10px;flex:1;min-width:0;background:#fff7;border:3px solid var(--wood);border-radius:5px;padding:4px 10px 4px 6px;font:inherit;color:var(--text);text-align:left;cursor:pointer}
 .hname img{width:40px;height:40px;image-rendering:pixelated}
 .hname small{display:block;font-size:10px;letter-spacing:2px;opacity:.7}.hname b{font-size:21px;line-height:1}
 .hname em{margin-left:auto;font-style:normal;font-size:12px;font-weight:600;opacity:.7}
@@ -332,7 +332,11 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .hlink.sure{color:#b3261e;opacity:1}
 .hlink{display:block;margin:6px auto 0;background:none;border:0;font:600 13px "Pixelify Sans";color:var(--text);opacity:.75;text-decoration:underline;cursor:pointer}
 #homeMsg{text-align:center;font-size:14px;font-weight:600;min-height:18px;margin-top:8px}#homeMsg.bad{color:#b3261e}#homeMsg.good{color:#2f7a45;animation:hFade .4s both}
-.gbtn{position:relative;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:10px;font:700 17px "Pixelify Sans";padding:8px 8px 11px;border-radius:6px;border:3px solid #1a1430;background:#fff;color:#1a1430;box-shadow:inset 0 -4px 0 #d9d4c4,0 3px 0 #0009;cursor:pointer;transition:transform .06s}
+.hwal{align-self:stretch;background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-radius:5px;padding:0 10px 3px;font-size:20px;box-shadow:inset 0 -4px 0 #1b1532,0 3px 0 #0009}
+.hunder{margin-top:8px;gap:8px;align-items:stretch}.hunder .gbtn{margin-top:0;flex:1}
+.hsq{flex:none;width:50px;display:flex;align-items:center;justify-content:center;padding:0 0 3px}
+#homeHud .btn.lob{font-size:17px;padding-top:7px;padding-bottom:10px;gap:8px}
+.gbtn{pointer-events:auto;position:relative;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:10px;font:700 17px "Pixelify Sans";padding:8px 8px 11px;border-radius:6px;border:3px solid #1a1430;background:#fff;color:#1a1430;box-shadow:inset 0 -4px 0 #d9d4c4,0 3px 0 #0009;cursor:pointer;transition:transform .06s}
 .gbtn:active{transform:translateY(2px)}.gbtn small{font-size:12px;font-weight:600;opacity:.7;margin-left:4px}
 .gbtn.in{background:#dff5e3;border-color:#2f7a45;color:#1f5a31;box-shadow:inset 0 -4px 0 #b9e3c2,0 3px 0 #0009}
 .gbtn.sure{background:#e4544f;border-color:#6b1416;color:#fff;box-shadow:inset 0 -4px 0 #a92b2c,0 3px 0 #0009}
@@ -394,20 +398,21 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <!-- WELCOME: the first thing you see. Make a lobby, join one, shop, collection. -->
   <div class="hud" id="homeHud">
     <div class="title logo"><span>MAFIA</span><em>2</em><small>A CHRISPY GAME</small></div>
-    <div class="bottom"><div class="panel hpanel">
-      <button class="hname" id="homeName"><img id="homeFace" alt=""><span><small>PLAYING AS</small><b id="homeNameT">You</b></span><em>Change</em></button>
-      <button class="hbig red" id="homeCreate">Create lobby</button>
-      <button class="hbig" id="homeJoin">Join with code</button>
-      <div class="row" style="margin-top:10px">
-        <button class="btn dark lob" id="homeShop"><i data-ic="case" data-c="solo"></i>Shop</button>
-        <button class="btn dark lob" id="homeColl"><i data-ic="hanger" data-c="solo"></i>Collection</button>
-        <span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span>
+    <div class="bottom">
+      <div class="panel hpanel">
+        <div class="row"><button class="hname" id="homeName"><img id="homeFace" alt=""><span><small>PLAYING AS</small><b id="homeNameT">You</b></span><em>Change</em></button>
+          <span class="wal hwal"><i data-ic="coin" data-s="3" data-c="solo"></i><span class="coinN">0</span></span></div>
+        <button class="hbig red" id="homeCreate">Create lobby</button>
+        <button class="hbig" id="homeJoin">Join with code</button>
+        <div class="row" style="margin-top:10px;gap:10px">
+          <button class="btn dark lob" id="homeShop"><i data-ic="bag" data-s="3" data-c="solo"></i>Shop</button>
+          <button class="btn dark lob" id="homeColl"><i data-ic="shirt" data-s="3" data-c="solo"></i>Collection</button>
+        </div>
+        <div id="homeMsg"></div>
+        <button class="hlink" id="homeBots">Practice town with bots</button>
       </div>
-      <button class="gbtn" id="homeAcct">Sign in with Google</button>
-      <div id="homeMsg"></div>
-      <button class="hlink" id="homeHow">How to play</button>
-      <button class="hlink" id="homeBots">Practice town with bots</button>
-    </div></div>
+      <div class="row hunder"><button class="gbtn" id="homeAcct">Sign in with Google</button><button class="btn dark hsq" id="homeHow" title="How to play"><i data-ic="help" data-s="3" data-c="solo"></i></button></div>
+    </div>
     <div class="modal big panel" id="howModal">
       <div class="mhead"><b>HOW TO PLAY</b></div>
       <p>4 to 10 players. One of you makes a lobby and shares the code. Everyone gets a secret role.</p>
@@ -631,7 +636,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </nav>
 </div>
 
-<script src="icons.js?v=11121504"></script>
+<script src="icons.js?v=11121506"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -686,7 +691,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121504'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121506'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
