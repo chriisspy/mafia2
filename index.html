@@ -358,7 +358,14 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .hin.code{text-transform:uppercase;letter-spacing:10px;font-size:32px}
 #joinErr{min-height:17px;margin-top:6px;font-weight:600}
 #townLeave{position:absolute;left:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
-#townCode{pointer-events:auto;cursor:pointer}
+#townCodeBox{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);display:none;flex-direction:column;align-items:center;padding:4px 16px 6px;cursor:pointer;font-family:inherit;z-index:21;min-width:150px}
+#townHud.net #townCodeBox{display:flex}#townHud.net .banner{top:calc(96px + env(safe-area-inset-top))}#townHud.net #townCode{display:none}
+#townCodeBox small{font-size:10px;letter-spacing:3px;opacity:.7;line-height:1.2}#townCodeBox b{font-size:34px;letter-spacing:8px;margin-right:-8px;line-height:1}
+#townCodeBox i{font-style:normal;font-size:9px;letter-spacing:2px;opacity:.55;line-height:1.3}
+#townCodeBox.ok{border-color:#2f7a45;background:#dff5e3}#townCodeBox.ok b{color:#2f7a45;font-size:26px;letter-spacing:3px;margin-right:-3px;line-height:34px;animation:gYay .35s cubic-bezier(.3,1.7,.5,1)}
+/* a button that is busy: its words change ("Creating…") and it breathes very gently */
+.busy{pointer-events:none;animation:busyP 1.1s ease-in-out infinite}
+@keyframes busyP{0%,100%{opacity:1}50%{opacity:.72}}
 #limboHud .banner,#overHud .banner{top:calc(54px + env(safe-area-inset-top));font-size:30px;color:#fff}
 #overHud .banner{font-size:44px;line-height:.95;top:calc(46px + env(safe-area-inset-top))}
 #overTitle{display:block;animation:ovPop .7s cubic-bezier(.3,1.6,.5,1) both}
@@ -468,12 +475,13 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <!-- WAITING LOBBY: the town, before the game starts -->
   <div class="hud" id="townHud">
     <button class="btn dark" id="townLeave">Leave</button>
+    <button class="panel" id="townCodeBox"><small>LOBBY CODE</small><b id="townCodeT">ABCD</b><i>TAP TO COPY</i></button>
     <div class="title banner"><small id="townCode">PRACTICE TOWN</small>THE TOWN<div class="tcount" id="townCount"></div></div>
     <div id="townMenu"><button class="btn" data-a="punch" title="Punch"><i data-ic="fist" data-s="3" data-c="solo"></i></button><button class="btn" data-a="five" title="High five"><i data-ic="hand" data-s="3" data-c="solo"></i></button></div>
     <div id="townToast"></div>
     <div id="wheelPop"></div>
     <div class="bottom"><div class="panel" style="padding:10px 12px 12px">
-      <div class="thead"><div class="tt"><b id="townLine">Waiting for the host</b><div class="small" id="townSub"></div></div><span class="wal"><i data-ic="coin" data-s="3" data-c="solo"></i><span class="coinN">0</span></span></div>
+      <div class="thead"><div class="tt"><b id="townLine">Waiting for the host</b><div class="small" id="townSub"></div></div></div>
       <div id="townRoles"><button class="rtog" data-r="d"><i data-ic="detective" data-c="solo"></i>Detective</button><button class="rtog" data-r="b"><i data-ic="bodyguard" data-c="solo"></i>Bodyguard</button><button class="rtog" data-r="j"><i data-ic="jester" data-c="solo"></i>Jester</button><button class="rtog" data-r="f"><i data-ic="framer" data-c="solo"></i>Framer</button><button class="rtog rand" data-r="r"><i data-ic="dice" data-c="solo"></i>Randomise roles</button></div>
       <button class="hbig red" id="townStart" style="display:none">Start the game</button>
       <button class="hlink" id="townDev">Start dev test (adds 3 bots)</button>
@@ -714,7 +722,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121525'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121529'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -2496,7 +2504,7 @@ const wlName=(e,obj)=>e.i===0?(obj?'you':'You'):(PEOPLE[e.i]&&PEOPLE[e.i].n)||e.
 const wlOk=(loc,x,y)=>loc<0?townOk(x,y):canStand(x,y);
 // a toast for something that happens to YOU (what the bots do to each other is their business); the bar itself says where you are
 function wlSay(a,tone){const e=$('#townToast');e.textContent=a;e.className='';void e.offsetWidth;e.className='on'+(tone?' '+tone:'');clearTimeout(wlSay.t);wlSay.t=setTimeout(()=>e.classList.remove('on'),2600);}
-function wlHead(a,b){const host=NET.on&&NET.host===NET.uid;$('#townLine').textContent=a||(NET.on?(host?'You are the host':'Waiting for the host'):'Practice town');$('#townSub').textContent=b||(host?'Tap the code up top to copy an invite link':'Tap a player, a cabin or the wheel');}
+function wlHead(a,b){const host=NET.on&&NET.host===NET.uid;$('#townLine').textContent=a||(NET.on?(host?'You are the host':'Waiting for the host'):'Practice town');$('#townSub').textContent=b||(host?'Tap the code to copy an invite link':'Tap a player, a cabin or the wheel');}
 // walk somewhere, then do something when you get there
 function wlGo(e,x,y,todo){if(e.ko)return;if(e.act&&e.act.k!=='punch')e.act=null;
   const p=e.loc<0?gridPath(TOWNG,TGW,TGH,TG,e.x,e.y,x,y):findPath(e.x,e.y,x,y);
@@ -2628,7 +2636,7 @@ scenes.town={hud:'#townHud',
     if(NET.on){const c=TOWN.cabins[NET.slot];WL.me=wlEnt(0,c.cx,c.top+40);WL.bots=[];NET.ents.clear();NET.sig=null;NET.sawRoster=false;}   // online: the others are real, they arrive in netApply
     else{WL.me=wlEnt(0,280,436);WL.bots=PEOPLE.slice(1).map((p,k)=>{const s=wlSpot();return wlEnt(k+1,s[0],s[1]);});}
     WL.fx=[];WL.sel=null;WL.feed=[];WL.fading=false;WL.shake=0;WL.wheel.busy=false;WL.wheel.by=null;wlMenu();paintCoins();$('#townCount').style.display='';$('#townCount').textContent=`${PEOPLE.length} of 10 players here`;
-    $('#townCode').textContent=NET.on?'LOBBY CODE '+NET.code:'PRACTICE TOWN';wlHead();$('#townToast').className='';$('#wheelPop').className='';WL.pop=0;netApply();netMove();},
+    $('#townHud').classList.toggle('net',NET.on);$('#townCodeT').textContent=NET.code||'';$('#townCodeBox').classList.remove('ok');wlHead();$('#townToast').className='';$('#wheelPop').className='';WL.pop=0;netApply();netMove();},
   leave(){$('#phone').style.background='';WL.sel=null;wlMenu();},
   frame(dt,t){const m=WL.me;wheelTick(dt);
     for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.remote&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
@@ -2966,8 +2974,8 @@ scenes.over={hud:'#overHud',enter(){document.documentElement.style.setProperty('
     townLights(t,{dim:.5},'rest');present();
     for(const q of people)if(q.win)nameTag(hits.get(q),q.i===0?'You':PEOPLE[q.i].n,'#ffd25e');
     if(GAME.g&&NET.host===NET.uid&&$('#overBack').style.display==='none'){$('#overBack').style.display='';$('#overWait').textContent='';}}};
-$('#overBack').onclick=()=>{if(NET.on&&NET.host===NET.uid)gRef().remove().catch(()=>{});};
-$('#townStart').onclick=()=>gameStart();$('#townDev').onclick=()=>gameStart(true);
+$('#overBack').onclick=()=>{if(NET.on&&NET.host===NET.uid){const d=btnBusy($('#overBack'),'Going back…');setTimeout(d,4000);gRef().remove().catch(()=>{});}};
+$('#townStart').onclick=()=>{const d=btnBusy($('#townStart'),'Starting…');setTimeout(d,2500);gameStart();};$('#townDev').onclick=()=>{const d=btnBusy($('#townDev'),'Starting…');setTimeout(d,2500);gameStart(true);};
 document.querySelectorAll('#townRoles .rtog').forEach(b=>b.onclick=()=>{if(!NET.on||NET.host!==NET.uid)return;const o=roleOpt();o[b.dataset.r]=o[b.dataset.r]?0:1;NET.me.child('opt').set(o).catch(()=>{});});
 $('#talkSkip').onclick=hostVote;
 // Leave the game: the first tap asks, the second does it. The others carry on; you count as dead. If you were the only
@@ -2996,10 +3004,11 @@ $('#homeAcct').onclick=async()=>{const b=$('#homeAcct'),a=NET.auth;if(NET.on||NE
   if(acctUser()){if(!b.classList.contains('sure')){b.className='gbtn sure';b.textContent='Tap again to sign out';clearTimeout(b.t);b.t=setTimeout(acctUI,3000);return;}
     clearTimeout(b.t);
     try{await a.signOut();NET.uid=(await a.signInAnonymously()).user.uid;localStorage.removeItem('m2_acct');}catch(e){}acctUI();homeMsg('Signed out. This phone keeps its own coins.');return;}
+  const gDone=btnBusy(b,'Signing in…');
   try{const prov=new firebase.auth.GoogleAuthProvider();
     try{await a.currentUser.linkWithPopup(prov);}catch(e){if(e&&e.code==='auth/credential-already-in-use'&&e.credential)await a.signInWithCredential(e.credential);else throw e;}   // used before on another phone: switch to that account
     NET.uid=a.currentUser.uid;await acctSync();acctUI();acctYay();homeMsg('Signed in. Your coins and outfits are saved.','good');}
-  catch(e){console.warn('sign-in',e);const w=acctWhy(e);homeMsg(w,!!w);}};
+  catch(e){console.warn('sign-in',e);gDone();acctUI();const w=acctWhy(e);homeMsg(w,!!w);}};
 /* ---- the welcome screen ---- */
 function homePaint(){if(!SP[PEOPLE[0].skin])return;$('#homeFace').src=face(PEOPLE[0].skin);$('#homeNameT').textContent=myName;}
 function homeMsg(t,bad){const e=$('#homeMsg');e.textContent=t||'';e.className='';void e.offsetWidth;e.className=bad===true?'bad':bad||'';}
@@ -3007,19 +3016,21 @@ function netWhy(e){const c=String((e&&(e.code||''))+' '+(e&&e.message||e));
   if(/PERMISSION_DENIED|permission_denied|operation-not-allowed|admin-restricted|configuration-not-found/i.test(c))return'The server is not switched on yet.';
   if(/offline|network|fetch/i.test(c))return'No internet. Try again.';
   return e&&e.message&&e.message.length<44?e.message:'Could not connect. Try again.';}
-async function homeDo(fn,errEl){if(NET.busy)return;NET.busy=true;homeMsg('Connecting…');
-  try{await fn();homeMsg('');}catch(e){console.warn('net',e);NET.on=false;const w=netWhy(e);homeMsg(w,true);if(errEl)errEl.textContent=w;}NET.busy=false;}
+// a button that is working: its words change to what it is doing, and go back when it is done
+function btnBusy(b,txt){if(!b||b.classList.contains('busy'))return()=>{};const old=b.innerHTML;b.classList.add('busy');b.textContent=txt;return()=>{b.classList.remove('busy');b.innerHTML=old;};}
+async function homeDo(fn,errEl,btn,txt){if(NET.busy)return;NET.busy=true;homeMsg('');const done=btnBusy(btn,txt||'Connecting…');
+  try{await fn();}catch(e){console.warn('net',e);NET.on=false;const w=netWhy(e);homeMsg(w,true);if(errEl)errEl.textContent=w;}done();NET.busy=false;}
 scenes.home={hud:'#homeHud',
   enter(){document.documentElement.style.setProperty('--accent','#4a7bd0');paintCoins();homePaint();homeMsg('');},
   frame(dt,t){const a=t*.00016;view(IMG.town,280+Math.round(Math.cos(a)*26),412+Math.round(Math.sin(a*1.4)*12),176,{loose:true});
     fireflies(t,[150,250,260,230]);townLights(t,{},'win');
     const me={name:PEOPLE[0].skin,x:280,y:372,t,dir:'front',tint:'#2a2f7a|0.12',lift:Math.abs(Math.sin(t*.004))*2};
     const hits=drawScene([me],TOWN.occ,IMG.town);townLights(t,{},'rest');rain(dt);present();nameTag(hits.get(me),myName,'#ffd25e');}};
-$('#homeCreate').onclick=()=>homeDo(netCreate);
+$('#homeCreate').onclick=()=>homeDo(netCreate,null,$('#homeCreate'),'Creating…');
 $('#homeJoin').onclick=()=>{$('#joinErr').textContent='';$('#joinIn').value='';$('#joinModal').classList.add('on');$('#joinIn').focus();};
 $('#joinX').onclick=()=>$('#joinModal').classList.remove('on');
 $('#joinOk').onclick=()=>{const c=$('#joinIn').value.toUpperCase().replace(/[^A-Z]/g,'');if(c.length!==4){$('#joinErr').textContent='The code is 4 letters.';return;}
-  $('#joinErr').textContent='Joining…';homeDo(()=>netJoin(c),$('#joinErr'));};
+  $('#joinErr').textContent='';homeDo(()=>netJoin(c),$('#joinErr'),$('#joinOk'),'Joining…');};
 $('#joinIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#joinOk').click();});
 $('#homeName').onclick=()=>{$('#nameIn').value=myName;$('#nameModal').classList.add('on');const ni=$('#nameIn');ni.focus();try{ni.setSelectionRange(0,ni.value.length);}catch(e){}};
 $('#nameX').onclick=()=>$('#nameModal').classList.remove('on');
@@ -3033,7 +3044,9 @@ const HOW_ROLES={mafia:'Picks one player to kill each night. Two Mafia from 7 pl
 $('#homeHow').onclick=()=>{$('#howRoles').innerHTML=Object.entries(HOW_ROLES).map(([r,d])=>`<div class="hr">${ic(r,3,'solo')}<div><b style="color:${ROLES[r].accent}">${ROLES[r].name}</b>${d}</div></div>`).join('');$('#howModal').classList.add('on');};
 $('#howX').onclick=()=>$('#howModal').classList.remove('on');
 $('#townLeave').onclick=()=>{if(WL.fading)return;if(NET.on)netLeave();else go('home');};
-$('#townCode').onclick=()=>{if(!NET.on)return;const link=location.origin+location.pathname+'#'+NET.code;try{navigator.clipboard.writeText(link).then(()=>wlSay('Invite link copied.','good'),()=>wlSay('Code: '+NET.code));}catch(e){wlSay('Code: '+NET.code);}};
+$('#townCodeBox').onclick=()=>{if(!NET.on)return;const box=$('#townCodeBox'),b=$('#townCodeT'),link=location.origin+location.pathname+'#'+NET.code;
+  const done=()=>{box.classList.add('ok');b.textContent='COPIED!';clearTimeout(box.t);box.t=setTimeout(()=>{box.classList.remove('ok');b.textContent=NET.code||'';},1500);};
+  try{navigator.clipboard.writeText(link).then(done,done);}catch(e){done();}};
 
 /* ---------- shell ---------- */
 function go(name,after){
@@ -3090,7 +3103,7 @@ let OBJ_META={};
   let start='home';if(LAB)try{start=localStorage.getItem('m2lab_scene')||'cabin';}catch(e){}
   go(scenes[start]&&start!=='watch'&&start!=='dawn'?start:'home',()=>{loading(false);
     let rj='';try{rj=sessionStorage.getItem('m2_rejoin')||'';sessionStorage.removeItem('m2_rejoin');}catch(e){}
-    if(!LAB&&/^[A-Z]{4}$/.test(rj)){homeDo(()=>netJoin(rj));return;}
+    if(!LAB&&/^[A-Z]{4}$/.test(rj)){homeDo(()=>netJoin(rj),null,$('#homeJoin'),'Joining…');return;}
     freshCheck();netLoad().then(()=>acctSync()).then(acctUI).catch(()=>{});   // connect early: the Google window has to open the instant it is tapped
     const h=location.hash.replace('#','').toUpperCase();if(!LAB&&/^[A-Z]{4}$/.test(h)){$('#joinIn').value=h;$('#joinErr').textContent='';$('#joinModal').classList.add('on');}});   // an invite link: the code is already typed in
   requestAnimationFrame(loop);
