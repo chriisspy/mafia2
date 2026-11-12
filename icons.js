@@ -14,6 +14,7 @@ civilian:['....KK....','...KRRK...','..KRRRRK..','.KRRRRRrK.','KKKKKKKKKK','.KPP
 detective:['..KKKK....','.KLLLLK...','KLWLLLLK..','KLLLLLLK..','KLLLLLLK..','KLLLLLLK..','.KLLLLKK..','..KKKKOOK.','.......KOK','........KK'],
 jester:['..KK..KK..','.KVVKKEEK.','KVVVVEEEEK','KVVVVEEEEK','KVKvvEeKEK','KVKKKKKKEK','KVK....KEK','.K......K.','KGK....KGK','.K......K.'],
 bodyguard:[E,'.KKKKKKKK.','.KGGGgggK.','.KGWGgggK.','.KGGGgggK.','.KGGGgggK.','..KGGggK..','...KGgK...','....KK....',E],
+dice:['.KKKKKKKK.','KWWWWWWWWK','KWKWWWWKWK','KWWWWWWWWK','KWWWKKWWWK','KWWWKKWWWK','KWWWWWWWWK','KWKWWWWKWK','KWWWWWWWWK','.KKKKKKKK.'],
 framer:[E,'.KKKKKKKK.','KMMMMMMMMK','KMKKMMKKMK','KMKKMMKKMK','KMMMMMMMMK','KMKMMMMKMK','.KMKKKKMK.','..KmmmmK..','...KKKK...'],
 eye:[E,E,'..KKKKKK..','.KWWWWWWK.','KWWBKKBWWK','KWWBKKBWWK','.KWWWWWWK.','..KKKKKK..',E,E],
 rain:[E,'...KKK....','.KKWWWKK..','KWWWWWWWK.','KSSSSSSSK.','.KKKKKKK..',E,'.B..B..B..','B..B..B...',E],
