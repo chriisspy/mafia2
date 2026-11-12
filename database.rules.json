@@ -1,0 +1,28 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "lobbies": {
+      "$code": {
+        ".read": "auth != null",
+        "meta": {
+          ".write": "auth != null && (!data.exists() || !root.child('lobbies').child($code).child('players').exists())"
+        },
+        "players": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "ev": {
+          "$id": {
+            ".write": "auth != null && !data.exists()"
+          }
+        }
+      }
+    }
+  }
+}

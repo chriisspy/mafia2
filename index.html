@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>MAFIA 2 Style Test</title>
+<title>MAFIA 2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -307,6 +307,35 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #dawnHud .row{justify-content:center;margin-top:12px}
 #dawnHud h2.safe{color:#2f7a3f}
 #dawnHud img.big{width:72px;height:72px;image-rendering:pixelated;margin:6px auto 0;display:block}
+/* ---------- THE REAL GAME SHELL (12 Nov): welcome screen, menus. The lab tabs only show with ?lab in the address ---------- */
+#phone.game #tabs,#phone.game #top,#phone.game #collAll,#phone.game #coinTest,#phone.game #spinTest{display:none}
+#phone.game .bottom{bottom:calc(12px + env(safe-area-inset-bottom))}
+#phone.game .modal{bottom:calc(14px + env(safe-area-inset-bottom))}
+#homeHud .logo{top:calc(70px + env(safe-area-inset-top));font-size:66px;color:var(--gold);line-height:.9;letter-spacing:2px}
+#homeHud .logo span{display:inline-block;animation:hDrop .7s cubic-bezier(.3,1.5,.5,1) both}
+#homeHud .logo em{display:inline-block;font-style:normal;color:#ff6a5e;margin-left:10px;animation:hPop .5s .55s cubic-bezier(.3,1.8,.5,1) both,hBob 2.4s 1.2s ease-in-out infinite}
+#homeHud .logo small{display:block;font-size:14px;color:#fff;letter-spacing:4px;margin-top:12px;animation:hFade .5s .9s both}
+@keyframes hDrop{0%{transform:translateY(-190px)}100%{transform:none}}
+@keyframes hPop{0%{transform:scale(0) rotate(-30deg)}100%{transform:scale(1) rotate(8deg)}}
+@keyframes hBob{0%,100%{transform:rotate(8deg) translateY(0)}50%{transform:rotate(4deg) translateY(-5px)}}
+@keyframes hFade{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+#homeHud .bottom{animation:hUp .55s .35s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes hUp{0%{transform:translateY(120%)}100%{transform:none}}
+.hpanel{padding:10px 12px 8px}
+.hname{display:flex;align-items:center;gap:10px;width:100%;background:#fff7;border:3px solid var(--wood);border-radius:5px;padding:4px 10px 4px 6px;font:inherit;color:var(--text);text-align:left;cursor:pointer}
+.hname img{width:40px;height:40px;image-rendering:pixelated}
+.hname small{display:block;font-size:10px;letter-spacing:2px;opacity:.7}.hname b{font-size:21px;line-height:1}
+.hname em{margin-left:auto;font-style:normal;font-size:12px;font-weight:600;opacity:.7}
+.hbig{display:block;width:100%;margin-top:10px;font:700 23px "Pixelify Sans";letter-spacing:1px;padding:10px 8px 15px;border-radius:6px;border:3px solid var(--wood);background:var(--paper);color:var(--text);box-shadow:inset 0 -5px 0 #0002,0 4px 0 #0009;cursor:pointer;transition:transform .06s}
+.hbig.red{background:#e4544f;color:#fff;border-color:#6b1416;box-shadow:inset 0 -6px 0 #a92b2c,0 4px 0 #0009}
+.hbig:active{transform:translateY(3px);box-shadow:inset 0 -2px 0 #0002,0 1px 0 #0009}
+.hlink{display:block;margin:8px auto 0;background:none;border:0;font:600 13px "Pixelify Sans";color:var(--text);opacity:.75;text-decoration:underline;cursor:pointer}
+#homeMsg{text-align:center;font-size:14px;font-weight:600;min-height:18px;margin-top:8px}#homeMsg.bad{color:#b3261e}
+.hin{width:100%;font:700 24px "Pixelify Sans";text-align:center;padding:8px;border:3px solid var(--wood);border-radius:5px;background:#fff6df;color:var(--text);margin-top:10px}
+.hin.code{text-transform:uppercase;letter-spacing:10px;font-size:32px}
+#joinErr{min-height:17px;margin-top:6px;font-weight:600}
+#townLeave{position:absolute;left:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
+#townCode{pointer-events:auto;cursor:pointer}
 </style>
 </head>
 <body>
@@ -330,6 +359,25 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <button class="btn dark" id="rainBtn"><i data-ic="rain"></i>Rain</button>
   </div>
 
+  <!-- WELCOME: the first thing you see. Make a lobby, join one, shop, collection. -->
+  <div class="hud" id="homeHud">
+    <div class="title logo"><span>MAFIA</span><em>2</em><small>A CHRISPY GAME</small></div>
+    <div class="bottom"><div class="panel hpanel">
+      <button class="hname" id="homeName"><img id="homeFace" alt=""><span><small>PLAYING AS</small><b id="homeNameT">You</b></span><em>Change</em></button>
+      <button class="hbig red" id="homeCreate">Create lobby</button>
+      <button class="hbig" id="homeJoin">Join with code</button>
+      <div class="row" style="margin-top:10px">
+        <button class="btn dark lob" id="homeShop"><i data-ic="case" data-c="solo"></i>Shop</button>
+        <button class="btn dark lob" id="homeColl"><i data-ic="hanger" data-c="solo"></i>Collection</button>
+        <span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span>
+      </div>
+      <div id="homeMsg"></div>
+      <button class="hlink" id="homeBots">Practice town with bots</button>
+    </div></div>
+    <div class="modal panel" id="nameModal"><h3>Your name</h3><div class="small">This is what your friends see.</div><input class="hin" id="nameIn" maxlength="10" autocomplete="off"><div class="row"><button class="btn" id="nameX">Back</button><button class="btn go" id="nameOk">Save</button></div></div>
+    <div class="modal panel" id="joinModal"><h3>Join a lobby</h3><div class="small">Type the 4 letter code from the host.</div><input class="hin code" id="joinIn" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false"><div class="small" id="joinErr"></div><div class="row"><button class="btn" id="joinX">Back</button><button class="btn go" id="joinOk">Join</button></div></div>
+  </div>
+
   <!-- LOBBY -->
   <div class="hud" id="lobbyHud">
     <div class="title logo">MAFIA 2<small>CHRISPY GAMES</small></div>
@@ -351,24 +399,12 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
         </div>
       </div>
     </div>
-    <div class="modal big panel" id="collModal">
-      <div class="mhead"><b>COLLECTION</b><span class="small" id="collCount"></span><button class="btn" id="collX"><i data-ic="cross" data-c="solo"></i></button></div>
-      <div class="small" style="margin-bottom:8px">Tap an outfit to wear it. Locked ones come from the Mafia Case.</div>
-      <div class="ogrid" id="collGrid"></div>
-      <div class="row" style="justify-content:center;margin-top:12px"><button class="btn" id="collAll">Unlock all (test)</button></div>
-    </div>
-    <div class="modal big panel" id="shopModal">
-      <div class="mhead"><b>SHOP</b><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><button class="btn" id="shopX"><i data-ic="cross" data-c="solo"></i></button></div>
-      <div class="casecard"><i data-ic="case" data-s="5" data-c="solo"></i><div style="flex:1"><b>Mafia Case</b><div class="small">One random outfit. A double pays some coins back.</div><div class="odds" id="caseOdds"></div></div></div>
-      <div id="caseItems"></div>
-      <div id="caseResult"></div>
-      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn red" id="caseOpen">Open</button><button class="btn" id="coinTest">+500 test coins</button></div>
-    </div>
   </div>
 
   <!-- WAITING LOBBY: the town, before the game starts -->
   <div class="hud" id="townHud">
-    <div class="title banner"><small>WAITING LOBBY · CODE K7QF</small>THE TOWN<div class="tcount" id="townCount"></div></div>
+    <button class="btn dark" id="townLeave">Leave</button>
+    <div class="title banner"><small id="townCode">PRACTICE TOWN</small>THE TOWN<div class="tcount" id="townCount"></div></div>
     <div id="townMenu"><button class="btn" data-a="punch" title="Punch"><i data-ic="fist" data-s="3" data-c="solo"></i></button><button class="btn" data-a="five" title="High five"><i data-ic="hand" data-s="3" data-c="solo"></i></button></div>
     <div id="townToast"></div>
     <div id="wheelPop"></div>
@@ -508,7 +544,23 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <div id="caseFx"><canvas id="caseCv"></canvas>
     <div id="reelBox"><div id="reel"></div><i class="mark"></i></div><div class="small cskip" id="caseSkip">Tap to skip</div></div>
 
+  <!-- the shop and the collection: opened from the welcome screen (and the old lobby tab) -->
+    <div class="modal big panel" id="collModal">
+      <div class="mhead"><b>COLLECTION</b><span class="small" id="collCount"></span><button class="btn" id="collX"><i data-ic="cross" data-c="solo"></i></button></div>
+      <div class="small" style="margin-bottom:8px">Tap an outfit to wear it. Locked ones come from the Mafia Case.</div>
+      <div class="ogrid" id="collGrid"></div>
+      <div class="row" style="justify-content:center;margin-top:12px"><button class="btn" id="collAll">Unlock all (test)</button></div>
+    </div>
+    <div class="modal big panel" id="shopModal">
+      <div class="mhead"><b>SHOP</b><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><button class="btn" id="shopX"><i data-ic="cross" data-c="solo"></i></button></div>
+      <div class="casecard"><i data-ic="case" data-s="5" data-c="solo"></i><div style="flex:1"><b>Mafia Case</b><div class="small">One random outfit. A double pays some coins back.</div><div class="odds" id="caseOdds"></div></div></div>
+      <div id="caseItems"></div>
+      <div id="caseResult"></div>
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn red" id="caseOpen">Open</button><button class="btn" id="coinTest">+500 test coins</button></div>
+    </div>
+
   <nav id="tabs">
+    <button class="btn" data-s="home">Home</button>
     <button class="btn" data-s="lobby">Lobby</button>
     <button class="btn" data-s="town">Town</button>
     <button class="btn" data-s="talk">Talk</button>
@@ -576,7 +628,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121136'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121224'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -922,7 +974,7 @@ let coins=1200;
 try{const o=JSON.parse(localStorage.getItem('m2_owned')||'null');if(Array.isArray(o))o.forEach(id=>{if(SKINS.some(s=>s.id===id))OWNED.add(id);});
   const c=localStorage.getItem('m2_coins');if(c!=null&&!isNaN(+c))coins=+c;
   const k=localStorage.getItem('m2_skin');if(k&&OWNED.has(k)){PEOPLE[0].skin=k;skinIdx=SKINS.findIndex(s=>s.id===k);}}catch(e){}
-function saveInv(){try{localStorage.setItem('m2_owned',JSON.stringify([...OWNED]));localStorage.setItem('m2_coins',String(coins));localStorage.setItem('m2_skin',PEOPLE[0].skin);}catch(e){}}
+function saveInv(){try{localStorage.setItem('m2_owned',JSON.stringify([...OWNED]));localStorage.setItem('m2_coins',String(coins));localStorage.setItem('m2_skin',PEOPLE[0].skin);}catch(e){}if(typeof homePaint==='function'){homePaint();netProfile();}}
 function paintCoins(){document.querySelectorAll('.coinN').forEach(e=>e.textContent=coins);}
 function wear(id){if(!OWNED.has(id))return;PEOPLE[0].skin=id;skinIdx=SKINS.findIndex(s=>s.id===id);paintSkin();puffAt(280,104);saveInv();}
 function openColl(){const g=$('#collGrid');
@@ -2286,21 +2338,22 @@ const wlName=(e,obj)=>e.i===0?(obj?'you':'You'):PEOPLE[e.i].n;
 const wlOk=(loc,x,y)=>loc<0?townOk(x,y):canStand(x,y);
 // a toast for something that happens to YOU (what the bots do to each other is their business); the bar itself says where you are
 function wlSay(a,tone){const e=$('#townToast');e.textContent=a;e.className='';void e.offsetWidth;e.className='on'+(tone?' '+tone:'');clearTimeout(wlSay.t);wlSay.t=setTimeout(()=>e.classList.remove('on'),2600);}
-function wlHead(a,b){$('#townLine').textContent=a||'Waiting for the host';$('#townSub').textContent=b||'Tap a player, a cabin or the wheel';}
+function wlHead(a,b){const host=NET.on&&NET.host===NET.uid;$('#townLine').textContent=a||(NET.on?(host?'You are the host':'Waiting for the host'):'Practice town');$('#townSub').textContent=b||(host?'Tap the code up top to copy an invite link':'Tap a player, a cabin or the wheel');}
 // walk somewhere, then do something when you get there
 function wlGo(e,x,y,todo){if(e.ko)return;if(e.act&&e.act.k!=='punch')e.act=null;
   const p=e.loc<0?gridPath(TOWNG,TGW,TGH,TG,e.x,e.y,x,y):findPath(e.x,e.y,x,y);
-  if(!p){e.path=[];e.todo=null;return;}e.path=p;e.todo=todo||null;if(!p.length){e.todo=null;if(todo)todo();}}
+  if(!p){e.path=[];e.todo=null;return;}e.path=p;e.todo=todo||null;if(e===WL.me)netMove();if(!p.length){e.todo=null;if(todo)todo();}}
 function wlSpot(){for(let k=0;k<30;k++){const sq=Math.random()<.7,x=sq?150+Math.random()*260:40+Math.random()*480,y=sq?275+Math.random()*210:90+Math.random()*620;if(townOk(x,y))return[x,y];}return[280,440];}
 // walk up beside someone, then punch or high-five them
 function wlDo(e,kind,tg,again){if(!again)e.tries=0;const a=Math.atan2(e.y-tg.y,e.x-tg.x);wlGo(e,tg.x+Math.cos(a)*16,tg.y+Math.sin(a)*8,()=>wlAct(e,kind,tg));}
 function wlAct(e,kind,tg){if(tg.loc!==e.loc||tg.ko)return;const d=Math.hypot(tg.x-e.x,tg.y-e.y);
-  if(d>26){if(e.i===0&&(e.tries=(e.tries||0)+1)<5)wlDo(e,kind,tg,true);return;}     // they wandered off: you keep after them
+  if(d>26&&!e.remote){if(e.i===0&&(e.tries=(e.tries||0)+1)<5)wlDo(e,kind,tg,true);return;}     // they wandered off: you keep after them (a real player's phone already decided it reached)
+  if(e===WL.me)netEv(kind,tg.uid);
   e.dir=dirFrom(tg.x-e.x,tg.y-e.y);const dd=d||1;
   if(kind==='punch')e.act={k:'punch',t:0,tg,dx:(tg.x-e.x)/dd,dy:(tg.y-e.y)/dd};
   else{e.act={k:'five',t:0,tg};if(!tg.act){tg.path=[];tg.todo=null;tg.walk=false;tg.dir=dirFrom(e.x-tg.x,e.y-tg.y);tg.act={k:'five',t:0,tg:e,slave:true};}
     if(e.i===0||tg.i===0)wlSay(`${wlName(e)} high-fived ${wlName(tg,1)}!`,'good');}}
-function wlHit(e,a){const tg=a.tg;if(tg.loc!==e.loc||tg.ko||Math.hypot(tg.x-e.x,tg.y-e.y)>32){if(e.i===0)wlSay('You missed.');return;}
+function wlHit(e,a){const tg=a.tg;if(tg.loc!==e.loc||tg.ko||(!e.remote&&Math.hypot(tg.x-e.x,tg.y-e.y)>32)){if(e.i===0)wlSay('You missed.');return;}
   tg.ko={t:0,vx:a.dx*100,vy:a.dy*100};tg.act=null;tg.path=[];tg.todo=null;tg.walk=false;tg.grudge=e;
   WL.fx.push({k:'pow',x:tg.x-a.dx*4,y:tg.y-16,t:0,loc:e.loc});
   if(tg.i===0){WL.shake=.35;WL.sel=null;wlMenu();}else if(e.i===0)WL.shake=.12;
@@ -2311,7 +2364,7 @@ function wlDoor(ci){if(WL.fading)return;WL.fading=true;const xf=$('#xfade');xf.c
     if(ci>=0){m.x=98;m.y=214;m.dir='back';$('#phone').style.background=ROOM_VOID;const o=CABIN_OF.indexOf(ci);
       wlHead(o===0?'Your cabin':o>0?`${PEOPLE[o].n}'s cabin`:'An empty cabin','Walk to the door to leave');}
     else{const c=TOWN.cabins[was];m.x=c.cx;m.y=c.top+38;m.dir='front';$('#phone').style.background='';wlHead();}
-    $('#townCount').style.display=ci>=0?'none':'';xf.classList.remove('on');setTimeout(()=>WL.fading=false,230);},240);}
+    $('#townCount').style.display=ci>=0?'none':'';netMove();xf.classList.remove('on');setTimeout(()=>WL.fading=false,230);},240);}
 function wlBotDoor(b,ci){const was=b.loc;b.path=[];b.todo=null;b.walk=false;
   if(ci>=0){b.loc=ci;b.x=98;b.y=212;b.dir='back';b.stay=2+Math.floor(Math.random()*3);if(WL.me.loc===ci)wlSay(`${wlName(b)} came in.`);}
   else{const c=TOWN.cabins[was];b.loc=-1;b.x=c.cx;b.y=c.top+38;b.dir='front';if(WL.me.loc===was)wlSay(`${wlName(b)} left.`);}}
@@ -2325,14 +2378,14 @@ function wlThink(b){const r=Math.random();b.wait=1+Math.random()*3.5;
   else if(r<.82){const ci=Math.floor(Math.random()*8),c=TOWN.cabins[ci];wlGo(b,c.cx,c.top+36,()=>wlBotDoor(b,ci));}
   else b.act={k:r<.92?'dance':'wave',t:0};}
 function wlStep(e,dt){
-  if(e.ko){const k=e.ko;k.t+=dt;if(k.t<.32){const f=1-k.t/.32,nx=e.x+k.vx*f*dt,ny=e.y+k.vy*f*dt;if(wlOk(e.loc,nx,ny)){e.x=nx;e.y=ny;}}if(k.t>1.5){e.ko=null;e.dir='front';e.wait=.3;}return;}
+  if(e.ko){const k=e.ko;k.t+=dt;if(k.t<.32){const f=1-k.t/.32,nx=e.x+k.vx*f*dt,ny=e.y+k.vy*f*dt;if(wlOk(e.loc,nx,ny)){e.x=nx;e.y=ny;}}if(k.t>1.5){e.ko=null;e.dir='front';e.wait=.3;if(e===WL.me)netMove();}return;}
   if(e.act){const a=e.act;a.t+=dt;
     if(a.k==='punch'){if(!a.hit&&a.t>=.14){a.hit=true;wlHit(e,a);}if(a.t>.45)e.act=null;}
     else if(a.k==='five'){if(!a.hit&&a.t>=.25){a.hit=true;if(!a.slave)WL.fx.push({k:'spark',x:(e.x+a.tg.x)/2,y:(e.y+a.tg.y)/2-22,t:0,loc:e.loc});}if(a.t>.6)e.act=null;}
     else if(a.k==='dance'){if(Math.floor(a.t/.4)!==Math.floor((a.t-dt)/.4))WL.fx.push({k:'note',x:e.x+(Math.random()-.5)*14,y:e.y-30,t:0,loc:e.loc});if(a.t>2.6)e.act=null;}
     else if(a.k==='wave'){if(!a.hit){a.hit=true;WL.fx.push({k:'heart',x:e.x,y:e.y-32,t:0,loc:e.loc});}if(a.t>.9)e.act=null;}
     return;}
-  if(e.path.length){const p=e.path[0],dx=p[0]-e.x,dy=p[1]-e.y,dd=Math.hypot(dx,dy),sp=(e.i===0?76:56)*dt;
+  if(e.path.length){const p=e.path[0],dx=p[0]-e.x,dy=p[1]-e.y,dd=Math.hypot(dx,dy),sp=(e.i===0||e.remote?76:56)*dt;
     if(dd<=sp){e.x=p[0];e.y=p[1];e.path.shift();if(!e.path.length){e.walk=false;const td=e.todo;e.todo=null;if(td)td();}}
     else{e.x+=dx/dd*sp;e.y+=dy/dd*sp;e.dir=dirFrom(dx,dy);e.walk=true;}}
   else e.walk=false;}
@@ -2355,8 +2408,8 @@ function wlFx(dt,loc){const LIFE={pow:.55,spark:.4,note:1.1,heart:1};
 // tap a player: two buttons pop up over their head
 function wlMenu(){$('#townMenu').classList.toggle('on',!!WL.sel);}
 document.querySelectorAll('#townMenu .btn').forEach(b=>b.onclick=()=>{const tg=WL.sel;if(!tg||WL.me.ko)return;WL.sel=null;wlMenu();wlDo(WL.me,b.dataset.a,tg);});
-$('#townDance').onclick=()=>{const m=WL.me;if(m.ko)return;m.path=[];m.todo=null;m.act={k:'dance',t:0};};
-$('#townWave').onclick=()=>{const m=WL.me;if(m.ko)return;m.path=[];m.todo=null;m.act={k:'wave',t:0};};
+$('#townDance').onclick=()=>{const m=WL.me;if(m.ko)return;m.path=[];m.todo=null;m.act={k:'dance',t:0};netEv('dance');};
+$('#townWave').onclick=()=>{const m=WL.me;if(m.ko)return;m.path=[];m.todo=null;m.act={k:'wave',t:0};netEv('wave');};
 
 /* ---- the Town Wheel: slices are as wide as their odds (they add up to 100) ---- */
 const WHEEL=[['c',25,13],['o','common',8],['c',50,9],['c',100,10],['o','rare',6],['c',25,13],['c',50,9],['o','epic',4],['c',25,13],['c',250,4],['c',50,9],['o','legendary',2]];
@@ -2410,12 +2463,13 @@ $('#spinTest').onclick=()=>{coins+=500;saveInv();wheelUI();};
 
 scenes.town={hud:'#townHud',
   enter(){document.documentElement.style.setProperty('--accent','#e9b25a');if(!TOWNG)buildTownGrid();
-    WL.me=wlEnt(0,280,436);WL.bots=PEOPLE.slice(1).map((p,k)=>{const s=wlSpot();return wlEnt(k+1,s[0],s[1]);});
+    if(NET.on){const c=TOWN.cabins[NET.slot];WL.me=wlEnt(0,c.cx,c.top+40);WL.bots=[];NET.ents.clear();NET.sig=null;NET.sawRoster=false;}   // online: the others are real, they arrive in netApply
+    else{WL.me=wlEnt(0,280,436);WL.bots=PEOPLE.slice(1).map((p,k)=>{const s=wlSpot();return wlEnt(k+1,s[0],s[1]);});}
     WL.fx=[];WL.sel=null;WL.feed=[];WL.fading=false;WL.shake=0;wlMenu();paintCoins();$('#townCount').style.display='';$('#townCount').textContent=`${PEOPLE.length} of 10 players here`;
-    wlHead();$('#townToast').className='';$('#wheelPop').className='';WL.pop=0;},
+    $('#townCode').textContent=NET.on?'LOBBY CODE '+NET.code:'PRACTICE TOWN';wlHead();$('#townToast').className='';$('#wheelPop').className='';WL.pop=0;netApply();netMove();},
   leave(){$('#phone').style.background='';WL.sel=null;wlMenu();},
   frame(dt,t){const m=WL.me;wheelTick(dt);
-    for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
+    for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.remote&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
     WL.shake=Math.max(0,WL.shake-dt);const sh=WL.shake>0?Math.round(Math.sin(t*.09)*8*WL.shake):0;
     const people=wlAll().filter(e=>e.loc===m.loc).map(e=>wlDraw(e,t));let hits;
     if(m.loc>=0){view(IMG.room,97,121,186,{fit:true,topCss:80,void:ROOM_VOID});
@@ -2452,6 +2506,116 @@ cv.addEventListener('pointerdown',e=>{if(scene!==scenes.town||WL.fading||documen
   if(ci>=0){const c=TOWN.cabins[ci];wlGo(m,c.cx,c.top+36,()=>wlDoor(ci));return;}
   wlGo(m,x,y+6);holdWalk(e,scenes.town,(x,y)=>{const m=WL.me;if(m.loc<0&&!m.ko)wlGo(m,x,y+6);});});
 
+/* ================= THE REAL GAME (12 Nov 2026): welcome screen + online lobbies =================
+   LAB = the old test tabs, only with ?lab in the address. Without it you get the welcome screen.
+   ONLINE: its own Firebase project (mafia2-c0146, his call: separate from Chrispy Games), anonymous sign-in, Realtime Database.
+     lobbies/{CODE}/meta            {createdAt, by}
+     lobbies/{CODE}/players/{uid}   {n, skin, slot (which cabin, 0-9), at (joined), m:{x,y,tx,ty,loc,dir,s}}   removed on disconnect
+     lobbies/{CODE}/ev/{push}       {k:'punch'|'five'|'dance'|'wave', by, to, x, y, loc, ts}
+     users/{uid}                    {n, coins, owned, skin}   a backup of the wallet (the phone's own copy is the one in use)
+   A player sends where they are and where they are walking TO (m); every phone walks them there itself, so it is smooth
+   and cheap. The host is whoever joined first (worked out on each phone, nothing to hand over when they leave).
+   The rules for the database are in database.rules.json (he pastes them into the Firebase console). */
+const LAB=/[?&]lab\b/.test(location.search);
+$('#phone').classList.toggle('game',!LAB);if(!LAB){raining=false;}
+const FB_CFG={apiKey:"AIzaSyBu06T2Qv-jF3pFx4yjFRai9LZNKLs0gig",authDomain:"mafia2-c0146.firebaseapp.com",databaseURL:"https://mafia2-c0146-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"mafia2-c0146",storageBucket:"mafia2-c0146.firebasestorage.app",messagingSenderId:"543181147659",appId:"1:543181147659:web:62e1ab78df78aec579810e"};
+const NET={on:false,code:null,uid:null,db:null,ref:null,me:null,slot:0,host:null,players:null,ents:new Map(),off:0,ready:null,busy:false,sig:null,seq:0,t0:0};
+const LAB_PEOPLE=PEOPLE.map(p=>({...p})),LAB_CABINS=[...CABIN_OF];
+let myName=ME_NAME==='Chris'?'Player':ME_NAME;try{const n=localStorage.getItem('m2_name');if(n&&n.trim())myName=n.trim().slice(0,10);}catch(e){}
+const TS=()=>firebase.database.ServerValue.TIMESTAMP;
+
+function netLoad(){if(NET.ready)return NET.ready;
+  NET.ready=(async()=>{
+    for(const f of['app','auth','database'])if(!(window.firebase&&(f==='app'||firebase[f])))await new Promise((ok,no)=>{const s=document.createElement('script');s.src=`https://www.gstatic.com/firebasejs/9.6.0/firebase-${f}-compat.js`;s.onload=ok;s.onerror=()=>no(new Error('offline'));document.head.appendChild(s);});
+    if(!firebase.apps.length)firebase.initializeApp(FB_CFG);
+    const cred=await firebase.auth().signInAnonymously();NET.uid=cred.user.uid;NET.db=firebase.database();
+    NET.db.ref('.info/serverTimeOffset').on('value',s=>NET.off=s.val()||0);netProfile();})();
+  NET.ready.catch(()=>{NET.ready=null;});return NET.ready;}
+// a backup of the wallet on the server (never read back yet: the phone's copy is the truth)
+function netProfile(){if(!NET.db||!NET.uid)return;clearTimeout(NET.pt);NET.pt=setTimeout(()=>{NET.db.ref('users/'+NET.uid).set({n:myName,coins,owned:[...OWNED],skin:PEOPLE[0].skin}).catch(()=>{});
+  if(NET.on)NET.me.update({n:myName,skin:PEOPLE[0].skin}).catch(()=>{});},800);}
+const CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
+async function netCreate(){await netLoad();
+  for(let k=0;k<8;k++){const code=Array.from({length:4},()=>CODE_CH[Math.floor(Math.random()*CODE_CH.length)]).join(''),r=NET.db.ref('lobbies/'+code);
+    if((await r.child('players').get()).exists())continue;                                  // somebody is in that one
+    await r.child('meta').set({createdAt:TS(),by:NET.uid});return netEnter(code,{});}
+  throw new Error('Could not make a lobby. Try again.');}
+async function netJoin(code){await netLoad();const r=NET.db.ref('lobbies/'+code),[m,p]=await Promise.all([r.child('meta').get(),r.child('players').get()]);
+  if(!m.exists())throw new Error('No lobby with that code.');const pl=p.val()||{};
+  if(!pl[NET.uid]&&Object.keys(pl).length>=10)throw new Error('That lobby is full.');return netEnter(code,pl);}
+const freeSlot=pl=>{const used=new Set(Object.entries(pl).filter(([u])=>u!==NET.uid).map(([,p])=>p.slot));let s=0;while(used.has(s))s++;return s;};
+async function netEnter(code,pl){NET.code=code;NET.ref=NET.db.ref('lobbies/'+code);NET.slot=freeSlot(pl);NET.me=NET.ref.child('players/'+NET.uid);
+  const c=TOWN.cabins[NET.slot];
+  await NET.me.onDisconnect().remove();
+  await NET.me.set({n:myName,skin:PEOPLE[0].skin,slot:NET.slot,at:TS(),m:{x:c.cx,y:c.top+40,tx:c.cx,ty:c.top+40,loc:-1,dir:'front',s:0}});
+  NET.on=true;NET.t0=Date.now()+NET.off-1500;NET.players=null;NET.sig=null;NET.ents.clear();
+  NET.ref.child('players').on('value',s=>{NET.players=s.val()||{};netApply();});
+  NET.ref.child('ev').limitToLast(1).on('child_added',netEvent);
+  try{history.replaceState(null,'','#'+code);}catch(e){}
+  go('town');}
+function netLeave(){if(NET.on){NET.on=false;try{NET.ref.child('players').off();NET.ref.child('ev').off();NET.me.onDisconnect().cancel();NET.me.remove();}catch(e){}}
+  NET.code=null;NET.ents.clear();NET.players=null;NET.sig=null;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+  PEOPLE.length=0;LAB_PEOPLE.forEach((p,i)=>PEOPLE.push(i?{...p}:{...p,skin:SKINS[skinIdx]&&OWNED.has(SKINS[skinIdx].id)?SKINS[skinIdx].id:p.skin}));CABIN_OF.length=0;CABIN_OF.push(...LAB_CABINS);buildTown();go('home');}
+// the list of players changed, or somebody moved: make this phone's town match
+function netApply(){if(!NET.on||!WL.me||scene!==scenes.town)return;const pl=NET.players||{},mine=pl[NET.uid];
+  if(!mine){NET.me.set({n:myName,skin:PEOPLE[0].skin,slot:NET.slot,at:TS(),m:netM()}).catch(()=>{});return;}       // we dropped off for a moment: go back in
+  const older=(a,ua,b,ub)=>(a.at||0)<(b.at||0)||((a.at||0)===(b.at||0)&&ua<ub);
+  if(Object.entries(pl).some(([u,p])=>u!==NET.uid&&p.slot===mine.slot&&older(p,u,mine,NET.uid))){NET.slot=freeSlot(pl);NET.me.update({slot:NET.slot});return;}   // two of us took one cabin: the later one moves
+  NET.slot=mine.slot;
+  const all=Object.entries(pl).filter(([u,p])=>p&&p.n&&p.m).sort((a,b)=>older(a[1],a[0],b[1],b[0])?-1:1);NET.host=all.length?all[0][0]:NET.uid;
+  const others=all.filter(([u])=>u!==NET.uid).slice(0,9);
+  const sig=JSON.stringify([NET.slot,myName,NET.host,others.map(([u,p])=>[u,p.n,p.skin,p.slot])]);
+  if(sig!==NET.sig){NET.sig=sig;const me=PEOPLE[0];PEOPLE.length=0;PEOPLE.push({...me,n:myName});CABIN_OF.length=0;CABIN_OF.push(NET.slot);
+    others.forEach(([u,p])=>{PEOPLE.push({n:String(p.n).slice(0,10),skin:SP[p.skin]?p.skin:'beanie',uid:u});CABIN_OF.push(p.slot);});
+    buildTown();$('#townCount').textContent=others.length?`${others.length+1} of 10 players here`:'Just you so far';if(WL.me.loc<0)wlHead();}
+  const keep=new Set();
+  others.forEach(([u,p],k)=>{keep.add(u);const m=p.m;let e=NET.ents.get(u);
+    if(!e){e=wlEnt(k+1,m.x,m.y);e.remote=true;e.uid=u;e.loc=m.loc;e.ms=-1;NET.ents.set(u,e);if(NET.sawRoster)wlSay(`${String(p.n).slice(0,10)} joined.`,'good');}
+    e.i=k+1;e.n=String(p.n).slice(0,10);
+    if(m.s!==e.ms){e.ms=m.s;if(e.loc!==m.loc||Math.hypot(e.x-m.x,e.y-m.y)>48){e.loc=m.loc;e.x=m.x;e.y=m.y;e.path=[];e.walk=false;}
+      if(!e.ko&&!e.act){if(Math.hypot(m.tx-e.x,m.ty-e.y)>2)wlGo(e,m.tx,m.ty);else{e.path=[];e.walk=false;if(m.dir)e.dir=m.dir;}}}});
+  for(const[u,e]of[...NET.ents])if(!keep.has(u)){NET.ents.delete(u);wlSay(`${e.n||'Someone'} left.`);}
+  WL.bots=others.map(([u])=>NET.ents.get(u));NET.sawRoster=true;if(WL.sel&&!WL.bots.includes(WL.sel)){WL.sel=null;wlMenu();}}
+const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,s:++NET.seq};};
+// tell everyone where I am and where I am walking to (at most about five times a second)
+function netMove(){if(!NET.on||!WL.me)return;clearTimeout(NET.mt);const send=()=>{NET.ml=performance.now();if(NET.on)NET.me.child('m').set(netM()).catch(()=>{});};
+  if(performance.now()-(NET.ml||0)>180)send();else NET.mt=setTimeout(send,180);}
+function netEv(k,to){if(!NET.on)return;const m=WL.me;NET.ref.child('ev').push({k,by:NET.uid,to:to||null,x:Math.round(m.x),y:Math.round(m.y),loc:m.loc,ts:TS()}).catch(()=>{});}
+function netEvent(s){const v=s.val();if(!NET.on||!v||v.by===NET.uid||!(v.ts>NET.t0)||scene!==scenes.town)return;const e=NET.ents.get(v.by);if(!e||e.ko)return;
+  e.loc=v.loc;e.x=v.x;e.y=v.y;e.path=[];e.todo=null;e.walk=false;
+  if(v.k==='dance'||v.k==='wave'){e.act={k:v.k,t:0};return;}
+  const tg=v.to===NET.uid?WL.me:NET.ents.get(v.to);if(tg)wlAct(e,v.k,tg);}
+
+/* ---- the welcome screen ---- */
+function homePaint(){if(!SP[PEOPLE[0].skin])return;$('#homeFace').src=face(PEOPLE[0].skin);$('#homeNameT').textContent=myName;}
+function homeMsg(t,bad){const e=$('#homeMsg');e.textContent=t||'';e.className=bad?'bad':'';}
+function netWhy(e){const c=String((e&&(e.code||''))+' '+(e&&e.message||e));
+  if(/PERMISSION_DENIED|permission_denied|operation-not-allowed|admin-restricted|configuration-not-found/i.test(c))return'The server is not switched on yet.';
+  if(/offline|network|fetch/i.test(c))return'No internet. Try again.';
+  return e&&e.message&&e.message.length<44?e.message:'Could not connect. Try again.';}
+async function homeDo(fn,errEl){if(NET.busy)return;NET.busy=true;homeMsg('Connecting…');
+  try{await fn();homeMsg('');}catch(e){console.warn('net',e);NET.on=false;const w=netWhy(e);homeMsg(w,true);if(errEl)errEl.textContent=w;}NET.busy=false;}
+scenes.home={hud:'#homeHud',
+  enter(){document.documentElement.style.setProperty('--accent','#4a7bd0');paintCoins();homePaint();homeMsg('');},
+  frame(dt,t){const a=t*.00016;view(IMG.town,280+Math.round(Math.cos(a)*26),412+Math.round(Math.sin(a*1.4)*12),176,{loose:true});
+    fireflies(t,[150,250,260,230]);townLights(t,{},'win');
+    const me={name:PEOPLE[0].skin,x:280,y:372,t,dir:'front',tint:'#2a2f7a|0.12',lift:Math.abs(Math.sin(t*.004))*2};
+    const hits=drawScene([me],TOWN.occ,IMG.town);townLights(t,{},'rest');rain(dt);present();nameTag(hits.get(me),myName,'#ffd25e');}};
+$('#homeCreate').onclick=()=>homeDo(netCreate);
+$('#homeJoin').onclick=()=>{$('#joinErr').textContent='';$('#joinIn').value='';$('#joinModal').classList.add('on');setTimeout(()=>$('#joinIn').focus(),50);};
+$('#joinX').onclick=()=>$('#joinModal').classList.remove('on');
+$('#joinOk').onclick=()=>{const c=$('#joinIn').value.toUpperCase().replace(/[^A-Z]/g,'');if(c.length!==4){$('#joinErr').textContent='The code is 4 letters.';return;}
+  $('#joinErr').textContent='Joining…';homeDo(()=>netJoin(c),$('#joinErr'));};
+$('#joinIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#joinOk').click();});
+$('#homeName').onclick=()=>{$('#nameIn').value=myName;$('#nameModal').classList.add('on');setTimeout(()=>$('#nameIn').select(),50);};
+$('#nameX').onclick=()=>$('#nameModal').classList.remove('on');
+$('#nameOk').onclick=()=>{const v=$('#nameIn').value.replace(/[<>]/g,'').trim().slice(0,10);if(!v)return;myName=v;try{localStorage.setItem('m2_name',v);}catch(e){}$('#nameModal').classList.remove('on');homePaint();netProfile();};
+$('#nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#nameOk').click();});
+$('#homeShop').onclick=()=>openShop();$('#homeColl').onclick=()=>openColl();
+$('#homeBots').onclick=()=>go('town');
+$('#townLeave').onclick=()=>{if(WL.fading)return;if(NET.on)netLeave();else go('home');};
+$('#townCode').onclick=()=>{if(!NET.on)return;const link=location.origin+location.pathname+'#'+NET.code;try{navigator.clipboard.writeText(link).then(()=>wlSay('Invite link copied.','good'),()=>wlSay('Code: '+NET.code));}catch(e){wlSay('Code: '+NET.code);}};
+
 /* ---------- shell ---------- */
 function go(name,after){
   const xf=$('#xfade');xf.classList.add('on');
@@ -2460,7 +2624,7 @@ function go(name,after){
     document.querySelectorAll('.hud').forEach(h=>h.classList.remove('on'));document.querySelectorAll('.modal').forEach(m=>m.classList.remove('on'));
     scene=scenes[name];if(scene.hud)$(scene.hud).classList.add('on');scene.enter&&scene.enter();
     document.querySelectorAll('#tabs .btn').forEach(b=>b.classList.toggle('sel',b.dataset.s===name));
-    try{localStorage.setItem('m2lab_scene',name);}catch(e){}
+    if(LAB)try{localStorage.setItem('m2lab_scene',name);}catch(e){}
     xf.classList.remove('on');if(after)after();
   },scene?200:0);
 }
@@ -2504,8 +2668,10 @@ let OBJ_META={};
     const cut=im=>{const c=mk(x1-x0+1,y1-y0+1);c.getContext('2d').drawImage(im,-x0,-y0);return c;};
     SP[n]={front:makeDir(cut(V[0])),back:makeDir(cut(V[1])),right:makeDir(cut(V[2])),left:makeDir(cut(V[3]))};}
   buildRoom();resetNight();
-  let start='cabin';try{start=localStorage.getItem('m2lab_scene')||'cabin';}catch(e){}
-  go(scenes[start]&&start!=='watch'&&start!=='dawn'?start:'cabin',()=>loading(false));requestAnimationFrame(loop);
+  let start='home';if(LAB)try{start=localStorage.getItem('m2lab_scene')||'cabin';}catch(e){}
+  go(scenes[start]&&start!=='watch'&&start!=='dawn'?start:'home',()=>{loading(false);
+    const h=location.hash.replace('#','').toUpperCase();if(!LAB&&/^[A-Z]{4}$/.test(h)){$('#joinIn').value=h;$('#joinErr').textContent='';$('#joinModal').classList.add('on');}});   // an invite link: the code is already typed in
+  requestAnimationFrame(loop);
 })();
 </script>
 </body>
