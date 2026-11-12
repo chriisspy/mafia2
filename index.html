@@ -774,6 +774,10 @@ const SFX={
   pop(){hiss(.25,{vol:.22,hp:1500});tone(300,.35,{type:'sawtooth',vol:.1,to:1400});arp([523,659,784,1047],.06,{vol:.1,at:.12});},
   sparkle(){[1568,1976,2349,2637,3136,3951].forEach((f,i)=>{tone(f,.5,{type:'triangle',vol:.07,at:.05+i*.045});tone(f*1.5,.22,{type:'sine',vol:.025,at:.05+i*.045});});
     [3520,2637,4186,3136,3951,2794,4699,3322].forEach((f,i)=>tone(f,.28,{type:'sine',vol:.05*(1-i/9),at:.36+i*.11}));hiss(.9,{vol:.025,hp:7000,at:.05});},
+  bark(){for(const at of[0,.28,.75]){tone(330,.09,{type:'sawtooth',vol:.16,to:170,at});hiss(.07,{vol:.12,lp:1400,at});}},
+  heart(){tone(58,.16,{type:'sine',vol:.5,to:40});tone(52,.2,{type:'sine',vol:.4,to:36,at:.17});},
+  twig(){hiss(.05,{vol:.3,hp:2500});tone(900,.04,{type:'square',vol:.08,to:300});hiss(.04,{vol:.16,hp:3000,at:.07});},
+  lampoff(){tone(1400,.03,{vol:.07});tone(140,.7,{type:'sine',vol:.2,to:60,at:.03});},
   rare(){arp([523,659,784,1047,1319],.08,{vol:.13});tone(1568,.5,{type:'triangle',vol:.14,at:.42});},
   night(){tone(196,1.3,{type:'sine',vol:.22});tone(98,1.5,{type:'sine',vol:.22});tone(294,.9,{type:'sine',vol:.08,at:.25});},
   lock(){tone(440,.06,{vol:.1});tone(660,.12,{vol:.1,at:.07});},
@@ -954,7 +958,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11130954'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11130959'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1890,7 +1894,28 @@ function planNight(force){
     N.shots.push([N.tHit+2.2,'The Bodyguard took the hit.','bad'],[tL+1.2,`${VN()} lives to see the morning.`,'good']);N.end=tL+4.4;}
   }
   N.shots.sort((a,b)=>a[0]-b[0]);
+  planBeats();
 }
+/* ---- SUSPENSE BEATS (13 Nov, his call: longer cutscenes with twists and curveballs; the text stays short) ----
+   A beat is a HOLD: the film's own clock stops at N.holds[i].at for .dur seconds while something happens, then carries
+   on. Everything already planned (the walk, the kill, the Doctor) keeps its timing, so no story had to be rewritten.
+   Every night gets:  one curveball on the way there (the lamps go out, or a twig snaps and they look round, or a
+   dog barks and everyone freezes), a heartbeat just before the strike, and a long silence after it, before anyone
+   knows if the Doctor is coming. Which curveball comes from the game's id and the round, so every phone sees the same. */
+function planBeats(){N.holds=[];let h=Math.floor(Math.random()*1e6);if(GAME.on&&GAME.g){h=7;for(const c of GAME.id+'|'+GAME.g.round)h=(h*31+c.charCodeAt(0))>>>0;}
+  const s=N.shots.find(q=>/scream|jumps in the way/i.test(q[1])),tS=s?s[0]:N.tCut-2.6,tHeart=N.inside?N.tIn-.35:tS-1;
+  const kinds=['dark','twig','bark'],mid=3.3+(tHeart-3.3)*(.45+(h%5)*.04);
+  if(tHeart-3.3>3)N.holds.push({at:mid,dur:2.8,kind:kinds[h%3],ci:(()=>{const o=CABIN_OF.filter(ci=>ci!==N.vci);return o.length?o[(h>>3)%o.length]:-1;})()});
+  N.holds.push({at:tHeart,dur:2,kind:'heart'});
+  if(N.guard<0)N.holds.push({at:N.tCut+.15,dur:1.9,kind:'still'});
+  N.holds.sort((a,b)=>a.at-b.at);}
+/* real seconds since the film began -> the film's own clock; N.hold = the beat going on now (and .k = seconds into it) */
+function filmT(rt){N.hold=null;let ft=rt;for(const h of N.holds||[]){if(ft<=h.at)break;const into=ft-h.at;if(into<h.dur){N.hold=h;h.k=into;return h.at;}ft-=h.dur;}return ft;}
+const BEAT_CAP={dark:['The lamps go out.','…and flicker back on.'],twig:['A twig snaps.','…Nothing. Just the wind.'],bark:['A dog barks. Everyone freezes.','…It stops.'],heart:['…',''],still:['Silence.','']};
+function beatTick(){const h=N.hold;if(!h)return;const i=N.holds.indexOf(h),c=BEAT_CAP[h.kind];
+  once('b'+i,()=>{caption($('#cap'),c[0],h.kind==='heart'||h.kind==='dark'?'bad':'');sfx(h.kind==='dark'?'lampoff':h.kind==='twig'?'twig':h.kind==='bark'?'bark':h.kind==='still'?'night':'heart');});
+  if(c[1]&&h.k>h.dur*.62)once('b'+i+'x',()=>{caption($('#cap'),c[1]);if(h.kind==='dark')sfx('copy');});
+  if(h.kind==='heart'){if(h.k>.65)once('b'+i+'h2',()=>sfx('heart'));if(h.k>1.3)once('b'+i+'h3',()=>sfx('heart'));}}
 const SCREAM=()=>N.wet?'A scream, lost in the rain.':'One scream. Then nothing.';
 const stepOut=(cab,T,t0)=>{const e=ramp(T,t0,t0+.6);return{x:cab.feet[0],y:lerp(cab.feet[1]-8,cab.feet[1],e),al:e,walk:e<1,dir:'front'};};
 const stepIn=(cab,T,t0)=>{const e=ramp(T,t0,t0+.5);return{x:cab.feet[0],y:lerp(cab.feet[1],cab.feet[1]-8,e),al:1-e,walk:true,dir:'back'};};
@@ -2136,14 +2161,18 @@ scenes.night={
     $('#nightTag').innerHTML=ic('rec')+'NIGHT '+NN()+(viewRole==='mafia'?' · YOUR TEAM':'');},
   leave(){$('#phone').style.background='';$('#barT').classList.remove('on');$('#barB').classList.remove('on');$('#fade').classList.remove('on');clearInterval(capTimer);fxStop();$('#bigMsg').className='';},
   frame(dt,t){
-    N.t+=dt;const T=N.t;
+    N.t+=dt;const T=filmT(N.t),HB=N.hold;beatTick();
     while(N.capI<N.shots.length&&T>N.shots[N.capI][0]){const s=N.shots[N.capI++];caption($('#cap'),s[1],s[2]);}
     const endT=N.cut?N.tCut:N.end;
     if(T>endT-1.2)$('#fade').classList.add('on');
     if(T>endT){if(N.cut){N.cut=false;CAB.keep=true;go('cabin');}else dawn();return;}
     if(N.cut)CAB.clock=Math.max(1,CAB.clock-dt);
     if(N.inside&&T>=N.tIn){nightRoom(T-N.tIn,dt,t);return;}
-    const f=PLAY[N.kind](T,dt,t);
+    const f=PLAY[N.kind](T,HB?0:dt,t);
+    if(HB){const e=Math.min(1,HB.k/.3)*Math.min(1,(HB.dur-HB.k)/.3);   /* a beat: everybody stops dead */
+      for(const q of f.people){q.walk=false;if((HB.kind==='twig'||HB.kind==='bark')&&q.kind==='maf')q.dir=HB.k<.9?'left':HB.k<1.7?'right':q.dir;}
+      if(HB.kind==='dark')f.lights={...f.lights,dim:.85*(1-e),lampK:1-e};
+      if(HB.kind==='heart')f.vw=(f.vw||150)*(1-.1*e);}
     if(N.heal&&T>N.tDoc){ // the Doctor runs up the cabin's path, kneels by them, and they get back up
       const k=T-N.tDoc,c=N.vic,vic=f.people.find(p=>p.kind==='vic'),tx=vic?vic.x:c.feet[0],ty=vic?vic.y:c.feet[1],from=c.route.at(86);
       const e=ease(ramp(k,.2,2.4)),gx=tx+(from.x>=tx?11:-11),dx=lerp(from.x,gx,e),dy=lerp(from.y,ty+1,e),kneel=e>=1&&k<4.4;
@@ -2169,6 +2198,10 @@ scenes.night={
     for(const q of people)if(q.walk&&q.alpha>.5&&Math.random()<dt*5)kickDust(q.x,q.y);
     townLights(t,{dim:.85,...f.lights},'win');
     patchDim='rgba(6,8,30,.38)';const hits=drawScene(people,TOWN.occ,IMG.town);patchDim=null;
+    if(HB){const e=Math.min(1,HB.k/.3)*Math.min(1,(HB.dur-HB.k)/.3);   /* drawn before the red eyes, so the eyes still burn in the dark */
+      if(HB.kind==='dark'){lx.fillStyle=`rgba(2,2,10,${(.62*e).toFixed(3)})`;lx.fillRect(0,0,cam.lw,cam.lh);}
+      if(HB.kind==='heart'){const b=Math.max(0,1-((HB.k%.65)/.3));vignette(.3*e+.4*b*e);}
+      if(HB.kind==='still')vignette(.45*e);}
     if(!mine)for(const q of people){const h=hits.get(q);if(q.p.kind==='maf'&&h&&q.dir!=='back'&&q.alpha>.5){const ey=h.top+Math.round(SP.mafia.front.eyeBot-PAD)-1;lx.fillStyle='#ff3c3c';
       if(q.dir==='front'){lx.fillRect(h.cx-4,ey,2,2);lx.fillRect(h.cx+2,ey,2,2);}else lx.fillRect(h.cx+(q.dir==='right'?2:-4),ey,2,2);}}
     if(f.over)f.over();
@@ -2183,8 +2216,15 @@ scenes.night={
   }
 };
 /* ---- DAWN: what the town finds, to match the night that just played ---- */
-/* longer, twistier stories (13 Nov, his call: suspense, plot twists, curveballs) */
-const DAWN_DEAD={"home": ["At midnight {n} heard a knock and called out, 'Who is it?' A friendly voice answered. {n} knew that voice, and opened the door. That was the mistake.", "{n} bolted the door, checked the windows and finally felt safe. But the muddy footprints this morning don't lead up to the cabin. They start inside it. Someone was already in there, waiting.", "The milk is still on {n}'s step and the fire is cold. The door was locked from the inside, and the key is still in it. So how did they get in? Nobody in town has an answer."], "walk": ["{n} went for a walk and heard footsteps behind. {n} stopped. The footsteps stopped. {n} laughed it off as an echo. Echoes don't carry knives.", "They found {n}'s scarf under the lamp post, folded neatly. {n} never folded anything. Somebody took their time last night, and wanted us to know it.", "{n} saw a shadow on the path and ran all the way home, heart pounding. Safe at last. Then {n} noticed the cabin door was already open."], "garden": ["{n} was watering the flowers when a shadow fell across the bed. 'Lovely night,' said a voice. {n} turned round to agree. The watering can is still lying where it dropped.", "{n}'s flowers got their water last night. This morning one of them is missing, cut clean at the stem. It was left on {n}'s pillow."], "wood": ["{n} went out for firewood and counted the logs. One, two, three. Then {n} counted the shadows on the wall. One, two. There should only have been one.", "The logs are scattered on the grass outside {n}'s cabin. The axe is gone from the block. Nobody in town will say who borrowed it."], "porch": ["{n} sat on the porch, watching the town sleep. One by one the windows went dark. All but one. Somebody was watching {n} right back. The chair was still rocking this morning.", "{n} heard the porch creak and froze. Then came a meow, and {n} breathed out. Just the cat. But the cat was asleep inside the whole time."], "cat": ["{n} put out milk for the stray, same as every night. The cat arched its back and hissed at the dark behind {n}. {n} should have listened to the cat.", "A full saucer of milk sits outside {n}'s cabin. The stray was found hiding under the porch, shaking. It saw everything. It isn't talking."], "stars": ["{n} lay on the grass counting stars. One of them moved. It wasn't a star. It was a lantern, coming closer, and whoever held it wasn't looking at the sky.", "{n} made a wish on a shooting star last night. The blanket is still on the grass, soaked with dew. Whatever {n} wished for, it wasn't this."], "mail": ["A letter came for {n} last night. It said, 'Look behind you.' {n} laughed, because who sends a letter like that? Then {n} looked.", "{n}'s mailbox hangs open and a letter lies in the grass. It's addressed to {n}, in {n}'s own handwriting. It says only: 'Don't go outside tonight.'"]};
+const DAWN_DEAD={
+  home:['{n} didn\'t answer the door this morning. The fire had gone out.','The milk was still on the step. {n} never came out for it.','Muddy footprints led up to {n}\'s porch. None led away.','{n}\'s window was open, the curtain soaked through. Nobody\'s home.'],
+  walk:['{n} went out for a walk last night. Only one boot came back.','They found {n}\'s scarf under the lamp post. Nothing else.'],
+  garden:['The watering can was still lying in {n}\'s flower bed this morning.','{n}\'s flowers got their water. {n} never made it back inside.'],
+  wood:['A pile of dropped logs outside {n}\'s cabin. The fire inside had gone cold.','{n} went out for firewood. The logs are still on the grass.'],
+  porch:['{n}\'s front door was wide open this morning. The porch was empty.','{n}\'s chair was still rocking on the porch. Nobody in it.'],
+  cat:['A full saucer of milk outside {n}\'s cabin. The cat hasn\'t come back either.','{n} went out to feed a stray. Only the saucer was found.'],
+  stars:['A blanket lay on the grass outside {n}\'s cabin, soaked with dew.','{n} went out to look at the sky. The blanket is still there.'],
+  mail:['{n}\'s mailbox was hanging open. A letter lay in the grass.','{n} went out for the post last night. Nobody has seen them since.']};
 const DAWN_SAFE={
   home:['The Mafia came for {n} last night. The Doctor was already there.','Somebody knocked on {n}\'s door last night. The Doctor answered it.'],
   walk:['{n} went for a walk last night and came home a lot faster than they left.','{n} is out of breath, and very much alive.'],
@@ -2194,9 +2234,9 @@ const DAWN_SAFE={
   cat:['{n} fed the stray and bolted the door. The cat was hissing at something.','Paw prints and boot prints outside {n}\'s cabin. {n} is fine.'],
   stars:['{n} came in from the cold just in time.','Flattened grass by {n}\'s blanket. Somebody else stood there too.'],
   mail:['{n} fetched the post and locked up. Somebody was watching.','Boot prints by {n}\'s mailbox. They stop at the locked door.']};
-const DAWN_DOC=["The Mafia got to {n} last night and left them for dead. They didn't check for a pulse. The Doctor did. Somebody in this town is going to be very surprised at breakfast.", "{n} was found on the ground, cold and still. The town began to mourn. Then {n} coughed, sat up and asked what all the fuss was about. The Doctor isn't saying a word.", "The knife came down and the Mafia slipped away, sure the job was done. But a lamp was already burning across the square. The Doctor had been waiting up all night. {n} lives.", "{n} has a bandage, a headache and a story nobody believes. One thing is certain. The Mafia walked home last night thinking they had won."];
-const DAWN_GUARD=["The Mafia came for {n} last night and found someone else in the way. There was a struggle in the dark. {n} is alive this morning. {g}, the Bodyguard, paid for it.", "{n} slept through the whole thing. The knock, the fight, the silence after. On the doorstep this morning: {g}, the Bodyguard, who never said a word about the job.", "The Mafia had a plan for {n}. They didn't plan for the Bodyguard. It was {g} who stepped out of the shadows, and {g} who didn't walk away."];
-const DAWN_QUIET=["A quiet night. Too quiet. The Mafia were out there, and for once they went home with nothing. Why?", "Nobody died last night. But somebody's door handle was tried, twice. The Mafia are still here, and they are getting impatient.", "Everyone woke up this morning. Count again if you like. It doesn't mean you're safe. It means they're still choosing."];
+const DAWN_DOC=['The Mafia got to {n} last night. The Doctor got there second.','{n} was found on the ground, breathing. Someone had patched them up.','{n} has a bandage and a story. The Doctor isn\'t saying a word.'];
+const DAWN_GUARD=['The Mafia came for {n} last night. {g} stepped in the way. {g} was the Bodyguard.','{n} is alive this morning because {g} is not. The Bodyguard did the job.'];
+const DAWN_QUIET=['A quiet night. Nobody came to any harm.'];   /* the text stays short (his call, 13 Nov): the suspense belongs in the cutscenes */
 /* in a real game every phone must tell the SAME story: the pick comes from the game's id and the round, not from luck */
 function storyPick(list){if(!(GAME.on&&GAME.g))return list[Math.floor(Math.random()*list.length)];let h=7;for(const c of GAME.id+'|'+GAME.g.round)h=(h*31+c.charCodeAt(0))>>>0;return list[h%list.length];}
 function dawn(){const g=N.guard>=0&&!N.heal?N.guard:-1,v=g>=0?g:N.victim,key=N.variant||N.kind,list=N.heal?DAWN_DOC:g>=0?DAWN_GUARD:DAWN_DEAD[key],h=$('#dawnTitle');
@@ -2290,7 +2330,7 @@ scenes.mydeath={hud:'#nightHud',
     $('#phone').style.background=ROOM_VOID;$('#nightTag').innerHTML=ic('rec')+'NIGHT '+NN()+' · YOUR CABIN';},
   leave(){$('#phone').style.background='';$('#fade').classList.remove('on');$('#bigMsg').className='';clearInterval(capTimer);fxStop();},
   frame(dt,t){
-    if(MD.town){const T=N.t+dt;
+    if(MD.town){const T=filmT(N.t+dt);
       if(T>MD.tK)once('hit',()=>{N.shake=6;if(N.guard<0)fxBleed(.9);});
       if(!N.heal&&N.guard<0&&T>MD.tK+2.2)once('big',()=>mdBig('bad'));
       if(N.heal&&T>N.tDoc+4.4)once('up',()=>{fxStop();fxHeal();mdBig('good');});
