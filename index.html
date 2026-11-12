@@ -219,8 +219,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .tbtn.dance{background:#4a7bd0;box-shadow:inset 0 -6px 0 #2b4a8a,inset 0 3px 0 #7fa6e8,0 4px 0 #0009}
 .tbtn.wave{background:#f07ab0;box-shadow:inset 0 -6px 0 #b8457e,inset 0 3px 0 #ffb0d2,0 4px 0 #0009}
 .tbtn:active{transform:translateY(3px)}
-#townToast{position:absolute;left:50%;top:calc(182px + env(safe-area-inset-top));transform:translateX(-50%);max-width:92%;white-space:nowrap;font-size:18px;font-weight:700;color:#fff;background:#0b0918f0;border:3px solid #f6dfae;border-radius:6px;box-shadow:0 0 0 3px #0b0918,0 5px 0 #0009;padding:4px 12px 6px;display:none;z-index:6}
-#townToast.on{display:block;animation:wrPop .2s ease-out}#townToast.bad{border-color:#e4544f;color:#ffd9d6}#townToast.good{border-color:#6fd08a;color:#dcffe6}
+#townToast{position:absolute;left:50%;top:calc(182px + env(safe-area-inset-top));transform:translateX(-50%);max-width:92%;white-space:nowrap;font-size:18px;font-weight:700;color:#fff;background:#0b0918f0;border:3px solid #f6dfae;border-radius:6px;box-shadow:0 0 0 3px #0b0918,0 5px 0 #0009;padding:4px 12px 6px;z-index:6;opacity:0;transform:translate(-50%,10px);transition:opacity .22s ease-out,transform .22s ease-out;pointer-events:none}
+#townToast.on{opacity:1;transform:translate(-50%,0)}#townToast.bad{border-color:#e4544f;color:#ffd9d6}#townToast.good{border-color:#6fd08a;color:#dcffe6}
 #wheelPop{position:absolute;transform:translate(-50%,-100%);display:none;align-items:center;gap:8px;white-space:nowrap;background:#0b0918f0;color:#fff;border:3px solid #ffd25e;border-radius:6px;box-shadow:0 0 0 3px #0b0918,0 5px 0 #0009;padding:5px 12px 6px 6px;z-index:4;font-size:18px;font-weight:700;line-height:1.1}
 #wheelPop.on{display:flex}#wheelPop img.f{width:36px;height:36px;image-rendering:pixelated}#wheelPop small{display:block;font-size:11px;font-weight:600;letter-spacing:1px;color:#ffe9a8}#wheelPop b{display:flex;align-items:center;gap:5px}
 #wheelModal{text-align:center}#wheelModal .mhead{text-align:left}
@@ -344,6 +344,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #talkSkip{position:absolute;left:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
 #phone.game #talkMenu [data-a=msg]{display:none}
 #townStart{margin-top:8px}
+#townDev{display:none}
 #townRoles{display:none;gap:6px;margin-top:8px}#townRoles.on{display:flex}
 .rtog{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font:600 13px "Pixelify Sans";padding:5px 2px 7px;border-radius:5px;border:3px solid var(--wood);background:#fff6;color:var(--text);cursor:pointer;opacity:.45}
 .rtog.sel{opacity:1;background:#fff;box-shadow:inset 0 -3px 0 #0002}.rtog:disabled{cursor:default}
@@ -424,6 +425,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <div class="thead"><div class="tt"><b id="townLine">Waiting for the host</b><div class="small" id="townSub"></div></div><span class="wal"><i data-ic="coin" data-s="3" data-c="solo"></i><span class="coinN">0</span></span></div>
       <div id="townRoles"><button class="rtog" data-r="d"><i data-ic="detective" data-c="solo"></i>Detective</button><button class="rtog" data-r="b"><i data-ic="bodyguard" data-c="solo"></i>Bodyguard</button><button class="rtog" data-r="j"><i data-ic="jester" data-c="solo"></i>Jester</button></div>
       <button class="hbig red" id="townStart" style="display:none">Start the game</button>
+      <button class="hlink" id="townDev">Start dev test (adds 3 bots)</button>
       <div class="row" style="margin-top:10px;gap:10px">
         <button class="tbtn dance" id="townDance"><i data-ic="note" data-s="3" data-c="solo"></i>Dance</button>
         <button class="tbtn wave" id="townWave"><i data-ic="heart" data-s="3" data-c="solo"></i>Wave</button>
@@ -651,7 +653,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121329'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121333'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -2637,7 +2639,7 @@ async function netEnter(code,pl){NET.code=code;NET.ref=NET.db.ref('lobbies/'+cod
   NET.on=true;NET.t0=Date.now()+NET.off-1500;NET.players=null;NET.sig=null;NET.ents.clear();
   NET.ref.child('players').on('value',s=>{NET.players=s.val()||{};netApply();});
   NET.ref.child('ev').limitToLast(1).on('child_added',netEvent);
-  NET.ref.child('act').on('value',s=>{GAME.acts=s.val()||{};gameActs();});
+  NET.ref.child('act').on('value',s=>{GAME.racts=s.val()||{};GAME.acts={...GAME.racts,...((GAME.g&&GAME.g.bact)||{})};gameActs();});
   NET.ref.child('mchat').limitToLast(30).on('child_added',gameChat);
   NET.ref.child('game').on('value',s=>gameSync(s.val()));
   try{history.replaceState(null,'','#'+code);}catch(e){}
@@ -2710,14 +2712,17 @@ function rolesFor(n,opt){const r=['mafia','doctor'];if(n>=7)r.push('mafia');cons
   for(const[k,role]of[['d','detective'],['b','bodyguard'],['j','jester']])if(opt[k]&&ex<cap){r.push(role);ex++;}
   while(r.length<n)r.push('civilian');
   for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
-function gameStart(){if(!NET.on||NET.host!==NET.uid||GAME.g)return;
+const isBot=u=>String(u).startsWith('bot');
+function gameStart(dev){if(!NET.on||NET.host!==NET.uid||GAME.g)return;
   const all=Object.entries(NET.players||{}).filter(([u,p])=>p&&p.n&&p.m).sort((a,b)=>(a[1].at||0)-(b[1].at||0)).slice(0,10);
+  if(dev===true){const used=new Set(all.map(([,p])=>p.slot)),free=[0,1,2,3,4,5,6,7,8,9].filter(s=>!used.has(s));
+    [['Ava','raincoat'],['Leo','curly'],['Sam','farmer']].slice(0,Math.min(3,10-all.length)).forEach(([n,skin],k)=>all.push(['bot'+(k+1),{n,skin,slot:free[k],v:BUILD,m:1}]));}
   if(all.length<MINP){wlSay(`You need ${MINP} players to start.`);return;}
   const old=all.filter(([u,p])=>p.v!==BUILD);if(old.length){wlSay(`${old.map(([,p])=>p.n).join(', ')} must reload the page first.`,'bad');return;}
   const rs=window.FORCE_ROLES&&window.FORCE_ROLES.length===all.length?window.FORCE_ROLES:rolesFor(all.length,roleOpt()),pl={},roles={};/* FORCE_ROLES: for tests only */all.forEach(([u,p],k)=>{pl[u]={n:String(p.n).slice(0,10),skin:p.skin||'beanie',slot:p.slot,o:k};roles[u]=rs[k];});
   const now=serverNow();gRef().set({id:now.toString(36),phase:'night',round:1,t0:now,ends:now+NIGHT_MS,nkind:newKind(),pl,roles}).catch(e=>{console.warn('start',e);wlSay('Could not start. The server rules need the new update.','bad');});}
 // the lobby's own buttons: the host gets Start; a late joiner is told a game is on
-function gameLobbyUI(){const host=NET.on&&NET.host===NET.uid,busy=!!(GAME.g&&GAME.g.roles);$('#townStart').style.display=host&&!busy?'':'none';
+function gameLobbyUI(){const host=NET.on&&NET.host===NET.uid,busy=!!(GAME.g&&GAME.g.roles);$('#townStart').style.display=host&&!busy?'':'none';$('#townDev').style.display=host&&!busy?'block':'none';
   {const o=roleOpt(),box=$('#townRoles');box.classList.toggle('on',NET.on&&!busy);box.querySelectorAll('.rtog').forEach(b=>{b.classList.toggle('sel',!!o[b.dataset.r]);b.disabled=!host;});}
   if(NET.on&&busy&&!GAME.on&&scene===scenes.town&&WL.me&&WL.me.loc<0)wlHead('A game is on','You are in the next one');}
 
@@ -2726,7 +2731,7 @@ function gameSync(g){
   if(!g||!g.roles||!g.roles[NET.uid]){GAME.g=g||null;
     if(GAME.on){GAME.on=false;GAME.id=null;GAME.key='';V.dead=new Set();V.ring=[];viewRole='civilian';clearTimeout(GAME.dawnT);$('#phone').style.background='';if(NET.on)go('town');}
     gameLobbyUI();return;}
-  GAME.g=g;
+  GAME.g=g;GAME.acts={...(GAME.racts||{}),...(g.bact||{})};   // the bots' choices sit in the game itself
   if(!GAME.on||GAME.id!==g.id){GAME.on=true;GAME.id=g.id;GAME.key='';GAME.gone={};GAME.busy='';GAME.filmDone=true;gameCast(g);}
   GAME.meDead=!!(g.dead&&g.dead[NET.uid]);
   V.dead=new Set(Object.keys(g.dead||{}).map(u=>GAME.idx[u]).filter(i=>i!=null));
@@ -2792,15 +2797,21 @@ function hostDo(tag,fn){if(GAME.busy===tag)return;GAME.busy=tag;fn();}
 function hostWin(g,dead){const alive=Object.keys(g.pl).filter(u=>!dead[u]),maf=alive.filter(u=>g.roles[u]==='mafia').length;return!maf?'town':maf>=alive.length-maf?'mafia':null;}
 function hostTick(){const g=GAME.g;if(!NET.on||!NET.players||!g||!g.roles||NET.host!==NET.uid||g.phase==='over')return;const now=serverNow(),dead={...(g.dead||{})},alive=Object.keys(g.pl).filter(u=>!dead[u]);
   // somebody shut the game or lost their signal for 20 seconds: they are out, like a death
-  for(const u of alive){if(NET.players&&NET.players[u]){delete GAME.gone[u];continue;}GAME.gone[u]=GAME.gone[u]||now;
+  for(const u of alive){if(isBot(u)||(NET.players&&NET.players[u])){delete GAME.gone[u];continue;}GAME.gone[u]=GAME.gone[u]||now;
     if(now-GAME.gone[u]>20000&&g.phase!=='film'){hostDo(GAME.key+':gone:'+u,()=>{dead[u]=true;const w=hostWin(g,dead);gRef().update(w?{['dead/'+u]:true,phase:'over',win:w,t0:now}:{['dead/'+u]:true});});return;}}
   const acted=u=>{const a=GAME.acts[u];return!!(a&&a.g===g.id&&a.r===g.round&&a.pick);};
+  // the bots: each makes its night pick a few seconds in (a different moment each), and votes a few seconds into its turn
+  if(g.phase==='night')for(const u of alive.filter(isBot)){const role=g.roles[u],k=+u.slice(3);if(!ROLES[role].pick||acted(u)||now<g.t0+5000+k*3500)continue;
+    const rnd=l=>l[Math.floor(Math.random()*l.length)],others=alive.filter(x=>x!==u),pool=role==='mafia'?others.filter(x=>g.roles[x]!=='mafia'):role==='doctor'?alive:others;if(!pool.length)continue;
+    const pick=[rnd(pool)];if(role==='detective'&&pool.length>1){const b=rnd(pool.filter(x=>x!==pick[0]));pick.push(b);}
+    hostDo(GAME.key+':bot:'+u,()=>gRef().child('bact/'+u).set({g:g.id,r:g.round,pick}));return;}
   if(g.phase==='night'){const need=alive.filter(u=>['mafia','doctor','bodyguard','detective'].includes(g.roles[u]));
     if(now>g.ends+1200)hostDo(GAME.key+':night',()=>hostNight(g,alive,acted));}
   // (the film -> the day: only when the host taps "To the square", see hostToSquare)
   else if(g.phase==='day'){if(now>g.ends)hostVote();}
   else if(g.phase==='vote'){const v=g.vote||{},cast=v.cast||{},order=(v.order||[]).filter(u=>!dead[u]),cur=order.find(u=>cast[u]==null);
-    if(cur){if(now>(v.t||g.t0)+VOTE_TURN_MS)hostDo(GAME.key+':skip:'+cur,()=>gRef().child('vote').update({['cast/'+cur]:'none',t:now}));}
+    if(cur&&isBot(cur)){if(now>(v.t||g.t0)+6000)hostDo(GAME.key+':botv:'+cur,()=>{const o=order.filter(x=>x!==cur);gRef().child('vote').update({['cast/'+cur]:Math.random()<.2?'none':o[Math.floor(Math.random()*o.length)],t:now});});}
+    else if(cur){if(now>(v.t||g.t0)+VOTE_TURN_MS)hostDo(GAME.key+':skip:'+cur,()=>gRef().child('vote').update({['cast/'+cur]:'none',t:now}));}
     else if(!g.out)hostDo(GAME.key+':out',()=>{const n={};let none=0;for(const u of order){const c=cast[u];if(c==='none'||dead[c])none++;else n[c]=(n[c]||0)+1;}
       const top=Math.max(0,...Object.values(n)),who=Object.keys(n).filter(u=>n[u]===top);gRef().update({out:top>0&&who.length===1&&top>none?who[0]:'none',outAt:now});});   // most votes goes; a tie, or as many "no vote", and nobody does
     else if(now>(g.outAt||now)+15000)hostDo(GAME.key+':next',()=>{const up={};if(g.out!=='none'){dead[g.out]=true;up['dead/'+g.out]=true;}
@@ -2840,7 +2851,7 @@ scenes.over={hud:'#overHud',enter(){document.documentElement.style.setProperty('
     drawScene(people,TOWN.occ,IMG.town);townLights(t,{},'rest');fireflies(t,[150,250,260,230]);present();
     if(GAME.g&&NET.host===NET.uid&&$('#overBack').style.display==='none'){$('#overBack').style.display='';$('#overWait').textContent='';}}};
 $('#overBack').onclick=()=>{if(NET.on&&NET.host===NET.uid)gRef().remove().catch(()=>{});};
-$('#townStart').onclick=gameStart;
+$('#townStart').onclick=()=>gameStart();$('#townDev').onclick=()=>gameStart(true);
 document.querySelectorAll('#townRoles .rtog').forEach(b=>b.onclick=()=>{if(!NET.on||NET.host!==NET.uid)return;const o=roleOpt();o[b.dataset.r]=o[b.dataset.r]?0:1;NET.me.child('opt').set(o).catch(()=>{});});
 $('#talkSkip').onclick=hostVote;
 
