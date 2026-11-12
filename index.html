@@ -954,7 +954,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11130941'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11130954'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2183,15 +2183,8 @@ scenes.night={
   }
 };
 /* ---- DAWN: what the town finds, to match the night that just played ---- */
-const DAWN_DEAD={
-  home:['{n} didn\'t answer the door this morning. The fire had gone out.','The milk was still on the step. {n} never came out for it.','Muddy footprints led up to {n}\'s porch. None led away.','{n}\'s window was open, the curtain soaked through. Nobody\'s home.'],
-  walk:['{n} went out for a walk last night. Only one boot came back.','They found {n}\'s scarf under the lamp post. Nothing else.'],
-  garden:['The watering can was still lying in {n}\'s flower bed this morning.','{n}\'s flowers got their water. {n} never made it back inside.'],
-  wood:['A pile of dropped logs outside {n}\'s cabin. The fire inside had gone cold.','{n} went out for firewood. The logs are still on the grass.'],
-  porch:['{n}\'s front door was wide open this morning. The porch was empty.','{n}\'s chair was still rocking on the porch. Nobody in it.'],
-  cat:['A full saucer of milk outside {n}\'s cabin. The cat hasn\'t come back either.','{n} went out to feed a stray. Only the saucer was found.'],
-  stars:['A blanket lay on the grass outside {n}\'s cabin, soaked with dew.','{n} went out to look at the sky. The blanket is still there.'],
-  mail:['{n}\'s mailbox was hanging open. A letter lay in the grass.','{n} went out for the post last night. Nobody has seen them since.']};
+/* longer, twistier stories (13 Nov, his call: suspense, plot twists, curveballs) */
+const DAWN_DEAD={"home": ["At midnight {n} heard a knock and called out, 'Who is it?' A friendly voice answered. {n} knew that voice, and opened the door. That was the mistake.", "{n} bolted the door, checked the windows and finally felt safe. But the muddy footprints this morning don't lead up to the cabin. They start inside it. Someone was already in there, waiting.", "The milk is still on {n}'s step and the fire is cold. The door was locked from the inside, and the key is still in it. So how did they get in? Nobody in town has an answer."], "walk": ["{n} went for a walk and heard footsteps behind. {n} stopped. The footsteps stopped. {n} laughed it off as an echo. Echoes don't carry knives.", "They found {n}'s scarf under the lamp post, folded neatly. {n} never folded anything. Somebody took their time last night, and wanted us to know it.", "{n} saw a shadow on the path and ran all the way home, heart pounding. Safe at last. Then {n} noticed the cabin door was already open."], "garden": ["{n} was watering the flowers when a shadow fell across the bed. 'Lovely night,' said a voice. {n} turned round to agree. The watering can is still lying where it dropped.", "{n}'s flowers got their water last night. This morning one of them is missing, cut clean at the stem. It was left on {n}'s pillow."], "wood": ["{n} went out for firewood and counted the logs. One, two, three. Then {n} counted the shadows on the wall. One, two. There should only have been one.", "The logs are scattered on the grass outside {n}'s cabin. The axe is gone from the block. Nobody in town will say who borrowed it."], "porch": ["{n} sat on the porch, watching the town sleep. One by one the windows went dark. All but one. Somebody was watching {n} right back. The chair was still rocking this morning.", "{n} heard the porch creak and froze. Then came a meow, and {n} breathed out. Just the cat. But the cat was asleep inside the whole time."], "cat": ["{n} put out milk for the stray, same as every night. The cat arched its back and hissed at the dark behind {n}. {n} should have listened to the cat.", "A full saucer of milk sits outside {n}'s cabin. The stray was found hiding under the porch, shaking. It saw everything. It isn't talking."], "stars": ["{n} lay on the grass counting stars. One of them moved. It wasn't a star. It was a lantern, coming closer, and whoever held it wasn't looking at the sky.", "{n} made a wish on a shooting star last night. The blanket is still on the grass, soaked with dew. Whatever {n} wished for, it wasn't this."], "mail": ["A letter came for {n} last night. It said, 'Look behind you.' {n} laughed, because who sends a letter like that? Then {n} looked.", "{n}'s mailbox hangs open and a letter lies in the grass. It's addressed to {n}, in {n}'s own handwriting. It says only: 'Don't go outside tonight.'"]};
 const DAWN_SAFE={
   home:['The Mafia came for {n} last night. The Doctor was already there.','Somebody knocked on {n}\'s door last night. The Doctor answered it.'],
   walk:['{n} went for a walk last night and came home a lot faster than they left.','{n} is out of breath, and very much alive.'],
@@ -2201,15 +2194,18 @@ const DAWN_SAFE={
   cat:['{n} fed the stray and bolted the door. The cat was hissing at something.','Paw prints and boot prints outside {n}\'s cabin. {n} is fine.'],
   stars:['{n} came in from the cold just in time.','Flattened grass by {n}\'s blanket. Somebody else stood there too.'],
   mail:['{n} fetched the post and locked up. Somebody was watching.','Boot prints by {n}\'s mailbox. They stop at the locked door.']};
-const DAWN_DOC=['The Mafia got to {n} last night. The Doctor got there second.','{n} was found on the ground, breathing. Someone had patched them up.','{n} has a bandage and a story. The Doctor isn\'t saying a word.'];
-const DAWN_GUARD=['The Mafia came for {n} last night. {g} stepped in the way. {g} was the Bodyguard.','{n} is alive this morning because {g} is not. The Bodyguard did the job.'];
+const DAWN_DOC=["The Mafia got to {n} last night and left them for dead. They didn't check for a pulse. The Doctor did. Somebody in this town is going to be very surprised at breakfast.", "{n} was found on the ground, cold and still. The town began to mourn. Then {n} coughed, sat up and asked what all the fuss was about. The Doctor isn't saying a word.", "The knife came down and the Mafia slipped away, sure the job was done. But a lamp was already burning across the square. The Doctor had been waiting up all night. {n} lives.", "{n} has a bandage, a headache and a story nobody believes. One thing is certain. The Mafia walked home last night thinking they had won."];
+const DAWN_GUARD=["The Mafia came for {n} last night and found someone else in the way. There was a struggle in the dark. {n} is alive this morning. {g}, the Bodyguard, paid for it.", "{n} slept through the whole thing. The knock, the fight, the silence after. On the doorstep this morning: {g}, the Bodyguard, who never said a word about the job.", "The Mafia had a plan for {n}. They didn't plan for the Bodyguard. It was {g} who stepped out of the shadows, and {g} who didn't walk away."];
+const DAWN_QUIET=["A quiet night. Too quiet. The Mafia were out there, and for once they went home with nothing. Why?", "Nobody died last night. But somebody's door handle was tried, twice. The Mafia are still here, and they are getting impatient.", "Everyone woke up this morning. Count again if you like. It doesn't mean you're safe. It means they're still choosing."];
+/* in a real game every phone must tell the SAME story: the pick comes from the game's id and the round, not from luck */
+function storyPick(list){if(!(GAME.on&&GAME.g))return list[Math.floor(Math.random()*list.length)];let h=7;for(const c of GAME.id+'|'+GAME.g.round)h=(h*31+c.charCodeAt(0))>>>0;return list[h%list.length];}
 function dawn(){const g=N.guard>=0&&!N.heal?N.guard:-1,v=g>=0?g:N.victim,key=N.variant||N.kind,list=N.heal?DAWN_DOC:g>=0?DAWN_GUARD:DAWN_DEAD[key],h=$('#dawnTitle');
   if(N.heal){h.innerHTML=ic('heart',4)+(v===0?'THE DOCTOR SAVED<b>YOU</b>':'<b>NOBODY</b>DIED');h.classList.add('safe');}
   else{if(v!==0)V.dead.add(v);h.innerHTML=ic('skull',4)+(v===0?'<b>YOU</b>ARE DEAD':`<b>${esc(PEOPLE[v].n.toUpperCase())}</b>IS DEAD`);h.classList.remove('safe');}
   $('#dawnGo').textContent=v===0&&!N.heal?'Rise as a ghost':'To the square';N.meDead=v===0&&!N.heal;
   setTimeout(()=>{if(scene===scenes.dawn){if(N.heal)fxHeal(1);else fxBleed(.5);}},350);
   $('#dawnFace').src=face(looksLike(v));
-  $('#dawnStory').textContent=list[Math.floor(Math.random()*list.length)].replace(/\{n\}/g,g>=0?VN():v===0&&GAME.on?myName:PEOPLE[v].n).replace(/\{g\}/g,g===0?'You':g>=0?PEOPLE[g].n:'').replace('You was','You were').replace('because You is not','because you are not');
+  $('#dawnStory').textContent=storyPick(list).replace(/\{n\}/g,g>=0?VN():v===0&&GAME.on?myName:PEOPLE[v].n).replace(/\{g\}/g,g===0?'You':g>=0?PEOPLE[g].n:'').replace('You was','You were').replace('because You is not','because you are not');
   // the note they left (only shown if they really died): yours if it was you, else whatever that player wrote
   const nt=N.heal?'':v===0?NOTE.mine:(NOTE.of[v]??(NOTE.of[v]=Math.random()<.65?NPC_NOTES[Math.floor(Math.random()*NPC_NOTES.length)]:''));
   const dn=$('#dawnNote');dn.style.display=nt?'block':'none';dn.innerHTML=nt?`<b>${esc(PEOPLE[v].n.toUpperCase())} LEFT A NOTE</b>${esc(nt)}`:'';
@@ -3139,7 +3135,7 @@ function gFilm(g){const nt=g.night||{};GAME.filmDone=false;clearTimeout(GAME.daw
   N.keepPlan=false;N.cut=false;
   go(N.net.victim===0?'mydeath':'night');}
 function quietDawn(){const h=$('#dawnTitle');h.innerHTML=ic('heart',4)+'<b>NOBODY</b>DIED';h.classList.add('safe');$('#dawnFace').src=face(looksLike(0));
-  $('#dawnStory').textContent='A quiet night. Nobody came to any harm.';$('#dawnNote').style.display='none';$('#dawnGo').textContent='To the square';N.meDead=false;go('dawn',gameDawn);}
+  $('#dawnStory').textContent=storyPick(DAWN_QUIET);$('#dawnNote').style.display='none';$('#dawnGo').textContent='To the square';N.meDead=false;go('dawn',gameDawn);}
 // my film is over (the host waits for everyone's, so the town wakes up together)
 // the Detective's stakeout: at dawn they can watch it back through the binoculars, then the notes stay on the dawn card
 const spyOn=()=>GAME.on&&viewRole==='detective'&&!GAME.meDead&&NIGHT.locked&&NIGHT.picks.length&&GAME.spyRound!==GAME.g.round;
