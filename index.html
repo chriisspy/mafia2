@@ -328,7 +328,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #homeHud .logo span,#lobbyHud .logo span{display:inline-block;animation:hDrop .7s cubic-bezier(.3,1.5,.5,1) both}
 #homeHud .logo em,#lobbyHud .logo em{display:inline-block;font-style:normal;color:#ff6a5e;margin-left:10px;animation:hPop .5s .55s cubic-bezier(.3,1.8,.5,1) both,hBob 2.4s 1.2s ease-in-out infinite}
 #homeHud .logo small,#lobbyHud .logo small{display:table;margin:8px auto 0;background:#140c24;padding:4px 10px 5px 14px;border-radius:3px;font-size:13px;color:#ffe98a;letter-spacing:4px;text-shadow:none;animation:hFade .5s .9s both}
-.logoCv{display:block;margin:0 auto;width:min(308px,78vw);height:auto;image-rendering:pixelated;animation:hDrop .7s cubic-bezier(.3,1.5,.5,1) both}
+.logoCv{display:block;margin:0 auto;width:min(256px,66vw);height:auto;image-rendering:pixelated;animation:hDrop .7s cubic-bezier(.3,1.5,.5,1) both}
 @keyframes hDrop{0%{transform:translateY(-190px)}100%{transform:none}}
 @keyframes hPop{0%{transform:scale(0) rotate(-30deg)}100%{transform:scale(1) rotate(8deg)}}
 @keyframes hBob{0%,100%{transform:rotate(8deg) translateY(0)}50%{transform:rotate(4deg) translateY(-5px)}}
@@ -929,7 +929,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121817'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121820'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3284,8 +3284,16 @@ const LOGO_F={
   A:['..XXXXX..','.XXXXXXX.','XXX...XXX','XXX...XXX','XXX...XXX','XXXXXXXXX','XXXXXXXXX','XXX...XXX','XXX...XXX','XXX...XXX','XXX...XXX'],
   F:['XXXXXXXX','XXXXXXXX','XXX.....','XXX.....','XXXXXXX.','XXXXXXX.','XXX.....','XXX.....','XXX.....','XXX.....','XXX.....'],
   I:['XXXXX','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','XXXXX']};
-const LOGO_FACE=['#fff6c8','#ffe98a','#ffdb4d','#ffd03d','#ffc02e','#f9ac28','#f29a24','#e98820','#dc761d','#c9631a','#b35218'];
-function drawLogo(cv,t){const word='MAFIA',H=11,D=2,O=1,TOP=2,GAP=2,x=cv.getContext('2d');
+/* colour sets to try (12 Nov): face = 11 bands top to bottom, rim = the light top edge, body = the 3D block (near, far) */
+const LOGO_PALS={
+  gold:{face:['#fff6c8','#ffe98a','#ffdb4d','#ffd03d','#ffc02e','#f9ac28','#f29a24','#e98820','#dc761d','#c9631a','#b35218'],rim:'#fffbe8',body:['#9a2338','#5e1429']},
+  blood:{face:['#ffd6cc','#ffb3a3','#ff8a78','#f8665a','#ec4a46','#dd3a3c','#c92e35','#b3242f','#9c1c2a','#851626','#6e1122'],rim:'#ffe9e4',body:['#3e0a18','#24060f']},
+  noir:{face:['#ffffff','#ffffff','#f4f1ec','#e8e3dc','#ff7a6e','#ef5248','#e4413a','#d03532','#b82a2c','#a02327','#881c22'],rim:'#ffffff',body:['#2a1c3e','#16102a']},
+  steel:{face:['#ffffff','#eef2f8','#dbe2ee','#c8d1e1','#b4bfd3','#a1adc5','#8f9cb6','#7e8ba6','#6d7a95','#5d6984','#4e5873'],rim:'#ffffff',body:['#2a3150','#181c34']},
+  cream:{face:['#fffaf0','#fff1d6','#f9e6bf','#f6dfae','#f0d39c','#e9c88a','#e0b977','#d5a966','#c89757','#b9854a','#a8743f'],rim:'#ffffff',body:['#e4544f','#a92b2c']},
+  neon:{face:['#fff0fb','#ffd1f2','#ffaeea','#ff8ae0','#ff6ad6','#f64fcb','#e33ac0','#cb2bb4','#b021a6','#941a97','#7a1588'],rim:'#fff7fd','body':['#2f1a6e','#1a0f44']}};
+let LOGO_PAL='gold';try{const s=new URLSearchParams(location.search).get('logo');if(LOGO_PALS[s])LOGO_PAL=s;}catch(e){}   /* to try a colour: add ?logo=blood (or noir, steel, cream, neon) to the link */
+function drawLogo(cv,t,pal){const P=LOGO_PALS[pal||cv.dataset.pal||LOGO_PAL],LOGO_FACE=P.face,word='MAFIA',H=11,D=2,O=1,TOP=2,GAP=2,x=cv.getContext('2d');
   let W=0;for(const ch of word)W+=LOGO_F[ch][0].length;W+=GAP*(word.length-1);const CW=W+O*2,CH=H+O*2+D+TOP;
   if(cv.width!==CW||cv.height!==CH){cv.width=CW;cv.height=CH;}
   const face=new Map(),key=(a,b)=>a+','+b,s=(t/1000)%4.2;let ox=O;
@@ -3296,10 +3304,10 @@ function drawLogo(cv,t){const word='MAFIA',H=11,D=2,O=1,TOP=2,GAP=2,x=cv.getCont
   const solid=k3=>face.has(k3)||body.has(k3);
   for(let b=0;b<CH;b++)for(let a=0;a<CW;a++){const k3=key(a,b);if(solid(k3))continue;   /* the outline: every empty pixel touching a letter or its red block */
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if((dx||dy)&&solid(key(a+dx,b+dy))){px(a,b,'#140c24');dy=dx=2;}}
-  for(const[k3,d]of body){const[a,b]=k3.split(',').map(Number);px(a,b,d===1?'#9a2338':'#5e1429');}
+  for(const[k3,d]of body){const[a,b]=k3.split(',').map(Number);px(a,b,P.body[d===1?0:1]);}
   const sh=(t/1000*30)%110-20;   /* the shine: a slanted band sweeping left to right */
   for(const[k3,r]of face){const[a,b]=k3.split(',').map(Number);let c=LOGO_FACE[r];
-    if(!face.has(key(a,b-1)))c='#fffbe8';                          /* a light rim along every top edge */
+    if(!face.has(key(a,b-1))&&r<5)c=P.rim;   /* only on the upper edges: not the foot of the I */                          /* a light rim along every top edge */
     else if(!face.has(key(a-1,b))&&r<6)c=LOGO_FACE[Math.max(0,r-2)];  /* left edges a touch lighter */
     const q=a+b*.7-sh;if(q>=0&&q<3)c=q<1.5?'#ffffff':'#fff8d6';px(a,b,c);}}
 setInterval(()=>{const now=performance.now();document.querySelectorAll('.logoCv').forEach(c=>{if(c.offsetParent)drawLogo(c,now);});},60);
