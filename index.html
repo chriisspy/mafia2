@@ -68,6 +68,7 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #tabs{position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;padding:8px 10px calc(10px + env(safe-area-inset-bottom));
   background:linear-gradient(#0000,#05040cee 40%);z-index:20}
 #tabs .btn{flex:1 0 auto;font-size:14px;padding:8px 7px}
+#labCoins{display:flex;align-items:center;gap:4px;white-space:nowrap;flex:none}
 #tabs{overflow-x:auto;scrollbar-width:none}#tabs::-webkit-scrollbar{display:none}
 #tabs .btn.sel{background:var(--gold);box-shadow:inset 0 -4px 0 #d39b2a,0 3px 0 #0009}
 #top{position:absolute;top:calc(10px + env(safe-area-inset-top));right:10px;display:flex;gap:6px;z-index:21}
@@ -683,6 +684,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div class="small" id="menuVer" style="text-align:center;margin-top:8px;opacity:.6"></div>
   </div>
   <nav id="tabs">
+    <button class="btn go" id="labCoins"><i data-ic="coin" data-c="solo"></i>+500</button>
     <button class="btn" data-s="home">Home</button>
     <button class="btn" data-s="lobby">Lobby</button>
     <button class="btn" data-s="town">Town</button>
@@ -929,7 +931,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121834'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121944'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3380,7 +3382,9 @@ function go(name,after){
     xf.classList.remove('on');if(after)after();
   },scene?200:0);
 }
-document.querySelectorAll('#tabs .btn').forEach(b=>b.onclick=()=>go(b.dataset.s));
+document.querySelectorAll('#tabs .btn[data-s]').forEach(b=>b.onclick=()=>go(b.dataset.s));
+/* lab only: 500 coins into this phone's wallet (it is the same wallet the real game uses on this browser) */
+$('#labCoins').onclick=()=>{coins+=500;saveInv();paintCoins();sfx('coin');toast(ic('coin')+' +500 coins. You have '+coins+'.');};
 $('#rainBtn').onclick=()=>{raining=!raining;$('#rainBtn').innerHTML=raining?ic('rain')+'Rain':ic('moon')+'Clear';};
 $('#roleBtn').onclick=()=>{viewRole=VIEW_ROLES[(VIEW_ROLES.indexOf(viewRole)+1)%VIEW_ROLES.length];
   $('#roleBtn').innerHTML=ic('eye')+ROLES[viewRole].name[0]+ROLES[viewRole].name.slice(1).toLowerCase();paintSkin();resetNight();
