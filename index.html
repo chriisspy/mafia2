@@ -774,7 +774,7 @@ const SFX={
   pop(){hiss(.25,{vol:.22,hp:1500});tone(300,.35,{type:'sawtooth',vol:.1,to:1400});arp([523,659,784,1047],.06,{vol:.1,at:.12});},
   sparkle(){[1568,1976,2349,2637,3136,3951].forEach((f,i)=>{tone(f,.5,{type:'triangle',vol:.07,at:.05+i*.045});tone(f*1.5,.22,{type:'sine',vol:.025,at:.05+i*.045});});
     [3520,2637,4186,3136,3951,2794,4699,3322].forEach((f,i)=>tone(f,.28,{type:'sine',vol:.05*(1-i/9),at:.36+i*.11}));hiss(.9,{vol:.025,hp:7000,at:.05});},
-  bark(){for(const at of[0,.28,.75]){tone(330,.09,{type:'sawtooth',vol:.16,to:170,at});hiss(.07,{vol:.12,lp:1400,at});}},
+  bark(){for(const at of[0,.2]){tone(300,.1,{type:'sawtooth',vol:.2,to:150,at});tone(150,.12,{type:'square',vol:.1,to:90,at});hiss(.08,{vol:.16,lp:1500,at});}},
   heart(){tone(58,.16,{type:'sine',vol:.5,to:40});tone(52,.2,{type:'sine',vol:.4,to:36,at:.17});},
   twig(){hiss(.05,{vol:.3,hp:2500});tone(900,.04,{type:'square',vol:.08,to:300});hiss(.04,{vol:.16,hp:3000,at:.07});},
   lampoff(){tone(1400,.03,{vol:.07});tone(140,.7,{type:'sine',vol:.2,to:60,at:.03});},
@@ -958,7 +958,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11130959'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131004'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1905,7 +1905,7 @@ function planNight(force){
 function planBeats(){N.holds=[];let h=Math.floor(Math.random()*1e6);if(GAME.on&&GAME.g){h=7;for(const c of GAME.id+'|'+GAME.g.round)h=(h*31+c.charCodeAt(0))>>>0;}
   const s=N.shots.find(q=>/scream|jumps in the way/i.test(q[1])),tS=s?s[0]:N.tCut-2.6,tHeart=N.inside?N.tIn-.35:tS-1;
   const kinds=['dark','twig','bark'],mid=3.3+(tHeart-3.3)*(.45+(h%5)*.04);
-  if(tHeart-3.3>3)N.holds.push({at:mid,dur:2.8,kind:kinds[h%3],ci:(()=>{const o=CABIN_OF.filter(ci=>ci!==N.vci);return o.length?o[(h>>3)%o.length]:-1;})()});
+  /* (no random curveballs on the way: he threw them out, 13 Nov. A beat has to MEAN something in the story.) */
   N.holds.push({at:tHeart,dur:2,kind:'heart'});
   if(N.guard<0)N.holds.push({at:N.tCut+.15,dur:1.9,kind:'still'});
   N.holds.sort((a,b)=>a.at-b.at);}
@@ -1931,6 +1931,39 @@ function mafWalkers(){if(!GAME.on)return[{cab:TOWN.cabins[CABIN_OF[0]],ci:CABIN_
   let free=TOWN.cabins.map((_,ci)=>ci).filter(ci=>!CABIN_OF.includes(ci));if(free.length<2)free=TOWN.cabins.map((_,ci)=>ci).filter(ci=>ci!==N.vci);
   const r=GAME.g.round*3,a=free[r%free.length],b=free[(r+1+(GAME.g.round%Math.max(1,free.length-1)))%free.length];
   return[a,b===a?free[(free.indexOf(a)+1)%free.length]:b].map((ci,k)=>({cab:TOWN.cabins[ci],ci,lbl:mafLbl(k)}));}
+/* 0. THE NIGHT NOBODY DIES (13 Nov, his story): the Mafia could not agree on a door (or never chose). They meet in the
+   square, dither, and the town's dog finds them: it barks the place awake, the windows light up, and they run for home.
+   Nobody is pointed at as "the one they came for": that would tell the town who is not Mafia. */
+function planQuiet(){Object.assign(N,{kind:'quiet',victim:-1,heal:false,saved:false,guard:-1,self:false,variant:null,inside:false,red:0,vci:-1,vic:null,holds:[],wet:raining});
+  N.walkers=mafWalkers().slice(0,mafCount());const two=N.walkers.length>1;
+  N.TW=3.6;N.tMeet=N.TW+Math.max(...N.walkers.map(w=>w.cab.route.len))/SPD+.6;
+  const tB=N.tBark=N.tMeet+2.6,tR=N.tRun=tB+3.2;N.end=tR+Math.max(...N.walkers.map(w=>w.cab.route.len))/(SPD*1.9)+2.6;N.tCut=N.end;
+  N.shots=[[.5,'Night '+NN()+'.'],[1.7,'The town is asleep…'],[3.0,'…but not everyone.'],[N.tMeet-.4,two?'They meet in the square.':'A shadow crosses the square.'],
+    [N.tMeet+1,two?'They can\'t agree on a door.':'The shadow can\'t choose a door.'],[tB,'A dog barks!','bad'],[tB+1.5,'Lights come on. The town is waking up.'],[tR+.2,two?'They run for it.':'The shadow runs for it.','good'],[N.end-2.4,'Nobody dies tonight.','good']];}
+PLAN.quiet=planQuiet;
+PLAY.quiet=T=>{const{TW,tMeet,tBark:tB,tRun:tR}=N,P=[];
+  N.walkers.forEach((w,k)=>{const out0=2.8+k*.3;if(T<out0)return;let p,dir='front',walk=false,al=1;const rt=w.cab.route,spot={x:CENTER[0]+(k?10:-10),y:CENTER[1]};
+    if(T<TW){const e=ramp(T,out0,out0+.6);p={x:w.cab.feet[0],y:lerp(w.cab.feet[1]-8,w.cab.feet[1],e)};walk=e<1;al=e;}
+    else if(T<tMeet){const d=Math.max(0,(T-TW)*SPD),a=rt.at(Math.min(d,rt.len));p=a;walk=d<rt.len;dir=walk?dirFrom(a.dx,a.dy):'front';if(!walk)p=spot;}
+    else if(T<tB){p=spot;dir=N.walkers.length>1?(k?'left':'right'):(Math.floor(T*1.4)%2?'left':'right');}                      /* arguing, or looking from door to door */
+    else if(T<tR){p=spot;dir=T<tB+.5?'right':Math.floor((T-tB)*2.5)%2?'left':'right';}                                          /* caught: heads snapping round */
+    else{const d=rt.len-(T-tR-k*.15)*SPD*1.9,a=rt.at(clamp(d,0,rt.len));p=a;walk=true;dir=dirFrom(-a.dx,-a.dy);                 /* flat out, back the way they came */
+      if(d<=0){const e=ramp(T,tR+k*.15+rt.len/(SPD*1.9),tR+k*.15+rt.len/(SPD*1.9)+.5);p={x:w.cab.feet[0],y:lerp(w.cab.feet[1],w.cab.feet[1]-8,e)};dir='back';al=1-e;}}
+    P.push({kind:'maf',x:p.x,y:p.y,dir,walk,al,lbl:w.lbl});});
+  const me=N.walkers[0].cab;let cx=CENTER[0],cy=CENTER[1]-14,vw=175;
+  if(T<2.4){cx=280;cy=360;vw=230;}else if(T<TW+.6){cx=me.cx;cy=me.top+20;vw=150;}
+  else if(T<tMeet-.2){const a=me.route.at(Math.max(0,(T-TW)*SPD));cx=a.x;cy=a.y-14;vw=165;}
+  else if(T>tR+1){const k=ease(ramp(T,tR+1,tR+2.4));vw=lerp(175,230,k);cy=lerp(CENTER[1]-14,360,k);cx=lerp(CENTER[0],280,k);}   /* pull back: the whole town, awake */
+  /* the dog: trots in from the right, plants itself in front of them and barks; chases them a few steps when they bolt */
+  const dx=T<tB?lerp(CENTER[0]+90,CENTER[0]+34,ease(ramp(T,tB-1.1,tB-.1))):lerp(CENTER[0]+34,CENTER[0]+16,ease(ramp(T,tR,tR+.8))),dy=CENTER[1]+8;
+  const barkAt=[tB,tB+.9,tB+1.8,tB+2.6,tR+.5],bk=barkAt.some(b=>T>=b&&T<b+.3);
+  barkAt.forEach((b,i)=>{if(T>b)once('bk'+i,()=>{sfx('bark');N.shake=2.5;});});
+  const over=()=>{if(T<tB-1.1)return;const y=dy-(bk?2:0)-(T<tB&&Math.floor(T*8)%2?1:0),B='#b9773a',D='#7a4a22',K='#1a1430';
+    px(dx-1,y-5,10,1,K);px(dx-2,y-4,12,5,K);px(dx-6,y-8,6,7,K);px(dx+9,y-7,3,4,K);px(dx-1,y+1,3,3,K);px(dx+6,y+1,3,3,K);          /* outline */
+    px(dx-1,y-4,10,4,B);px(dx-5,y-7,4,5,B);px(dx-5,y-8,1,1,D);px(dx-2,y-8,1,1,D);px(dx+9,y-(bk?7:6),2,2,B);px(dx,y,1,3,D);px(dx+7,y,1,3,D);
+    px(dx-6,y-5,1,1,K);px(dx-4,y-6,1,1,K);if(bk)px(dx-6,y-4,2,2,'#e4544f');};
+  const lit=ramp(T,tB+1.2,tB+1.8),texts=bk?[['WOOF!',dx-12,dy-16]]:[];
+  return{cx,cy,vw,people:P,doors:N.walkers.map((w,k)=>[w.ci,ramp(T,2.5+k*.3,2.8+k*.3)*(1-ramp(T,TW+.1,TW+.4))]),texts,over,lights:{dim:.85+.6*lit},flash:['255,220,130',.1*pulse2(T,tB+1.3)]};};
 /* 1. HOME: they knock on the door */
 PLAN.home=()=>{
   // HIS CALL (12 Nov): the usual film (they set off, they meet, they knock), and when the door opens every phone cuts to
@@ -2165,7 +2198,7 @@ scenes.night={
     while(N.capI<N.shots.length&&T>N.shots[N.capI][0]){const s=N.shots[N.capI++];caption($('#cap'),s[1],s[2]);}
     const endT=N.cut?N.tCut:N.end;
     if(T>endT-1.2)$('#fade').classList.add('on');
-    if(T>endT){if(N.cut){N.cut=false;CAB.keep=true;go('cabin');}else dawn();return;}
+    if(T>endT){if(N.cut){N.cut=false;CAB.keep=true;go('cabin');}else if(N.kind==='quiet')once('qd',quietDawn);else dawn();return;}
     if(N.cut)CAB.clock=Math.max(1,CAB.clock-dt);
     if(N.inside&&T>=N.tIn){nightRoom(T-N.tIn,dt,t);return;}
     const f=PLAY[N.kind](T,HB?0:dt,t);
@@ -2236,7 +2269,7 @@ const DAWN_SAFE={
   mail:['{n} fetched the post and locked up. Somebody was watching.','Boot prints by {n}\'s mailbox. They stop at the locked door.']};
 const DAWN_DOC=['The Mafia got to {n} last night. The Doctor got there second.','{n} was found on the ground, breathing. Someone had patched them up.','{n} has a bandage and a story. The Doctor isn\'t saying a word.'];
 const DAWN_GUARD=['The Mafia came for {n} last night. {g} stepped in the way. {g} was the Bodyguard.','{n} is alive this morning because {g} is not. The Bodyguard did the job.'];
-const DAWN_QUIET=['A quiet night. Nobody came to any harm.'];   /* the text stays short (his call, 13 Nov): the suspense belongs in the cutscenes */
+const DAWN_QUIET=['A dog barked half the night. Nobody came to any harm.','Something spooked the dog last night. Everyone woke up, and everyone is still here.'];   /* the text stays short (his call, 13 Nov): the suspense belongs in the cutscenes */
 /* in a real game every phone must tell the SAME story: the pick comes from the game's id and the round, not from luck */
 function storyPick(list){if(!(GAME.on&&GAME.g))return list[Math.floor(Math.random()*list.length)];let h=7;for(const c of GAME.id+'|'+GAME.g.round)h=(h*31+c.charCodeAt(0))>>>0;return list[h%list.length];}
 function dawn(){const g=N.guard>=0&&!N.heal?N.guard:-1,v=g>=0?g:N.victim,key=N.variant||N.kind,list=N.heal?DAWN_DOC:g>=0?DAWN_GUARD:DAWN_DEAD[key],h=$('#dawnTitle');
@@ -3169,7 +3202,7 @@ function gNight(g){sfx('night');GAME.filmDone=true;$('#dawnGo').disabled=false;C
   if(GAME.meDead){go('ghost');return;}
   CAB.keep=true;go('cabin',()=>{if(g.round===1)toast(ic(viewRole)+'You are '+roleA(viewRole));});}
 function gFilm(g){const nt=g.night||{};GAME.filmDone=false;clearTimeout(GAME.dawnT);
-  if(!nt.victim||GAME.idx[nt.victim]==null){quietDawn();return;}
+  if(!nt.victim||GAME.idx[nt.victim]==null){planQuiet();N.keepPlan=true;N.cut=false;go('night');return;}   /* nobody dies: the dog film, then the quiet dawn */
   N.net={victim:GAME.idx[nt.victim],heal:!!nt.heal,guard:nt.guard&&GAME.idx[nt.guard]!=null?GAME.idx[nt.guard]:-1,kind:PLAN[nt.kind]?nt.kind:'home'};
   if(nt.died){const di=GAME.idx[nt.died];if(di>0)NOTE.of[di]=nt.note||'';}
   N.keepPlan=false;N.cut=false;
