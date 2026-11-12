@@ -461,7 +461,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 
   <!-- LOBBY -->
   <div class="hud" id="lobbyHud">
-    <div class="title logo">MAFIA 2<small>CHRISPY GAMES</small></div>
+    <div class="title logo"><span>MAFIA</span><em>2</em><small>A CHRISPY GAME</small></div>
     <div class="bottom">
       <div class="panel" style="padding:10px 12px">
         <div class="skinrow">
@@ -474,8 +474,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
         </div>
         <div class="small" style="text-align:center;margin-top:6px">Only you see your role outfit. Everyone else sees this.</div>
         <div class="row" style="margin-top:10px">
-          <button class="btn dark lob" id="shopBtn"><i data-ic="case" data-c="solo"></i>Shop</button>
-          <button class="btn dark lob" id="collBtn"><i data-ic="hanger" data-c="solo"></i>Collection</button>
+          <button class="btn dark lob" id="shopBtn"><i data-ic="bag" data-s="3" data-c="solo"></i>Shop</button>
+          <button class="btn dark lob" id="collBtn"><i data-ic="shirt" data-s="3" data-c="solo"></i>Collection</button>
           <span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span>
         </div>
       </div>
@@ -928,7 +928,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121813'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121815'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
