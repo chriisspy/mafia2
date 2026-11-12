@@ -342,7 +342,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .hlink.sure{color:#b3261e;opacity:1}
 .hlink{display:block;margin:6px auto 0;background:none;border:0;font:600 13px "Pixelify Sans";color:var(--text);opacity:.75;text-decoration:underline;cursor:pointer}
 #homeMsg{text-align:center;font-size:14px;font-weight:600;min-height:18px;margin-top:8px}#homeMsg.bad{color:#b3261e}#homeMsg.good{color:#2f7a45;animation:hFade .4s both}
-.hwal{align-self:stretch;background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-radius:5px;padding:0 10px 3px;font-size:20px;box-shadow:inset 0 -4px 0 #1b1532,0 3px 0 #0009}
+.hwal{align-self:stretch;background:#fff;color:var(--text);border:3px solid var(--wood);border-radius:5px;padding:0 10px 2px;font-size:20px}
 .hunder{margin-top:8px;gap:8px;align-items:stretch}.hunder .gbtn{margin-top:0;flex:1}
 .hsq{flex:none;width:50px;display:flex;align-items:center;justify-content:center;padding:0 0 3px}
 #homeHud .btn.lob{font-size:17px;padding-top:7px;padding-bottom:10px;gap:8px}
@@ -714,7 +714,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121522'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121525'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
