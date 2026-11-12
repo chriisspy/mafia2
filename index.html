@@ -120,8 +120,18 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .ocard.no{animation:ocNo .3s steps(4)}@keyframes ocNo{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 .casecard{display:flex;gap:12px;align-items:center;background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-radius:5px;padding:10px;box-shadow:inset 0 -4px 0 #1b1532}
 .odds{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}.odds .rar{font-size:10px;padding:1px 4px}
-#caseItems{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
-#caseItems img{width:36px;height:36px;image-rendering:pixelated;border:2px solid var(--rc);border-radius:4px;background:#fff6df}#caseItems img.lock{filter:brightness(.3)}
+.ccard{position:relative;background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-radius:6px;padding:10px;margin-top:10px;box-shadow:inset 0 -5px 0 #1b1532,0 3px 0 #0006;overflow:hidden}
+#ccMafia{border-color:#ffd25e;box-shadow:inset 0 -5px 0 #1b1532,0 0 0 3px #1a1430,0 4px 0 3px #0006}
+.ctop{display:flex;align-items:center;gap:10px}
+.ccv{width:192px;height:168px;flex:none;image-rendering:pixelated;margin:-10px -6px -8px -14px}
+.cinfo{flex:1;min-width:0}.cinfo b{display:block;font-size:21px;letter-spacing:1px;line-height:1;color:#ffd25e}.cinfo .small{margin:5px 0 9px;line-height:1.2}
+.copen{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-size:20px;padding:8px 12px 12px;margin-top:4px;white-space:nowrap}
+.cin{margin-top:8px;border-top:3px solid #1b1532;padding-top:8px}.cin>small{display:block;font-size:11px;letter-spacing:2px;opacity:.75}
+.crow{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}.crow .rar{font-size:10px;padding:1px 5px;min-width:86px;text-align:center}
+.crow img{width:38px;height:38px;image-rendering:pixelated;border:2px solid var(--rc);border-radius:4px;background:#fff6df}.crow img.lock{filter:brightness(.45) saturate(.5)}
+.ccard.soon{background:#1d1936}.ccard.soon .ccv{filter:brightness(.38) saturate(.6)}.ccard.soon .ccv.dark{filter:brightness(0)}
+.ccard.soon .cinfo b{color:#b9b2d6}.ccard.soon .small{opacity:.6}
+.csoon{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:1px;white-space:nowrap;color:#1a1430;background:#b9b2d6;border-radius:4px;padding:3px 8px 5px}
 #reelBox{display:none;position:absolute;left:12px;right:12px;top:21%;overflow:hidden;height:86px;border:3px solid var(--ink);border-radius:5px;background:#1a1430;z-index:3;box-shadow:0 0 0 3px #ffd25e,0 0 0 6px #1a1430,0 8px 0 6px #0b0918}
 #reelBox.on{animation:cfReel .5s cubic-bezier(.2,.9,.3,1)}
 @keyframes cfReel{0%{transform:translateY(70px) scale(.2)}70%{transform:translateY(-6px) scale(1.04)}100%{transform:none}}
@@ -135,7 +145,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #reel .rc img{width:48px;height:48px;image-rendering:pixelated;display:block;margin:2px auto 0}
 #reel .rc i{display:block;height:10px;background:var(--rc)}
 #reelBox .mark{position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1px;background:var(--gold);box-shadow:0 0 0 1px #1a1430}
-#caseResult{text-align:center;margin-top:8px;min-height:22px;font-size:17px;font-weight:700}
+#caseResult{text-align:center;margin-top:4px;min-height:0;font-size:17px;font-weight:700}#caseResult:empty{display:none}
 #caseResult .btn{margin-left:8px;font-size:14px;padding:4px 10px}
 #winFx{position:absolute;inset:0;z-index:30;display:none;overflow:hidden;background:rgba(8,6,20,.88);--rc:#7bc96f;cursor:pointer}
 #winFx.on{display:block}
@@ -321,7 +331,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 @keyframes hFade{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 #homeHud .bottom{animation:hUp .55s .35s cubic-bezier(.2,1.2,.4,1) both}
 @keyframes hUp{0%{transform:translateY(120%)}100%{transform:none}}
-.hpanel{padding:10px 12px 8px}
+.hpanel{padding:8px 10px 10px}.hpanel+.hpanel{margin-top:8px}#homeMsg:empty{display:none}
 .hname{display:flex;align-items:center;gap:10px;flex:1;min-width:0;background:#fff7;border:3px solid var(--wood);border-radius:5px;padding:4px 10px 4px 6px;font:inherit;color:var(--text);text-align:left;cursor:pointer}
 .hname img{width:40px;height:40px;image-rendering:pixelated}
 .hname small{display:block;font-size:10px;letter-spacing:2px;opacity:.7}.hname b{font-size:21px;line-height:1}
@@ -402,14 +412,18 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <div class="panel hpanel">
         <div class="row"><button class="hname" id="homeName"><img id="homeFace" alt=""><span><small>PLAYING AS</small><b id="homeNameT">You</b></span><em>Change</em></button>
           <span class="wal hwal"><i data-ic="coin" data-s="3" data-c="solo"></i><span class="coinN">0</span></span></div>
-        <button class="hbig red" id="homeCreate">Create lobby</button>
+      </div>
+      <div class="panel hpanel">
+        <button class="hbig red" id="homeCreate" style="margin-top:0">Create lobby</button>
         <button class="hbig" id="homeJoin">Join with code</button>
-        <div class="row" style="margin-top:10px;gap:10px">
+        <div id="homeMsg"></div>
+        <button class="hlink" id="homeBots">Practice town with bots</button>
+      </div>
+      <div class="panel hpanel">
+        <div class="row" style="gap:10px">
           <button class="btn dark lob" id="homeShop"><i data-ic="bag" data-s="3" data-c="solo"></i>Shop</button>
           <button class="btn dark lob" id="homeColl"><i data-ic="shirt" data-s="3" data-c="solo"></i>Collection</button>
         </div>
-        <div id="homeMsg"></div>
-        <button class="hlink" id="homeBots">Practice town with bots</button>
       </div>
       <div class="row hunder"><button class="gbtn" id="homeAcct">Sign in with Google</button><button class="btn dark hsq" id="homeHow" title="How to play"><i data-ic="help" data-s="3" data-c="solo"></i></button></div>
     </div>
@@ -615,10 +629,19 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     </div>
     <div class="modal big panel" id="shopModal">
       <div class="mhead"><b>SHOP</b><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><button class="btn" id="shopX"><i data-ic="cross" data-c="solo"></i></button></div>
-      <div class="casecard"><i data-ic="case" data-s="5" data-c="solo"></i><div style="flex:1"><b>Mafia Case</b><div class="small">One random outfit. A double pays some coins back.</div><div class="odds" id="caseOdds"></div></div></div>
-      <div id="caseItems"></div>
-      <div id="caseResult"></div>
-      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn red" id="caseOpen">Open</button><button class="btn" id="coinTest">+500 test coins</button></div>
+      <div class="ccard" id="ccMafia">
+        <div class="ctop"><canvas class="ccv" id="ccvMafia" width="96" height="84"></canvas>
+          <div class="cinfo"><b>MAFIA CASE</b><div class="small">One random outfit. A double pays some coins back.</div>
+</div></div>
+        <button class="btn red copen" id="caseOpen">Open</button>
+        <div id="caseResult"></div>
+        <div class="cin"><small>WHAT'S INSIDE</small><div id="caseItems"></div></div>
+      </div>
+      <div class="ccard soon"><div class="ctop"><canvas class="ccv" id="ccvCabin" width="96" height="84"></canvas>
+          <div class="cinfo"><b>CABIN CASE</b><div class="small">New looks for your cabin.</div><span class="csoon"><i data-ic="lock" data-c="solo"></i>COMING SOON</span></div></div></div>
+      <div class="ccard soon"><div class="ctop"><canvas class="ccv dark" id="ccvMyst" width="96" height="84"></canvas>
+          <div class="cinfo"><b>? ? ?</b><div class="small">Something else is on its way.</div><span class="csoon"><i data-ic="lock" data-c="solo"></i>COMING SOON</span></div></div></div>
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="coinTest">+500 test coins</button></div>
     </div>
 
   <button class="btn dark" id="gameLeave">Leave</button>
@@ -691,7 +714,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121506'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121511'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -1047,10 +1070,21 @@ function openColl(){const g=$('#collGrid');
   g.querySelectorAll('.ocard').forEach(c=>c.onclick=()=>{if(!OWNED.has(c.dataset.id)){c.classList.remove('no');void c.offsetWidth;c.classList.add('no');return;}wear(c.dataset.id);openColl();});
   $('#shopModal').classList.remove('on');$('#collModal').classList.add('on');}
 function paintShop(){paintCoins();
-  $('#caseOdds').innerHTML=Object.entries(CASE.odds).map(([r,q])=>`<span class="rar ${r==='common'?'':r}">${r.toUpperCase()} ${Math.round(q*100)}%</span>`).join('');
-  $('#caseItems').innerHTML=SKINS.map(s=>`<img class="${OWNED.has(s.id)?'':'lock'}" src="${face(s.id)}" style="--rc:${RAR_COL[s.rar]}" alt="">`).join('');
+  // what the case holds, a row for each rarity with its odds; the ones you own are lit
+  $('#caseItems').innerHTML=Object.entries(CASE.odds).map(([r,q])=>`<div class="crow"><span class="rar ${r==='common'?'':r}">${r.toUpperCase()} ${Math.round(q*100)}%</span>${SKINS.filter(s=>s.rar===r).map(s=>`<img class="${OWNED.has(s.id)?'':'lock'}" src="${face(s.id)}" style="--rc:${RAR_COL[s.rar]}" alt="">`).join('')}</div>`).join('');
   const b=$('#caseOpen');b.innerHTML=ic('coin',2)+' Open · '+CASE.price;b.disabled=CASE.busy||coins<CASE.price;}
-function openShop(){$('#collModal').classList.remove('on');$('#reelBox').classList.remove('on');$('#caseResult').innerHTML='';paintShop();$('#shopModal').classList.add('on');}
+// the cases in the shop are alive: each bobs, its latch rattles every few seconds, and little stars wink round it
+const SHOP={raf:0};
+function shopCase(cv,img,t,o){const x=cv.getContext('2d'),W=cv.width,H=cv.height;x.imageSmoothingEnabled=false;x.clearRect(0,0,W,H);if(!img)return;
+  const live=!o.still,bob=live?Math.round(Math.sin(t*2.2+o.ph)*2):0,cyc=(t+o.ph*1.3)%3.4,rat=live&&cyc<.55,fr=rat&&o.frames>1?Math.min(6,Math.floor(cyc/.55*7)):0,jx=rat?Math.round(Math.sin(t*60)*1.5):0;
+  x.fillStyle='rgba(8,5,18,.55)';const sw=34-Math.abs(bob)*2;x.fillRect(W/2-sw,H-8,sw*2,4);x.fillRect(W/2-sw+4,H-10,sw*2-8,8);
+  x.drawImage(img,fr*96,0,96,96,jx,bob-8,96,96);
+  if(live)for(let k=0;k<5;k++){const ph=(t*.9+k*.37)%1,r=Math.round(Math.sin(ph*Math.PI)*2.4),sx=[8,86,16,80,48][k],sy=[22,18,66,60,6][k];if(r<1)continue;
+    x.fillStyle=k%2?'#ffffff':'#ffd95e';x.fillRect(sx-r,sy,2*r+1,1);x.fillRect(sx,sy-r,1,2*r+1);}}
+function shopLoop(now){if(!$('#shopModal').classList.contains('on')){SHOP.raf=0;return;}const t=now/1000;
+  shopCase($('#ccvMafia'),IMG.caseSheet,t,{ph:0,frames:13});shopCase($('#ccvCabin'),IMG.cabinCase,t,{ph:2,frames:1,still:true});shopCase($('#ccvMyst'),IMG.caseSheet,t,{ph:4,frames:1,still:true});
+  SHOP.raf=requestAnimationFrame(shopLoop);}
+function openShop(){$('#collModal').classList.remove('on');$('#reelBox').classList.remove('on');$('#caseResult').innerHTML='';paintShop();$('#shopModal').classList.add('on');if(!SHOP.raf)SHOP.raf=requestAnimationFrame(shopLoop);}
 function rollCase(){let r=Math.random(),rar='common';for(const[k,q]of Object.entries(CASE.odds)){if(r<q){rar=k;break;}r-=q;}const pool=SKINS.filter(s=>s.rar===rar);return pool[Math.floor(Math.random()*pool.length)];}
 function openCase(){if(CASE.busy||coins<CASE.price)return;coins-=CASE.price;CASE.busy=true;saveInv();paintShop();
   const win=rollCase(),WIN=30,strip=[];for(let i=0;i<36;i++)strip.push(i===WIN?win:rollCase());
@@ -3031,7 +3065,7 @@ let OBJ_META={};
   const FINAL=Object.fromEntries(['beanie','brownhair','ponytail','curly','farmer','raincoat','redcap','mafia','doctor','jester','detective','batman','alfa','golf','ferrari','bape','fisher','sheik'].map(n=>[n,'assets/final/'+n]));
   const names=[...SKINS.map(s=>s.id),'mafia','doctor','jester','detective'].filter(n=>!PL[n]&&!FINAL[n]);
   OBJ_META=await (await fetch('assets/room-objects/objects.json?v='+BUILD)).json();
-  const jobs=[load('townBase','assets/town4/night.png'),load('townDay','assets/town4/day.png'),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png')];
+  const jobs=[load('townBase','assets/town4/night.png'),load('townDay','assets/town4/day.png'),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png'),load('cabinCase','assets/case/cabin.png')];
   for(const n of Object.keys(OBJ_META))jobs.push(load('obj/'+n,`assets/room-objects/${n}.png`));
   for(const n of names)for(const d of['','back/','side/'])jobs.push(load(d+n,`assets/sprites/${d}${n}.png`));
   for(const[n,dir]of Object.entries(PL))for(const v of['south','north','east','west'])jobs.push(load(`pl/${n}/${v}`,`${dir}/${v}.png`));
