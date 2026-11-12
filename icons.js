@@ -4,7 +4,7 @@
 (function(){
 const PAL={K:'#1a1430',W:'#ffffff',P:'#f6dfae',p:'#e9c88a',R:'#e4544f',r:'#a92b2c',G:'#ffd25e',g:'#d39b2a',Y:'#fff2a8',
   B:'#4a7bd0',b:'#2b4a8a',L:'#9fd0ff',E:'#5fc46f',e:'#2f7a3f',S:'#b8c2d4',s:'#6f7b92',H:'#5a5290',h:'#3b3468',
-  O:'#c58a4a',o:'#7a4a2a',V:'#9a48ad',v:'#5e2a86',M:'#f07ab0',m:'#b8457e'};
+  O:'#c58a4a',o:'#7a4a2a',A:'#d18a2e',a:'#b5651d',V:'#9a48ad',v:'#5e2a86',M:'#f07ab0',m:'#b8457e'};
 // Drawn on a 10 by 10 grid. At button size one icon pixel is 2px, the same as the game's own pixels.
 const GRID=10,E='..........';
 const ICONS={
@@ -35,7 +35,7 @@ bat:[E,'K........K','KK.K..K.KK','KHKKHHKKHK','KHHHHHHHHK','KHHRHHRHHK','.KHHHHH
 spider:['K...KK...K','.K.KHHK.K.','..KHHHHK..','KKKHRRHKKK','..KHHHHK..','.KKHHHHKK.','K..KHHK..K','...KKKK...','..K....K..',E],
 boo:['..KKK.KKK.','..KRK.KRK.','..KRK.KRK.','..KRK.KRK.','..KRK.KRK.','..KKK.KKK.',E,'..KKK.KKK.','..KRK.KRK.','..KKK.KKK.'],
 heart:[E,'.KKK..KKK.','KRRRKKRRRK','KRWRRRRRRK','KRRRRRRRrK','.KRRRRRrK.','..KRRRrK..','...KRrK...','....KK....',E],
-coin:[E,'..KKKKKK..','.KGGGGGGK.','KGYGGGGGgK','KGYGggGGgK','KGGGggGGgK','KGGGGGGggK','.KGGggggK.','..KKKKKK..',E],
+coin:['...KKKK...','.KKGGYYKK.','.KGGGGGYK.','KGGAAaAGGK','KGAAGYAAGK','KGAAGGAAGK','KGGaAAAGGK','.KYGGGGGK.','.KKYGGGKK.','...KKKK...'],
 chat:[E,'.KKKKKKKK.','KWWWWWWWWK','KWKWKWKWWK','KWWWWWWWWK','.KKKWWKKK.','...KWK....','...KK.....',E,E],
 vote:['...KKKK...','...KWWK...','...KRWK...','KKKKWWKKKK','KOOKKKKOOK','KOOOOOOOOK','KOOOOOOOOK','KooooooooK','KKKKKKKKKK',E],
 knife:['....KK....','...KSWK...','...KSWK...','...KSWK...','...KSWK...','.KKKSWKKK.','.KggggggK.','.KKKooKKK.','...KooK...','...KKKK...'],
@@ -44,8 +44,8 @@ right:[E,'..KK......','..KgKK....','..KgggKK..','..KgggggK.','..KgggggK.','..Kgg
 check:[E,'........KK','.......KEK','......KEEK','.KK..KEEK.','KEEKKEEK..','KEEEEEK...','.KEEEK....','..KKK.....',E],
 cross:[E,'.KK....KK.','KRRK..KRRK','.KRRKKRRK.','..KRRRRK..','..KRRRRK..','.KRRKKRRK.','KRRK..KRRK','.KK....KK.',E],
 google:['...RRRR...','.RRRRRRRR.','RRR....RR.','GG........','GG...BBBBB','GG...BBBBB','EE......BB','EEE....BBB','.EEEEEEBB.','...EEEE...'],
-bag:['...KKKK...','..KK..KK..','.KKKKKKKK.','.KRRRRRRK.','.KRRRRRRK.','.KRRGGRRK.','.KRRGGRRK.','.KRRRRRrK.','.KrrrrrrK.','.KKKKKKKK.'],
-shirt:[E,'.KKK..KKK.','KLLLKKLLLK','KLLLLLLLLK','.KKLLLLKK.','..KLLLLK..','..KLLLLK..','..KLLLBK..','..KBBBBK..','..KKKKKK..'],
+bag:['................','.KKKKKKKKKKKKKK.','KRRRWWWRRWWWRRRK','KRRRWWWRRWWWRRRK','KrrrSSSrrSSSrrrK','.KrKKSKKKKSKKrK.','..KOhhhhhhhhOK..','..KOhhhhhhhhOK..','..KOhhhhhhhhOK..','.KKKKKKKKKKKKKK.','.KPPPPPPPPPPPPK.','.KOOOOGGGGOOOOK.','.KOOOOGYGGOOOOK.','.KooooggggooooK.','.KKKKKKKKKKKKKK.','................'],
+shirt:['................','....KK....KK....','...KLBK..KBBK...','..KKLBBKKBBBKK..','.KLBBBBBBBBBBBK.','KLBBBBBBBBBBBBbK','KBBBBBBBBBBBBbbK','.KKKBBBBBBBbKKK.','...KBBBBBBBbK...','...KBBBBBBBbK...','...KBBBBBBBbK...','...KBBBBBBbbK...','...KbbbbbbbbK...','...KKKKKKKKKK...','................','................'],
 help:[E,'...KKKK...','..KWWWWK..','.KWWKKWWK.','.KKK.KWWK.','....KWWK..','...KWWK...','...KKKK...','...KWWK...','...KKKK...'],
 crossk:[E,'.KK....KK.','KKKK..KKKK','.KKKKKKKK.','..KKKKKK..','..KKKKKK..','.KKKKKKKK.','KKKK..KKKK','.KK....KK.',E],
 skip:[E,E,'KK...KK...','KgKK.KgKK.','KgggKKgggK','KgggKKgggK','KgKK.KgKK.','KK...KK...',E,E],
@@ -61,13 +61,15 @@ ICONS.up=[...ICONS.down].reverse();
 const URLS={};
 function url(name){
   if(URLS[name])return URLS[name];
-  const g=ICONS[name],c=document.createElement('canvas');c.width=c.height=GRID;const x=c.getContext('2d');
+  const g=ICONS[name],c=document.createElement('canvas');c.width=c.height=g.length;   // most icons are 10 by 10; the newer shaded ones are 16 by 16
+ const x=c.getContext('2d');
   g.forEach((row,y)=>[...row].forEach((ch,i)=>{if(ch==='.')return;x.fillStyle=PAL[ch]||'#f0f';x.fillRect(i,y,1,1);}));
   return URLS[name]=c.toDataURL();
 }
 // ic('lock') -> an <img> at button size; ic('skull',3) for headings; pass 'solo' or 'after' as the third argument
 // for an icon on its own, or one that comes after its label
 window.ic=function(name,scale,cls){const s=Math.max(2,scale||2);if(!ICONS[name])return'';
-  return `<img class="ic${cls?' '+cls:''}" src="${url(name)}" width="${GRID*s}" height="${GRID*s}" alt="">`;};
+  const n=ICONS[name].length,px=n>GRID?Math.max(1,s-1):s;   // a 16-grid icon at scale 3 is 32px (2px pixels), beside 30px for the 10-grid ones
+  return `<img class="ic${cls?' '+cls:''}" src="${url(name)}" width="${n*px}" height="${n*px}" alt="">`;};
 window.M2_ICONS=ICONS;
 })();
