@@ -928,7 +928,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121749'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121750'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3275,10 +3275,12 @@ async function homeDo(fn,errEl,btn,txt){if(NET.busy)return;NET.busy=true;homeMsg
   try{await fn();}catch(e){console.warn('net',e);NET.on=false;const w=netWhy(e);homeMsg(w,true);if(errEl)errEl.textContent=w;}done();NET.busy=false;}
 scenes.home={hud:'#homeHud',
   enter(){document.documentElement.style.setProperty('--accent','#4a7bd0');paintCoins();homePaint();homeMsg('');},
-  frame(dt,t){const a=t*.00016;view(IMG.town,280+Math.round(Math.cos(a)*26),412+Math.round(Math.sin(a*1.4)*12),176,{loose:true});
-    fireflies(t,[150,250,260,230]);townLights(t,{},'win');
-    const me={name:PEOPLE[0].skin,x:280,y:372,t,dir:'front',tint:'#2a2f7a|0.12',lift:Math.abs(Math.sin(t*.004))*2};
-    const hits=drawScene([me],TOWN.occ,IMG.town);townLights(t,{},'rest');rain(dt);present();nameTag(hits.get(me),myName,'#ffd25e');}};
+  /* the old lobby picture (his call, 12 Nov): you, standing on the porch of your cabin */
+  frame(dt,t){view(IMG.town,280,112,120);
+    fireflies(t,[220,60,120,90]);townLights(t,{},'win');
+    const hit=drawChar({name:PEOPLE[0].skin,x:280,y:118,t,tint:'#2a2f7a|0.12'});
+    townLights(t,{},'rest');lights([[280,98,40,'255,200,130',.22,1]],t);
+    drawPuffs(dt);rain(dt);present();nameTag(hit,myName,'#ffd25e');}};
 $('#homeCreate').onclick=()=>homeDo(netCreate,null,$('#homeCreate'),'Creating…');
 $('#homeJoin').onclick=()=>{$('#joinErr').textContent='';$('#joinIn').value='';$('#joinModal').classList.add('on');$('#joinIn').focus();};
 $('#joinX').onclick=()=>$('#joinModal').classList.remove('on');
