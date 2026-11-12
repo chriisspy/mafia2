@@ -331,7 +331,15 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .hbig:active{transform:translateY(3px);box-shadow:inset 0 -2px 0 #0002,0 1px 0 #0009}
 .hlink.sure{color:#b3261e;opacity:1}
 .hlink{display:block;margin:6px auto 0;background:none;border:0;font:600 13px "Pixelify Sans";color:var(--text);opacity:.75;text-decoration:underline;cursor:pointer}
-#homeMsg{text-align:center;font-size:14px;font-weight:600;min-height:18px;margin-top:8px}#homeMsg.bad{color:#b3261e}
+#homeMsg{text-align:center;font-size:14px;font-weight:600;min-height:18px;margin-top:8px}#homeMsg.bad{color:#b3261e}#homeMsg.good{color:#2f7a45;animation:hFade .4s both}
+.gbtn{position:relative;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:10px;font:700 17px "Pixelify Sans";padding:8px 8px 11px;border-radius:6px;border:3px solid #1a1430;background:#fff;color:#1a1430;box-shadow:inset 0 -4px 0 #d9d4c4,0 3px 0 #0009;cursor:pointer;transition:transform .06s}
+.gbtn:active{transform:translateY(2px)}.gbtn small{font-size:12px;font-weight:600;opacity:.7;margin-left:4px}
+.gbtn.in{background:#dff5e3;border-color:#2f7a45;color:#1f5a31;box-shadow:inset 0 -4px 0 #b9e3c2,0 3px 0 #0009}
+.gbtn.sure{background:#e4544f;border-color:#6b1416;color:#fff;box-shadow:inset 0 -4px 0 #a92b2c,0 3px 0 #0009}
+.gbtn.yay{animation:gYay .7s cubic-bezier(.3,1.7,.5,1)}
+@keyframes gYay{0%{transform:scale(.6)}45%{transform:scale(1.1)}100%{transform:none}}
+.gbtn .spk{position:absolute;left:50%;top:50%;width:6px;height:6px;pointer-events:none;animation:gSpk .75s ease-out forwards}
+@keyframes gSpk{0%{transform:translate(-50%,-50%);opacity:1}80%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy)));opacity:0}}
 .hin{width:100%;font:700 24px "Pixelify Sans";text-align:center;padding:8px;border:3px solid var(--wood);border-radius:5px;background:#fff6df;color:var(--text);margin-top:10px}
 .hin.code{text-transform:uppercase;letter-spacing:10px;font-size:32px}
 #joinErr{min-height:17px;margin-top:6px;font-weight:600}
@@ -395,8 +403,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
         <button class="btn dark lob" id="homeColl"><i data-ic="hanger" data-c="solo"></i>Collection</button>
         <span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span>
       </div>
+      <button class="gbtn" id="homeAcct">Sign in with Google</button>
       <div id="homeMsg"></div>
-      <button class="hlink" id="homeAcct">Sign in with Google to keep your coins</button>
       <button class="hlink" id="homeHow">How to play</button>
       <button class="hlink" id="homeBots">Practice town with bots</button>
     </div></div>
@@ -623,7 +631,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </nav>
 </div>
 
-<script src="icons.js?v=11121459"></script>
+<script src="icons.js?v=11121504"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -678,7 +686,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121459'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121504'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -2933,7 +2941,11 @@ $('#gameLeave').onclick=()=>{const b=$('#gameLeave');if(!b.classList.contains('s
 /* ---- the account: a Google sign-in that keeps the wallet ---- */
 const acctUser=()=>{const u=NET.auth&&NET.auth.currentUser;return u&&!u.isAnonymous?u:null;};
 function acctUI(){const u=acctUser(),b=$('#homeAcct');if(!b)return;const g=u&&(u.providerData||[]).find(q=>q&&q.providerId==='google.com');
-  b.textContent=u?`Signed in as ${(g&&g.displayName)||u.displayName||'you'} · Sign out`:'Sign in with Google to keep your coins';b.classList.remove('sure');}
+  b.className='gbtn'+(u?' in':'');b.innerHTML=u?`${ic('check',2,'solo')}<span>Signed in as ${esc(((g&&g.displayName)||u.displayName||'you').split(' ')[0])}</span><small>Sign out</small>`:`${ic('google',2,'solo')}<span>Sign in with Google</span>`;}
+// it worked: the chip pops and throws out a ring of green and gold pixels
+function acctYay(){const b=$('#homeAcct');b.classList.remove('yay');void b.offsetWidth;b.classList.add('yay');
+  for(let k=0;k<14;k++){const i=document.createElement('i'),a=k/14*Math.PI*2,r=60+Math.random()*50;i.className='spk';i.style.background=['#5fc46f','#ffd25e','#2f7a45','#fff2a8'][k%4];
+    i.style.setProperty('--dx',Math.round(Math.cos(a)*r*1.6)+'px');i.style.setProperty('--dy',Math.round(Math.sin(a)*r*.7)+'px');b.appendChild(i);setTimeout(()=>i.remove(),800);}}
 async function acctSync(){const u=acctUser();if(!u)return;const s=(await NET.db.ref('users/'+u.uid).get()).val();let lt=0,acct='';try{lt=+localStorage.getItem('m2_wts')||0;acct=localStorage.getItem('m2_acct')||'';}catch(e){}
   if(s){(s.owned||[]).forEach(id=>{if(SKINS.some(k=>k.id===id))OWNED.add(id);});
     if(acct!==u.uid)coins=Math.max(coins,+s.coins||0);                                         // the first time this account is on this phone
@@ -2942,15 +2954,16 @@ async function acctSync(){const u=acctUser();if(!u)return;const s=(await NET.db.
 function acctWhy(e){const c=String(e&&e.code||e);return/operation-not-allowed|configuration-not-found/.test(c)?'Google sign-in is not switched on yet.':/unauthorized-domain/.test(c)?'This website is not allowed in Firebase yet.':/popup-blocked/.test(c)?'Your browser blocked the sign-in window. Allow pop-ups and try again.':/popup-closed|cancelled-popup/.test(c)?'':'Could not sign in. Try again.';}
 $('#homeAcct').onclick=async()=>{const b=$('#homeAcct'),a=NET.auth;if(NET.on||NET.busy)return;
   if(!a){homeMsg('Connecting… tap again in a moment.');netLoad().then(acctUI).catch(()=>homeMsg('No internet. Try again.',true));return;}
-  if(acctUser()){if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='Tap again to sign out';clearTimeout(b.t);b.t=setTimeout(acctUI,3000);return;}
+  if(acctUser()){if(!b.classList.contains('sure')){b.className='gbtn sure';b.textContent='Tap again to sign out';clearTimeout(b.t);b.t=setTimeout(acctUI,3000);return;}
+    clearTimeout(b.t);
     try{await a.signOut();NET.uid=(await a.signInAnonymously()).user.uid;localStorage.removeItem('m2_acct');}catch(e){}acctUI();homeMsg('Signed out. This phone keeps its own coins.');return;}
   try{const prov=new firebase.auth.GoogleAuthProvider();
     try{await a.currentUser.linkWithPopup(prov);}catch(e){if(e&&e.code==='auth/credential-already-in-use'&&e.credential)await a.signInWithCredential(e.credential);else throw e;}   // used before on another phone: switch to that account
-    NET.uid=a.currentUser.uid;await acctSync();acctUI();homeMsg('Signed in. Your coins and outfits are saved.');}
+    NET.uid=a.currentUser.uid;await acctSync();acctUI();acctYay();homeMsg('Signed in. Your coins and outfits are saved.','good');}
   catch(e){console.warn('sign-in',e);const w=acctWhy(e);homeMsg(w,!!w);}};
 /* ---- the welcome screen ---- */
 function homePaint(){if(!SP[PEOPLE[0].skin])return;$('#homeFace').src=face(PEOPLE[0].skin);$('#homeNameT').textContent=myName;}
-function homeMsg(t,bad){const e=$('#homeMsg');e.textContent=t||'';e.className=bad?'bad':'';}
+function homeMsg(t,bad){const e=$('#homeMsg');e.textContent=t||'';e.className='';void e.offsetWidth;e.className=bad===true?'bad':bad||'';}
 function netWhy(e){const c=String((e&&(e.code||''))+' '+(e&&e.message||e));
   if(/PERMISSION_DENIED|permission_denied|operation-not-allowed|admin-restricted|configuration-not-found/i.test(c))return'The server is not switched on yet.';
   if(/offline|network|fetch/i.test(c))return'No internet. Try again.';
