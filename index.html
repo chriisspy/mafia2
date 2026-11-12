@@ -359,10 +359,10 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #joinErr{min-height:17px;margin-top:6px;font-weight:600}
 #townLeave{position:absolute;left:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
 #townCodeBox{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);display:none;flex-direction:column;align-items:center;padding:4px 16px 6px;cursor:pointer;font-family:inherit;z-index:21;min-width:150px}
-#townHud.net #townCodeBox{display:flex}#townHud.net .banner{top:calc(96px + env(safe-area-inset-top))}#townHud.net #townCode{display:none}
+#townHud.net #townCodeBox{display:flex}#townHud.net .banner{top:calc(86px + env(safe-area-inset-top))}#townHud.net #townCode{display:none}
 #townCodeBox small{font-size:10px;letter-spacing:3px;opacity:.7;line-height:1.2}#townCodeBox b{font-size:34px;letter-spacing:8px;margin-right:-8px;line-height:1}
 #townCodeBox i{font-style:normal;font-size:9px;letter-spacing:2px;opacity:.55;line-height:1.3}
-#townCodeBox.ok{border-color:#2f7a45;background:#dff5e3}#townCodeBox.ok b{color:#2f7a45;font-size:26px;letter-spacing:3px;margin-right:-3px;line-height:34px;animation:gYay .35s cubic-bezier(.3,1.7,.5,1)}
+#townCodeBox.ok{border-color:#2f7a45;background:#dff5e3;color:#1f5a31;box-shadow:inset 0 0 0 3px #7fc98f,inset 0 -6px 0 #b9e3c2,0 5px 0 #0008}#townCodeBox.ok b{color:#2f7a45;font-size:26px;letter-spacing:3px;margin-right:-3px;line-height:34px;animation:gYay .35s cubic-bezier(.3,1.7,.5,1)}
 /* a button that is busy: its words change ("Creating…") and it breathes very gently */
 .busy{pointer-events:none;animation:busyP 1.1s ease-in-out infinite}
 @keyframes busyP{0%,100%{opacity:1}50%{opacity:.72}}
@@ -475,7 +475,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <!-- WAITING LOBBY: the town, before the game starts -->
   <div class="hud" id="townHud">
     <button class="btn dark" id="townLeave">Leave</button>
-    <button class="panel" id="townCodeBox"><small>LOBBY CODE</small><b id="townCodeT">ABCD</b><i>TAP TO COPY</i></button>
+    <button class="panel" id="townCodeBox"><small>LOBBY CODE</small><b id="townCodeT">ABCD</b></button>
     <div class="title banner"><small id="townCode">PRACTICE TOWN</small>THE TOWN<div class="tcount" id="townCount"></div></div>
     <div id="townMenu"><button class="btn" data-a="punch" title="Punch"><i data-ic="fist" data-s="3" data-c="solo"></i></button><button class="btn" data-a="five" title="High five"><i data-ic="hand" data-s="3" data-c="solo"></i></button></div>
     <div id="townToast"></div>
@@ -722,7 +722,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121529'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121531'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
