@@ -117,10 +117,13 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .ocard.lock{background:#cfc5ae}.ocard.lock>img{filter:brightness(0);opacity:.5}
 .ocard.sel{background:#fff;box-shadow:0 0 0 3px var(--ink),0 2px 0 #0004}
 .ocard.sel:after{content:"WEARING";position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:1px;background:var(--ink);color:#fff;padding:1px 5px;border-radius:2px}
+.ocard.rm.sel:after{content:"YOURS"}
 .ocard.no{animation:ocNo .3s steps(4)}@keyframes ocNo{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 .casecard{display:flex;gap:12px;align-items:center;background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-radius:5px;padding:10px;box-shadow:inset 0 -4px 0 #1b1532}
 .odds{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}.odds .rar{font-size:10px;padding:1px 4px}
 .ccard{position:relative;background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-radius:6px;padding:10px;margin-top:10px;box-shadow:inset 0 -5px 0 #1b1532,0 3px 0 #0006;overflow:hidden}
+#ccCabin{border-color:#c98a4b;box-shadow:inset 0 -5px 0 #1b1532,0 0 0 3px #1a1430,0 4px 0 3px #0006}
+#reel .rc img.rm{width:58px;height:50px;margin:0;object-fit:cover}
 #ccMafia{border-color:#ffd25e;box-shadow:inset 0 -5px 0 #1b1532,0 0 0 3px #1a1430,0 4px 0 3px #0006}
 .ctop{display:flex;align-items:center;gap:10px}
 .ccv{width:144px;height:126px;flex:none;image-rendering:pixelated;margin:-8px -4px -6px -10px}
@@ -145,7 +148,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #reel .rc img{width:48px;height:48px;image-rendering:pixelated;display:block;margin:2px auto 0}
 #reel .rc i{display:block;height:10px;background:var(--rc)}
 #reelBox .mark{position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1px;background:var(--gold);box-shadow:0 0 0 1px #1a1430}
-#caseResult{text-align:center;margin-top:4px;min-height:0;font-size:17px;font-weight:700}#caseResult:empty{display:none}
+#caseResult,#cabResult{text-align:center;margin-top:4px;min-height:0;font-size:17px;font-weight:700}#caseResult:empty,#cabResult:empty{display:none}
 #caseResult .btn{margin-left:8px;font-size:14px;padding:4px 10px}
 #winFx{position:absolute;inset:0;z-index:30;display:none;overflow:hidden;background:rgba(8,6,20,.88);--rc:#7bc96f;cursor:pointer}
 #winFx.on{display:block}
@@ -640,6 +643,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <div class="mhead"><b>COLLECTION</b><span class="small" id="collCount"></span><button class="btn" id="collX"><i data-ic="cross" data-c="solo"></i></button></div>
       <div class="small" style="margin-bottom:8px">Tap an outfit to wear it. Locked ones come from the Mafia Case.</div>
       <div class="ogrid" id="collGrid"></div>
+      <div class="small" style="margin:14px 0 8px"><b>CABIN ROOMS</b> · tap one to move in. Locked ones come from the Cabin Case.</div>
+      <div class="ogrid" id="roomGrid"></div>
       <div class="row" style="justify-content:center;margin-top:12px"><button class="btn" id="collAll">Unlock all (test)</button></div>
     </div>
     <div class="modal big panel" id="shopModal">
@@ -652,8 +657,14 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
         <div id="caseResult"></div>
         <div class="cin"><small>WHAT'S INSIDE</small><div id="caseItems"></div></div>
       </div>
-      <div class="ccard soon"><div class="ctop"><canvas class="ccv" id="ccvCabin" width="96" height="84"></canvas>
-          <div class="cinfo"><b>CABIN CASE</b><div class="small">New looks for your cabin.</div></div></div><span class="csoon"><i data-ic="lock" data-c="solo"></i>COMING SOON</span></div>
+      <div class="ccard" id="ccCabin">
+        <div class="ctop"><canvas class="ccv" id="ccvCabin" width="96" height="84"></canvas>
+          <div class="cinfo"><b>CABIN CASE</b><div class="small">One random room for the inside of your cabin. A double pays some coins back.</div>
+</div></div>
+        <button class="btn red copen" id="cabOpen">Open</button>
+        <div id="cabResult"></div>
+        <div class="cin"><small>WHAT'S INSIDE</small><div id="cabItems"></div></div>
+      </div>
       <div class="ccard soon"><div class="ctop"><canvas class="ccv dark" id="ccvMyst" width="96" height="84"></canvas>
           <div class="cinfo"><b>? ? ?</b><div class="small">Something else is on its way.</div></div></div><span class="csoon"><i data-ic="lock" data-c="solo"></i>COMING SOON</span></div>
       <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="coinTest">+500 test coins</button></div>
@@ -876,11 +887,27 @@ const SKINS=[
   {id:'batman',name:'Batman',rar:'legendary',locked:true,from:'Mafia Case'},{id:'sheik',name:'Sheik Osama',rar:'legendary'}];
 {const RO=['common','rare','epic','legendary'];SKINS.sort((a,b)=>RO.indexOf(a.rar)-RO.indexOf(b.rar));} // always listed Common, Rare, Epic, Legendary (lobby arrows, Collection, Shop)
 SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
-const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
+const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121656'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121716'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
+/* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
+   Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
+   Higgsfield pictures by tools/make_rooms.py). The game cuts the furniture out of that picture itself with the masks of
+   the base pieces, so every theme has exactly the same cut-outs. 'lit' is that room's light: the colour of the fire glow,
+   the two bedside lamps and the floor lamp, and how strong each is (bright rooms need less, or they wash out).
+   Your room is myRoom (m2_room on the phone, 'room' in users/{uid} and in your player node, so others see it). */
+const ROOMS=[
+  {id:'r_classic', name:'Classic',  rar:'common',   base:true,art:'assets/rooms/classic.png',  lit:{fire:'255,130,40',fk:1,  lamp:'255,210,140',lk:1,  fl:'170,255,170',flk:1}},
+  {id:'r_eggshell',name:'Eggshell', rar:'common',   art:'assets/rooms/eggshell.png', lit:{fire:'255,150,70',fk:.5, lamp:'255,225,170',lk:.5, fl:'255,235,200',flk:.6}},
+  {id:'r_candy',   name:'Candy',    rar:'common',   art:'assets/rooms/candy.png',    lit:{fire:'255,140,90',fk:.5, lamp:'150,255,200',lk:.55,fl:'150,255,200',flk:.8}},
+  {id:'r_christmas',name:'Christmas',rar:'rare',    art:'assets/rooms/christmas.png',lit:{fire:'255,130,40',fk:1,  lamp:'255,215,150',lk:1,  fl:'255,80,60',  flk:1.3}},
+  {id:'r_midnight',name:'Midnight', rar:'rare',     art:'assets/rooms/midnight.png', lit:{fire:'255,130,40',fk:.85,lamp:'130,160,255',lk:.45,fl:'130,160,255',flk:.7}},
+  {id:'r_royal',   name:'Royal',    rar:'epic',     art:'assets/rooms/royal.png',    lit:{fire:'255,150,50',fk:.9, lamp:'200,120,255',lk:.9, fl:'255,200,90', flk:1.6}},
+  {id:'r_haunted', name:'Haunted',  rar:'legendary',art:'assets/rooms/haunted.png',  lit:{fire:'70,255,120', fk:1.1,lamp:'80,255,130', lk:1.25,fl:'150,255,170',flk:.6,green:true,hearth:'#07180c'}}];
+const ROOM_BY=Object.fromEntries(ROOMS.map(r=>[r.id,r]));
+const thumb=s=>s.art?s.art.replace('.png','-t.png')+'?v='+BUILD:face(s.id);   /* rooms: a square zoomed in on the bed */   /* the little picture of a prize: a room's own picture, or an outfit's face */
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
 /* ---------- THE PIXEL GRID ----------
@@ -1221,23 +1248,31 @@ $('#skinNext').onclick=()=>{skinIdx=(skinIdx+1)%SKINS.length;if(OWNED.has(SKINS[
    Lab only: these coins and unlocks live on this phone (m2_coins / m2_owned / m2_skin). The real game will use the
    main app's coins. A case costs CASE.price; a double pays CASE.dupe of that back (same rule as the main app's cases). */
 const RAR_COL={common:'#7bc96f',rare:'#6fb5ff',epic:'#c58bff',legendary:'#ffcf4a'};
-const CASE={price:300,odds:{common:.55,rare:.3,epic:.12,legendary:.03},dupe:.4,busy:false};
-let coins=1200;
-try{const o=JSON.parse(localStorage.getItem('m2_owned')||'null');if(Array.isArray(o))o.forEach(id=>{if(SKINS.some(s=>s.id===id))OWNED.add(id);});
+const CASE_DEF={mafia:{price:300,odds:{common:.55,rare:.3,epic:.12,legendary:.03},pool:()=>SKINS,sheet:'caseSheet'},
+  cabin:{price:400,odds:{common:.5,rare:.32,epic:.13,legendary:.05},pool:()=>ROOMS.filter(r=>!r.base),sheet:'cabinOpen'}};
+/* CASE.kind is the case being opened; price, odds and pool read from it */
+const CASE={kind:'mafia',dupe:.4,busy:false,get price(){return CASE_DEF[CASE.kind].price;},get odds(){return CASE_DEF[CASE.kind].odds;},get pool(){return CASE_DEF[CASE.kind].pool();}};
+const caseRes=()=>$(CASE.kind==='cabin'?'#cabResult':'#caseResult');
+let coins=1200,myRoom='r_classic';
+try{const o=JSON.parse(localStorage.getItem('m2_owned')||'null');if(Array.isArray(o))o.forEach(id=>{if(SKINS.some(s=>s.id===id)||ROOM_BY[id])OWNED.add(id);});
+  const rm=localStorage.getItem('m2_room');if(rm&&ROOM_BY[rm]&&OWNED.has(rm))myRoom=rm;
   const c=localStorage.getItem('m2_coins');if(c!=null&&!isNaN(+c))coins=+c;
   const k=localStorage.getItem('m2_skin');if(k&&OWNED.has(k)){PEOPLE[0].skin=k;skinIdx=SKINS.findIndex(s=>s.id===k);}}catch(e){}
-function saveInv(){try{localStorage.setItem('m2_owned',JSON.stringify([...OWNED]));localStorage.setItem('m2_coins',String(coins));localStorage.setItem('m2_skin',PEOPLE[0].skin);}catch(e){}if(typeof homePaint==='function'){try{localStorage.setItem('m2_wts',String(Date.now()+NET.off));}catch(e){}homePaint();netProfile();}}
+function saveInv(){try{localStorage.setItem('m2_owned',JSON.stringify([...OWNED]));localStorage.setItem('m2_coins',String(coins));localStorage.setItem('m2_skin',PEOPLE[0].skin);localStorage.setItem('m2_room',myRoom);}catch(e){}if(typeof homePaint==='function'){try{localStorage.setItem('m2_wts',String(Date.now()+NET.off));}catch(e){}homePaint();netProfile();}}
 function paintCoins(){document.querySelectorAll('.coinN').forEach(e=>e.textContent=coins);}
 function wear(id){if(!OWNED.has(id))return;PEOPLE[0].skin=id;skinIdx=SKINS.findIndex(s=>s.id===id);paintSkin();puffAt(280,104);saveInv();}
+function setRoom(id){if(!OWNED.has(id)||!ROOM_BY[id])return;myRoom=id;sfx('door');saveInv();}
 function openColl(){const g=$('#collGrid');
   g.innerHTML=SKINS.map(s=>{const own=OWNED.has(s.id);return`<div class="ocard${own?'':' lock'}${own&&PEOPLE[0].skin===s.id?' sel':''}" data-id="${s.id}" style="--rc:${RAR_COL[s.rar]}"><img src="${face(s.id)}" alt=""><span>${own?s.name:'? ? ?'}</span><em>${own?s.rar.toUpperCase():ic('lock',2)}</em></div>`;}).join('');
-  $('#collCount').textContent=`${SKINS.filter(s=>OWNED.has(s.id)).length} / ${SKINS.length}`;$('#collAll').textContent=SKINS.every(s=>OWNED.has(s.id))?'Lock again (test)':'Unlock all (test)';
-  g.querySelectorAll('.ocard').forEach(c=>c.onclick=()=>{if(!OWNED.has(c.dataset.id)){c.classList.remove('no');void c.offsetWidth;c.classList.add('no');return;}wear(c.dataset.id);openColl();});
+  $('#roomGrid').innerHTML=ROOMS.map(s=>{const own=OWNED.has(s.id);return`<div class="ocard rm${own?'':' lock'}${own&&myRoom===s.id?' sel':''}" data-id="${s.id}" style="--rc:${RAR_COL[s.rar]}"><img src="${thumb(s)}" alt=""><span>${own?s.name:'? ? ?'}</span><em>${own?s.rar.toUpperCase():ic('lock',2)}</em></div>`;}).join('');
+  $('#collCount').textContent=`${SKINS.filter(s=>OWNED.has(s.id)).length} / ${SKINS.length}`;$('#collAll').textContent=[...SKINS,...ROOMS].every(s=>OWNED.has(s.id))?'Lock again (test)':'Unlock all (test)';
+  document.querySelectorAll('#collGrid .ocard,#roomGrid .ocard').forEach(c=>c.onclick=()=>{if(!OWNED.has(c.dataset.id)){c.classList.remove('no');void c.offsetWidth;c.classList.add('no');return;}(c.classList.contains('rm')?setRoom:wear)(c.dataset.id);openColl();});
   $('#shopModal').classList.remove('on');$('#collModal').classList.add('on');}
 function paintShop(){paintCoins();
-  // what the case holds, a row for each rarity with its odds; the ones you own are lit
-  $('#caseItems').innerHTML=Object.entries(CASE.odds).map(([r,q])=>`<div class="crow"><span class="rar ${r==='common'?'':r}">${r.toUpperCase()} ${Math.round(q*100)}%</span>${SKINS.filter(s=>s.rar===r).map(s=>`<img class="${OWNED.has(s.id)?'':'lock'}" src="${face(s.id)}" style="--rc:${RAR_COL[s.rar]}" alt="">`).join('')}</div>`).join('');
-  const b=$('#caseOpen');b.innerHTML=ic('coin',2)+' Open · '+CASE.price;b.disabled=CASE.busy||coins<CASE.price;}
+  /* what each case holds, a row for each rarity with its odds; the ones you own are lit */
+  for(const[k,box,btn]of[['mafia','#caseItems','#caseOpen'],['cabin','#cabItems','#cabOpen']]){const D=CASE_DEF[k];
+    $(box).innerHTML=Object.entries(D.odds).map(([r,q])=>`<div class="crow"><span class="rar ${r==='common'?'':r}">${r.toUpperCase()} ${Math.round(q*100)}%</span>${D.pool().filter(s=>s.rar===r).map(s=>`<img class="${s.art?'rm ':''}${OWNED.has(s.id)?'':'lock'}" src="${thumb(s)}" style="--rc:${RAR_COL[s.rar]}" alt="">`).join('')}</div>`).join('');
+    const b=$(btn);b.innerHTML=ic('coin',2)+' Open · '+D.price;b.disabled=CASE.busy||coins<D.price;}}
 // the cases in the shop are alive: each bobs, its latch rattles every few seconds, and little stars wink round it
 const SHOP={raf:0};
 function shopCase(cv,img,t,o){const x=cv.getContext('2d'),W=cv.width,H=cv.height;x.imageSmoothingEnabled=false;x.clearRect(0,0,W,H);if(!img)return;
@@ -1247,21 +1282,21 @@ function shopCase(cv,img,t,o){const x=cv.getContext('2d'),W=cv.width,H=cv.height
   if(live)for(let k=0;k<5;k++){const ph=(t*.9+k*.37)%1,r=Math.round(Math.sin(ph*Math.PI)*2.4),sx=[8,86,16,80,48][k],sy=[22,18,66,60,6][k];if(r<1)continue;
     x.fillStyle=k%2?'#ffffff':'#ffd95e';x.fillRect(sx-r,sy,2*r+1,1);x.fillRect(sx,sy-r,1,2*r+1);}}
 function shopLoop(now){if(!$('#shopModal').classList.contains('on')){SHOP.raf=0;return;}const t=now/1000;
-  shopCase($('#ccvMafia'),IMG.caseSheet,t,{ph:0,frames:13});shopCase($('#ccvCabin'),IMG.cabinCase,t,{ph:2,frames:1,still:true});shopCase($('#ccvMyst'),IMG.caseSheet,t,{ph:4,frames:1,still:true});
+  shopCase($('#ccvMafia'),IMG.caseSheet,t,{ph:0,frames:13});shopCase($('#ccvCabin'),IMG.cabinOpen,t,{ph:2,frames:13});shopCase($('#ccvMyst'),IMG.caseSheet,t,{ph:4,frames:1,still:true});
   SHOP.raf=requestAnimationFrame(shopLoop);}
-function openShop(){$('#collModal').classList.remove('on');$('#reelBox').classList.remove('on');$('#caseResult').innerHTML='';paintShop();$('#shopModal').classList.add('on');if(!SHOP.raf)SHOP.raf=requestAnimationFrame(shopLoop);}
-function rollCase(){let r=Math.random(),rar='common';for(const[k,q]of Object.entries(CASE.odds)){if(r<q){rar=k;break;}r-=q;}const pool=SKINS.filter(s=>s.rar===rar);return pool[Math.floor(Math.random()*pool.length)];}
-function openCase(){if(CASE.busy||coins<CASE.price)return;coins-=CASE.price;CASE.busy=true;saveInv();paintShop();
+function openShop(){$('#collModal').classList.remove('on');$('#reelBox').classList.remove('on');document.querySelectorAll('#caseResult,#cabResult').forEach(e=>e.innerHTML='');paintShop();$('#shopModal').classList.add('on');if(!SHOP.raf)SHOP.raf=requestAnimationFrame(shopLoop);}
+function rollCase(){let r=Math.random(),rar='common';for(const[k,q]of Object.entries(CASE.odds)){if(r<q){rar=k;break;}r-=q;}const pool=CASE.pool.filter(s=>s.rar===rar);return pool[Math.floor(Math.random()*pool.length)];}
+function openCase(kind){if(CASE.busy)return;if(typeof kind==='string')CASE.kind=kind;if(coins<CASE.price)return;coins-=CASE.price;CASE.busy=true;saveInv();paintShop();
   const win=rollCase(),WIN=30,strip=[];for(let i=0;i<36;i++)strip.push(i===WIN?win:rollCase());
-  const reel=$('#reel'),box=$('#reelBox');$('#caseResult').innerHTML='';
-  reel.innerHTML=strip.map(s=>`<div class="rc" style="--rc:${RAR_COL[s.rar]}"><img src="${face(s.id)}" alt=""><i></i></div>`).join('');reel.style.transform='translateX(0)';
+  const reel=$('#reel'),box=$('#reelBox');caseRes().innerHTML='';
+  reel.innerHTML=strip.map(s=>`<div class="rc" style="--rc:${RAR_COL[s.rar]}"><img${s.art?' class="rm"':''} src="${thumb(s)}" alt=""><i></i></div>`).join('');reel.style.transform='translateX(0)';
   caseFilm(()=>{box.classList.add('on');
   const el=reel.children[WIN],end=el.offsetLeft+el.offsetWidth/2-box.clientWidth/2+(Math.random()-.5)*36,t0=performance.now(),D=5200;
   // a steady crawl to a stop (ease-out quad): a steeper curve leaves the reel looking frozen before it lands
   const tick=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/D),e=1-(1-k)*(1-k);reel.style.transform=`translateX(${-Math.round(end*e)}px)`;{const ri=Math.floor(end*e/60);if(ri!==CASE.ri){CASE.ri=ri;sfx('tick');}}
     if(k>=1){clearInterval(tick);const dupe=OWNED.has(win.id),back=Math.round(CASE.price*CASE.dupe);
-      if(dupe){coins+=back;$('#caseResult').innerHTML=`${esc(win.name)} again. ${ic('coin',2)} +${back} back`;}
-      else{OWNED.add(win.id);$('#caseResult').innerHTML=`NEW! ${esc(win.name)} <span class="rar ${win.rar==='common'?'':win.rar}">${win.rar.toUpperCase()}</span>`;}
+      if(dupe){coins+=back;caseRes().innerHTML=`${esc(win.name)} again. ${ic('coin',2)} +${back} back`;}
+      else{OWNED.add(win.id);caseRes().innerHTML=`NEW! ${esc(win.name)} <span class="rar ${win.rar==='common'?'':win.rar}">${win.rar.toUpperCase()}</span>`;}
       saveInv();paintSkin();setTimeout(()=>{CASE.busy=false;paintShop();caseFilmEnd();showWin(win,dupe,back);},380);}},16);});}
 /* ---------- OPENING A CASE: a little film ----------
    The case (drawn and animated in PixelLab, facing the camera: assets/case/open.png, 13 frames of 96 px) drops in from
@@ -1275,7 +1310,7 @@ function caseFilmEnd(){CF.on=false;clearInterval(CF.tick);$('#caseFx').classList
 $('#caseFx').onclick=()=>{if(CF.on&&CF.t<CF_T.reel-.1)CF.t=CF_T.reel-.1;};
 // HIS RULES (12 Nov): solid, chunky pixel shapes only (no see-through lines, cones or soft rays), the light comes out of the
 // case IN FRONT of the lid, the case faces the camera, and the scene fills the whole screen.
-function caseFilm(startReel){const el=$('#caseFx'),c=$('#caseCv'),x=c.getContext('2d'),im=IMG.caseSheet,A=CASE_ART;
+function caseFilm(startReel){const el=$('#caseFx'),c=$('#caseCv'),x=c.getContext('2d'),im=IMG[CASE_DEF[CASE.kind].sheet]||IMG.caseSheet,A=CASE_ART;
   el.classList.add('on');$('#reelBox').classList.remove('on');$('#caseSkip').style.display='';
   const LW=180,LH=Math.max(200,Math.round(LW*el.clientHeight/el.clientWidth));c.width=LW;c.height=LH;x.imageSmoothingEnabled=false;
   const NF=Math.round(im.width/96),cx=LW/2,fy0=Math.round(LH*.6);
@@ -1339,14 +1374,14 @@ const WIN_FX={
   epic:     {ray:.5, ray2:.2, flash:.55,sh:7, burst:100,rain:.5, spark:1.1,glow:46,glint:1, delay:.5, pop:.6, word:5},
   legendary:{ray:.75,ray2:.4, flash:.95,sh:13,burst:210,rain:1.3,spark:2,  glow:70,glint:1, delay:1.1,pop:.75,word:6}};
 const WIN={on:false,parts:[],timer:0,item:null};
-function showWin(item,dupe,back){sfx(item.rar==='common'?'prize':'rare');const el=$('#winFx'),fx=WIN_FX[item.rar],col=RAR_COL[item.rar],src=SP[item.id].front.frames[0][0];
+function showWin(item,dupe,back){sfx(item.rar==='common'?'prize':'rare');const el=$('#winFx'),fx=WIN_FX[item.rar],col=RAR_COL[item.rar],src=item.art?null:SP[item.id].front.frames[0][0];
   WIN.item=item;WIN.on=true;WIN.parts=[];el.classList.remove('on','shake');void el.offsetWidth;
   for(const[k,v]of Object.entries({rc:col,ray:fx.ray,ray2:fx.ray2,flash:fx.flash,sh:fx.sh+'px',glow:fx.glow+'px',glint:fx.glint,delay:fx.delay+'s',pop:fx.pop+'s'}))el.style.setProperty('--'+k,v);
-  const im=$('#winImg');im.src=src.toDataURL();im.style.width=src.width*4+'px';im.style.height=src.height*4+'px';
+  const im=$('#winImg');if(item.art){im.src=thumb(item);im.style.width='152px';im.style.height='152px';}else{im.src=src.toDataURL();im.style.width=src.width*4+'px';im.style.height=src.height*4+'px';}
   $('#winName').textContent=item.name;const r=$('#winRar');r.textContent=item.rar.toUpperCase();r.className='rar '+(item.rar==='common'?'':item.rar);
-  $('#winSub').innerHTML=dupe?`You already have this. ${ic('coin',2)} +${back} back`:'New outfit unlocked';
+  $('#winSub').innerHTML=dupe?`You already have this. ${ic('coin',2)} +${back} back`:item.art?'New room unlocked':'New outfit unlocked';
   $('#winWord').innerHTML=fx.word?pxWord(item.rar,fx.word,item.rar,fx.delay+.1):'';
-  $('#winEquip').style.display=PEOPLE[0].skin===item.id?'none':'';
+  $('#winEquip').style.display=(item.art?myRoom:PEOPLE[0].skin)===item.id?'none':'';
   const again=$('#winAgain');again.style.display='';again.innerHTML=ic('coin',2)+' Open case · '+CASE.price;again.disabled=coins<CASE.price;
   el.classList.add('on');
   // pixel confetti on a small canvas (3 screen pixels per dot, like the rest of the game)
@@ -1367,14 +1402,14 @@ function showWin(item,dupe,back){sfx(item.rar==='common'?'prize':'rare');const e
     g.globalAlpha=1;},33);}
 function closeWin(){if(!WIN.on)return;WIN.on=false;clearInterval(WIN.timer);$('#winFx').classList.remove('on','shake');paintShop();}
 $('#winFx').onclick=closeWin;
-$('#winEquip').onclick=e=>{e.stopPropagation();wear(WIN.item.id);closeWin();$('#caseResult').innerHTML=`You are wearing ${esc(WIN.item.name)}.`;};
+$('#winEquip').onclick=e=>{e.stopPropagation();const it=WIN.item;(it.art?setRoom:wear)(it.id);closeWin();caseRes().innerHTML=it.art?`You moved into the ${esc(it.name)} room.`:`You are wearing ${esc(it.name)}.`;};
 $('#winAgain').onclick=e=>{e.stopPropagation();closeWin();openCase();};
 $('#shopBtn').onclick=openShop;$('#collBtn').onclick=openColl;$('#shopX').onclick=()=>$('#shopModal').classList.remove('on');$('#collX').onclick=()=>$('#collModal').classList.remove('on');
 // test only: unlock every outfit on this phone, or lock them again (back to the four common ones)
-$('#collAll').onclick=()=>{const all=SKINS.every(s=>OWNED.has(s.id));
-  if(all){OWNED.clear();SKINS.filter(s=>s.rar==='common').forEach(s=>OWNED.add(s.id));if(!OWNED.has(PEOPLE[0].skin))wear(SKINS[0].id);}else SKINS.forEach(s=>OWNED.add(s.id));
+$('#collAll').onclick=()=>{const all=[...SKINS,...ROOMS].every(s=>OWNED.has(s.id));
+  if(all){OWNED.clear();SKINS.filter(s=>s.rar==='common').forEach(s=>OWNED.add(s.id));OWNED.add('r_classic');myRoom='r_classic';if(!OWNED.has(PEOPLE[0].skin))wear(SKINS[0].id);}else[...SKINS,...ROOMS].forEach(s=>OWNED.add(s.id));
   saveInv();paintSkin();openColl();};
-$('#caseOpen').onclick=openCase;$('#coinTest').onclick=()=>{coins+=500;saveInv();paintShop();};
+$('#caseOpen').onclick=()=>openCase('mafia');$('#cabOpen').onclick=()=>openCase('cabin');$('#coinTest').onclick=()=>{coins+=500;saveInv();paintShop();};
 const pk=$('#peekBtn');
 pk.addEventListener('pointerdown',e=>{e.preventDefault();if(!peek){peek=true;puffAt(280,104);}});
 ['pointerup','pointerleave','pointercancel'].forEach(ev=>pk.addEventListener(ev,()=>{if(peek){peek=false;puffAt(280,104);}}));
@@ -1486,13 +1521,29 @@ function buildRoom(){
   for(const[n,m]of Object.entries(OBJ_META))makeObj(n,IMG['obj/'+n],m);
   OBJ.fireplace.after=drawFire;
   ROOM_OBJS=Object.values(OBJ);
+  if(!ROOMSET.r_classic)ROOMSET.r_classic={room:IMG.room,quilt:IMG.quilt,chairback:IMG.chairback,obj:Object.fromEntries(Object.keys(OBJ_META).map(n=>[n,IMG['obj/'+n]]))};
 }
+/* a themed room: every piece is cut from the theme's one picture with the base piece as the mask (same shape, same soft edges) */
+const ROOMSET={};let ROOM_NOW='r_classic',RT=ROOM_BY.r_classic.lit;
+function roomSet(id){if(ROOMSET[id])return ROOMSET[id];const pic=IMG['room/'+id],B=ROOMSET.r_classic;if(!pic||!B)return null;
+  const cut=(mask,ox,oy)=>{const c=mk(mask.width,mask.height),x=c.getContext('2d');x.drawImage(mask,0,0);x.globalCompositeOperation='source-in';x.drawImage(pic,-ox,-oy);return c;};
+  const S={room:pic,quilt:cut(B.quilt,OBJ_META.bed.x,OBJ_META.bed.y),chairback:cut(B.chairback,OBJ_META.chair.x,OBJ_META.chair.y),obj:{}};
+  for(const n of Object.keys(OBJ_META))S.obj[n]=cut(B.obj[n],OBJ_META[n].x,OBJ_META[n].y);
+  return ROOMSET[id]=S;}
+/* call before drawing a room: puts that theme's pictures and light in place (the base room until a theme has loaded) */
+function useRoom(id){const S=ROOM_BY[id]&&roomSet(id),r=S?id:'r_classic';if(r===ROOM_NOW||!ROOMSET.r_classic)return;const Q=S||ROOMSET.r_classic;ROOM_NOW=r;RT=ROOM_BY[r].lit;
+  IMG.room=Q.room;IMG.quilt=Q.quilt;IMG.chairback=Q.chairback;for(const n in Q.obj)if(OBJ[n])OBJ[n].img=Q.obj[n];}
+/* whose room: person 0 is you */
+const roomOf=p=>p===0?myRoom:(PEOPLE[p]&&ROOM_BY[PEOPLE[p].room]?PEOPLE[p].room:'r_classic');
+/* the four lights of a room in its theme's colours: fire, two bedside lamps, floor lamp (dk dims them for the kill) */
+function roomLights(fl,dk){const R=RT;return[[33,81,70,R.fire,(.24+.1*fl)*(1-dk)*R.fk,1],[61,64,26,R.lamp,.3*(1-dk*1.6)*R.lk,2],[133,64,26,R.lamp,.3*(1-dk*1.6)*R.lk,3],[151,58,22,R.fl,.16*R.flk,4]];}
 // fire: the classic spreading-heat effect, one cell = one art pixel
 const FW=ROOM.fire[2],FH=ROOM.fire[3],FIRE=new Uint8Array(FW*FH);let fireAcc=0;
-const FPAL=['0,0,0,0','40,8,4,.9','80,14,6,1','128,24,8,1','170,40,10,1','205,62,12,1','230,92,18,1','244,124,28,1','250,156,40,1','252,186,60,1','254,212,96,1','255,234,150,1','255,248,210,1'];
+const FPAL=window.FPAL_O=['0,0,0,0','40,8,4,.9','80,14,6,1','128,24,8,1','170,40,10,1','205,62,12,1','230,92,18,1','244,124,28,1','250,156,40,1','252,186,60,1','254,212,96,1','255,234,150,1','255,248,210,1'];
+const FPAL_G=FPAL.map(s=>{const[r,g,b,a]=s.split(',');return[b,r,g,a].join(',');});   /* the same flames in green (Haunted) */
 function stepFire(){for(let x=0;x<FW;x++)FIRE[(FH-1)*FW+x]=(x>1&&x<FW-2)?12:6;
   for(let y=1;y<FH;y++)for(let x=0;x<FW;x++){const i=y*FW+x,v=FIRE[i];const r=Math.random()*3|0;const dx=clamp(x-r+1,0,FW-1);FIRE[(y-1)*FW+dx]=Math.max(0,v-(Math.random()<.45?1:0)-(Math.random()<.12?1:0));}}
-function drawFire(){const[fx,fy]=ROOM.fire;lx.fillStyle='#24090a';lx.fillRect(X(fx),Y(fy),FW,FH);
+function drawFire(){const[fx,fy]=ROOM.fire,FPAL=RT.green?FPAL_G:window.FPAL_O;lx.fillStyle=RT.hearth||'#24090a';lx.fillRect(X(fx),Y(fy),FW,FH);
   for(let y=0;y<FH;y++)for(let x=0;x<FW;x++){const v=FIRE[y*FW+x];if(!v)continue;if(y<3&&(x<3-y||x>FW-4+y))continue;lx.fillStyle=`rgba(${FPAL[v]})`;lx.fillRect(X(fx+x),Y(fy+y),1,1);}
   patchObj('fireplace',[fx-2,fy+FH-2,fx+FW+2,fy+FH+1]);}
 // the quilt, from its fold line down: goes over whoever is in the bed
@@ -1511,7 +1562,7 @@ scenes.cabin={
     const topIn=80,topOut=62,avail=(sh.getBoundingClientRect().top-cv.getBoundingClientRect().top-topOut-6)*DPR;
     const Sout=open?clamp(Math.floor(avail/242),1,Sin):Sin;if(open)CAB.sOut=Sout;
     CAB.zk=CAB.zk??(open?1:0);CAB.zk+=((open?1:0)-CAB.zk)*Math.min(1,dt*7);if(Math.abs((open?1:0)-CAB.zk)<.012)CAB.zk=open?1:0;
-    view(IMG.room,97,121,186,{s:lerp(Sin,CAB.sOut??Sin,CAB.zk),topCss:lerp(topIn,topOut,CAB.zk),void:ROOM_VOID});
+    useRoom(roomOf(0));view(IMG.room,97,121,186,{s:lerp(Sin,CAB.sOut??Sin,CAB.zk),topCss:lerp(topIn,topOut,CAB.zk),void:ROOM_VOID});
     rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));
     fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
     // walking
@@ -1543,7 +1594,7 @@ scenes.cabin={
       const zx=X(z.x+Math.sin(z.t*3)*2+z.t*4),zy=Y(z.y-z.t*10);lx.fillStyle=`rgba(255,255,255,${1-z.t/1.6})`;lx.fillRect(zx,zy,3,1);lx.fillRect(zx+1,zy+1,1,1);lx.fillRect(zx,zy+2,3,1);}
     // light last, so it falls on everything, and only inside the room
     const fl=.5+.5*noise(t*1.7,2);
-    const L=[[33,81,70,'255,130,40',.24+.1*fl,1],[61,64,26,'255,210,140',.3,2],[133,64,26,'255,210,140',.3,3],[151,58,22,'170,255,170',.16,4]];
+    const L=roomLights(fl,0);
     if(CAB.pc>0)L.push([159,138,26,'120,220,255',.35*CAB.pc,5]);
     lights(L,t,ROOM_MASK);
     lx.save();lx.globalCompositeOperation='lighter';for(let i=0;i<14;i++){const px=X(40+((i*37+t*.004*(1+i%3))%120)),py=Y(90+((i*29+t*.006)%90));lx.fillStyle=`rgba(255,200,140,${.18+.18*Math.sin(t*.002+i)})`;lx.fillRect(px,py,1,1);}lx.restore();
@@ -1812,11 +1863,11 @@ PLAN.home=()=>{
 function nightRoom(k,dt,t){$('#phone').style.background=ROOM_VOID;once('rdoor',()=>sfx('door'));
   if(k>3.2)once('rhit',()=>{N.shake=7;N.red=1;sfx('stab');});
   const sh=N.shake>0?(Math.random()-.5)*N.shake:0;N.shake=Math.max(0,N.shake-dt*14);
-  view(IMG.room,97+sh,121+sh*.6,186,{fit:true,topCss:80,void:ROOM_VOID});
+  useRoom(roomOf(N.victim));view(IMG.room,97+sh,121+sh*.6,186,{fit:true,topCss:80,void:ROOM_VOID});
   rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
   const hits=drawScene(killRoom(looksLike(N.victim),k,N.heal,t),null,IMG.room,ROOM_OBJS);
   const dk=(N.heal&&k>11?1-ramp(k,11,12):ramp(k,0,1.2))*.42,fl=.5+.5*noise(t*1.7,2);   // the room darkens while they are inside
-  lights([[33,81,70,'255,130,40',(.24+.1*fl)*(1-dk),1],[61,64,26,'255,210,140',.3*(1-dk*1.6),2],[133,64,26,'255,210,140',.3*(1-dk*1.6),3],[151,58,22,'170,255,170',.16,4]],t,ROOM_MASK);
+  lights(roomLights(fl,dk),t,ROOM_MASK);
   if(dk>0){lx.fillStyle=`rgba(4,3,14,${dk})`;lx.fillRect(0,0,cam.lw,cam.lh);}
   if(N.red>0){lx.fillStyle=`rgba(190,10,20,${N.red*.55})`;lx.fillRect(0,0,cam.lw,cam.lh);N.red=Math.max(0,N.red-dt*1.6);}
   present();
@@ -2191,12 +2242,12 @@ scenes.mydeath={hud:'#nightHud',
     if(N.heal&&k>11)once('up',()=>{fxStop();fxHeal();mdBig('good');});
     if(T>MD.end-1.2)$('#fade').classList.add('on');if(T>MD.end){dawn();return;}
     const sh=N.shake>0?(Math.random()-.5)*N.shake:0;N.shake=Math.max(0,N.shake-dt*14);
-    view(IMG.room,97+sh,121+sh*.6,186,{fit:true,topCss:80,void:ROOM_VOID});
+    useRoom(roomOf(0));view(IMG.room,97+sh,121+sh*.6,186,{fit:true,topCss:80,void:ROOM_VOID});
     rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
     const people=k>0?killRoom(me,k,N.heal,t):[{name:me,dir:T>3.4?'front':'back',x:98,y:168,t,vic:true}];
     const hits=drawScene(people,null,IMG.room,ROOM_OBJS);
     const dk=k>0?(N.heal&&k>11?1-ramp(k,11,12):ramp(k,0,1.2))*.42:0,fl=.5+.5*noise(t*1.7,2);   // the room darkens while they are inside
-    lights([[33,81,70,'255,130,40',(.24+.1*fl)*(1-dk),1],[61,64,26,'255,210,140',.3*(1-dk*1.6),2],[133,64,26,'255,210,140',.3*(1-dk*1.6),3],[151,58,22,'170,255,170',.16,4]],t,ROOM_MASK);
+    lights(roomLights(fl,dk),t,ROOM_MASK);
     if(dk>0){lx.fillStyle=`rgba(4,3,14,${dk})`;lx.fillRect(0,0,cam.lw,cam.lh);}
     if(MD.red>0){lx.fillStyle=`rgba(190,10,20,${MD.red*.55})`;lx.fillRect(0,0,cam.lw,cam.lh);MD.red=Math.max(0,MD.red-dt*1.6);}
     present();
@@ -2505,7 +2556,7 @@ function ghostRoom(dt,t){
   // following someone: when they walk out of their cabin, you go out after them (and back in when they come home)
   if(G.watch>0&&!G.fading&&CABIN_OF[G.watch]===G.inCab&&ghostAway(G.watch)){ghostDoor(-1);}
   const ci=G.inCab,i=CABIN_OF.indexOf(ci),home=i>=0&&!ghostAway(i),act=home?G.acts[i]:null,nm=home?looksLike(i):null;
-  view(IMG.room,97,121,186,{fit:true,topCss:80,void:ROOM_VOID});
+  useRoom(roomOf(CABIN_OF.indexOf(G.inCab)));view(IMG.room,97,121,186,{fit:true,topCss:80,void:ROOM_VOID});
   rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
   const people=[];let cover=null,head=false;
   if(act==='bed')head=true;
@@ -2522,7 +2573,7 @@ function ghostRoom(dt,t){
   const hits=drawScene(people,null,IMG.room,ROOM_OBJS);
   if(head){const d=SP[nm].front,crop=Math.min(d.h,d.eyeBot+10),hx=X(ROOM.bed.head[0])-Math.floor(d.w/2),hy=Y(BED_LINE)-(d.eyeBot+3);lx.drawImage(d.frames[0][1],0,0,d.w,crop,hx,hy,d.w,crop);drawQuilt(1);}
   if(cover==='chairback')lx.drawImage(IMG.chairback,X(OBJ.chair.x),Y(OBJ.chair.y));else if(cover==='arm')patchObj('armchair',ROOM.arm.front);
-  const fl=.5+.5*noise(t*1.7,2),L=[[33,81,70,'255,130,40',.24+.1*fl,1],[61,64,26,'255,210,140',.3,2],[133,64,26,'255,210,140',.3,3],[151,58,22,'170,255,170',.16,4]];
+  const fl=.5+.5*noise(t*1.7,2),L=roomLights(fl,0);
   if(act==='pc')L.push([159,138,26,'120,220,255',.35,5]);
   lights(L,t,ROOM_MASK);
   G.fxAt=kk>0?[98,130]:act==='bed'?[98,80]:act==='pc'?[157,168]:act==='arm'?[36,172]:act==='fire'?[38,96]:people.length>1?[people[0].x,people[0].y-10]:[98,150];ghostFx(dt);present();
@@ -2801,10 +2852,10 @@ scenes.town={hud:'#townHud',
     for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.remote&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
     WL.shake=Math.max(0,WL.shake-dt);const sh=WL.shake>0?Math.round(Math.sin(t*.09)*8*WL.shake):0;
     const people=wlAll().filter(e=>e.loc===m.loc).map(e=>wlDraw(e,t));let hits;
-    if(m.loc>=0){view(IMG.room,97,121,186,{fit:true,topCss:80,void:ROOM_VOID});
+    if(m.loc>=0){useRoom(roomOf(CABIN_OF.indexOf(m.loc)));view(IMG.room,97,121,186,{fit:true,topCss:80,void:ROOM_VOID});
       rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
       hits=drawScene(people,null,IMG.room,ROOM_OBJS);wlFx(dt,m.loc);
-      const fl=.5+.5*noise(t*1.7,2);lights([[33,81,70,'255,130,40',.24+.1*fl,1],[61,64,26,'255,210,140',.3,2],[133,64,26,'255,210,140',.3,3],[151,58,22,'170,255,170',.16,4]],t,ROOM_MASK);
+      const fl=.5+.5*noise(t*1.7,2);lights(roomLights(fl,0),t,ROOM_MASK);
     }else{dayMode=true;const img=dayImg('ground');view(img,m.x+sh,m.y+24,190,{loose:true});
       const hid=behindCabin(m.x,m.y);WL.cabA=WL.cabA||TOWN.cabins.map(()=>1);
       const huts=dayImg('cabins').map(o=>{const a=WL.cabA[o.ci]=clamp(WL.cabA[o.ci]+(o.ci===hid?-1:1)*dt*4,.4,1);return a<1?{...o,alpha:a}:o;});
@@ -2871,8 +2922,8 @@ function netLoad(){if(NET.ready)return NET.ready;
     NET.db.ref('.info/serverTimeOffset').on('value',s=>NET.off=s.val()||0);netProfile();})();
   NET.ready.catch(()=>{NET.ready=null;});return NET.ready;}
 // a backup of the wallet on the server (never read back yet: the phone's copy is the truth)
-function netProfile(){if(!NET.db||!NET.uid)return;clearTimeout(NET.pt);NET.pt=setTimeout(()=>{NET.db.ref('users/'+NET.uid).set({n:myName,coins,owned:[...OWNED],skin:PEOPLE[0].skin,ts:TS()}).catch(()=>{});
-  if(NET.on)NET.me.update({n:myName,skin:PEOPLE[0].skin}).catch(()=>{});},800);}
+function netProfile(){if(!NET.db||!NET.uid)return;clearTimeout(NET.pt);NET.pt=setTimeout(()=>{NET.db.ref('users/'+NET.uid).set({n:myName,coins,owned:[...OWNED],skin:PEOPLE[0].skin,room:myRoom,ts:TS()}).catch(()=>{});
+  if(NET.on)NET.me.update({n:myName,skin:PEOPLE[0].skin,room:myRoom}).catch(()=>{});},800);}
 const CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 async function netCreate(){await netLoad();
   for(let k=0;k<8;k++){const code=Array.from({length:4},()=>CODE_CH[Math.floor(Math.random()*CODE_CH.length)]).join(''),r=NET.db.ref('lobbies/'+code);
@@ -2886,7 +2937,7 @@ const freeSlot=pl=>{const used=new Set(Object.entries(pl).filter(([u])=>u!==NET.
 async function netEnter(code,pl){NET.code=code;NET.ref=NET.db.ref('lobbies/'+code);NET.slot=freeSlot(pl);NET.me=NET.ref.child('players/'+NET.uid);
   const c=TOWN.cabins[NET.slot];
   await NET.me.onDisconnect().remove();
-  await NET.me.set({n:myName,skin:PEOPLE[0].skin,slot:NET.slot,v:BUILD,at:TS(),m:{x:c.cx,y:c.top+40,tx:c.cx,ty:c.top+40,loc:-1,dir:'front',s:0}});
+  await NET.me.set({n:myName,skin:PEOPLE[0].skin,room:myRoom,slot:NET.slot,v:BUILD,at:TS(),m:{x:c.cx,y:c.top+40,tx:c.cx,ty:c.top+40,loc:-1,dir:'front',s:0}});
   NET.on=true;NET.t0=Date.now()+NET.off-1500;NET.players=null;NET.sig=null;NET.ents.clear();
   NET.ref.child('players').on('value',s=>{NET.players=s.val()||{};netApply();});
   NET.ref.child('ev').limitToLast(1).on('child_added',netEvent);
@@ -2903,7 +2954,7 @@ function netLeave(){$('#phone').classList.remove('ingame');if(NET.on){NET.on=fal
 function netApply(){if(!NET.on)return;const pl=NET.players||{},mine=pl[NET.uid],c0=TOWN.cabins[NET.slot];
   if(Object.values(pl).some(p=>p&&p.v&&p.v!==BUILD&&+p.v>+BUILD))freshCheck();   // a friend has a newer version than me
   if(!mine){NET.me.onDisconnect().remove().catch(()=>{});       // we dropped off for a moment: go back in
-    NET.me.set({n:myName,skin:PEOPLE[0].skin,slot:NET.slot,v:BUILD,at:TS(),m:WL.me&&!GAME.on?netM():{x:c0.cx,y:c0.top+40,tx:c0.cx,ty:c0.top+40,loc:-1,dir:'front',s:++NET.seq}}).catch(()=>{});return;}
+    NET.me.set({n:myName,skin:PEOPLE[0].skin,room:myRoom,slot:NET.slot,v:BUILD,at:TS(),m:WL.me&&!GAME.on?netM():{x:c0.cx,y:c0.top+40,tx:c0.cx,ty:c0.top+40,loc:-1,dir:'front',s:++NET.seq}}).catch(()=>{});return;}
   const older=(a,ua,b,ub)=>(a.at||0)<(b.at||0)||((a.at||0)===(b.at||0)&&ua<ub);
   {const a0=Object.entries(pl).filter(([u,p])=>p&&p.n&&p.m).sort((a,b)=>older(a[1],a[0],b[1],b[0])?-1:1);NET.host=a0.length?a0[0][0]:NET.uid;}
   if(GAME.on||!WL.me||scene!==scenes.town){gameLobbyUI();return;}
@@ -2911,9 +2962,9 @@ function netApply(){if(!NET.on)return;const pl=NET.players||{},mine=pl[NET.uid],
   NET.slot=mine.slot;
   const all=Object.entries(pl).filter(([u,p])=>p&&p.n&&p.m).sort((a,b)=>older(a[1],a[0],b[1],b[0])?-1:1);NET.host=all.length?all[0][0]:NET.uid;
   const others=all.filter(([u])=>u!==NET.uid).slice(0,9);
-  const sig=JSON.stringify([NET.slot,myName,NET.host,others.map(([u,p])=>[u,p.n,p.skin,p.slot])]);
+  const sig=JSON.stringify([NET.slot,myName,NET.host,others.map(([u,p])=>[u,p.n,p.skin,p.slot,p.room])]);
   if(sig!==NET.sig){NET.sig=sig;const me=PEOPLE[0];PEOPLE.length=0;PEOPLE.push({...me,n:myName});CABIN_OF.length=0;CABIN_OF.push(NET.slot);
-    others.forEach(([u,p])=>{PEOPLE.push({n:String(p.n).slice(0,10),skin:SP[p.skin]?p.skin:'beanie',uid:u});CABIN_OF.push(p.slot);});
+    others.forEach(([u,p])=>{PEOPLE.push({n:String(p.n).slice(0,10),skin:SP[p.skin]?p.skin:'beanie',room:p.room,uid:u});CABIN_OF.push(p.slot);});
     buildTown();$('#townCount').textContent=others.length?`${others.length+1} of 10 players here`:'Just you so far';if(WL.me.loc<0)wlHead();}
   const keep=new Set();
   others.forEach(([u,p],k)=>{keep.add(u);const m=p.m;let e=NET.ents.get(u);
@@ -2976,7 +3027,7 @@ function gameStart(dev){if(!NET.on||NET.host!==NET.uid||GAME.g)return;
     [['Ava','raincoat'],['Leo','curly'],['Sam','farmer']].slice(0,Math.min(3,10-all.length)).forEach(([n,skin],k)=>all.push(['bot'+(k+1),{n,skin,slot:free[k],v:BUILD,m:1}]));}
   if(all.length<MINP){wlSay(`You need ${MINP} players to start.`);return;}
   const old=all.filter(([u,p])=>p.v!==BUILD);if(old.length){wlSay(`${old.map(([,p])=>p.n).join(', ')} must reload the page first.`,'bad');return;}
-  const rs=window.FORCE_ROLES&&window.FORCE_ROLES.length===all.length?window.FORCE_ROLES:rolesFor(all.length,roleOpt()),pl={},roles={};/* FORCE_ROLES: for tests only */all.forEach(([u,p],k)=>{pl[u]={n:String(p.n).slice(0,10),skin:p.skin||'beanie',slot:p.slot,o:k};roles[u]=rs[k];});
+  const rs=window.FORCE_ROLES&&window.FORCE_ROLES.length===all.length?window.FORCE_ROLES:rolesFor(all.length,roleOpt()),pl={},roles={};/* FORCE_ROLES: for tests only */all.forEach(([u,p],k)=>{pl[u]={n:String(p.n).slice(0,10),skin:p.skin||'beanie',room:ROOM_BY[p.room]?p.room:'r_classic',slot:p.slot,o:k};roles[u]=rs[k];});
   const now=serverNow();gRef().set({id:now.toString(36),phase:'night',round:1,t0:now,ends:now+NIGHT_MS,nkind:newKind(),pl,roles}).catch(e=>{console.warn('start',e);wlSay('Could not start. The server rules need the new update.','bad');});}
 // the lobby's own buttons: the host gets Start; a late joiner is told a game is on
 function gameLobbyUI(){const host=NET.on&&NET.host===NET.uid,busy=!!(GAME.g&&GAME.g.roles);$('#townStart').style.display=host&&!busy?'':'none';$('#townDev').style.display=host&&!busy?'block':'none';
@@ -3000,7 +3051,7 @@ function gRoute(g){const f={night:gNight,film:gFilm,day:gDay,vote:gVote,over:gOv
 function gameCast(g){const others=Object.entries(g.pl).filter(([u])=>u!==NET.uid).sort((a,b)=>a[1].o-b[1].o),me=g.pl[NET.uid],my=PEOPLE[0];
   GAME.ids=[NET.uid,...others.map(([u])=>u)];GAME.idx={};GAME.ids.forEach((u,i)=>GAME.idx[u]=i);
   PEOPLE.length=0;PEOPLE.push({n:'You',skin:my.skin,role:g.roles[NET.uid]});CABIN_OF.length=0;CABIN_OF.push(me.slot);
-  others.forEach(([u,p])=>{PEOPLE.push({n:p.n,skin:SP[p.skin]?p.skin:'beanie',role:g.roles[u],uid:u});CABIN_OF.push(p.slot);});
+  others.forEach(([u,p])=>{PEOPLE.push({n:p.n,skin:SP[p.skin]?p.skin:'beanie',room:p.room,role:g.roles[u],uid:u});CABIN_OF.push(p.slot);});
   viewRole=g.roles[NET.uid];NOTE.mine='';NOTE.of={};T.notes={};T.muted.clear();V.ring=[];NIGHT.mateN=null;buildTown();}
 function gNight(g){sfx('night');GAME.filmDone=true;$('#dawnGo').disabled=false;CAB.sentSt=null;CAB.spTxt=null;resetNight();NOTE.mine='';Object.assign(CAB,{state:'stand',x:98,y:200,tgt:null,path:null,dir:'back',walk:false,anim:null});
   if(GAME.meDead){go('ghost');return;}
@@ -3153,9 +3204,9 @@ function acctYay(){sfx('rare');const b=$('#homeAcct');b.classList.remove('yay');
   for(let k=0;k<14;k++){const i=document.createElement('i'),a=k/14*Math.PI*2,r=60+Math.random()*50;i.className='spk';i.style.background=['#5fc46f','#ffd25e','#2f7a45','#fff2a8'][k%4];
     i.style.setProperty('--dx',Math.round(Math.cos(a)*r*1.6)+'px');i.style.setProperty('--dy',Math.round(Math.sin(a)*r*.7)+'px');b.appendChild(i);setTimeout(()=>i.remove(),800);}}
 async function acctSync(){const u=acctUser();if(!u)return;const s=(await NET.db.ref('users/'+u.uid).get()).val();let lt=0,acct='';try{lt=+localStorage.getItem('m2_wts')||0;acct=localStorage.getItem('m2_acct')||'';}catch(e){}
-  if(s){(s.owned||[]).forEach(id=>{if(SKINS.some(k=>k.id===id))OWNED.add(id);});
+  if(s){(s.owned||[]).forEach(id=>{if(SKINS.some(k=>k.id===id)||ROOM_BY[id])OWNED.add(id);});
     if(acct!==u.uid)coins=Math.max(coins,+s.coins||0);                                         // the first time this account is on this phone
-    else if((+s.ts||0)>lt+3000){coins=+s.coins||0;if(s.skin&&OWNED.has(s.skin)){PEOPLE[0].skin=s.skin;skinIdx=SKINS.findIndex(k=>k.id===s.skin);}}}   // played somewhere else since: that wallet is newer
+    else if((+s.ts||0)>lt+3000){coins=+s.coins||0;if(s.room&&ROOM_BY[s.room]&&OWNED.has(s.room))myRoom=s.room;if(s.skin&&OWNED.has(s.skin)){PEOPLE[0].skin=s.skin;skinIdx=SKINS.findIndex(k=>k.id===s.skin);}}}   // played somewhere else since: that wallet is newer
   try{localStorage.setItem('m2_acct',u.uid);}catch(e){}saveInv();paintCoins();paintSkin();}
 function acctWhy(e){const c=String(e&&e.code||e);return/operation-not-allowed|configuration-not-found/.test(c)?'Google sign-in is not switched on yet.':/unauthorized-domain/.test(c)?'This website is not allowed in Firebase yet.':/popup-blocked/.test(c)?'Your browser blocked the sign-in window. Allow pop-ups and try again.':/popup-closed|cancelled-popup/.test(c)?'':'Could not sign in. Try again.';}
 $('#homeAcct').onclick=async()=>{const b=$('#homeAcct'),a=NET.auth;if(NET.on||NET.busy)return;
@@ -3256,7 +3307,8 @@ let OBJ_META={};
   const FINAL=Object.fromEntries(['beanie','brownhair','ponytail','curly','farmer','raincoat','redcap','mafia','doctor','jester','detective','batman','alfa','golf','ferrari','bape','fisher','sheik'].map(n=>[n,'assets/final/'+n]));
   const names=[...SKINS.map(s=>s.id),'mafia','doctor','jester','detective'].filter(n=>!PL[n]&&!FINAL[n]);
   OBJ_META=await (await fetch('assets/room-objects/objects.json?v='+BUILD)).json();
-  const jobs=[load('townBase','assets/town4/night.png'),load('townDay','assets/town4/day.png'),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png'),load('cabinCase','assets/case/cabin.png')];
+  const jobs=[load('townBase','assets/town4/night.png'),load('townDay','assets/town4/day.png'),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png'),load('cabinOpen','assets/case/cabin-open.png')];
+  ROOMS.forEach(r=>{if(!r.base)load('room/'+r.id,r.art).catch(()=>{});});   /* the themed rooms come in behind the scenes */
   for(const n of Object.keys(OBJ_META))jobs.push(load('obj/'+n,`assets/room-objects/${n}.png`));
   for(const n of names)for(const d of['','back/','side/'])jobs.push(load(d+n,`assets/sprites/${d}${n}.png`));
   for(const[n,dir]of Object.entries(PL))for(const v of['south','north','east','west'])jobs.push(load(`pl/${n}/${v}`,`${dir}/${v}.png`));
