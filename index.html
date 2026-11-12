@@ -714,7 +714,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121521'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121522'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -3016,12 +3016,12 @@ scenes.home={hud:'#homeHud',
     const me={name:PEOPLE[0].skin,x:280,y:372,t,dir:'front',tint:'#2a2f7a|0.12',lift:Math.abs(Math.sin(t*.004))*2};
     const hits=drawScene([me],TOWN.occ,IMG.town);townLights(t,{},'rest');rain(dt);present();nameTag(hits.get(me),myName,'#ffd25e');}};
 $('#homeCreate').onclick=()=>homeDo(netCreate);
-$('#homeJoin').onclick=()=>{$('#joinErr').textContent='';$('#joinIn').value='';$('#joinModal').classList.add('on');setTimeout(()=>$('#joinIn').focus(),50);};
+$('#homeJoin').onclick=()=>{$('#joinErr').textContent='';$('#joinIn').value='';$('#joinModal').classList.add('on');$('#joinIn').focus();};
 $('#joinX').onclick=()=>$('#joinModal').classList.remove('on');
 $('#joinOk').onclick=()=>{const c=$('#joinIn').value.toUpperCase().replace(/[^A-Z]/g,'');if(c.length!==4){$('#joinErr').textContent='The code is 4 letters.';return;}
   $('#joinErr').textContent='Joining…';homeDo(()=>netJoin(c),$('#joinErr'));};
 $('#joinIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#joinOk').click();});
-$('#homeName').onclick=()=>{$('#nameIn').value=myName;$('#nameModal').classList.add('on');setTimeout(()=>$('#nameIn').select(),50);};
+$('#homeName').onclick=()=>{$('#nameIn').value=myName;$('#nameModal').classList.add('on');const ni=$('#nameIn');ni.focus();try{ni.setSelectionRange(0,ni.value.length);}catch(e){}};
 $('#nameX').onclick=()=>$('#nameModal').classList.remove('on');
 $('#nameOk').onclick=()=>{const v=$('#nameIn').value.replace(/[<>]/g,'').trim().slice(0,10);if(!v)return;myName=v;try{localStorage.setItem('m2_name',v);}catch(e){}$('#nameModal').classList.remove('on');homePaint();netProfile();};
 $('#nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#nameOk').click();});
