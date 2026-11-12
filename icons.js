@@ -43,6 +43,7 @@ door:['.KKKKKKKK.','.KOOOOOOK.','.KOKKKKOK.','.KOKooKOK.','.KOKKKKOK.','.KOOOOGO
 right:[E,'..KK......','..KgKK....','..KgggKK..','..KgggggK.','..KgggggK.','..KgggKK..','..KgKK....','..KK......',E],
 check:[E,'........KK','.......KEK','......KEEK','.KK..KEEK.','KEEKKEEK..','KEEEEEK...','.KEEEK....','..KKK.....',E],
 cross:[E,'.KK....KK.','KRRK..KRRK','.KRRKKRRK.','..KRRRRK..','..KRRRRK..','.KRRKKRRK.','KRRK..KRRK','.KK....KK.',E],
+crossk:[E,'.KK....KK.','KKKK..KKKK','.KKKKKKKK.','..KKKKKK..','..KKKKKK..','.KKKKKKKK.','KKKK..KKKK','.KK....KK.',E],
 skip:[E,E,'KK...KK...','KgKK.KgKK.','KgggKKgggK','KgggKKgggK','KgKK.KgKK.','KK...KK...',E,E],
 sleep:['....BBBBBB','........BB','.......BB.','......BB..','.....BB...','....BBBBBB','BBBB......','..BB......','.BB.......','BBBB......'],
 hourglass:['KKKKKKKKKK','.KWWWWWWK.','.KWGGGGWK.','..KWGGWK..','...KWWK...','...KWGK...','..KWWGWK..','.KWGGGGWK.','.KWGGGGWK.','KKKKKKKKKK'],
