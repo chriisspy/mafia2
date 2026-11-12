@@ -659,7 +659,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121352'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121444'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -2861,7 +2861,7 @@ scenes.limbo={hud:'#limboHud',frame(dt,t){const a=t*.00016;view(IMG.town,280+Mat
 // ---- the end ----
 const gWon=(g,r)=>g.win==='town'?r!=='mafia'&&r!=='jester'&&r!=='framer':g.win==='mafia'?r==='mafia'||r==='framer':g.win===r;   // did someone with this role win?
 function overPaint(g){const won=gWon(g,g.roles[NET.uid]);
-  $('#overTitle').textContent={town:'THE TOWN WINS',mafia:'THE MAFIA WIN',jester:'THE JESTER WINS'}[g.win]||'GAME OVER';
+  $('#overTitle').textContent={town:'THE TOWN WINS',mafia:'MAFIA WINS',jester:'THE JESTER WINS'}[g.win]||'GAME OVER';
   $('#overTitle').style.color={town:'#9fe8b0',mafia:'#ff8a8a',jester:'#d9a8ff'}[g.win]||'#fff';
   $('#overNames').textContent=PEOPLE.map((p,i)=>gWon(g,p.role)?(i===0?'You':p.n):null).filter(Boolean).join(' · ');
   const pay=won?150:50;if(GAME.paid!==g.id){GAME.paid=g.id;coins+=pay;saveInv();paintCoins();}
