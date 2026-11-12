@@ -48,6 +48,7 @@ bag:['................','.KKKKKKKKKKKKKK.','KRRRWWWRRWWWRRRK','KRRRWWWRRWWWRRRK'
 shirt:['................','....KK....KK....','...KLBK..KBBK...','..KKLBBKKBBBKK..','.KLBBBBBBBBBBBK.','KLBBBBBBBBBBBBbK','KBBBBBBBBBBBBbbK','.KKKBBBBBBBbKKK.','...KBBBBBBBbK...','...KBBBBBBBbK...','...KBBBBBBBbK...','...KBBBBBBbbK...','...KbbbbbbbbK...','...KKKKKKKKKK...','................','................'],
 help:[E,'...KKKK...','..KWWWSK..','.KWWKKWSK.','.KKK.KWSK.','....KWSK..','...KWSK...','...KKKK...','...KWSK...','...KKKK...'],
 sound:[E,'....KK....','...KSK.L..','.KKSSK..L.','.KWSsK.L.L','.KSSsK.L.L','.KKssK..L.','...KsK.L..','....KK....',E],
+menu:[E,'.PPPPPPPP.','.pppppppp.',E,'.PPPPPPPP.','.pppppppp.',E,'.PPPPPPPP.','.pppppppp.',E],
 crossk:[E,'.KK....KK.','KKKK..KKKK','.KKKKKKKK.','..KKKKKK..','..KKKKKK..','.KKKKKKKK.','KKKK..KKKK','.KK....KK.',E],
 skip:[E,E,'KK...KK...','KGKK.KGKK.','KGGGKKGGGK','KgggKKgggK','KgKK.KgKK.','KK...KK...',E,E],
 sleep:['....BBBBBB','........BB','.......BB.','......BB..','.....BB...','....BBBBBB','BBBB......','..BB......','.BB.......','BBBB......'],
