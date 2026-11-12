@@ -329,7 +329,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .hbig{display:block;width:100%;margin-top:10px;font:700 23px "Pixelify Sans";letter-spacing:1px;padding:10px 8px 15px;border-radius:6px;border:3px solid var(--wood);background:var(--paper);color:var(--text);box-shadow:inset 0 -5px 0 #0002,0 4px 0 #0009;cursor:pointer;transition:transform .06s}
 .hbig.red{background:#e4544f;color:#fff;border-color:#6b1416;box-shadow:inset 0 -6px 0 #a92b2c,0 4px 0 #0009}
 .hbig:active{transform:translateY(3px);box-shadow:inset 0 -2px 0 #0002,0 1px 0 #0009}
-.hlink{display:block;margin:8px auto 0;background:none;border:0;font:600 13px "Pixelify Sans";color:var(--text);opacity:.75;text-decoration:underline;cursor:pointer}
+.hlink.sure{color:#b3261e;opacity:1}
+.hlink{display:block;margin:6px auto 0;background:none;border:0;font:600 13px "Pixelify Sans";color:var(--text);opacity:.75;text-decoration:underline;cursor:pointer}
 #homeMsg{text-align:center;font-size:14px;font-weight:600;min-height:18px;margin-top:8px}#homeMsg.bad{color:#b3261e}
 .hin{width:100%;font:700 24px "Pixelify Sans";text-align:center;padding:8px;border:3px solid var(--wood);border-radius:5px;background:#fff6df;color:var(--text);margin-top:10px}
 .hin.code{text-transform:uppercase;letter-spacing:10px;font-size:32px}
@@ -349,7 +350,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #talkSkip{position:absolute;right:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
 #gameLeave{position:absolute;left:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:22;display:none}
 #phone.ingame #gameLeave{display:block}#gameLeave.sure{background:#e4544f;color:#fff;border-color:#6b1416}
-#howModal{bottom:calc(14px + env(safe-area-inset-bottom))}#howModal h4{font-size:16px;margin:10px 0 2px;letter-spacing:1px}#howModal p{font-size:14px;line-height:1.3;margin:0 0 4px}
+#howModal{bottom:calc(14px + env(safe-area-inset-bottom))}
+#howX{position:absolute;right:16px;top:calc(50px + env(safe-area-inset-top));z-index:10;display:none;padding:5px 9px}#howModal.on+#howX{display:block}   /* the close button sits above the panel, so it never scrolls away */#howModal h4{font-size:16px;margin:10px 0 2px;letter-spacing:1px}#howModal p{font-size:14px;line-height:1.3;margin:0 0 4px}
 #howModal .hr{display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-top:2px solid #0001;font-size:14px;line-height:1.25}#howModal .hr b{display:block;font-size:15px}
 #townStart{margin-top:8px}
 #townDev{display:none}
@@ -394,11 +396,12 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
         <span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span>
       </div>
       <div id="homeMsg"></div>
+      <button class="hlink" id="homeAcct">Sign in with Google to keep your coins</button>
       <button class="hlink" id="homeHow">How to play</button>
       <button class="hlink" id="homeBots">Practice town with bots</button>
     </div></div>
     <div class="modal big panel" id="howModal">
-      <div class="mhead"><b>HOW TO PLAY</b><button class="btn" id="howX"><i data-ic="cross" data-c="solo"></i></button></div>
+      <div class="mhead"><b>HOW TO PLAY</b></div>
       <p>4 to 10 players. One of you makes a lobby and shares the code. Everyone gets a secret role.</p>
       <h4>NIGHT</h4><p>You are alone in your cabin for 45 seconds. If your role has a job, pick someone and lock it in.</p>
       <h4>DAWN</h4><p>Everyone watches what happened in the night. The host taps "To the square".</p>
@@ -407,6 +410,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <h4>WINNING</h4><p>The town wins when the Mafia are gone. The Mafia win when they match the town.</p>
       <h4>ROLES</h4><div id="howRoles"></div>
     </div>
+    <button class="btn red" id="howX"><i data-ic="cross" data-c="solo"></i></button>
     <div class="modal panel" id="nameModal"><h3>Your name</h3><div class="small">This is what your friends see.</div><input class="hin" id="nameIn" maxlength="10" autocomplete="off"><div class="row"><button class="btn" id="nameX">Back</button><button class="btn go" id="nameOk">Save</button></div></div>
     <div class="modal panel" id="joinModal"><h3>Join a lobby</h3><div class="small">Type the 4 letter code from the host.</div><input class="hin code" id="joinIn" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false"><div class="small" id="joinErr"></div><div class="row"><button class="btn" id="joinX">Back</button><button class="btn go" id="joinOk">Join</button></div></div>
   </div>
@@ -674,7 +678,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121448'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121457'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -1021,7 +1025,7 @@ let coins=1200;
 try{const o=JSON.parse(localStorage.getItem('m2_owned')||'null');if(Array.isArray(o))o.forEach(id=>{if(SKINS.some(s=>s.id===id))OWNED.add(id);});
   const c=localStorage.getItem('m2_coins');if(c!=null&&!isNaN(+c))coins=+c;
   const k=localStorage.getItem('m2_skin');if(k&&OWNED.has(k)){PEOPLE[0].skin=k;skinIdx=SKINS.findIndex(s=>s.id===k);}}catch(e){}
-function saveInv(){try{localStorage.setItem('m2_owned',JSON.stringify([...OWNED]));localStorage.setItem('m2_coins',String(coins));localStorage.setItem('m2_skin',PEOPLE[0].skin);}catch(e){}if(typeof homePaint==='function'){homePaint();netProfile();}}
+function saveInv(){try{localStorage.setItem('m2_owned',JSON.stringify([...OWNED]));localStorage.setItem('m2_coins',String(coins));localStorage.setItem('m2_skin',PEOPLE[0].skin);}catch(e){}if(typeof homePaint==='function'){try{localStorage.setItem('m2_wts',String(Date.now()+NET.off));}catch(e){}homePaint();netProfile();}}
 function paintCoins(){document.querySelectorAll('.coinN').forEach(e=>e.textContent=coins);}
 function wear(id){if(!OWNED.has(id))return;PEOPLE[0].skin=id;skinIdx=SKINS.findIndex(s=>s.id===id);paintSkin();puffAt(280,104);saveInv();}
 function openColl(){const g=$('#collGrid');
@@ -2647,11 +2651,13 @@ function netLoad(){if(NET.ready)return NET.ready;
     for(const f of['app','auth','database'])if(!(window.firebase&&(f==='app'||firebase[f])))await new Promise((ok,no)=>{const s=document.createElement('script');s.src=`https://www.gstatic.com/firebasejs/9.6.0/firebase-${f}-compat.js`;s.onload=ok;s.onerror=()=>no(new Error('offline'));document.head.appendChild(s);});
     const nm=(location.search.match(/[?&]p=(\w+)/)||[])[1],name=nm?'p'+nm:'[DEFAULT]';   // ?p=2 in the address = another test player in the same browser
     const app=firebase.apps.find(a=>a.name===name)||(nm?firebase.initializeApp(FB_CFG,name):firebase.initializeApp(FB_CFG));
-    const cred=await app.auth().signInAnonymously();NET.uid=cred.user.uid;NET.db=app.database();
+    NET.auth=app.auth();NET.db=app.database();
+    let user=await new Promise(r=>{const un=NET.auth.onAuthStateChanged(u=>{un();r(u);});});   // a Google sign-in from last time is still there
+    if(!user)user=(await NET.auth.signInAnonymously()).user;NET.uid=user.uid;
     NET.db.ref('.info/serverTimeOffset').on('value',s=>NET.off=s.val()||0);netProfile();})();
   NET.ready.catch(()=>{NET.ready=null;});return NET.ready;}
 // a backup of the wallet on the server (never read back yet: the phone's copy is the truth)
-function netProfile(){if(!NET.db||!NET.uid)return;clearTimeout(NET.pt);NET.pt=setTimeout(()=>{NET.db.ref('users/'+NET.uid).set({n:myName,coins,owned:[...OWNED],skin:PEOPLE[0].skin}).catch(()=>{});
+function netProfile(){if(!NET.db||!NET.uid)return;clearTimeout(NET.pt);NET.pt=setTimeout(()=>{NET.db.ref('users/'+NET.uid).set({n:myName,coins,owned:[...OWNED],skin:PEOPLE[0].skin,ts:TS()}).catch(()=>{});
   if(NET.on)NET.me.update({n:myName,skin:PEOPLE[0].skin}).catch(()=>{});},800);}
 const CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 async function netCreate(){await netLoad();
@@ -2924,6 +2930,24 @@ $('#gameLeave').onclick=()=>{const b=$('#gameLeave');if(!b.classList.contains('s
   const alone=!Object.keys(NET.players||{}).some(u=>u!==NET.uid);
   (alone?gRef().remove():gRef().child('left/'+NET.uid).set(true)).catch(()=>{}).then(()=>netLeave());};
 
+/* ---- the account: a Google sign-in that keeps the wallet ---- */
+const acctUser=()=>{const u=NET.auth&&NET.auth.currentUser;return u&&!u.isAnonymous?u:null;};
+function acctUI(){const u=acctUser(),b=$('#homeAcct');if(!b)return;const g=u&&(u.providerData||[]).find(q=>q&&q.providerId==='google.com');
+  b.textContent=u?`Signed in as ${(g&&g.displayName)||u.displayName||'you'} · Sign out`:'Sign in with Google to keep your coins';b.classList.remove('sure');}
+async function acctSync(){const u=acctUser();if(!u)return;const s=(await NET.db.ref('users/'+u.uid).get()).val();let lt=0,acct='';try{lt=+localStorage.getItem('m2_wts')||0;acct=localStorage.getItem('m2_acct')||'';}catch(e){}
+  if(s){(s.owned||[]).forEach(id=>{if(SKINS.some(k=>k.id===id))OWNED.add(id);});
+    if(acct!==u.uid)coins=Math.max(coins,+s.coins||0);                                         // the first time this account is on this phone
+    else if((+s.ts||0)>lt+3000){coins=+s.coins||0;if(s.skin&&OWNED.has(s.skin)){PEOPLE[0].skin=s.skin;skinIdx=SKINS.findIndex(k=>k.id===s.skin);}}}   // played somewhere else since: that wallet is newer
+  try{localStorage.setItem('m2_acct',u.uid);}catch(e){}saveInv();paintCoins();paintSkin();}
+function acctWhy(e){const c=String(e&&e.code||e);return/operation-not-allowed|configuration-not-found/.test(c)?'Google sign-in is not switched on yet.':/unauthorized-domain/.test(c)?'This website is not allowed in Firebase yet.':/popup-blocked/.test(c)?'Your browser blocked the sign-in window. Allow pop-ups and try again.':/popup-closed|cancelled-popup/.test(c)?'':'Could not sign in. Try again.';}
+$('#homeAcct').onclick=async()=>{const b=$('#homeAcct'),a=NET.auth;if(NET.on||NET.busy)return;
+  if(!a){homeMsg('Connecting… tap again in a moment.');netLoad().then(acctUI).catch(()=>homeMsg('No internet. Try again.',true));return;}
+  if(acctUser()){if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='Tap again to sign out';clearTimeout(b.t);b.t=setTimeout(acctUI,3000);return;}
+    try{await a.signOut();NET.uid=(await a.signInAnonymously()).user.uid;localStorage.removeItem('m2_acct');}catch(e){}acctUI();homeMsg('Signed out. This phone keeps its own coins.');return;}
+  try{const prov=new firebase.auth.GoogleAuthProvider();
+    try{await a.currentUser.linkWithPopup(prov);}catch(e){if(e&&e.code==='auth/credential-already-in-use'&&e.credential)await a.signInWithCredential(e.credential);else throw e;}   // used before on another phone: switch to that account
+    NET.uid=a.currentUser.uid;await acctSync();acctUI();homeMsg('Signed in. Your coins and outfits are saved.');}
+  catch(e){console.warn('sign-in',e);const w=acctWhy(e);homeMsg(w,!!w);}};
 /* ---- the welcome screen ---- */
 function homePaint(){if(!SP[PEOPLE[0].skin])return;$('#homeFace').src=face(PEOPLE[0].skin);$('#homeNameT').textContent=myName;}
 function homeMsg(t,bad){const e=$('#homeMsg');e.textContent=t||'';e.className=bad?'bad':'';}
@@ -3015,7 +3039,7 @@ let OBJ_META={};
   go(scenes[start]&&start!=='watch'&&start!=='dawn'?start:'home',()=>{loading(false);
     let rj='';try{rj=sessionStorage.getItem('m2_rejoin')||'';sessionStorage.removeItem('m2_rejoin');}catch(e){}
     if(!LAB&&/^[A-Z]{4}$/.test(rj)){homeDo(()=>netJoin(rj));return;}
-    freshCheck();
+    freshCheck();netLoad().then(()=>acctSync()).then(acctUI).catch(()=>{});   // connect early: the Google window has to open the instant it is tapped
     const h=location.hash.replace('#','').toUpperCase();if(!LAB&&/^[A-Z]{4}$/.test(h)){$('#joinIn').value=h;$('#joinErr').textContent='';$('#joinModal').classList.add('on');}});   // an invite link: the code is already typed in
   requestAnimationFrame(loop);
 })();
