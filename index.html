@@ -689,11 +689,21 @@ const cv=$('#c'), ctx=cv.getContext('2d');
   const STOPS=[[0,[246,223,174]],[.115,[4,4,14]],[.665,[246,223,174]],[1,[246,223,174]]],LUT=new Uint8Array(768);   // his gradient map: brightness -> colour
   for(let l=0;l<256;l++){const p=l/255;let k=0;while(k<STOPS.length-2&&p>STOPS[k+1][0])k++;const a=STOPS[k],b=STOPS[k+1],q=Math.min(1,Math.max(0,(p-a[0])/(b[0]-a[0])));for(let j=0;j<3;j++)LUT[l*3+j]=Math.round(a[1][j]+(b[1][j]-a[1][j])*q);}
   const ok=i=>i&&i.complete&&i.naturalWidth,BOB=[0,-1,-2,-1];
-  for(let k=0;k<5;k++)L('b'+k,'assets/loader/bush'+k+'.png');   // three bushes drawn by PixelLab (his call: natural edges, not my circles)
+  for(let k=0;k<8;k++)L('b'+k,'assets/loader/bush'+k+'.png');   // PixelLab plants in the style he picked: five shrubs (0-4), a tree (5), a thin tree (6), a small pointed shrub (7)
+  // They come past at random (his call: 'too perfect' in a neat row): a random plant, a random gap, some sunk into the
+  // ground so they stand at different heights, some mirrored. Trees turn up less often.
+  const BSZ=[[20, 23], [24, 25], [23, 23], [16, 23], [24, 22], [28, 36], [16, 32], [14, 22]],PICK=[0,1,2,3,4,7,0,2,4,7,5,6,5],plants=[];let gap=0,lastT=0;
+  function spawn(px){const k=PICK[Math.floor(Math.random()*PICK.length)],tree=k===5||k===6;const p={k,x:px,sink:tree?0:Math.floor(Math.random()*Math.random()*13),flip:Math.random()<.5};
+    if(px==null)p.x=-BSZ[k][0];plants.push(p);gap=(tree?10:2)+Math.floor(Math.random()*Math.random()*70);return p;}
+  for(let px=W-10;px>-20;){const p=spawn(px);px-=BSZ[p.k][0]+gap;p.x=px;}                                   // some already there when it opens
   function tick(t){if(el.classList.contains('off')&&getComputedStyle(el).opacity==='0')return setTimeout(()=>requestAnimationFrame(tick),300);
     x.clearRect(0,0,W,H);const f=Math.floor(t/80),v=im.v,m=im.m;
     // the ground is one thin line; bushes drift past behind them (his call: no road, no sweat)
-    {const span=250,off=(t*.045)%span;for(const[bx,k]of[[0,0],[46,3],[98,1],[150,4],[202,2]]){const px=Math.round((bx+off)%span)-38,bb=im["b"+k];if(ok(bb))x.drawImage(bb,px,GY-bb.height+1);}}
+    {const dt=Math.min(100,t-(lastT||t));lastT=t;for(const p of plants)p.x+=dt*.045;
+      while(plants.length&&plants[0].x>W+2)plants.shift();
+      const newest=plants[plants.length-1];if(!newest||newest.x>=gap)spawn();
+      for(const p of plants){const bb=im['b'+p.k];if(!ok(bb))continue;const w=bb.width,h=bb.height-p.sink,px=Math.round(p.x);
+        if(p.flip){x.save();x.translate(px+w,0);x.scale(-1,1);x.drawImage(bb,0,0,w,h,0,GY-h+1,w,h);x.restore();}else x.drawImage(bb,0,0,w,h,px,GY-h+1,w,h);}}
     x.fillStyle='#ffffff';x.fillRect(0,GY,W,1);
     if(ok(v))x.drawImage(v,(Math.floor(t/70)%6)*48,0,48,50,0,GY-46+BOB[f%4],48,50);                               // the farmer, running scared: faster feet than the Mafia
     if(ok(m))x.drawImage(m,(Math.floor(t/95)%4)*48,0,48,46,52,GY-44+BOB[(f+2)%4],48,46);
@@ -727,7 +737,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121603'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121606'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
