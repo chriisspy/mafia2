@@ -714,7 +714,7 @@ function tone(f,dur,o={}){const c=SND.ctx,t=c.currentTime+(o.at||0),os=c.createO
   os.connect(g);g.connect(SND.out);os.start(t);os.stop(t+dur+.02);}
 /* a burst of noise: how long, o = {vol, at, lp (low-pass Hz), hp (high-pass Hz)} */
 function hiss(dur,o={}){const c=SND.ctx,t=c.currentTime+(o.at||0),s=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();s.buffer=SND.nb;f.type=o.bp?'bandpass':o.hp?'highpass':'lowpass';f.frequency.value=o.bp||o.hp||o.lp||1200;
-  const v=o.vol??.2;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0008,t+dur);s.connect(f);f.connect(g);g.connect(SND.out);s.start(t,Math.random()*.5,dur+.02);}
+  const v=o.vol??.2;if(o.att){g.gain.setValueAtTime(.0008,t);g.gain.linearRampToValueAtTime(v,t+o.att);}else g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0008,t+dur);s.connect(f);f.connect(g);g.connect(SND.out);s.start(t,Math.random()*.5,dur+.02);}
 const arp=(notes,step,o={})=>notes.forEach((f,i)=>tone(f,o.len||step*1.6,{...o,at:(o.at||0)+i*step}));
 const SFX={
   click(){hiss(.022,{vol:.13,lp:2200});tone(190,.045,{type:'triangle',vol:.2,to:105});},   /* a soft low tap, like pressing a real key (his call: the high blip got annoying) */
@@ -744,7 +744,7 @@ const SFX={
   heal(){arp([523,659,784,1047,1319],.11,{type:'triangle',vol:.16,len:.3});},
   dead(){tone(220,1.1,{type:'sawtooth',vol:.14,to:55});tone(110,1.3,{type:'triangle',vol:.2,to:40});},
   dawn(){arp([392,494,587,784],.14,{type:'triangle',vol:.14,len:.4});},
-  step_grass(){hiss(.12,{vol:.22,bp:650});hiss(.06,{vol:.035,hp:4200,at:.02});},   /* a soft swish through the blades, with a faint crisp edge */
+  step_grass(){hiss(.2,{vol:.13,lp:3200,att:.045});hiss(.16,{vol:.1,bp:900,att:.04});},   /* more hiss, but it swells in softly: no sharp start, no crisp top (his call) */
   step_stone(){tone(105,.055,{type:'triangle',vol:.14,to:62});hiss(.022,{vol:.06,bp:1200});},   /* lower than the wood step: a dull, heavy tap */
   step_wood(){tone(150,.06,{type:'triangle',vol:.1,to:95});hiss(.03,{vol:.03,lp:600});},
   type(){tone(760,.02,{vol:.035});},
@@ -879,7 +879,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121650'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121653'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
