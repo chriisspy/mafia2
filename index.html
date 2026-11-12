@@ -698,9 +698,9 @@ function hiss(dur,o={}){const c=SND.ctx,t=c.currentTime+(o.at||0),s=c.createBuff
   const v=o.vol??.2;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0008,t+dur);s.connect(f);f.connect(g);g.connect(SND.out);s.start(t,Math.random()*.5,dur+.02);}
 const arp=(notes,step,o={})=>notes.forEach((f,i)=>tone(f,o.len||step*1.6,{...o,at:(o.at||0)+i*step}));
 const SFX={
-  click(){tone(620,.045,{vol:.09});},
+  click(){hiss(.022,{vol:.13,lp:2200});tone(190,.045,{type:'triangle',vol:.2,to:105});},   /* a soft low tap, like pressing a real key (his call: the high blip got annoying) */
   open(){tone(520,.07,{vol:.1,to:820});},
-  close(){tone(700,.06,{vol:.08,to:440});},
+  close(){hiss(.03,{vol:.1,lp:1500});tone(150,.07,{type:'triangle',vol:.2,to:80});},
   coin(){tone(988,.06,{vol:.12});tone(1319,.16,{vol:.12,at:.06});},
   copy(){tone(880,.05,{vol:.1});tone(1175,.1,{vol:.1,at:.06});},
   error(){tone(190,.16,{type:'sawtooth',vol:.12});tone(150,.2,{type:'sawtooth',vol:.12,at:.1});},
@@ -795,7 +795,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121615'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121618'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
