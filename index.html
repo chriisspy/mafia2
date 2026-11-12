@@ -819,7 +819,7 @@ let GROUND=null;
 function groundAt(x,y){const st=TOWN.stage;if(((x-st.x)/46)**2+((y-st.y-2)/26)**2<1)return'wood';
   if(!GROUND){const im=IMG.townDay;if(!im)return'grass';const c=mk(560,750),g=c.getContext('2d');g.drawImage(im,0,0);GROUND=g.getImageData(0,0,560,750).data;}
   const i=(Math.max(0,Math.min(749,Math.round(y)))*560+Math.max(0,Math.min(559,Math.round(x))))*4,r=GROUND[i],gg=GROUND[i+1],b=GROUND[i+2];return gg>r+18&&gg>b+18?'grass':'stone';}
-function footstep(e,dt,surf){e.stepT=(e.stepT||0)+dt;if(e.stepT<.27)return;e.stepT=0;sfx('step_'+surf);}
+function footstep(e,dt,surf){e.stepT=(e.stepT||0)+dt;if(e.stepT<.54)return;e.stepT=0;sfx('step_'+surf);}
 function sndUI(){const b=$('#homeSnd');if(b)b.innerHTML=ic(SND.on?'sound':'mute',3,'solo');}
 // THE LOADER (his design, 12 Nov): the Mafia chase someone with a knife. Both run on the spot, bobbing, while the cobbles
 // slide past to the right. The Mafia's knife run is a PixelLab animation (assets/loader/mafia-run.png, 4 frames of 48 x 46).
@@ -879,7 +879,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121653'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121655'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
