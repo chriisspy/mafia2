@@ -890,7 +890,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121741'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121742'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1249,7 +1249,7 @@ $('#skinNext').onclick=()=>{skinIdx=(skinIdx+1)%SKINS.length;if(OWNED.has(SKINS[
    main app's coins. A case costs CASE.price; a double pays CASE.dupe of that back (same rule as the main app's cases). */
 const RAR_COL={common:'#7bc96f',rare:'#6fb5ff',epic:'#c58bff',legendary:'#ffcf4a'};
 const CASE_DEF={mafia:{price:300,odds:{common:.55,rare:.3,epic:.12,legendary:.03},pool:()=>SKINS,sheet:'caseSheet'},
-  cabin:{price:400,odds:{common:.5,rare:.32,epic:.13,legendary:.05},pool:()=>ROOMS.filter(r=>!r.base),sheet:'cabinOpen'}};
+  cabin:{price:1000,odds:{common:.5,rare:.32,epic:.13,legendary:.05},pool:()=>ROOMS.filter(r=>!r.base),sheet:'cabinOpen'}};
 /* CASE.kind is the case being opened; price, odds and pool read from it */
 const CASE={kind:'mafia',dupe:.4,busy:false,get price(){return CASE_DEF[CASE.kind].price;},get odds(){return CASE_DEF[CASE.kind].odds;},get pool(){return CASE_DEF[CASE.kind].pool();}};
 const caseRes=()=>$(CASE.kind==='cabin'?'#cabResult':'#caseResult');
