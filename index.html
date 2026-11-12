@@ -691,7 +691,9 @@ function sndCtx(){if(!SND.ctx){const C=window.AudioContext||window.webkitAudioCo
 addEventListener('pointerdown',()=>{if(SND.on)sndCtx();},{capture:true,passive:true});
 /* one note: freq in Hz, how long, o = {type, vol, to (slide to this freq), at (seconds from now)} */
 function tone(f,dur,o={}){const c=SND.ctx,t=c.currentTime+(o.at||0),os=c.createOscillator(),g=c.createGain();os.type=o.type||'square';os.frequency.setValueAtTime(f,t);
-  if(o.to)os.frequency.exponentialRampToValueAtTime(Math.max(20,o.to),t+dur);const v=o.vol??.16;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.006);g.gain.exponentialRampToValueAtTime(.0008,t+dur);
+  if(o.to)os.frequency.exponentialRampToValueAtTime(Math.max(20,o.to),t+dur);
+  if(o.vib){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=o.vib[0];lg.gain.value=o.vib[1];l.connect(lg);lg.connect(os.frequency);l.start(t);l.stop(t+dur+.02);}
+  const v=o.vol??.16;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.006);g.gain.exponentialRampToValueAtTime(.0008,t+dur);
   os.connect(g);g.connect(SND.out);os.start(t);os.stop(t+dur+.02);}
 /* a burst of noise: how long, o = {vol, at, lp (low-pass Hz), hp (high-pass Hz)} */
 function hiss(dur,o={}){const c=SND.ctx,t=c.currentTime+(o.at||0),s=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();s.buffer=SND.nb;f.type=o.hp?'highpass':'lowpass';f.frequency.value=o.hp||o.lp||1200;
@@ -720,13 +722,14 @@ const SFX={
   night(){tone(196,1.3,{type:'sine',vol:.22});tone(98,1.5,{type:'sine',vol:.22});tone(294,.9,{type:'sine',vol:.08,at:.25});},
   lock(){tone(440,.06,{vol:.1});tone(660,.12,{vol:.1,at:.07});},
   knock(){tone(170,.07,{type:'triangle',vol:.4,to:90});hiss(.05,{vol:.15,lp:700});},
-  scream(){tone(1100,.55,{type:'sawtooth',vol:.12,to:380});tone(1150,.5,{type:'square',vol:.05,to:420});},
-  stab(){hiss(.18,{vol:.3,hp:1800});tone(90,.5,{type:'sawtooth',vol:.2,to:40});},
+  scream(){tone(820,.16,{type:'sawtooth',vol:.11,to:1250,vib:[11,40]});tone(1250,.62,{type:'sawtooth',vol:.12,to:560,vib:[13,90],at:.15});tone(1262,.6,{type:'square',vol:.04,to:570,vib:[13,90],at:.15});hiss(.5,{vol:.05,hp:2600,at:.15});},
+  stab(){hiss(.07,{vol:.3,hp:3500});tone(2400,.09,{type:'sawtooth',vol:.12,to:300});hiss(.16,{vol:.34,lp:700,at:.07});tone(140,.3,{type:'triangle',vol:.4,to:42,at:.07});tone(62,1.1,{type:'sawtooth',vol:.16,to:34,at:.2});tone(65,1.1,{type:'sine',vol:.22,to:36,at:.2});},
   heal(){arp([523,659,784,1047,1319],.11,{type:'triangle',vol:.16,len:.3});},
   dead(){tone(220,1.1,{type:'sawtooth',vol:.14,to:55});tone(110,1.3,{type:'triangle',vol:.2,to:40});},
   dawn(){arp([392,494,587,784],.14,{type:'triangle',vol:.14,len:.4});},
+  mourn(){tone(147,2.4,{type:'sine',vol:.2});tone(73,2.6,{type:'triangle',vol:.2});[440,349,294,220].forEach((f,i)=>{tone(f,1.1,{type:'triangle',vol:.15,at:.15+i*.5});tone(f*2,.5,{type:'sine',vol:.04,at:.15+i*.5});});},
   gavel(){tone(200,.1,{type:'triangle',vol:.35,to:110});hiss(.06,{vol:.2,lp:900});tone(200,.1,{type:'triangle',vol:.35,to:110,at:.22});hiss(.06,{vol:.2,lp:900,at:.22});},
-  stamp(){hiss(.08,{vol:.25,lp:1400});tone(240,.09,{type:'triangle',vol:.25,to:130});},
+  stamp(){hiss(.07,{vol:.3,lp:1100});tone(210,.13,{type:'triangle',vol:.36,to:80});tone(622,.1,{vol:.1,at:.09});tone(440,.24,{vol:.11,at:.19});tone(220,.3,{type:'triangle',vol:.14,at:.19});},
   verdict(){for(let i=0;i<3;i++){tone(130,.16,{type:'triangle',vol:.32,to:70,at:i*.22});hiss(.08,{vol:.14,lp:600,at:i*.22});}tone(98,.9,{type:'sawtooth',vol:.1,at:.66});},
   haunt(){tone(320,.9,{type:'sine',vol:.14,to:560});tone(326,.9,{type:'sine',vol:.14,to:548});hiss(.6,{vol:.05,hp:3000});},
   win(){arp([523,523,523,659,784,1047],.11,{vol:.14});arp([262,330,392,523],.16,{type:'triangle',vol:.14,len:.4});tone(1047,.9,{vol:.12,at:.68});tone(1319,.9,{vol:.08,at:.68});},
@@ -736,6 +739,54 @@ let sfxLast={};
 function sfx(n){if(!SND.on||!SFX[n])return;const now=performance.now();if(now-(sfxLast[n]||0)<25)return;sfxLast[n]=now;try{if(sndCtx())SFX[n]();}catch(e){}}
 /* every button makes a small click (the ones with their own sound still get it underneath, quietly) */
 addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button,.card,.ocard,.gc');if(b&&!b.disabled)sfx(b.id==='shopX'||b.id==='collX'||b.id==='howX'||b.id==='wheelX'?'close':'click');},true);
+/* ================= MUSIC (12 Nov 2026): chiptune loops, written as notes and played by the same little synth =================
+   Each tune is three lines read left to right, one step at a time: a lead (square wave), a bass (triangle) and drums
+   (k = kick, h = hat, s = snare). '-' is a rest. A scheduler lays the next half second of notes down ahead of time so
+   the beat stays steady. music('name') changes tune with a short fade; music(null) is silence. The speaker button
+   turns it off with everything else. */
+const NOTE_HZ=n=>{const m=/^([A-G])(#|b)?(\d)$/.exec(n);if(!m)return 0;const s={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0);return 440*Math.pow(2,(s-9)/12+(+m[3]-4));};
+const SEQ=s=>s.trim().split(/\s+/);
+const TUNES={
+  /* the welcome screen and the town lobby: easy and bright */
+  menu:{bpm:104,step:.5,vol:.5,leadType:'square',
+    lead:SEQ('E5 - G5 - E5 - C5 -  D5 - F5 - D5 - B4 -  C5 - E5 - A5 - E5 -  F5 - - E5 D5 - G4 -  E5 - G5 - C6 - G5 -  D5 - F5 - A5 - F5 -  E5 - C5 - A4 - C5 -  D5 - - - G4 - - -'),
+    bass:SEQ('C3 - G3 - C3 - G3 -  G2 - D3 - G2 - D3 -  A2 - E3 - A2 - E3 -  F2 - C3 - G2 - D3 -  C3 - G3 - C3 - G3 -  D3 - A3 - D3 - A3 -  A2 - E3 - A2 - E3 -  G2 - D3 - G2 - B2 -'),
+    drum:SEQ('k - h - s - h -')},
+  /* night in the cabin: slow, low, uneasy */
+  night:{bpm:66,step:.5,vol:.55,leadType:'triangle',
+    lead:SEQ('A4 - - C5 - - B4 -  - - E4 - - - - -  A4 - - C5 - - D5 -  E5 - - - D5 - C5 -  F4 - - A4 - - G#4 -  - - E4 - - - - -  A4 - - - - - - -  - - - - - - - -'),
+    bass:SEQ('A2 - - - - - - -  A2 - - - E2 - - -  A2 - - - - - - -  C3 - - - B2 - - -  F2 - - - - - - -  E2 - - - - - - -  A2 - - - - - - -  E2 - - - - - - -'),
+    drum:SEQ('k - - - - - - -  k k - - - - - -')},
+  /* the day talk: light, a bit thoughtful */
+  day:{bpm:92,step:.5,vol:.4,leadType:'square',
+    lead:SEQ('F5 - - A5 - - C6 -  A5 - - - G5 - - -  Bb5 - - G5 - - D5 -  G5 - - - - - - -  A5 - - F5 - - C5 -  D5 - - - F5 - - -  G5 - - E5 - - C5 -  F5 - - - - - - -'),
+    bass:SEQ('F2 - C3 - F2 - C3 -  F2 - C3 - F2 - C3 -  Bb2 - F3 - Bb2 - F3 -  C3 - G3 - C3 - G3 -  D3 - A3 - D3 - A3 -  Bb2 - F3 - Bb2 - F3 -  C3 - G3 - C3 - G3 -  F2 - C3 - F2 - - -'),
+    drum:SEQ('- - h - - - h -')},
+  /* the vote: a ticking, tense pulse */
+  vote:{bpm:118,step:.5,vol:.5,leadType:'square',
+    lead:SEQ('D5 - - F5 - - E5 -  D5 - - - A4 - - -  D5 - - F5 - - G5 -  A5 - - - - - - -  Bb5 - - A5 - - G5 -  F5 - - - E5 - - -  D5 - - - C#5 - - -  D5 - - - - - - -'),
+    bass:SEQ('D2 D2 - D2 D2 - D2 -  D2 D2 - D2 D2 - D2 -  Bb1 Bb1 - Bb1 Bb1 - Bb1 -  A1 A1 - A1 A1 - A1 -  G2 G2 - G2 G2 - G2 -  Bb1 Bb1 - Bb1 Bb1 - Bb1 -  A1 A1 - A1 A1 - A1 -  D2 D2 - D2 - - - -'),
+    drum:SEQ('k - h - k - h h')},
+};
+const MUS={name:null,want:null,gain:null,step:0,next:0,timer:0};
+function musTick(){const c=SND.ctx,T=TUNES[MUS.name];if(!c||!T||!SND.on)return;const sd=60/T.bpm*T.step;
+  while(MUS.next<c.currentTime+.45){const i=MUS.step,t0=Math.max(0,MUS.next-c.currentTime),L=T.lead[i%T.lead.length],Bn=T.bass[i%T.bass.length],D=T.drum[i%T.drum.length];
+    const play=(f,dur,type,vol)=>{const t=c.currentTime+t0,os=c.createOscillator(),g=c.createGain();os.type=type;os.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.008);g.gain.exponentialRampToValueAtTime(.0008,t+dur);os.connect(g);g.connect(MUS.gain);os.start(t);os.stop(t+dur+.02);};
+    if(L&&L!=='-')play(NOTE_HZ(L),sd*1.7,T.leadType,.1);
+    if(Bn&&Bn!=='-')play(NOTE_HZ(Bn),sd*1.5,'triangle',.2);
+    if(D&&D!=='-'){const t=c.currentTime+t0,s=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();s.buffer=SND.nb;
+      if(D==='k'){const os=c.createOscillator(),kg=c.createGain();os.type='triangle';os.frequency.setValueAtTime(130,t);os.frequency.exponentialRampToValueAtTime(45,t+.12);kg.gain.setValueAtTime(.3,t);kg.gain.exponentialRampToValueAtTime(.0008,t+.14);os.connect(kg);kg.connect(MUS.gain);os.start(t);os.stop(t+.16);}
+      else{f.type='highpass';f.frequency.value=D==='h'?5000:1800;const dur=D==='h'?.03:.09;g.gain.setValueAtTime(D==='h'?.05:.11,t);g.gain.exponentialRampToValueAtTime(.0008,t+dur);s.connect(f);f.connect(g);g.connect(MUS.gain);s.start(t,Math.random()*.5,dur+.02);}}
+    MUS.step++;MUS.next+=sd;}}
+function music(name){MUS.want=name||null;if(!SND.on||!SND.ctx){return;}const c=SND.ctx;if(MUS.name===MUS.want&&MUS.gain)return;
+  if(MUS.gain){const g=MUS.gain;g.gain.cancelScheduledValues(c.currentTime);g.gain.setValueAtTime(g.gain.value,c.currentTime);g.gain.linearRampToValueAtTime(0,c.currentTime+.5);setTimeout(()=>{try{g.disconnect();}catch(e){}},700);MUS.gain=null;}
+  MUS.name=MUS.want;clearInterval(MUS.timer);if(!TUNES[MUS.name])return;
+  MUS.gain=c.createGain();MUS.gain.gain.setValueAtTime(0,c.currentTime);MUS.gain.gain.linearRampToValueAtTime(TUNES[MUS.name].vol*.5,c.currentTime+.8);MUS.gain.connect(SND.out);
+  MUS.step=0;MUS.next=c.currentTime+.25;MUS.timer=setInterval(musTick,120);musTick();}
+/* which tune goes with which screen */
+const SCENE_TUNE={home:'menu',town:'menu',lobby:'menu',cabin:'night',ghost:'night',limbo:'night',watch:'night',talk:'day',vote:'vote',over:'menu'};
+/* phones only allow sound after a tap: the first tap starts whatever tune the screen wants */
+addEventListener('pointerdown',()=>{if(SND.on&&MUS.want&&MUS.name!==MUS.want)setTimeout(()=>music(MUS.want),0);},{capture:true,passive:true});
 function sndUI(){const b=$('#homeSnd');if(b)b.innerHTML=ic(SND.on?'sound':'mute',3,'solo');}
 // THE LOADER (his design, 12 Nov): the Mafia chase someone with a knife. Both run on the spot, bobbing, while the cobbles
 // slide past to the right. The Mafia's knife run is a PixelLab animation (assets/loader/mafia-run.png, 4 frames of 48 x 46).
@@ -795,7 +846,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id)); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11121618'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11121625'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 const load=(n,src)=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IMG[n]=i;res()};i.onerror=()=>rej(new Error('missing '+src));i.src=src+'?v='+BUILD;});
 
@@ -2935,7 +2986,7 @@ const spyOn=()=>GAME.on&&viewRole==='detective'&&!GAME.meDead&&NIGHT.locked&&NIG
 function spyShow(){if(!GAME.on||GAME.spyRound===GAME.g.round)return;GAME.spyRound=GAME.g.round;
   const h=NIGHT.picks.map(i=>{const l=leavesHouse(i);return`<div class="note${l?'':' ok'}"><img src="${face(looksLike(i))}" alt=""><div>${esc(PEOPLE[i].n)} <b>${l?'LEFT THE HOUSE':'stayed in'}</b></div></div>`;}).join('');
   $('#dawnSpy').innerHTML=h;if(scene===scenes.talk)talkSay(NIGHT.picks.map(i=>PEOPLE[i].n+(leavesHouse(i)?' LEFT THE HOUSE':' stayed in')).join(' · '),'Only you know this.');}
-function gameDawn(){if(!GAME.on)return;sfx('dawn');GAME.filmDone=true;
+function gameDawn(){if(!GAME.on)return;sfx(GAME.g.night&&GAME.g.night.died?'mourn':'dawn');GAME.filmDone=true;
   $('#dawnSpy').innerHTML=spyOn()?`<button class="btn go" id="spyGo">${ic('binoculars')}See who left the house</button>`:'';
   if(spyOn())$('#spyGo').onclick=()=>{if(spyOn())go('watch');};
 $('#dawnSun').innerHTML=ic('sun')+'DAWN · DAY '+GAME.g.round;
@@ -3118,7 +3169,7 @@ const HOW_ROLES={mafia:'Picks one player to kill each night. Two Mafia from 7 pl
   jester:'Wants to be voted out. If they are, the Jester wins alone.',framer:'On the Mafia side. Frames one player so the Detective thinks they left the house.'};
 $('#homeHow').onclick=()=>{$('#howRoles').innerHTML=Object.entries(HOW_ROLES).map(([r,d])=>`<div class="hr">${ic(r,3,'solo')}<div><b style="color:${ROLES[r].accent}">${ROLES[r].name}</b>${d}</div></div>`).join('');$('#howModal').classList.add('on');};
 $('#howX').onclick=()=>$('#howModal').classList.remove('on');
-$('#homeSnd').onclick=()=>{SND.on=!SND.on;try{localStorage.setItem('m2_snd',SND.on?'1':'0');}catch(e){}sndUI();if(SND.on)sfx('coin');};sndUI();
+$('#homeSnd').onclick=()=>{SND.on=!SND.on;try{localStorage.setItem('m2_snd',SND.on?'1':'0');}catch(e){}sndUI();if(SND.on){sfx('coin');const w=MUS.want;MUS.name=null;music(w);}else{const w=MUS.want;if(SND.ctx&&MUS.gain){MUS.gain.gain.value=0;try{MUS.gain.disconnect();}catch(e){}MUS.gain=null;}clearInterval(MUS.timer);MUS.name=null;MUS.want=w;}};sndUI();
 $('#townLeave').onclick=()=>{if(WL.fading)return;if(NET.on)netLeave();else go('home');};
 $('#townCodeBox').onclick=()=>{if(!NET.on)return;const box=$('#townCodeBox'),b=$('#townCodeT'),link=location.origin+location.pathname+'#'+NET.code;
   const done=()=>{sfx('copy');box.classList.add('ok');b.textContent='COPIED!';clearTimeout(box.t);box.t=setTimeout(()=>{box.classList.remove('ok');b.textContent=NET.code||'';},1500);};
@@ -3130,7 +3181,7 @@ function go(name,after){
   setTimeout(()=>{
     if(scene&&scene.leave)scene.leave();
     document.querySelectorAll('.hud').forEach(h=>h.classList.remove('on'));document.querySelectorAll('.modal').forEach(m=>m.classList.remove('on'));
-    scene=scenes[name];if(scene.hud)$(scene.hud).classList.add('on');scene.enter&&scene.enter();
+    scene=scenes[name];if(scene.hud)$(scene.hud).classList.add('on');scene.enter&&scene.enter();music(SCENE_TUNE[name]||null);
     document.querySelectorAll('#tabs .btn').forEach(b=>b.classList.toggle('sel',b.dataset.s===name));
     if(LAB)try{localStorage.setItem('m2lab_scene',name);}catch(e){}
     xf.classList.remove('on');if(after)after();
