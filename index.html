@@ -783,6 +783,12 @@ const SFX={
   pop(){hiss(.25,{vol:.22,hp:1500});tone(300,.35,{type:'sawtooth',vol:.1,to:1400});arp([523,659,784,1047],.06,{vol:.1,at:.12});},
   sparkle(){[1568,1976,2349,2637,3136,3951].forEach((f,i)=>{tone(f,.5,{type:'triangle',vol:.07,at:.05+i*.045});tone(f*1.5,.22,{type:'sine',vol:.025,at:.05+i*.045});});
     [3520,2637,4186,3136,3951,2794,4699,3322].forEach((f,i)=>tone(f,.28,{type:'sine',vol:.05*(1-i/9),at:.36+i*.11}));hiss(.9,{vol:.025,hp:7000,at:.05});},
+  /* the cat: a yowl that climbs and falls, with a wobble in it */
+  meow(){tone(520,.2,{type:'sawtooth',vol:.07,to:1150,vib:[16,50]});tone(1150,.42,{type:'sawtooth',vol:.09,to:430,vib:[21,110],at:.19});tone(1160,.4,{type:'triangle',vol:.07,to:440,vib:[21,110],at:.19});hiss(.3,{vol:.03,hp:4000,at:.2});},
+  /* the bin going over: a low thump, a ringing metal clang (notes that do not fit together, like sheet metal), then the lid spinning to a stop */
+  crash(){tone(120,.3,{type:'triangle',vol:.4,to:50});hiss(.35,{vol:.3,bp:2400});hiss(.12,{vol:.24,hp:5000});
+    for(const[f,v,d]of[[311,.13,.9],[523,.11,.7],[811,.1,.6],[1217,.08,.5],[1733,.06,.4],[2551,.04,.3]])tone(f,d,{type:'square',vol:v*.6,to:f*.985});
+    for(let i=0;i<11;i++){const at=.35+i*.11-i*i*.003;tone(1900-i*40,.05,{type:'square',vol:.06*(1-i/12),at});hiss(.03,{vol:.07*(1-i/12),hp:3500,at});}},
   rare(){arp([523,659,784,1047,1319],.08,{vol:.13});tone(1568,.5,{type:'triangle',vol:.14,at:.42});},
   night(){tone(196,1.3,{type:'sine',vol:.22});tone(98,1.5,{type:'sine',vol:.22});tone(294,.9,{type:'sine',vol:.08,at:.25});},
   lock(){tone(440,.06,{vol:.1});tone(660,.12,{vol:.1,at:.07});},
@@ -963,7 +969,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131136'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131149'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1958,8 +1964,8 @@ function planQuiet(){const H=seedH();N.qv=N.forceQ||(H%2?'bin':'argue');
   if(N.qv==='bin'){const live=PEOPLE.map((_,i)=>i).filter(i=>!V.dead.has(i)&&!(GAME.watcher&&!i)),v=live.length?live[(H>>2)%live.length]:0;
     N.victim=v;N.vci=CABIN_OF[v];N.vic=TOWN.cabins[N.vci];PLAN.home();N.kind='bin';N.inside=false;N.pillow=false;const TA=N.TA,two=N.walkers.length>1;N.tFlee=TA+3.2;
     N.shots=[[.5,'Night '+NN()+'.'],[1.7,'The town is asleep…'],[3.0,'…but not everyone.'],[N.tMeet-.4,two?'They meet in the square.':'A shadow crosses the square.'],[TA-.6,'Quiet. Nearly there.'],
-      [TA+1.2,'The cat jumps.'],[TA+1.9,'CRASH!','bad'],[TA+3,'Lights come on, all down the street.'],[N.tFlee+.4,two?'They run for it.':'The shadow runs for it.','good'],[TA+9.4,'Nobody dies tonight.','good']];
-    N.end=TA+12;N.tCut=N.end;return;}
+      [TA+1.2,'The cat jumps.'],[TA+1.9,'CRASH!','bad'],[TA+3,'Lights come on, all down the street.'],[N.tFlee+.4,two?'They run for it.':'The shadow runs for it.','good'],[N.tFlee+3,'Nobody dies tonight.','good']];
+    N.end=N.tFlee+5.6;N.tCut=N.end;return;}   /* straight to the morning card once they are gone */
   N.kind='argue';N.victim=-1;N.vci=-1;N.vic=null;N.walkers=mafWalkers().slice(0,mafCount());const two=N.walkers.length>1;
   N.TW=3.6;N.tMeet=N.TW+Math.max(...N.walkers.map(w=>w.cab.route.len))/SPD+.6;
   const t0=N.tArg=N.tMeet+.8,tD=N.tSun=t0+9.6,tR=N.tRun=tD+2.4;N.end=tR+Math.max(...N.walkers.map(w=>w.cab.route.len))/(SPD*1.25)+2.4;N.tCut=N.end;
@@ -1997,12 +2003,12 @@ function drawBin(wx,wy,down,roll){const K='#1a1430',B='#8a93a6',D='#5b6478',L='#
     const lx2=wx+12+roll;px(lx2-4,wy-4,9,5,K);px(lx2-3,wy-3,7,3,L);px(lx2-3,wy-1,7,1,D);px(wx+9,wy-1,3,2,'#6a8f4a');px(wx+11,wy-3,2,2,'#c98a4b');}}   /* a bit of rubbish */
 PLAY.bin=(T,dt,t)=>{const TA=N.TA,tF=N.tFlee,tC=TA+1.9,f=PLAY.home(Math.min(T,TA+.25),dt,t),c=N.vic,r=N.vicRoute,bx=c.feet[0]+25,by=c.feet[1]+7;
   f.people.forEach((q,k)=>{if(q.kind!=='maf')return;
-    if(T>tF){const s=r.len-(T-tF-k*.2)*SPD*2,a=r.at(clamp(s,0,r.len));q.x=a.x;q.y=a.y;q.walk=true;q.dir=dirFrom(-a.dx,-a.dy);q.al=1-ramp(T,tF+2.2,tF+3.6);}
+    if(T>tF){const s=r.len-(T-tF-k*.2)*SPD*2,a=r.at(clamp(s,0,r.len));q.x=a.x;q.y=a.y;q.walk=true;q.dir=dirFrom(-a.dx,-a.dy);q.al=1-ramp(T,tF+1.5,tF+2.6);}
     else if(T>tC){q.walk=false;q.dir=T<tC+.5?'right':Math.floor((T-tC)*3)%2?'left':'right';q.lift=Math.sin(Math.PI*ramp(T,tC,tC+.35))*7;}     /* they jump out of their skins */
     else if(T>TA+.25){q.walk=false;}});
-  if(T>tF){const k=ease(ramp(T,tF+.4,tF+3.4)),a=r.at(clamp(r.len-(T-tF)*SPD*2,0,r.len));f.cx=lerp(f.cx,a.x,k);f.cy=lerp(f.cy,a.y-14,k);f.vw=lerp(f.vw||150,205,k);}
-  else f.cx=lerp(f.cx,f.cx+10,ease(ramp(T,TA-1,TA+.5)));
-  if(T>tC)once('crash',()=>{N.shake=7;sfx('thud');sfx('rattle');sfx('punch');});if(T>TA+1.2)once('meow',()=>sfx('wave'));
+  f.cx=lerp(f.cx,f.cx+10,ease(ramp(T,TA-1,TA+.5)));
+  if(T>tF){const k=ease(ramp(T,tF,tF+1.6));f.cy+=5*k;f.vw=lerp(f.vw||150,162,k);}   /* stays on the cabin: just eases back to watch them go down the path */
+  if(T>tC)once('crash',()=>{N.shake=7;sfx('crash');});if(T>TA+1.2)once('meow',()=>sfx('meow'));if(T>tC+.25)once('meow2',()=>sfx('meow'));
   const down=T>tC,roll=down?Math.min(9,(T-tC)*14):0,jump=ramp(T,TA+1.2,tC),run=T>tC+.2;
   f.over=()=>{drawBin(bx,by,down,roll);
     const cx2=down?bx+10+(T-tC-.2)*70:lerp(bx,bx+6,jump),cy2=down?by-2:by-17-Math.sin(Math.PI*jump)*9;if(!run||cx2<bx+120)drawCat(cx2,cy2,1,run||jump>0,t);};
@@ -2491,9 +2497,9 @@ function pillowRoom(nm,k,t){const P=[],hit=4.6,pull=7.5,rev=9.2,flee=10.7,n2=maf
     const st=!j&&k>hit-.7&&k<hit+.45,look=k>rev;
     P.push({name:'mafia',x:b>0?lerp(x0,98,b):st?lerp(x0,98,ease(ramp(k,hit-.7,hit-.3))):x0,y:b>0?lerp(142,238,b):st?lerp(142,137,ease(ramp(k,hit-.7,hit-.3))):lerp(236,142,ease(a)),t,
       dir:b>0||look?'front':'back',pose:st?'stab':null,step:st?clamp(Math.floor((k-hit+.7)/1.15*9),0,8):undefined,walk:!st&&((a>0&&a<1)||b>0),tint:SHADOW_TINT,alpha:b>0?1-ramp(b,.6,1):ramp(k,.2+j*.3,.6+j*.3),phase:j*300,lift:look&&k<rev+.3?Math.sin(Math.PI*(k-rev)/.3)*5:0});}
-  if(k>rev-.4){const a=ramp(k,rev-.4,rev+.2),side=ramp(k,flee-.5,flee);   /* in the doorway: the Doctor, and the one who should be dead; they step apart to let the Mafia run */
-    P.push({name:'doctor',dir:'back',x:lerp(90,74,side),y:lerp(232,214,a),t,walk:a<1||(side>0&&side<1),alpha:a,doc:true});
-    P.push({name:nm,dir:'back',x:lerp(107,123,side),y:lerp(234,216,a),t,walk:a<1||(side>0&&side<1),alpha:a,vic:true});}
+  if(k>rev-.4){const a=ramp(k,rev-.4,rev+.2);   /* either side of the doorway, on the floor by the wall (his call, 13 Nov): the Doctor, and the one who should be dead. The Mafia have to run out between them. */
+    P.push({name:'doctor',dir:'back',x:70,y:188,t,walk:false,alpha:a,doc:true});
+    P.push({name:nm,dir:'back',x:126,y:188,t,walk:false,alpha:a,vic:true});}
   return P;}
 /* ---------- when it is YOU: the same night, at the same moment, seen from inside your own cabin ----------
    It runs exactly as long as the town's cutscene and nobody learns anything early. Blood runs down the screen if you
