@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#231850">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MAFIA">
 <title>MAFIA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -78,6 +86,9 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #nightOne.on b{animation:n1tx 4.3s linear forwards}
 @keyframes n1bg{0%{opacity:0}14%{opacity:.9}74%{opacity:.9}100%{opacity:0}}
 @keyframes n1tx{0%,16%{opacity:0;letter-spacing:2px}34%{opacity:1}37%{opacity:.25}39%{opacity:1}52%{opacity:1}53.5%{opacity:.4}55%{opacity:1}72%{opacity:1;letter-spacing:12px}88%,100%{opacity:0;letter-spacing:15px}}
+#turnPhone{display:none;position:fixed;inset:0;z-index:9999;background:#140c24;color:#f6dfae;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+#turnPhone b{font-size:22px}#turnPhone small{font-size:13px;opacity:.7}
+@media (orientation:landscape) and (max-height:520px) and (pointer:coarse){#turnPhone{display:flex}}
 #labFilms{white-space:nowrap;flex:none}
 #filmList .fh{font-size:11px;letter-spacing:2px;opacity:.7;margin:10px 0 4px}#filmList .fr{display:flex;align-items:center;gap:5px;margin-top:5px}
 #filmList .fr b{flex:1;font-size:15px;min-width:0}#filmList .fr .btn{font-size:12px;padding:3px 7px 5px}#filmList .fr .btn.one{flex:none;min-width:86px}
@@ -708,6 +719,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <button class="btn dark" id="gameLeave">Leave</button>
   <button class="btn dark" id="menuBtn" title="Menu"><i data-ic="menu" data-c="solo"></i></button>
   <div id="nightOne"><b>NIGHT 1</b></div>
+  <div id="turnPhone"><i data-ic="phone" data-s="5" data-c="solo"></i><b>Turn your phone upright</b><small>MAFIA plays in portrait</small></div>
   <div class="modal big panel" id="filmModal">
     <div class="mhead"><b>NIGHT FILMS</b><button class="btn" id="filmX"><i data-ic="cross" data-c="solo"></i></button></div>
     <div class="small" style="margin-bottom:6px">Lab only. Tap one to watch it.</div>
@@ -738,7 +750,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </nav>
 </div>
 
-<script src="icons.js?v=11121746"></script>
+<script src="icons.js?v=11131312"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -801,7 +813,7 @@ const SFX={
   omen(){tone(55,3.6,{type:'sine',vol:.4});tone(58.3,3.6,{type:'sine',vol:.22});tone(110,3.2,{type:'triangle',vol:.1,to:104});tone(41,1.4,{type:'sine',vol:.5,to:30});hiss(.5,{vol:.2,lp:300});
     hiss(3,{vol:.035,bp:700,at:.3});tone(880,2.4,{type:'sine',vol:.012,at:.8,vib:[5,22]});tone(932,2.4,{type:'sine',vol:.01,at:.8,vib:[4,18]});},
   /* something is wrong: a hard two-tone alarm with a thump under it */
-  alert(){tone(98,.5,{type:'triangle',vol:.3,to:60});tone(1175,.1,{type:'square',vol:.13});tone(1175,.1,{type:'square',vol:.13,at:.15});tone(1568,.34,{type:'square',vol:.14,at:.3});tone(1175,.1,{type:'sawtooth',vol:.06});tone(1568,.34,{type:'sawtooth',vol:.06,at:.3});},
+  alert(){tone(98,.6,{type:'triangle',vol:.36,to:52});tone(49,.8,{type:'sine',vol:.34,to:36});tone(196,.45,{type:'sawtooth',vol:.07,to:150});tone(233,.45,{type:'sawtooth',vol:.06,to:178});hiss(.18,{vol:.14,lp:700});},   /* a low hit, no bell (his call) */
   rare(){arp([523,659,784,1047,1319],.08,{vol:.13});tone(1568,.5,{type:'triangle',vol:.14,at:.42});},
   night(){tone(196,1.3,{type:'sine',vol:.22});tone(98,1.5,{type:'sine',vol:.22});tone(294,.9,{type:'sine',vol:.08,at:.25});},
   lock(){tone(440,.06,{vol:.1});tone(660,.12,{vol:.1,at:.07});},
@@ -1002,7 +1014,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131256'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131312'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3642,14 +3654,16 @@ function introLoad(){return INTRO.p||(INTRO.p=Promise.all(['stop','road','forest
 const iOnce=(k,fn)=>{if(!INTRO.kicks[k]){INTRO.kicks[k]=1;fn();}};
 const introCast=()=>PEOPLE.slice(0,10).map(q=>SP[q.skin]?q.skin:'beanie');   /* their own outfits: never a role outfit */
 function introPlan(){const I=INTRO,n=introCast().length;I.awake=seedH()%Math.min(6,n);   /* one of them, a different one each game, is not asleep */
-  if(I.mode==='short'){I.S=[['out',0,2.6],['town',2.6,5.8]];I.end=5.8;I.shots=[[.3,'The bus broke down in the woods.'],[2.9,'But there was a town.'],[4.4,'Every light on. Nobody home.']];return;}
+  if(I.mode==='short'){I.S=[['out',0,2.6],['town',2.6,5.8]];I.end=5.8;I.shots=[[.3,'The coach broke down in the middle of the woods.'],[3,'They followed the lights to a little town.']];return;}
   /* v2 timing: about 43 s. Every shot now has room to breathe: the coach idles before anyone boards, the forest is
      held long enough to notice the eyes, and after the lights die there is a long dark silence before anyone moves. */
   const tB=I.tB=3+(n-1)*.25+2.9,a=tB+2.9;let s=0;const add=(nm,d)=>{const r=[nm,s,s+d];s+=d;return r;};
   I.S=[add('stop',a),add('road',3.8),add('forest',4.4),add('inside',2.3),add('dead',7),add('out',5.2),add('town',6.4),add('settle',5.4)];I.end=s;const at=nm=>I.S.find(q=>q[0]===nm)[1];
-  I.shots=[[.5,'A weekend away.'],[3.1,'Everybody on!'],[at('road')+.4,'The open road.'],[at('road')+2.2,'Hours later…'],[at('forest')+.5,'The road gets darker.'],[at('inside')+.4,'Everyone is asleep.'],
-    [at('dead')+.3,'CLUNK.','bad'],[at('dead')+4.4,'The engine is dead.','bad'],[at('out')+1.2,'No signal. No cars. Nothing.'],[at('out')+3.7,'Wait. Lights.','good'],
-    [at('town')+2.4,'A town.'],[at('town')+3.8,'Every light on.'],[at('town')+5.2,'Nobody home.','bad'],[at('settle')+.5,'They take a cabin each.'],[at('settle')+3.2,'This one is yours.']];}
+  /* the narration (his call, 13 Nov: plain, natural storytelling, said the way a person would tell it; no slogans) */
+  I.shots=[[.5,'It was meant to be a quiet weekend away.'],[3.1,'One by one, they climbed aboard.'],[at('road')+.4,'The drive took longer than anyone expected.'],[at('road')+2.2,'By sunset there wasn\'t a house in sight.'],
+    [at('forest')+.5,'The road wound deeper into the trees.'],[at('inside')+.4,'Most of them had dozed off.'],
+    [at('dead')+4.4,'The engine wouldn\'t start again.','bad'],[at('out')+1.2,'Nobody had a signal, and no cars came by.'],[at('out')+3.7,'Then someone spotted lights through the trees.','good'],
+    [at('town')+2.4,'There was a little town at the end of the trail.'],[at('town')+4.4,'Every window was lit, but nobody answered.','bad'],[at('settle')+.5,'They took a cabin each and settled in for the night.'],[at('settle')+3.2,'This one was yours.']];}
 /* THE COACH (v3, his calls 13 Nov). 234 x 79: the coach he picked, redrawn bigger by PixelLab. The side-on scenes
    are a third bigger to match (tools/make_intro.py), so the film is shot wider: about 250 game pixels across.
    - The driver's cab at the front is dark: that seat is the driver's, and nobody sees who is in it.
@@ -3710,7 +3724,7 @@ const INTRO_DRAW={
     view(IMG['intro/forest'],cx,cy,vw,{s:W/vw});
     drawScene([],null,null,[introBus(bx,by,{faces:introFaces(),bounce:moving,sleep:k<B,jolt:k>B&&k<B+.25?-3:0})]);   /* every eye snaps open, every head jerks up */
     if(k>B)introSmoke(bx+4,by+60,k-B);if(on)busLights(bx,by,t);
-    if(k>B&&k<B+1.15){const a=Math.min(1,(k-B)/.12),u=Math.max(2,Math.round(cam.lw/26)),pop=k-B<.12?1.5:k-B<.2?.9:1,w=Math.round(u*2*pop),h=Math.round(u*6.4*pop),x0=Math.round(cam.lw/2-w/2),y0=Math.round(cam.lh*.2);   /* THE BIG "!" : solid, chunky, yellow on navy */
+    if(k>B&&k<B+1.15){const a=Math.min(1,(k-B)/.12),u=Math.max(2,Math.round(cam.lw/40)),pop=k-B<.12?1.5:k-B<.2?.9:1,w=Math.round(u*2*pop),h=Math.round(u*6.4*pop),x0=Math.round(cam.lw/2-w/2),y0=Math.round(cam.lh*.07);   /* THE BIG "!" : solid, chunky, yellow on navy */
       if(a>0&&(k-B<.9||Math.floor(k*14)%2)){lx.fillStyle='#1a1430';lx.fillRect(x0-u,y0-u,w+2*u,h+2*u);lx.fillRect(x0-u,y0+h+u,w+2*u,w+3*u);
         lx.fillStyle='#e4544f';lx.fillRect(x0,y0+Math.round(u*.6),w,h);lx.fillRect(x0,y0+h+2*u+Math.round(u*.6),w,w);lx.fillStyle='#ffd25e';lx.fillRect(x0,y0,w,h);lx.fillRect(x0,y0+h+2*u,w,w);
         lx.fillStyle='#fff2a8';lx.fillRect(x0,y0,Math.max(1,Math.round(w/3)),h);lx.fillRect(x0,y0+h+2*u,Math.max(1,Math.round(w/3)),w);}}
@@ -3830,6 +3844,8 @@ $('#filmList').insertAdjacentHTML('beforeend','<div class="fh">PRIZE CARDS (the 
 $('#filmList').insertAdjacentHTML('afterbegin','<div class="fh">THE INTRO</div><div class="fr"><b>The bus trip</b><button class="btn go" data-i="full">Full</button><button class="btn" data-i="short">Short</button><button class="btn" data-i="n1">Night 1</button></div>');
 $('#filmList').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.i){$('#filmModal').classList.remove('on');if(b.dataset.i==='n1'){CAB.keep=false;go('cabin',()=>nightOne(1));return;}INTRO.mode=b.dataset.i;introLoad().then(()=>{if(INTRO.ok)go('intro');});return;}if(b.dataset.w){$('#filmModal').classList.remove('on');const it=SKINS.find(s=>s.rar===b.dataset.w);showWin(it,true,0);$('#winAgain').style.display='none';$('#winEquip').style.display='none';return;}playFilm(b.dataset.k,b.dataset.e);};
 $('#labFilms').onclick=()=>{document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));$('#filmModal').classList.add('on');};$('#filmX').onclick=()=>$('#filmModal').classList.remove('on');
+/* portrait only: where the browser allows it (full screen, or the home-screen app), hold the screen upright */
+addEventListener('pointerdown',()=>{try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('portrait').catch(()=>{});}catch(e){}},{once:true,capture:true,passive:true});
 /* lab only: 500 coins into this phone's wallet (it is the same wallet the real game uses on this browser) */
 $('#labCoins').onclick=()=>{coins+=500;saveInv();paintCoins();sfx('coin');toast(ic('coin')+' +500 coins. You have '+coins+'.');};
 $('#rainBtn').onclick=()=>{raining=!raining;$('#rainBtn').innerHTML=raining?ic('rain')+'Rain':ic('moon')+'Clear';};

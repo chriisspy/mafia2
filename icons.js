@@ -28,6 +28,7 @@ fist:[E,'....KKKK..','..KKTRRRK.','.KTRRRWRRK','.KRRRRRRRK','.KRRKRRRrK','.KRRRK
 hand:['..K.K.K...','.KPKPKPK..','.KPKPKPK..','.KPKPKPKK.','.KPPPPPKPK','.KPPPPPPPK','.KPPPPPPpK','.KPPPPPppK','..KPPPppK.','...KKKKK..'],
 note:['....KKKKK.','....KWWSK.','....KWKKK.','....KWK...','....KWK...','..KKKWK...','.KWWWSK...','.KWSSSK...','..KKKK....',E],
 wheel:['...KKKK...','.KKRRGGKK.','.KRRRGGGK.','KBBRRGGEEK','KBBBKKEEEK','KVVVKKYYYK','KVVMMOOYYK','.KMMMOOOK.','.KKMMOOKK.','...KKKK...'],
+phone:['..KKKKKK..','..KWWWWK..','..KWWWWK..','..KWWWWK..','..KWWWWK..','..KWWWWK..','..KWWWWK..','..KKKKKK..','..KKGGKK..','..KKKKKK..'],
 mystery:['...KKKK...','..KKKKKK..','.KKKWWKKK.','.KKWKKWKK.','KKKKKKWKKK','KKKKKWKKKK','.KKKWKKKK.','.KKKKKKKK.','..KKWKKK..','...KKKK...'],
 hanger:['....KK....','...K..K...','......K...','....KKK...','...KOOOK..','..KOKKKOK.','.KOK...KOK','KOOKKKKKOK','KKKKKKKKKK',E],
 skull:['..KKKKKK..','.KWWWWWSK.','KWWWWWWWSK','KWKKWWKKSK','KWKKWWKKSK','KWWWKKWSSK','.KSWWWSSK.','..KWKKSK..','..KKKKKK..',E],
