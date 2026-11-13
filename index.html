@@ -1047,7 +1047,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131640'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131643'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1130,10 +1130,22 @@ function xmasLights(t,dark,darkK){if(!XMAS||!XL||dayMode)return;lx.save();lx.glo
     if(cn){lx.globalAlpha=.13*pulse*off;lx.drawImage(xGlow(XCOL.c[1],9),Math.round(sx+cx/cn-9),Math.round(sy+cy/cn-9));
       lx.globalAlpha=.45*off;lx.globalCompositeOperation='source-over';lx.fillStyle=XCOL.c[0];L.forEach(([x,y,k])=>{if(k==='c')lx.fillRect(sx+x,sy+y,1,1);});lx.globalCompositeOperation='lighter';}});
   lx.restore();}
-function glowOn(c,x,y,r,col,a){if(r<=0||a<=0)return;const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);c.fillStyle=g;c.fillRect(x-r,y-r,2*r,2*r);}
+/* in smooth-follow mode a glow is painted at art size on a scratch canvas and stamped on, so lights keep their chunky pixels (and stay cheap) */
+const GSC=mk(8,8),GSX=GSC.getContext('2d');
+function glowOn(c,x,y,r,col,a){if(r<=0||a<=0)return;
+  if(c===lx&&cam.hi){const n=2*Math.ceil(r);if(GSC.width<n){GSC.width=n;GSC.height=n;}GSX.clearRect(0,0,n,n);const g=GSX.createRadialGradient(n/2,n/2,0,n/2,n/2,r);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);GSX.fillStyle=g;GSX.fillRect(0,0,n,n);
+    lx.drawImage(GSC,0,0,n,n,x-n/2,y-n/2,n,n);return;}
+  const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);c.fillStyle=g;c.fillRect(x-r,y-r,2*r,2*r);}
+/* a batch of glows put on with one blend. In smooth-follow mode they are painted on a small art-size layer first and laid on in ONE go:
+   dozens of blended stamps at full screen sharpness every frame is what would make a phone stutter */
+const lb=mk(1,1),lbx=lb.getContext('2d');
+function glowBatch(op,inner,fn){if(!cam.hi){lx.save();lx.globalCompositeOperation=op;fn(lx);lx.restore();return;}
+  if(lb.width!==cam.lw||lb.height!==cam.lh){lb.width=cam.lw;lb.height=cam.lh;}
+  lbx.globalCompositeOperation='source-over';lbx.clearRect(0,0,lb.width,lb.height);lbx.globalCompositeOperation=inner;fn(lbx);
+  lx.save();lx.globalCompositeOperation=op;lx.drawImage(lb,0,0);lx.restore();}
 // lights: [x,y,radius,"r,g,b",alpha,seed]; with a mask they only land on the room, never the void outside
 function lights(list,t,mask){
-  if(!mask){lx.save();lx.globalCompositeOperation='lighter';for(const[x,y,r,col,a,s]of list)glowOn(lx,X(x),Y(y),r,col,a*(1+.18*noise(t,s??x)));lx.restore();return;}
+  if(!mask){glowBatch('lighter','lighter',c=>{for(const[x,y,r,col,a,s]of list)glowOn(c,X(x),Y(y),r,col,a*(1+.18*noise(t,s??x)));});return;}
   lcx.globalCompositeOperation='source-over';lcx.clearRect(0,0,lc.width,lc.height);lcx.globalCompositeOperation='lighter';
   for(const[x,y,r,col,a,s]of list)glowOn(lcx,X(x),Y(y),r,col,a*(1+.18*noise(t,s??x)));
   lcx.globalCompositeOperation='destination-in';lcx.drawImage(mask,-cam.x,-cam.y);
@@ -1300,7 +1312,7 @@ function snowfall(dt,clip){const lw=cam.lw,lh=cam.lh,want=Math.round(lw*lh/150);
   flakes.length=Math.min(flakes.length,want);
   lx.save();if(clip){lx.beginPath();for(const r of clip)lx.rect(...r);lx.clip();}
   for(const f of flakes){f.y+=f.v*dt;f.ph+=dt*f.sw;f.x+=Math.sin(f.ph)*f.sw*6*dt+2*dt;if(f.y>lh+2){f.y=-2;f.x=Math.random()*lw;}if(f.x>lw+2)f.x=-2;
-    lx.fillStyle=f.c;lx.fillRect(Math.round(f.x),Math.round(f.y),f.s,f.s);}
+    lx.fillStyle=f.c;if(cam.hi&&!clip)lx.fillRect(Math.round((f.x+cam.fx)*S)/S,Math.round((f.y+cam.fy)*S)/S,f.s,f.s);else lx.fillRect(Math.round(f.x),Math.round(f.y),f.s,f.s);}
   lx.restore();}
 function rain(dt,clip){if(XMAS){snowfall(dt,clip);return;}
   if(!raining){flash=0;return;}
@@ -1373,11 +1385,10 @@ function townLights(t,o={},part){ // part 'win' = only the cabin windows (draw b
   if(part!=='win'){
     // the square is lit orange by its lights: a soft tint (not added brightness, which washes colour out),
     // strongest by the ring of bulbs and fading away from it
-    lx.save();lx.globalCompositeOperation='soft-light';const wk=dim*lampK;
-    glowOn(lx,X(280),Y(365),175,'255,125,30',.4*wk);
-    TOWN.lamps.forEach(([x,y])=>glowOn(lx,X(x),Y(y)+14,44,'255,120,30',.5*wk));
-    TOWN.bulbs.forEach(([x,y])=>glowOn(lx,X(x),Y(y)+8,22,'255,120,30',.2*wk));
-    lx.restore();
+    const wk=dim*lampK;
+    glowBatch('soft-light','source-over',c=>{glowOn(c,X(280),Y(365),175,'255,125,30',.4*wk);
+      TOWN.lamps.forEach(([x,y])=>glowOn(c,X(x),Y(y)+14,44,'255,120,30',.5*wk));
+      TOWN.bulbs.forEach(([x,y])=>glowOn(c,X(x),Y(y)+8,22,'255,120,30',.2*wk));});
     TOWN.lamps.forEach(([x,y],i)=>{L.push([x,y,30,'255,130,45',.16*dim*lampK,i]);L.push([x,y,9,'255,170,80',.22*dim*lampK,i+9]);});
     TOWN.bulbs.forEach(([x,y],i)=>L.push([x,y,6,'255,150,60',.2*dim*lampK,i*7+3]));
   }
@@ -2512,7 +2523,7 @@ scenes.night={
       if(N.victim===0&&T>N.tHit+1.3)once('gsv',()=>{fxHeal();mdBig('guard');});}        // you were the one they came for
     let cx=f.cx,cy=f.cy;
     if(N.shake>0){cx+=(Math.random()-.5)*N.shake;cy+=(Math.random()-.5)*N.shake;N.shake=Math.max(0,N.shake-dt*20);}
-    view(IMG.town,Math.round(cx),Math.round(cy),f.vw||150,{loose:true});   /* whole pixels: the walkers stop shimmering against the ground (13 Nov) */
+    view(IMG.town,cx,cy,f.vw||150,{loose:true,hi:true});   /* smooth follow: the ground glides, the walkers stay steady (13 Nov) */
     lx.fillStyle='rgba(6,8,30,.38)';lx.fillRect(0,0,cam.lw,cam.lh);
     for(const[ci,a]of f.doors||[])doorOpen(ci,a);
     if(f.under)f.under();
@@ -2973,7 +2984,7 @@ scenes.ghost={hud:'#ghostHud',
     if(G.watch>0&&!G.fading){const sp=ghostSpots(f).find(q=>q.i===G.watch);
       if(sp&&sp.st==='home'&&!ghostAway(G.watch)){ghostWatch(G.watch);return;}                 // they went back in: follow them inside
       if(sp){G.x=G.tx=sp.x+12;G.y=G.ty=sp.y+20;G.fxAt=[sp.x,sp.y];}}
-    view(IMG.town,Math.round(G.x),Math.round(G.y)-14,175,{loose:true});
+    view(IMG.town,G.x,G.y-14,175,{loose:true,hi:true});
     // walking behind a hut (his call, 12 Nov): that hut is rubbed out of the town picture (the bare ground goes back in),
     // then drawn again in order with the people, see-through, so the ghost shows behind it
     const hid=behindCabin(G.x,G.y),huts=[];G.cabA=G.cabA||TOWN.cabins.map(()=>1);
