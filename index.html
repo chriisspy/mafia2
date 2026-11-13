@@ -1073,7 +1073,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131752'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131756'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2845,7 +2845,7 @@ const CK_THEMES={
   acid:{name:'Acid',sky:['#06120a','#0a2010','#103016','#18421c'],grid:'rgba(163,230,53,.06)',tw:['#0a1a08','#3f6212','#84cc16','#1f3a0c','#d9f99d','#f7fee7'],floor:['#365314','#a3e635'],ball:'#bef264',glow:'163,230,53'},
   vapor:{name:'Vaporwave',sky:['#1b0a3a','#3a1466','#6a1f8a','#b8338f'],grid:'rgba(1,205,254,.08)',tw:['#1b0a3a','#b967ff','#ff71ce','#5a2a9a','#01cdfe','#fffb96'],floor:['#12052a','#ff71ce'],ball:'#fffb96',glow:'255,113,206'},
   /* 13 Nov, his ask: a bunch of new themes, all out of the Clicker Case */
-  sunny:{name:'Sunny Day',sky:['#4fb8ea','#6cc6f0','#8ad3f4','#acdff7'],grid:'rgba(255,255,255,.03)',tw:['#5a2a14','#c8643a','#e9875a','#a24a26','#ffd28a','#fff1c8'],floor:['#3f8f3a','#7bd36a'],ball:'#ffd34d',glow:'255,211,77'},
+  sunny:{name:'Sunny Day',sky:['#4fb8ea','#6cc6f0','#8ad3f4','#acdff7'],grid:'rgba(255,255,255,.03)',tw:['#1f4a14','#4caf3a','#7fd65a','#36882a','#9be86a','#e4ffc8'],floor:['#3f8f3a','#7bd36a'],ball:'#ffd34d',glow:'255,211,77'},
   deepsea:{name:'Deep Sea',sky:['#021a33','#03264a','#053466','#08447f'],grid:'rgba(120,200,255,.04)',tw:['#0e1a2e','#3b6e8f','#5aa0c0','#2a5470','#ff8a5c','#ffd2b8'],floor:['#0e2a3a','#c2a36b'],ball:'#ffb347',glow:'255,179,71'},
   sakura:{name:'Sakura',sky:['#ff9fb8','#ffb8c8','#ffd0da','#ffe6e6'],grid:'rgba(255,255,255,.04)',tw:['#3a1418','#b8323c','#d8505a','#8a2028','#ffd6e0','#ffffff'],floor:['#4a6b30','#8fbf5a'],ball:'#ff5f8f',glow:'255,95,143'},
   candy:{name:'Candyland',sky:['#ff8fcf','#ffa8da','#ffc2e6','#ffdcf1'],grid:'rgba(255,255,255,.05)',tw:['#a3123a','#fff4f8','#ffffff','#ff4d6d','#7ee8fa','#d6fbff'],floor:['#5a2a14','#c8743a'],ball:'#7ee8fa',glow:'126,232,250'},
@@ -2889,6 +2889,8 @@ function ckBack(x,W0,H0){const k=CK.theme,T=CK.t,sc=CK.scroll;
   else if(k==='sunny'){   /* a big sun, drifting clouds, two rows of rolling hills */
     x.fillStyle='#fff3a3';for(let j=-11;j<=11;j++){const hw=Math.round(Math.sqrt(121-j*j));x.fillRect(104-hw,30+j,hw*2,1);}x.fillStyle='#ffe066';for(let j=-8;j<=8;j++){const hw=Math.round(Math.sqrt(64-j*j));x.fillRect(104-hw,30+j,hw*2,1);}
     for(let i=0;i<5;i++){const cx=Math.round(((i*61-sc*.12-T*5)%240+240)%240-50),cy=24+((i*37)%70);x.fillStyle='#ffffff';x.fillRect(cx,cy,30,8);x.fillRect(cx+5,cy-5,14,5);x.fillRect(cx+15,cy-8,10,8);x.fillStyle='#d9f2fb';x.fillRect(cx,cy+6,30,2);}
+    for(let i=0;i<8;i++){const bw=12+(i*5)%10,bh=34+(i*23)%38,bx=Math.round(((i*19-sc*.1)%170+170)%170-20),by=H0-38-bh;   /* the city skyline, far back (his call) */
+      x.fillStyle=i%2?'#9fcbe0':'#b5d8ea';x.fillRect(bx,by,bw,bh+38);x.fillStyle='#d8eef7';for(let wy=by+4;wy<H0-40;wy+=6)for(let wx=bx+2;wx<bx+bw-2;wx+=4)x.fillRect(wx,wy,2,3);}
     for(let i=0;i<W0;i+=2){const h1=34+Math.round(10*Math.sin((i+sc*.2)*.045)+5*Math.sin((i+sc*.2)*.11));x.fillStyle='#7ccf6a';x.fillRect(i,H0-h1,2,h1);x.fillStyle='#9be28a';x.fillRect(i,H0-h1,2,2);}
     for(let i=0;i<W0;i+=2){const h2=18+Math.round(7*Math.sin((i+sc*.45)*.07+1));x.fillStyle='#4fae4a';x.fillRect(i,H0-h2,2,h2);x.fillStyle='#6fc95f';x.fillRect(i,H0-h2,2,1);}}
   else if(k==='deepsea'){   /* light shafts, swaying kelp, little fish, rising bubbles */
@@ -3010,7 +3012,7 @@ function ckLoop(now){CK.raf=requestAnimationFrame(ckLoop);let dt=Math.min(.033,(
   ckBack(x,W0,H0);
   for(const p of CK.pipes){const px0=Math.round(p.x),ty=Math.round(p.top),by0=Math.round(p.top+p.gap),fl=p.flash;
     for(const[y0,y1,cap]of[[0,ty,ty-5],[by0,H0,by0]]){x.fillStyle=TH.tw[0];x.fillRect(px0+2,y0,CK_PW-4,y1-y0);x.fillStyle=fl>0?TH.tw[2]:TH.tw[1];x.fillRect(px0+3,y0,CK_PW-6,y1-y0);x.fillStyle=TH.tw[2];x.fillRect(px0+4,y0,3,y1-y0);x.fillStyle=TH.tw[3];x.fillRect(px0+CK_PW-7,y0,3,y1-y0);
-      for(let yy=y0+6-((y0)%12);yy<y1;yy+=12){x.fillStyle=TH.tw[3];x.fillRect(px0+3,yy,CK_PW-6,1);}
+      for(let yy=y0+(((6-y0%12)%12)+12)%12;yy<y1;yy+=12){x.fillStyle=TH.tw[3];x.fillRect(px0+3,yy,CK_PW-6,1);}
       x.fillStyle=TH.tw[0];x.fillRect(px0,cap,CK_PW,5);x.fillStyle=fl>0?TH.tw[5]:TH.tw[4];x.fillRect(px0+1,cap+1,CK_PW-2,3);}}
   for(const o of CK.orbs){const ox=Math.round(o.x),oy=Math.round(o.y+Math.sin(o.t*3)*2);
     if(o.type==='coin'){x.fillStyle='#7a5a10';x.fillRect(ox-3,oy-4,6,8);x.fillRect(ox-4,oy-3,8,6);x.fillStyle='#ffd86b';x.fillRect(ox-2,oy-3,4,6);x.fillRect(ox-3,oy-2,6,4);x.fillStyle='#fff3c0';x.fillRect(ox-2,oy-2,1,3);}
