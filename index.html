@@ -832,6 +832,7 @@ const SFX={
   dawn(){arp([392,494,587,784],.14,{type:'triangle',vol:.14,len:.4});},
   step_grass(){hiss(.2,{vol:.095,lp:3200,att:.045});hiss(.16,{vol:.072,bp:900,att:.04});},   /* more hiss, but it swells in softly: no sharp start, no crisp top (his call) */
   step_stone(){tone(105,.055,{type:'triangle',vol:.14,to:62});hiss(.022,{vol:.06,bp:1200});},   /* lower than the wood step: a dull, heavy tap */
+  step_snow(){hiss(.1,{vol:.07,lp:450,att:.012});for(let i=0;i<5;i++)hiss(.014,{vol:.045+Math.random()*.035,bp:1500+Math.random()*1800,at:i*.017+Math.random()*.007});},   /* a soft crunch: a muffled press, then little grains packing down (his ask, 13 Nov) */
   step_wood(){tone(150,.06,{type:'triangle',vol:.1,to:95});hiss(.03,{vol:.03,lp:600});},
   type(){tone(760,.02,{vol:.035});},
   sit(){tone(120,.12,{type:'triangle',vol:.2,to:70});hiss(.08,{vol:.08,lp:500});},
@@ -903,6 +904,7 @@ addEventListener('pointerdown',()=>{if(SND.on&&SND.mus&&MUS.want&&MUS.name!==MUS
    (green = grass, anything else = stone) and the round stage is wood; inside a cabin it is always wood. */
 let GROUND=null;
 function groundAt(x,y){const st=TOWN.stage;if(((x-st.x)/46)**2+((y-st.y-2)/26)**2<1)return'wood';
+  if(XMAS){const M=snowMask(true),xi=Math.round(x),yi=Math.round(y);if(M&&xi>=0&&yi>=0&&xi<M.w&&yi<M.h&&M.m[yi*M.w+xi])return'snow';}   /* Christmas: the snowy ground crunches */
   if(!GROUND){const im=IMG.townDay;if(!im)return'grass';const c=mk(560,750),g=c.getContext('2d');g.drawImage(im,0,0);GROUND=g.getImageData(0,0,560,750).data;}
   const i=(Math.max(0,Math.min(749,Math.round(y)))*560+Math.max(0,Math.min(559,Math.round(x))))*4,r=GROUND[i],gg=GROUND[i+1],b=GROUND[i+2];return gg>r+18&&gg>b+18?'grass':'stone';}
 function footstep(e,dt,surf){e.stepT=(e.stepT||0)+dt;if(e.stepT<.42)return;e.stepT=0;sfx('step_'+surf);}
@@ -1021,7 +1023,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131524'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131526'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
