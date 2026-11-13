@@ -109,6 +109,10 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #introSkip{position:absolute;right:14px;top:calc(14px + env(safe-area-inset-top));z-index:6;display:none;align-items:center;gap:6px;font-size:14px;padding:5px 10px 7px;pointer-events:auto}
 #nightHud.intro #introSkip{display:flex}
 #phone:not(.game) #introSkip{top:calc(66px + env(safe-area-inset-top))}
+/* THE FLOATING X (13 Nov, his ask): scroll a long panel (shop, collection...) and its X stays at the panel's top right;
+   scroll back up to the real X and this one goes away */
+#floatX{position:absolute;z-index:12;display:none;padding:4px 8px;box-shadow:0 3px 0 #0008}
+#floatX.on{display:flex;align-items:center;justify-content:center}
 #joy{position:absolute;left:14px;bottom:120px;width:130px;height:130px;z-index:8;display:none;opacity:.72;touch-action:none;pointer-events:auto;background-size:100% 100%;image-rendering:pixelated}
 #joy.on{display:block}#joy.held{opacity:.9}
 #joy i{position:absolute;left:35px;top:35px;width:60px;height:60px;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
@@ -771,6 +775,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <button class="btn dark" id="menuBtn" title="Menu"><i data-ic="menu" data-c="solo"></i></button>
   <div id="nightOne"><b>NIGHT 1</b></div>
   <div id="joy"><i></i></div>
+  <button class="btn" id="floatX" title="Close"><i data-ic="cross" data-c="solo"></i></button>
   <div id="turnPhone"><i data-ic="phone" data-s="5" data-c="solo"></i><b>Turn your phone upright</b><small>MAFIA plays in portrait</small></div>
   <div class="modal big panel" id="filmModal">
     <div class="mhead"><b>NIGHT FILMS</b><button class="btn" id="filmX"><i data-ic="cross" data-c="solo"></i></button></div>
@@ -1073,7 +1078,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131810'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131900'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1982,7 +1987,13 @@ joyArt();
   el.addEventListener('pointermove',e=>{if(JOY.on&&JOY.id===e.pointerId)set(e);});
   ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>el.addEventListener(ev,end));})();
 /* where it sits: just above the bottom panel of the screen you are on; hidden when there is no room or a window is open */
-function joyPlace(){const el=$('#joy'),ok=[scenes.town,scenes.cabin,scenes.ghost].includes(scene)&&!document.querySelector('.modal.on')&&!$('#clk').classList.contains('on');
+function floatXTick(){const fx=$('#floatX');let show=false;const m=[...document.querySelectorAll('.modal.on')].pop();
+  if(m&&m.scrollHeight>m.clientHeight+4){const x=[...m.querySelectorAll('.mhead .btn')].pop();
+    if(x){const mr=m.getBoundingClientRect(),xr=x.getBoundingClientRect();
+      if(xr.bottom<mr.top+6){show=true;const pr=$('#phone').getBoundingClientRect();fx.style.top=Math.round(mr.top-pr.top+10)+'px';fx.style.right=Math.round(pr.right-mr.right+12)+'px';fx.onclick=e=>{e.stopPropagation();x.click();};}}}
+  if(fx.classList.contains('on')!==show)fx.classList.toggle('on',show);}
+document.addEventListener('scroll',floatXTick,{capture:true,passive:true});
+function joyPlace(){floatXTick();const el=$('#joy'),ok=[scenes.town,scenes.cabin,scenes.ghost].includes(scene)&&!document.querySelector('.modal.on')&&!$('#clk').classList.contains('on');
   let show=false;if(ok){const hud=$(scene.hud),ph=$('#phone').getBoundingClientRect();let top=ph.bottom;
     for(const e of hud.querySelectorAll('.panel')){if(!e.offsetParent||e.classList.contains('modal')||e.classList.contains('toast'))continue;const r=e.getBoundingClientRect();if(r.bottom>ph.bottom-260&&r.top<top)top=r.top;}
     const b=ph.bottom-top+22;show=top-ph.top>330;if(show)el.style.bottom=b+'px';}
