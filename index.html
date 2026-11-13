@@ -67,9 +67,14 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #loader canvas{width:156px;height:117px;image-rendering:pixelated}
 #loader span{font:600 14px "Pixelify Sans",monospace;letter-spacing:4px;margin-right:-4px;color:#f6dfae}
 /* wood + parchment panel, the game's UI frame */
-/* CHRISTMAS PANELS: a red frame with a green line inside it, and snow lying along the top (a strip of solid pixels) */
-#phone.xmas .panel{border-color:#9b1c2e;box-shadow:inset 0 0 0 3px #1f6b3a,inset 0 -6px 0 var(--paper2),0 5px 0 #0008;background-image:url(assets/xmas/snowcap.svg);background-repeat:repeat-x;background-position:0 0;background-size:16px 8px;image-rendering:pixelated}
-#phone.xmas #ghostHud .panel{border-color:#9b1c2e;box-shadow:inset 0 0 0 3px #1f6b3a,0 4px 0 #0009}
+/* CHRISTMAS PANELS (v2, 13 Nov): one drawn frame on every panel (assets/xmas/panel.svg, tools/make_xmas_panel.py): a dark outline,
+   red and a green line, a drift of snow lying on the top edge and hanging over it, holly on the two top corners.
+   It is a border-image: 12 art px corners shown at 36 px (3 screen px per art px), pushed out 9 px (15 at the top) so the snow and holly sit outside the panel. */
+#phone.xmas .panel{border-color:#9b1c2e;box-shadow:inset 0 -6px 0 var(--paper2),0 5px 0 #0008;border-image:url(assets/xmas/panel.svg) 12 / 36px / 15px 9px 9px 9px repeat;image-rendering:pixelated}
+#phone.xmas #ghostHud .panel{box-shadow:0 4px 0 #0009}
+/* his rule (13 Nov): when panels are stacked, only the top one wears the snow; the ones under it just get the red frame */
+#phone.xmas .panel:not(.modal):not(.toast)~.panel:not(.modal),#phone.xmas #townCodeBox,#phone.xmas .toast.panel,#phone.xmas #menuCode{border-image-source:url(assets/xmas/panel-lite.svg)}
+#phone.xmas .tpanel{border-image-source:url(assets/xmas/panel.svg)}   /* the lobby's bottom panel is not under the code box, it is at the other end of the screen */
 #phone.xmas .mhead b,#phone.xmas .tt b{color:#9b1c2e}
 .panel{background:var(--paper);color:var(--text);border:4px solid var(--wood);border-radius:6px;
   box-shadow:inset 0 0 0 3px var(--wood2),inset 0 -6px 0 var(--paper2),0 5px 0 #0008}
@@ -1037,7 +1042,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131609'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131616'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2531,10 +2536,10 @@ const DAWN_GUARD=['The Mafia came for {n} last night. {g} stepped in the way. {g
 function storyPick(list){if(!(GAME.on&&GAME.g))return list[Math.floor(Math.random()*list.length)];let h=7;for(const c of GAME.id+'|'+GAME.g.round)h=(h*31+c.charCodeAt(0))>>>0;return list[h%list.length];}
 const DAWN_PILLOW=['A knife hole in {n}\'s pillow this morning. {n} wasn\'t under it.','Feathers all over {n}\'s floor. {n} slept somewhere else.'];
 const DAWN_THIRD=['Three shadows went out last night. Only two were Mafia. {g} was the Bodyguard.','{n} is alive because the third shadow was {g}. The Bodyguard did the job.'];
-function dawnCard(kind,chip,badge){const c=$('#dawnCard');c.classList.remove('safe','dead','quiet');c.classList.add(kind==='dead'?'dead':'safe');if(kind==='quiet')c.classList.add('quiet');$('#dawnChip').textContent=chip;$('#dawnChip').style.display=kind==='quiet'?'none':'';}
+function dawnCard(kind,chip){const c=$('#dawnCard');c.classList.remove('safe','dead','quiet');c.classList.add(kind==='dead'?'dead':'safe');if(kind==='quiet')c.classList.add('quiet');$('#dawnChip').textContent=chip;$('#dawnChip').style.display=kind==='quiet'?'none':'';}
 function dawn(){const g=N.guard>=0&&!N.heal?N.guard:-1,v=g>=0?g:N.victim,key=N.variant||N.kind,list=N.heal?(N.pillow?DAWN_PILLOW:DAWN_DOC):g>=0?(N.third?DAWN_THIRD:DAWN_GUARD):DAWN_DEAD[key],h=$('#dawnTitle');
-  if(N.heal){h.innerHTML=ic('heart',3,'solo')+(v===0?'THE DOCTOR SAVED YOU':'NOBODY DIED');h.classList.add('safe');dawnCard('safe','SAVED BY THE DOCTOR','heart');}
-  else{if(v!==0)V.dead.add(v);h.innerHTML=ic('skull',3,'solo')+(v===0?'YOU ARE DEAD':`${esc(PEOPLE[v].n.toUpperCase())} IS DEAD`);h.classList.remove('safe');dawnCard('dead','KILLED IN THE NIGHT','skull');}
+  if(N.heal){h.innerHTML=ic('heart',3,'solo')+(v===0?'THE DOCTOR SAVED YOU':'NOBODY DIED');h.classList.add('safe');dawnCard('safe',v===0?'YOU':PEOPLE[v].n.toUpperCase());}   /* the plate under the face: who it was */
+  else{if(v!==0)V.dead.add(v);h.innerHTML=ic('skull',3,'solo')+(v===0?'YOU ARE DEAD':`${esc(PEOPLE[v].n.toUpperCase())} IS DEAD`);h.classList.remove('safe');dawnCard('dead',(PEOPLE.length-V.dead.size-(v===0?1:0))+' STILL ALIVE');}   /* the plate under the face: how many are left (his call: no stating the obvious) */
   $('#dawnGo').textContent=v===0&&!N.heal?'Rise as a ghost':'To the square';N.meDead=v===0&&!N.heal;
   setTimeout(()=>{if(scene===scenes.dawn){if(N.heal)fxHeal(1);else fxBleed(.5);}},350);
   $('#dawnFace').src=face(looksLike(v));
