@@ -67,6 +67,10 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #loader canvas{width:156px;height:117px;image-rendering:pixelated}
 #loader span{font:600 14px "Pixelify Sans",monospace;letter-spacing:4px;margin-right:-4px;color:#f6dfae}
 /* wood + parchment panel, the game's UI frame */
+/* CHRISTMAS PANELS: a red frame with a green line inside it, and snow lying along the top (a strip of solid pixels) */
+#phone.xmas .panel{border-color:#9b1c2e;box-shadow:inset 0 0 0 3px #1f6b3a,inset 0 -6px 0 var(--paper2),0 5px 0 #0008;background-image:url(assets/xmas/snowcap.svg);background-repeat:repeat-x;background-position:0 0;background-size:16px 8px;image-rendering:pixelated}
+#phone.xmas #ghostHud .panel{border-color:#9b1c2e;box-shadow:inset 0 0 0 3px #1f6b3a,0 4px 0 #0009}
+#phone.xmas .mhead b,#phone.xmas .tt b{color:#9b1c2e}
 .panel{background:var(--paper);color:var(--text);border:4px solid var(--wood);border-radius:6px;
   box-shadow:inset 0 0 0 3px var(--wood2),inset 0 -6px 0 var(--paper2),0 5px 0 #0008}
 .btn{font:600 16px "Pixelify Sans";color:var(--text);background:var(--paper);border:3px solid var(--wood);border-radius:5px;
@@ -163,6 +167,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #reelBox{display:none;position:absolute;left:12px;right:12px;top:21%;overflow:hidden;height:86px;border:3px solid var(--ink);border-radius:5px;background:#1a1430;z-index:3;box-shadow:0 0 0 3px #ffd25e,0 0 0 6px #1a1430,0 8px 0 6px #0b0918}
 #reelBox.on{animation:cfReel .5s cubic-bezier(.2,.9,.3,1)}
 @keyframes cfReel{0%{transform:translateY(70px) scale(.2)}70%{transform:translateY(-6px) scale(1.04)}100%{transform:none}}
+#caseSnd{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:31;width:48px;height:44px;padding:0 0 3px;display:flex;align-items:center;justify-content:center}
 #caseFx{position:fixed;inset:0;z-index:29;display:none;overflow:hidden;background:#3a3270;cursor:pointer}
 #caseFx.on{display:block;animation:cfIn .3s ease-out}
 @keyframes cfIn{0%{opacity:0}100%{opacity:1}}
@@ -675,7 +680,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 
   <!-- OPENING A CASE: the case drops in, the lid pops, light pours out, the reel comes down out of the light. Tap to skip ahead. -->
   <div id="caseFx"><canvas id="caseCv"></canvas>
-    <div id="reelBox"><div id="reel"></div><i class="mark"></i></div><div class="small cskip" id="caseSkip">Tap to skip</div></div>
+    <div id="reelBox"><div id="reel"></div><i class="mark"></i></div><div class="small cskip" id="caseSkip">Tap to skip</div><button class="btn dark" id="caseSnd" title="Sound"></button></div>
 
   <!-- DEAD AT NIGHT (online): nothing to pick, but the dead see who everyone is -->
   <div class="hud" id="limboHud"><div class="title banner"><small id="limboTag">NIGHT 2</small>YOU ARE DEAD</div>
@@ -955,7 +960,7 @@ function winSound(rar,d){if(!SND.on||!sndCtx())return;const chord=(fs,dur,vol,at
     /* a shower of sparkles, and the shine: two high notes a hair apart, shimmering, with a bright hiss sweeping over the top */
     bells(22,d+.3,2.6,.05);
     tone(3136,2.4,{type:'sine',vol:.035,at:d+.5,vib:[7,14]});tone(3148,2.4,{type:'sine',vol:.035,at:d+.5});tone(4186,2,{type:'sine',vol:.02,at:d+.7,vib:[9,18]});hiss(1.8,{vol:.05,hp:7500,at:d+.5});}}
-function sndUI(){const b=$('#homeSnd');if(b)b.innerHTML=ic(SND.on?'sound':'mute',3,'solo');}
+function sndUI(){for(const id of['#homeSnd','#caseSnd']){const b=$(id);if(b)b.innerHTML=ic(SND.on?'sound':'mute',3,'solo');}}
 // THE LOADER (his design, 12 Nov): the Mafia chase someone with a knife. Both run on the spot, bobbing, while the cobbles
 // slide past to the right. The Mafia's knife run is a PixelLab animation (assets/loader/mafia-run.png, 4 frames of 48 x 46).
 // Everything goes through his Photoshop gradient map, so it is two colours: near-black and cream, and the darkest pixels
@@ -1014,7 +1019,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131319'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131443'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1164,7 +1169,25 @@ function drawProp(o){let im=dayMode?dayImg('prop/'+o.k):IMG['prop/'+o.k];
   if(patchDim){const id=o.k+patchDim;if(!DIMMED[id]){const c=mk(im.width,im.height),x=c.getContext('2d');x.drawImage(im,0,0);x.globalCompositeOperation='source-atop';x.fillStyle=patchDim;x.fillRect(0,0,c.width,c.height);DIMMED[id]=c;}im=DIMMED[id];}
   lx.drawImage(im,X(o.x),Y(o.y));}
 // draw people, objects and things that stand in front of them, back to front
+/* FOOTPRINTS (13 Nov, his test): anyone walking on snow leaves little prints that fade after about a second and a
+   half. Where the snow is comes from the ground picture itself: pale blue-white on the day ground, lit blue on the
+   night ground (the cobbles and the square stay clear). Only on the town, and only while it is Christmas. */
+const SNOWM={},FOOT=[],FOOTK=new Map();
+function snowMask(day){const k=day?'day':'night';if(SNOWM[k])return SNOWM[k];const im=day?IMG.townDay:IMG.townBase;if(!im)return null;
+  const c=mk(im.width,im.height),x=c.getContext('2d');x.drawImage(im,0,0);const d=x.getImageData(0,0,c.width,c.height).data,m=new Uint8Array(c.width*c.height);
+  for(let i=0;i<m.length;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2],l=(r+g+b)/3;m[i]=day?(b>=r-6&&l>160&&g>=r-10?1:0):(b>r+40&&l>70?1:0);}
+  return SNOWM[k]={m,w:c.width,h:c.height};}
+function footprints(people,day){const M=snowMask(day);if(!M)return;const now=performance.now();
+  for(const p of people){if(!p.walk||p.pose||(p.alpha??1)<.4)continue;const key=p.e||((p.p&&(p.p.kind+(p.p.lbl||p.p.i||'')))||p.name+(p.phase||''));
+    const L=FOOTK.get(key),x=Math.round(p.x),y=Math.round(p.y);if(L&&Math.hypot(x-L.x,y-L.y)<5)continue;
+    const side=L?-L.side:1;FOOTK.set(key,{x,y,side});if(x<0||y<0||x>=M.w||y>=M.h||!M.m[y*M.w+x])continue;
+    const dx=L?x-L.x:0,dy=L?y-L.y:1,up=Math.abs(dy)>Math.abs(dx);FOOT.push({x:x+(up?side*2:0),y:y+(up?0:side),up,t:now,day});}
+  while(FOOT.length&&now-FOOT[0].t>1600)FOOT.shift();if(FOOT.length>400)FOOT.splice(0,FOOT.length-400);
+  for(const f of FOOT){if(f.day!==day)continue;lx.globalAlpha=Math.max(0,1-(now-f.t)/1600);lx.fillStyle=day?'#9fb8d8':'#3d528c';
+    if(f.up)lx.fillRect(X(f.x),Y(f.y)-1,1,2);else lx.fillRect(X(f.x)-1,Y(f.y),2,1);}
+  lx.globalAlpha=1;}
 function drawScene(people,occ,img,objs){
+  if(XMAS&&img&&(img===IMG.town||img===IMG.townBase||img===DAYIMG.town||img===DAYIMG.ground))footprints(people,img===DAYIMG.town||img===DAYIMG.ground);
   const items=[...people.map(p=>({y:p.sortY??p.y,p})),...(occ||[]).map(o=>({y:o.base,o})),...(objs||[]).map(ob=>({y:ob.base,ob}))].sort((a,b)=>a.y-b.y);
   const hits=new Map();
   for(const it of items){if(it.p)hits.set(it.p,drawChar(it.p));else if(it.o)drawProp(it.o);else drawObj(it.ob);}
@@ -1193,7 +1216,18 @@ class Poly{constructor(pts){this.pts=pts;this.segs=[];this.len=0;for(let i=1;i<p
 /* ---------- weather + particles, all on the grid ---------- */
 let raining=true,flash=0,nextBolt=4000;
 const drops=[],splash=[];
-function rain(dt,clip){
+/* SNOW (Christmas): slow flakes that sway as they fall, mostly one pixel, a few two. Solid colours, no fog. It falls
+   in every night scene and outside the cabin windows; rain() hands over to it while it is Christmas. */
+const flakes=[];
+function snowfall(dt,clip){const lw=cam.lw,lh=cam.lh,want=Math.round(lw*lh/150);
+  if(!snowfall.lw||Math.abs(lw-snowfall.lw)>snowfall.lw*.15||Math.abs(lh-snowfall.lh)>snowfall.lh*.15){for(const f of flakes){f.x=Math.random()*lw;f.y=Math.random()*lh;}}snowfall.lw=lw;snowfall.lh=lh;
+  while(flakes.length<want)flakes.push({x:Math.random()*lw,y:Math.random()*lh,v:9+Math.random()*16,ph:Math.random()*7,sw:.6+Math.random()*1.4,s:Math.random()<.18?2:1,c:Math.random()<.3?'#cfe1f7':'#ffffff'});
+  flakes.length=Math.min(flakes.length,want);
+  lx.save();if(clip){lx.beginPath();for(const r of clip)lx.rect(...r);lx.clip();}
+  for(const f of flakes){f.y+=f.v*dt;f.ph+=dt*f.sw;f.x+=Math.sin(f.ph)*f.sw*6*dt+2*dt;if(f.y>lh+2){f.y=-2;f.x=Math.random()*lw;}if(f.x>lw+2)f.x=-2;
+    lx.fillStyle=f.c;lx.fillRect(Math.round(f.x),Math.round(f.y),f.s,f.s);}
+  lx.restore();}
+function rain(dt,clip){if(XMAS){snowfall(dt,clip);return;}
   if(!raining){flash=0;return;}
   // a drop slides right by a quarter of how far it falls, so they have to start that far off to the left
   const lw=cam.lw,lh=cam.lh,drift=lh*.25+6,span=lw+drift;const want=Math.round(span*lh/90);const rx=()=>Math.random()*span-drift;
@@ -1217,7 +1251,7 @@ function rain(dt,clip){
   lx.restore();
 }
 const flies=Array.from({length:22},()=>({x:Math.random(),y:Math.random(),s:Math.random()*99}));
-function fireflies(t,area){if(raining)return;lx.save();lx.globalCompositeOperation='lighter';
+function fireflies(t,area){if(raining||XMAS)return;lx.save();lx.globalCompositeOperation='lighter';
   for(const f of flies){const x=X(area[0]+f.x*area[2]+Math.sin(t*.0006+f.s)*14),y=Y(area[1]+f.y*area[3]+Math.cos(t*.0008+f.s)*10);
     const a=Math.max(0,Math.sin(t*.0025+f.s));if(a<.05)continue;
     lx.fillStyle=`rgba(200,255,120,${a*.35})`;lx.fillRect(x-1,y,3,1);lx.fillRect(x,y-1,1,3);
@@ -1289,10 +1323,14 @@ function townLights(t,o={},part){ // part 'win' = only the cabin windows (draw b
    plus one cabin picture per spot. Every cabin picture uses the same 116 x 154 frame, placed at
    door x-58, door top-90, so any theme fits any spot and its door, windows and steps land where
    TOWN.cabins says (lights, the kill scene and the door opening keep working for every theme). */
-const CABIN_FRAME={dx:-58,dy:-90,w:116,h:154};
+/* THE SEASON (13 Nov 2026, his Christmas town). 'christmas': his snowy day + night grounds and snowy huts (assets/xmas,
+   tools/make_xmas_art.py), snow falling every night instead of rain, footprints in the snow, Christmas panels.
+   Set it to '' to go back to the normal town. */
+const SEASON='christmas',XMAS=SEASON==='christmas';
+const CABIN_FRAME=XMAS?{dx:-68,dy:-90,w:126,h:154}:{dx:-58,dy:-90,w:116,h:154};   /* the Christmas frame is 10 px wider on the left: the Santa hat on hut 10 */
 const CABIN_THEMES={
   // the hut he drew for each spot (his huts 1-9 are spots 1-9, his hut 10 is spot 0)
-  classic:{name:'Classic',rarity:'common',art:ci=>`assets/town4/cabins/cabin${ci}.png`},
+  classic:{name:'Classic',rarity:'common',art:ci=>XMAS?`assets/xmas/cabins/cabin${ci}.png`:`assets/town4/cabins/cabin${ci}.png`},
   // unlockables from the Mafia case go here, one picture that fits any spot, e.g.
   // dark:{name:'Dark Cabin',rarity:'rare',art:()=>'assets/cabins/dark.png'},
   // christmas:{name:'Christmas Cabin',rarity:'epic',art:()=>'assets/cabins/christmas.png'},
@@ -3247,7 +3285,7 @@ cv.addEventListener('pointerdown',e=>{if(scene!==scenes.town||WL.fading||documen
    and cheap. The host is whoever joined first (worked out on each phone, nothing to hand over when they leave).
    The rules for the database are in database.rules.json (he pastes them into the Firebase console). */
 const LAB=/[?&]lab\b/.test(location.search);
-$('#phone').classList.toggle('game',!LAB);if(!LAB){raining=false;}
+$('#phone').classList.toggle('game',!LAB);$('#phone').classList.toggle('xmas',XMAS);if(!LAB){raining=false;}
 const FB_CFG={apiKey:"AIzaSyBu06T2Qv-jF3pFx4yjFRai9LZNKLs0gig",authDomain:"mafia2-c0146.firebaseapp.com",databaseURL:"https://mafia2-c0146-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"mafia2-c0146",storageBucket:"mafia2-c0146.firebasestorage.app",messagingSenderId:"543181147659",appId:"1:543181147659:web:62e1ab78df78aec579810e"};
 const NET={on:false,code:null,uid:null,db:null,ref:null,me:null,slot:0,host:null,players:null,ents:new Map(),off:0,ready:null,busy:false,sig:null,seq:0,t0:0};
 const LAB_PEOPLE=PEOPLE.map(p=>({...p})),LAB_CABINS=[...CABIN_OF];
@@ -3766,7 +3804,9 @@ scenes.intro={hud:'#nightHud',
 function nightOne(n,after){const el=$('#nightOne');el.querySelector('b').textContent='NIGHT '+n;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');sfx('omen');CAB.eyesAt=performance.now()+3350;
   clearTimeout(nightOne.t);nightOne.t=setTimeout(()=>{el.classList.remove('on');if(after)after();},4300);}
 /* the menu shows the standard hut (his cabin1), not the pale one that stands at the top spot in the town (his call, 13 Nov) */
-function homeHut(){const im=IMG[cabinKey(1)],c=TOWN.cabins[0];if(!im||!c)return;lx.save();lx.translate(-cam.x,-cam.y);lx.drawImage(im,c.cx+CABIN_FRAME.dx,c.top+CABIN_FRAME.dy);cabinSign(lx,0);lx.restore();}
+function homeHut(){const im=IMG[cabinKey(1)],c=TOWN.cabins[0];if(!im||!c)return;lx.save();lx.translate(-cam.x,-cam.y);const ox=c.cx+CABIN_FRAME.dx,oy=c.top+CABIN_FRAME.dy;
+  lx.drawImage(IMG.townBase,ox,oy,CABIN_FRAME.w,CABIN_FRAME.h,ox,oy,CABIN_FRAME.w,CABIN_FRAME.h);   /* clear the hut that stands there first (the Christmas one is wider: its Santa hat poked out) */
+  lx.drawImage(im,ox,oy);cabinSign(lx,0);lx.restore();}
 scenes.home={hud:'#homeHud',
   enter(){document.documentElement.style.setProperty('--accent','#4a7bd0');paintCoins();homePaint();homeMsg('');},
   /* the old lobby picture (his call, 12 Nov): you, standing on the porch of your cabin */
@@ -3795,7 +3835,9 @@ $('#howX').onclick=()=>$('#howModal').classList.remove('on');
 function musStop(){if(MUS.gain){try{MUS.gain.gain.value=0;MUS.gain.disconnect();}catch(e){}MUS.gain=null;}clearInterval(MUS.timer);MUS.name=null;}
 function sndSet(all,mus){if(all!=null)SND.on=all;if(mus!=null)SND.mus=mus;try{localStorage.setItem('m2_snd',SND.on?'1':'0');localStorage.setItem('m2_mus',SND.mus?'1':'0');}catch(e){}
   sndUI();menuPaint();if(SND.on&&SND.mus){const w=MUS.want;sndCtx();MUS.name=null;music(w);}else{const w=MUS.want;musStop();MUS.want=w;}}
-$('#homeSnd').onclick=()=>{sndSet(!SND.on);if(SND.on)sfx('coin');};sndUI();
+$('#homeSnd').onclick=()=>{sndSet(!SND.on);if(SND.on)sfx('coin');};
+/* the same switch on the case-opening screen (his call): it must not skip the film when tapped */
+$('#caseSnd').onclick=e=>{e.stopPropagation();sndSet(!SND.on);if(!SND.on)sparkleStop(true);};sndUI();
 /* THE MENU (the three bars, top left on every screen): the lobby code, the two mutes, How to play, and Leave */
 $('#phone').insertBefore($('#howModal'),$('#tabs'));$('#phone').insertBefore($('#howX'),$('#tabs'));
 function menuPaint(){$('#menuMus').innerHTML='Music<b>'+(SND.on&&SND.mus?'ON':'OFF')+'</b>';$('#menuSnd').innerHTML='All sounds<b>'+(SND.on?'ON':'OFF')+'</b>';$('#menuMus').disabled=!SND.on;
@@ -3867,7 +3909,7 @@ let OBJ_META={};
   const FINAL=Object.fromEntries(['beanie','brownhair','ponytail','curly','farmer','raincoat','redcap','mafia','doctor','jester','detective','batman','alfa','golf','ferrari','bape','fisher','sheik'].map(n=>[n,'assets/final/'+n]));
   const names=[...SKINS.map(s=>s.id),'mafia','doctor','jester','detective'].filter(n=>!PL[n]&&!FINAL[n]);
   OBJ_META=await (await fetch('assets/room-objects/objects.json?v='+BUILD)).json();
-  const jobs=[load('townBase','assets/town4/night.png'),load('townDay','assets/town4/day.png'),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png'),load('cabinOpen','assets/case/cabin-open.png')];
+  const jobs=[load('townBase',XMAS?'assets/xmas/night.png':'assets/town4/night.png'),load('townDay',XMAS?'assets/xmas/day.png':'assets/town4/day.png'),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png'),load('cabinOpen','assets/case/cabin-open.png')];
   ROOMS.forEach(r=>{if(!r.base)load('room/'+r.id,r.art).catch(()=>{});});   /* the themed rooms come in behind the scenes */
   for(const n of Object.keys(OBJ_META))jobs.push(load('obj/'+n,`assets/room-objects/${n}.png`));
   for(const n of names)for(const d of['','back/','side/'])jobs.push(load(d+n,`assets/sprites/${d}${n}.png`));
