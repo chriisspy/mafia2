@@ -9,7 +9,7 @@ from PIL import Image
 W, H, C = 88, 40, 12
 TOP, SIDE = 5, 3            # where the frame starts
 PAL = {'k': '#2a0d14', 'r': '#b3202f', 'R': '#d8414a', 'd': '#7d1522', 'g': '#1f6b3a', 'G': '#2f8f4e', 'D': '#124526',
-       'w': '#ffffff', 's': '#cfe1f7', 'S': '#a9c4e6', 'b': '#e4544f', 'B': '#ffb0a8', 'y': '#ffd25e'}
+       'w': '#ffffff', 's': '#cfe1f7', 'S': '#a9c4e6', 'b': '#e4544f', 'B': '#ffb0a8', 'y': '#ffd25e', 'h': '#000000'}
 px = [[None] * W for _ in range(H)]
 def put(x, y, c):
     if 0 <= x < W and 0 <= y < H: px[y][x] = c
@@ -24,6 +24,8 @@ for cx, cy in ((x0, y0), (x1, y0), (x0, y1), (x1, y1)):      # nip the four oute
     put(cx, cy, None)
 for (cx, cy), (dx, dy) in zip(((x0, y0), (x1, y0), (x0, y1), (x1, y1)), ((1, 1), (-1, 1), (1, -1), (-1, -1))):
     put(cx + dx, cy + dy, 'k')
+for x in range(x0 + 1, x1 + 1):                             # the panel's shadow, drawn in: two soft-dark rows under the frame
+    put(x, y1 + 1, 'h'); put(x, y1 + 2, 'h')
 lite = [row[:] for row in px]      # the plain frame, for small panels (no snow, no holly)
 # ---- the snow along the top: the same 64 px drift, so the edge tiles ----
 import math
@@ -70,7 +72,7 @@ def svg(grid, name):
             if c is None: x += 1; continue
             n = 1
             while x + n < W and grid[y][x + n] == c: n += 1
-            rects.append(f'<rect x="{x}" y="{y}" width="{n}" height="1" fill="{PAL[c]}"/>'); x += n
+            rects.append(f'<rect x="{x}" y="{y}" width="{n}" height="1" fill="{PAL[c]}"' + (' fill-opacity=".5"' if c == 'h' else '') + '/>'); x += n
     open(name, 'w').write(f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" shape-rendering="crispEdges">' + ''.join(rects) + '</svg>')
     return len(rects)
 rects = [0] * svg(px, 'assets/xmas/panel.svg'); svg(lite, 'assets/xmas/panel-lite.svg')

@@ -70,10 +70,15 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 /* CHRISTMAS PANELS (v2, 13 Nov): one drawn frame on every panel (assets/xmas/panel.svg, tools/make_xmas_panel.py): a dark outline,
    red and a green line, a drift of snow lying on the top edge and hanging over it, holly on the two top corners.
    It is a border-image: 12 art px corners shown at 36 px (3 screen px per art px), pushed out 9 px (15 at the top) so the snow and holly sit outside the panel. */
-#phone.xmas .panel{border-color:#9b1c2e;box-shadow:inset 0 -6px 0 var(--paper2),0 5px 0 #0008;border-image:url(assets/xmas/panel.svg) 12 / 36px / 15px 9px 9px 9px repeat;image-rendering:pixelated}
-#phone.xmas #ghostHud .panel{box-shadow:0 4px 0 #0009}
+#phone.xmas .panel{border-color:#9b1c2e;box-shadow:inset 0 -10px 0 var(--paper2);border-image:url(assets/xmas/panel.svg) 12 / 36px / 19px 13px 13px 13px repeat;image-rendering:pixelated}
+/* the 12 px frame covers the 4 px border and 4 px of the padding, and sticks out 4 px (its shadow is drawn in). The tight panels get a little more
+   padding and room between them, so there is never a thin sliver of paper between the frame and what is inside (his catch, 13 Nov) */
+#phone.xmas #ghostHud .panel{box-shadow:none}
+#phone.xmas #homeHud .hpanel{padding:10px 12px 11px}#phone.xmas #homeHud .hpanel+.hpanel{margin-top:16px}
+#phone.xmas #townHud .tpanel{padding:11px 13px}
+#phone.xmas #townCodeBox,#phone.xmas .toast.panel,#phone.xmas #menuCode{border-image:none!important;box-shadow:inset 0 0 0 3px #1f6b3a,0 4px 0 #0008}   /* the tiny ones keep the simple red and green border */
 /* his rule (13 Nov): when panels are stacked, only the top one wears the snow; the ones under it just get the red frame */
-#phone.xmas .panel:not(.modal):not(.toast)~.panel:not(.modal),#phone.xmas #townCodeBox,#phone.xmas .toast.panel,#phone.xmas #menuCode{border-image-source:url(assets/xmas/panel-lite.svg)}
+#phone.xmas .panel:not(.modal):not(.toast)~.panel:not(.modal){border-image-source:url(assets/xmas/panel-lite.svg)}
 #phone.xmas .tpanel{border-image-source:url(assets/xmas/panel.svg)}   /* the lobby's bottom panel is not under the code box, it is at the other end of the screen */
 #phone.xmas .mhead b,#phone.xmas .tt b{color:#9b1c2e}
 .panel{background:var(--paper);color:var(--text);border:4px solid var(--wood);border-radius:6px;
@@ -1042,7 +1047,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131616'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131619'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
