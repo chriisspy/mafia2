@@ -1024,7 +1024,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131556'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131602'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1360,6 +1360,10 @@ function townLights(t,o={},part){ // part 'win' = only the cabin windows (draw b
    tools/make_xmas_art.py), snow falling every night instead of rain, footprints in the snow, Christmas panels.
    Set it to '' to go back to the normal town. */
 const SEASON='christmas',XMAS=SEASON==='christmas';
+/* Christmas: the three bottom huts have picket fences either side of the steps, so at night people step down past
+   the fence before turning for the square (worked out on his walk mask, assets/xmas/block.png) */
+if(XMAS)[[7,[[124,648],[141,664],[169,664],[176,657],[196,572],[208,500]]],[8,[[436,648],[419,663],[389,663],[384,658],[364,572],[352,500]]],[9,[[280,702],[297,718],[325,718],[332,711],[346,590],[282,500]]]]
+  .forEach(([i,pts])=>{TOWN.cabins[i].route=new Poly([...pts,CENTER]);});
 const CABIN_FRAME=XMAS?{dx:-68,dy:-90,w:126,h:154}:{dx:-58,dy:-90,w:116,h:154};   /* the Christmas frame is 10 px wider on the left: the Santa hat on hut 10 */
 const CABIN_THEMES={
   // the hut he drew for each spot (his huts 1-9 are spots 1-9, his hut 10 is spot 0)
@@ -2465,7 +2469,7 @@ scenes.night={
       if(N.victim===0&&T>N.tHit+1.3)once('gsv',()=>{fxHeal();mdBig('guard');});}        // you were the one they came for
     let cx=f.cx,cy=f.cy;
     if(N.shake>0){cx+=(Math.random()-.5)*N.shake;cy+=(Math.random()-.5)*N.shake;N.shake=Math.max(0,N.shake-dt*20);}
-    view(IMG.town,cx,cy,f.vw||150,{loose:true});
+    view(IMG.town,Math.round(cx),Math.round(cy),f.vw||150,{loose:true});   /* whole pixels: the walkers stop shimmering against the ground (13 Nov) */
     lx.fillStyle='rgba(6,8,30,.38)';lx.fillRect(0,0,cam.lw,cam.lh);
     for(const[ci,a]of f.doors||[])doorOpen(ci,a);
     if(f.under)f.under();
@@ -2585,9 +2589,9 @@ function killRoom(nm,k,heal,t){const P=[],hit=3.2,dead=k>=hit&&!(heal&&k>11);
   const nm2=mafCount(),kv=k;k=k+mafLead();   /* from here on k is the Mafia's own clock: they do not stop for the pause */
   for(let j=0;j<nm2;j++){const a=ramp(k,.1+j*.3,hit-.2),b=ramp(k,hit+1.1+j*.2,hit+3.6);if(b>=1||k<.1+j*.3)continue;
     const st=!j&&k>hit-.7&&k<hit+.45;   /* the first one in does it: the knife, seen from behind */
-    P.push({name:'mafia',dir:b>0?'front':'back',x:st?lerp(98+(nm2>1?-12:0),98,ease(ramp(k,hit-.7,hit-.3))):98+(nm2>1?(j?12:-12):0),y:b>0?lerp(156,236,b):st?lerp(156,150,ease(ramp(k,hit-.7,hit-.3))):lerp(236,156,ease(a)),t,pose:st?'stab':null,step:st?clamp(Math.floor((k-hit+.7)/1.15*9),0,8):undefined,walk:!st&&((a>0&&a<1)||b>0),tint:SHADOW_TINT,alpha:b>0?1-ramp(b,.6,1):ramp(k,.1+j*.3,.5+j*.3),phase:j*300});}
+    P.push({name:'mafia',dir:b>0?'front':'back',x:st?lerp(98+(nm2>1?-12:0),98,ease(ramp(k,hit-.7,hit-.3))):98+(nm2>1?(j?12:-12):0),y:b>0?lerp(156,198,b):st?lerp(156,150,ease(ramp(k,hit-.7,hit-.3))):lerp(198,156,ease(a)),t,pose:st?'stab':null,step:st?clamp(Math.floor((k-hit+.7)/1.15*9),0,8):undefined,walk:!st&&((a>0&&a<1)||b>0),tint:SHADOW_TINT,alpha:b>0?1-ramp(b,.6,1):ramp(k,.1+j*.3,.5+j*.3),phase:j*300});}
   k=kv;
-  if(heal&&k>7.4&&!N.self){const a=ease(ramp(k,7.4,9.4)),kn=a>=1&&k<11;P.push({name:'doctor',dir:kn?'left':'back',x:lerp(98,116,a),y:lerp(236,144,a),t,walk:a<1,pose:kn?'bend':null,alpha:ramp(k,7.4,7.9),doc:true});}
+  if(heal&&k>7.4&&!N.self){const a=ease(ramp(k,7.4,9.4)),kn=a>=1&&k<11;P.push({name:'doctor',dir:kn?'left':'back',x:lerp(98,116,a),y:lerp(198,144,a),t,walk:a<1,pose:kn?'bend':null,alpha:ramp(k,7.4,7.9),doc:true});}
   return P;}
 
 /* ================= THE PILLOW (13 Nov, his pick): a Doctor save, inside the cabin =================
@@ -2622,7 +2626,7 @@ function bedFx(){const key=ROOM_NOW;if(BEDFX[key])return BEDFX[key];const src=OB
 function pillowRoom(nm,k,t){const P=[],hit=4.6,pull=7.5,rev=9.2,flee=10.7,n2=mafCount();
   for(let j=0;j<n2;j++){const x0=98+(n2>1?(j?13:-13):0),a=ramp(k,.2+j*.3,3.2),b=ramp(k,flee+j*.15,flee+1.3+j*.15);if(k<.2+j*.3||b>=1)continue;
     const st=!j&&k>hit-.7&&k<hit+.45,look=k>rev;
-    P.push({name:'mafia',x:b>0?lerp(x0,98,b):st?lerp(x0,98,ease(ramp(k,hit-.7,hit-.3))):x0,y:b>0?lerp(142,238,b):st?lerp(142,137,ease(ramp(k,hit-.7,hit-.3))):lerp(236,142,ease(a)),t,
+    P.push({name:'mafia',x:b>0?lerp(x0,98,b):st?lerp(x0,98,ease(ramp(k,hit-.7,hit-.3))):x0,y:b>0?lerp(142,198,b):st?lerp(142,137,ease(ramp(k,hit-.7,hit-.3))):lerp(198,142,ease(a)),t,
       dir:b>0||look?'front':'back',pose:st?'stab':null,step:st?clamp(Math.floor((k-hit+.7)/1.15*9),0,8):undefined,walk:!st&&((a>0&&a<1)||b>0),tint:SHADOW_TINT,alpha:b>0?1-ramp(b,.6,1):ramp(k,.2+j*.3,.6+j*.3),phase:j*300,lift:look&&k<rev+.3?Math.sin(Math.PI*(k-rev)/.3)*5:0});}
   if(k>rev-.4){const a=ramp(k,rev-.4,rev+.2);   /* either side of the doorway, on the floor by the wall (his call, 13 Nov): the Doctor, and the one who should be dead. The Mafia have to run out between them. */
     P.push({name:'doctor',dir:'back',x:70,y:188,t,walk:false,alpha:a,doc:true});
