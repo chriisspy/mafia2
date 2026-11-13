@@ -832,7 +832,7 @@ const SFX={
   dawn(){arp([392,494,587,784],.14,{type:'triangle',vol:.14,len:.4});},
   step_grass(){hiss(.2,{vol:.095,lp:3200,att:.045});hiss(.16,{vol:.072,bp:900,att:.04});},   /* more hiss, but it swells in softly: no sharp start, no crisp top (his call) */
   step_stone(){tone(105,.055,{type:'triangle',vol:.14,to:62});hiss(.022,{vol:.06,bp:1200});},   /* lower than the wood step: a dull, heavy tap */
-  step_snow(){hiss(.1,{vol:.07,lp:450,att:.012});for(let i=0;i<5;i++)hiss(.014,{vol:.045+Math.random()*.035,bp:1500+Math.random()*1800,at:i*.017+Math.random()*.007});},   /* a soft crunch: a muffled press, then little grains packing down (his ask, 13 Nov) */
+  step_snow(){hiss(.2,{vol:.1,lp:1300,att:.045});hiss(.16,{vol:.07,bp:550,att:.04});for(let i=0;i<6;i++)hiss(.012,{vol:.022+Math.random()*.018,bp:2600+Math.random()*1800,at:.025+i*.022+Math.random()*.01});},   /* his call, 13 Nov: the grass step, more muffled (lower), with crisp little grains crunching over it */
   step_wood(){tone(150,.06,{type:'triangle',vol:.1,to:95});hiss(.03,{vol:.03,lp:600});},
   type(){tone(760,.02,{vol:.035});},
   sit(){tone(120,.12,{type:'triangle',vol:.2,to:70});hiss(.08,{vol:.08,lp:500});},
@@ -1023,7 +1023,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131526'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131527'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
