@@ -259,8 +259,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #townMenu .btn:active{transform:translateY(2px)}
 .thead{display:flex;align-items:center;gap:10px}.thead .tt{flex:1;min-width:0}.thead b{font-size:19px;line-height:1.1;display:block}.thead .wal{font-size:20px}
 .tbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;font:700 20px "Pixelify Sans";color:#fff;border:3px solid #0f0b1e;border-radius:6px;padding:8px 6px 12px;cursor:pointer;pointer-events:auto;text-shadow:0 2px 0 #0007;letter-spacing:.5px}
-.tbtn.dance{background:#4a7bd0;box-shadow:inset 0 -6px 0 #2b4a8a,inset 0 3px 0 #7fa6e8,0 4px 0 #0009}
-.tbtn.wave{background:#f07ab0;box-shadow:inset 0 -6px 0 #b8457e,inset 0 3px 0 #ffb0d2,0 4px 0 #0009}
+.tbtn.shop{background:#4a7bd0;box-shadow:inset 0 -6px 0 #2b4a8a,inset 0 3px 0 #7fa6e8,0 4px 0 #0009}
+.tbtn.coll{background:#f07ab0;box-shadow:inset 0 -6px 0 #b8457e,inset 0 3px 0 #ffb0d2,0 4px 0 #0009}
 .tbtn:active{transform:translateY(3px)}
 #townToast{position:absolute;left:50%;top:calc(182px + env(safe-area-inset-top));transform:translateX(-50%);max-width:92%;white-space:nowrap;font-size:18px;font-weight:700;color:#fff;background:#0b0918f0;border:3px solid #f6dfae;border-radius:6px;box-shadow:0 0 0 3px #0b0918,0 5px 0 #0009;padding:4px 12px 6px;z-index:6;opacity:0;transform:translate(-50%,10px);transition:opacity .22s ease-out,transform .22s ease-out;pointer-events:none}
 #townToast.on{opacity:1;transform:translate(-50%,0)}#townToast.bad{border-color:#e4544f;color:#ffd9d6}#townToast.good{border-color:#6fd08a;color:#dcffe6}
@@ -547,8 +547,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <button class="hbig red" id="townStart" style="display:none">Start the game</button>
       <button class="hlink" id="townDev">Start dev test (adds 5 bots)</button>
       <div class="row" style="margin-top:10px;gap:10px">
-        <button class="tbtn dance" id="townDance"><i data-ic="note" data-s="3" data-c="solo"></i>Dance</button>
-        <button class="tbtn wave" id="townWave"><i data-ic="heart" data-s="3" data-c="solo"></i>Wave</button>
+        <button class="tbtn shop" id="townShop"><i data-ic="bag" data-s="3" data-c="solo"></i>Shop</button>
+        <button class="tbtn coll" id="townColl"><i data-ic="shirt" data-s="3" data-c="solo"></i>Collection</button>
       </div>
     </div></div>
     <div class="modal big panel" id="wheelModal">
@@ -1019,7 +1019,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131458'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131507'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1180,7 +1180,13 @@ const OBJ={};
 function makeObj(name,img,m){const sh=mk(img.width,img.height),x=sh.getContext('2d');x.drawImage(img,0,0);x.globalCompositeOperation='source-in';x.fillStyle='#000';x.fillRect(0,0,sh.width,sh.height);
   OBJ[name]={name,img,shadow:sh,...m};}
 function drawObj(o){if(o.shadow&&o.base>0){lx.globalAlpha=.3;lx.drawImage(o.shadow,X(o.x)+1,Y(o.y)+2);lx.globalAlpha=1;}if(o.alpha<1)lx.globalAlpha=o.alpha;lx.drawImage(o.img,X(o.x),Y(o.y));lx.globalAlpha=1;if(o.after)o.after();}
-function patchObj(name,r){const o=OBJ[name];lx.drawImage(o.img,r[0]-o.x,r[1]-o.y,r[2]-r[0],r[3]-r[1],X(r[0]),Y(r[1]),r[2]-r[0],r[3]-r[1]);}
+/* THE ARMCHAIR'S FRONT (13 Nov, his mask): the arm and the seat front go over whoever sits in it. His mask cuts that
+   part out of whichever armchair the room has, so every theme uses the same shape. */
+const ARMC={};
+function armCover(){const o=OBJ.armchair,m=IMG.armMask;if(!o||!o.img||!m||!m.width)return false;
+  if(ARMC.src!==o.img){const c=mk(o.img.width,o.img.height),x=c.getContext('2d');x.drawImage(o.img,0,0);x.globalCompositeOperation='destination-in';x.drawImage(m,0,0);ARMC.c=c;ARMC.src=o.img;}
+  lx.drawImage(ARMC.c,X(o.x),Y(o.y));return true;}
+function patchObj(name,r){if(name==='armchair'&&armCover())return;const o=OBJ[name];lx.drawImage(o.img,r[0]-o.x,r[1]-o.y,r[2]-r[0],r[3]-r[1],X(r[0]),Y(r[1]),r[2]-r[0],r[3]-r[1]);}
 // a town post / lamp / string; while the night's wash is on, a copy washed the same way (only its own pixels)
 const DIMMED={};
 function drawProp(o){let im=dayMode?dayImg('prop/'+o.k):IMG['prop/'+o.k];
@@ -1242,7 +1248,7 @@ function snowfall(dt,clip){const lw=cam.lw,lh=cam.lh,want=Math.round(lw*lh/150);
   if(jump){for(const f of flakes){f.x=Math.random()*lw;f.y=Math.random()*lh;}}
   else if(!clip&&snowfall.cx!=null){const mx=cx-snowfall.cx,my=cy-snowfall.cy;if(Math.abs(mx)<lw&&Math.abs(my)<lh)for(const f of flakes){f.x-=mx;f.y-=my;if(f.x<-2)f.x+=lw+4;else if(f.x>lw+2)f.x-=lw+4;if(f.y<-2)f.y+=lh+4;else if(f.y>lh+2)f.y-=lh+4;}}   /* (his note: flying round, the snow sat still on the screen) */
   snowfall.lw=lw;snowfall.lh=lh;if(!clip){snowfall.cx=cx;snowfall.cy=cy;}
-  while(flakes.length<want)flakes.push({x:Math.random()*lw,y:Math.random()*lh,v:9+Math.random()*16,ph:Math.random()*7,sw:.6+Math.random()*1.4,s:Math.random()<.18?2:1,c:Math.random()<.3?'#cfe1f7':'#ffffff'});
+  while(flakes.length<want)flakes.push({x:Math.random()*lw,y:Math.random()*lh,v:9+Math.random()*16,ph:Math.random()*7,sw:.6+Math.random()*1.4,s:Math.random()<.18?2:1,c:Math.random()<.35?'#b3c8e6':'#cfe1f7'});
   flakes.length=Math.min(flakes.length,want);
   lx.save();if(clip){lx.beginPath();for(const r of clip)lx.rect(...r);lx.clip();}
   for(const f of flakes){f.y+=f.v*dt;f.ph+=dt*f.sw;f.x+=Math.sin(f.ph)*f.sw*6*dt+2*dt;if(f.y>lh+2){f.y=-2;f.x=Math.random()*lw;}if(f.x>lw+2)f.x=-2;
@@ -3124,7 +3130,7 @@ const wlOk=(loc,x,y)=>loc<0?townOk(x,y):canStand(x,y);
 function wlSay(a,tone){const e=$('#townToast');e.textContent=a;e.className='';void e.offsetWidth;e.className='on'+(tone?' '+tone:'');clearTimeout(wlSay.t);wlSay.t=setTimeout(()=>e.classList.remove('on'),2600);}
 function wlHead(a,b){const host=NET.on&&NET.host===NET.uid;$('#townLine').textContent=a||(NET.on?(host?'You are the host':'Waiting for the host'):'Practice town');$('#townSub').textContent=b||(host?'Tap the code to copy an invite link':'Tap a player, a cabin or the wheel');}
 // walk somewhere, then do something when you get there
-function wlGo(e,x,y,todo){if(e.ko)return;if(e.act&&e.act.k!=='punch')e.act=null;
+function wlGo(e,x,y,todo){if(e.ko)return;if(e.act&&e.act.k!=='punch')e.act=null;wlSeatOff(e);
   const p=e.loc<0?gridPath(TOWNG,TGW,TGH,TG,e.x,e.y,x,y):findPath(e.x,e.y,x,y);
   if(!p){e.path=[];e.todo=null;return;}e.path=p;e.todo=todo||null;if(e===WL.me)netMove();if(!p.length){e.todo=null;if(todo)todo();}}
 function wlSpot(){for(let k=0;k<30;k++){const sq=Math.random()<.7,x=sq?150+Math.random()*260:40+Math.random()*480,y=sq?275+Math.random()*210:90+Math.random()*620;if(townOk(x,y))return[x,y];}return[280,440];}
@@ -3138,13 +3144,13 @@ function wlAct(e,kind,tg){if(tg.loc!==e.loc||tg.ko)return;const d=Math.hypot(tg.
   else{e.act={k:'five',t:0,tg};if(!tg.act){tg.path=[];tg.todo=null;tg.walk=false;tg.dir=dirFrom(e.x-tg.x,e.y-tg.y);tg.act={k:'five',t:0,tg:e,slave:true};}
     if(e.i===0||tg.i===0)wlSay(`${wlName(e)} high-fived ${wlName(tg,1)}!`,'good');}}
 function wlHit(e,a){const tg=a.tg;if(tg.loc!==e.loc||tg.ko||(!e.remote&&Math.hypot(tg.x-e.x,tg.y-e.y)>32)){if(e.i===0)wlSay('You missed.');return;}
-  tg.ko={t:0,vx:a.dx*100,vy:a.dy*100};tg.act=null;tg.path=[];tg.todo=null;tg.walk=false;tg.grudge=e;
+  wlSeatOff(tg);tg.ko={t:0,vx:a.dx*100,vy:a.dy*100};tg.act=null;tg.path=[];tg.todo=null;tg.walk=false;tg.grudge=e;
   WL.fx.push({k:'pow',x:tg.x-a.dx*4,y:tg.y-16,t:0,loc:e.loc});if(e.loc===WL.me.loc)sfx('punch');
   if(tg.i===0){WL.shake=.35;WL.sel=null;wlMenu();}else if(e.i===0)WL.shake=.12;
   if(e.i===0||tg.i===0)wlSay(`${wlName(e)} punched ${wlName(tg,1)}!`,tg.i===0?'bad':null);}
 // in and out of a cabin. You: the screen fades through black. Bots just come and go.
 function wlDoor(ci){if(WL.fading)return;WL.fading=true;sfx('door');const xf=$('#xfade');xf.classList.add('on');
-  setTimeout(()=>{const m=WL.me,was=m.loc;m.loc=ci;m.path=[];m.todo=null;m.walk=false;WL.sel=null;wlMenu();
+  setTimeout(()=>{const m=WL.me,was=m.loc;m.seat=null;m.loc=ci;m.path=[];m.todo=null;m.walk=false;WL.sel=null;wlMenu();
     if(ci>=0){m.x=98;m.y=214;m.dir='back';$('#phone').style.background=ROOM_VOID;const o=CABIN_OF.indexOf(ci);
       wlHead(o===0?'Your cabin':o>0?`${PEOPLE[o].n}'s cabin`:'An empty cabin','Walk to the door to leave');}
     else{const c=TOWN.cabins[was];m.x=c.cx;m.y=c.top+38;m.dir='front';$('#phone').style.background='';wlHead();}
@@ -3155,7 +3161,9 @@ function wlBotDoor(b,ci){const was=b.loc;b.path=[];b.todo=null;b.walk=false;
 // what a bot does next
 function wlThink(b){const r=Math.random();b.wait=1+Math.random()*3.5;
   if(b.grudge){const g=b.grudge;b.grudge=null;if(!g.ko&&g.loc===b.loc&&Math.random()<.65){wlDo(b,'punch',g);return;}}
-  if(b.loc>=0){if(--b.stay<=0)wlGo(b,98,224,()=>wlBotDoor(b,-1));else wlGo(b,30+Math.random()*130,100+Math.random()*90);return;}
+  if(b.loc>=0){if(b.seat){wlUp(b);return;}if(--b.stay<=0)wlGo(b,98,224,()=>wlBotDoor(b,-1));
+    else if(Math.random()<.4){const k=SEATK[Math.floor(Math.random()*3)];if(!seatTaken(b,k)){const s=wlSeat(k,b);wlGo(b,s.stand[0],s.stand[1],()=>{wlSit(b,k);b.wait=4+Math.random()*6;});}}
+    else wlGo(b,30+Math.random()*130,100+Math.random()*90);return;}
   if(r<.42){const p=wlSpot();wlGo(b,p[0],p[1]);}
   else if(r<.6){const o=wlAll().filter(q=>q!==b&&q.loc===b.loc&&!q.ko);const tg=o[Math.floor(Math.random()*o.length)];if(tg)wlDo(b,Math.random()<.45?'punch':'five',tg);}
   else if(r<.7){if(wheelFree())wlGo(b,280+(Math.random()<.5?-26:26),WHEEL_AT[1]+12,()=>{b.dir='back';if(wheelFree())wheelSpin(b);});}
@@ -3163,6 +3171,9 @@ function wlThink(b){const r=Math.random();b.wait=1+Math.random()*3.5;
   else b.act={k:r<.92?'dance':'wave',t:0};}
 function wlStep(e,dt){
   if(e.ko){const k=e.ko;k.t+=dt;if(k.t<.32){const f=1-k.t/.32,nx=e.x+k.vx*f*dt,ny=e.y+k.vy*f*dt;if(wlOk(e.loc,nx,ny)){e.x=nx;e.y=ny;}}if(k.t>1.5){e.ko=null;e.dir='front';e.wait=.3;if(e===WL.me)netMove();}return;}
+  if(e.seat){const a=e.seat,s=wlSeat(a.k,e);a.t+=dt;if(a.out&&a.t>=s.dur)wlSeatOff(e);
+    else if(!a.out&&a.k==='bed'&&a.t>s.dur&&e.loc===WL.me.loc&&Math.random()<dt*1.2)WL.fx.push({k:'z',x:ROOM.bed.head[0]+6,y:s.zy,t:0,loc:e.loc});
+    e.walk=false;return;}
   if(e.act){const a=e.act;a.t+=dt;
     if(a.k==='punch'){if(!a.hit&&a.t>=.14){a.hit=true;wlHit(e,a);}if(a.t>.45)e.act=null;}
     else if(a.k==='five'){if(!a.hit&&a.t>=.25){a.hit=true;if(!a.slave){WL.fx.push({k:'spark',x:(e.x+a.tg.x)/2,y:(e.y+a.tg.y)/2-22,t:0,loc:e.loc});if(e.loc===WL.me.loc)sfx('five');}}if(a.t>.6)e.act=null;}
@@ -3173,8 +3184,26 @@ function wlStep(e,dt){
     if(dd<=sp){e.x=p[0];e.y=p[1];e.path.shift();if(!e.path.length){e.walk=false;const td=e.todo;e.todo=null;if(td)td();}}
     else{e.x+=dx/dd*sp;e.y+=dy/dd*sp;e.dir=dirFrom(dx,dy);e.walk=true;if(e===WL.me)footstep(e,dt,e.loc<0?groundAt(e.x,e.y):'wood');}}
   else e.walk=false;}
+/* SITTING IN THE LOBBY CABINS (13 Nov, his ask): tap the chair, the bed, the armchair or the computer (Chrispy Clicker),
+   the same as your own cabin at night. Everyone in the cabin sees it: the seat goes out with your position. Tap to get up. */
+const SEATK=['bed','chair','arm'];
+function wlSeat(k,e){const R=ROOM;
+  if(k==='bed'){const sp=SP[PEOPLE[e.i]&&PEOPLE[e.i].skin],d=sp&&sp.front;return{stand:R.bed.stand,sit:[R.bed.head[0],d?BED_LINE-(d.eyeBot+3)+d.h-1:BED_LINE+16],zy:BED_LINE-(d?d.eyeBot:8)+2,din:'back',dout:'front',lift:6,sortY:140,dur:.6};}
+  if(k==='chair')return{stand:R.chair.stand,sit:R.chair.sit,din:'right',dout:'left',lift:3,sortY:180,dur:.45};
+  return{stand:R.arm.stand,sit:R.arm.sit,din:'left',dout:'right',lift:4,sortY:195,dur:.4};}
+const seatTaken=(e,k)=>wlAll().some(q=>q!==e&&q.loc===e.loc&&q.seat&&q.seat.k===k);
+function wlSit(e,k){if(e.ko||e.loc<0)return;if(seatTaken(e,k)){if(e===WL.me)wlSay('Someone is already there.');return;}
+  const s=wlSeat(k,e);e.path=[];e.todo=null;e.walk=false;e.act=null;e.x=s.stand[0];e.y=s.stand[1];e.seat={k,t:0};
+  if(e.loc===WL.me.loc)sfx('sit');if(e===WL.me){netMove();if(k==='bed')wlSay('Lights out. Tap to get up.');}}
+function wlUp(e){const a=e.seat;if(!a||a.out||a.t<wlSeat(a.k,e).dur)return;e.seat={k:a.k,t:0,out:true};if(e===WL.me)netMove();}
+function wlSeatOff(e){if(!e.seat)return;const s=wlSeat(e.seat.k,e);e.x=s.stand[0];e.y=s.stand[1];e.dir=s.dout;e.seat=null;}
 function wlDraw(e,t){const o={e,name:PEOPLE[e.i].skin,dir:e.dir,x:e.x,y:e.y,t,phase:e.phase,walk:e.walk};
   if(e.ko){const k=e.ko.t;o.walk=false;if(k<1.25){o.pose='dead';o.lift=k<.32?Math.sin(Math.PI*k/.32)*7:0;}else{o.lift=Math.sin(Math.PI*(k-1.25)/.25)*5;o.dir='front';}}
+  else if(e.seat){const a=e.seat,s=wlSeat(a.k,e),k=clamp(a.t/s.dur,0,1),q=ease(a.out?1-k:k);o.walk=false;
+    if(a.t<s.dur){o.x=lerp(s.stand[0],s.sit[0],q);o.y=lerp(s.stand[1],s.sit[1],q);o.sortY=s.sortY;o.lift=Math.sin(k*Math.PI)*s.lift;o.walk=true;o.dir=a.out?s.dout:s.din;o.noShadow=a.k!=='chair';
+      o.cover=a.k==='bed'?{quilt:a.out?1-ramp(k,.35,.8):ramp(k,.15,.6)}:a.k==='arm'&&(a.out?k<.35:k>.6)?['armchair',ROOM.arm.front]:null;}
+    else if(a.k==='bed')o.head=true;
+    else{o.x=s.sit[0];o.y=s.sit[1];o.pose='sit';o.dir=a.k==='chair'?'back':'right';o.sortY=s.sortY;o.noShadow=true;o.cover=a.k==='chair'?'chairback':['armchair',ROOM.arm.front];}}
   else if(e.act){const a=e.act,k=a.t;o.walk=false;
     if(a.k==='punch'){const l=7*Math.sin(Math.PI*clamp(k/.3,0,1));o.x+=a.dx*l;o.y+=a.dy*l;}
     else if(a.k==='five')o.lift=Math.sin(Math.PI*clamp(k/.5,0,1))*6;
@@ -3184,16 +3213,16 @@ function wlDraw(e,t){const o={e,name:PEOPLE[e.i].skin,dir:e.dir,x:e.x,y:e.y,t,ph
 // little pixel effects: POW, a high-five spark, music notes, a heart
 function pxStar(x,y,r){for(let dy=-r;dy<=r;dy++){const w=r-Math.abs(dy);lx.fillRect(x-w,y+dy,2*w+1,1);}const h=Math.round(r*.62);lx.fillRect(x-h,y-h,2*h+1,2*h+1);}
 function pxText(c,str,x,y){for(const ch of String(str)){const g=CK_FONT[ch];if(g)for(let r=0;r<5;r++)for(let q=0;q<3;q++)if(g[r]&(4>>q))c.fillRect(x+q,y+r,1,1);x+=4;}}
-function wlFx(dt,loc){const LIFE={pow:.55,spark:.4,note:1.1,heart:1};
+function wlFx(dt,loc){const LIFE={pow:.55,spark:.4,note:1.1,heart:1,z:1.6};
   for(let i=WL.fx.length-1;i>=0;i--){const f=WL.fx[i];f.t+=dt;const life=LIFE[f.k];if(f.t>life){WL.fx.splice(i,1);continue;}if(f.loc!==loc)continue;const x=X(f.x),y=Y(f.y),k=f.t/life;
     if(f.k==='pow'){const s=Math.min(1,k/.22),r=Math.round(4+6*s);lx.fillStyle='#1a1430';pxStar(x,y,r+1);lx.fillStyle='#e4544f';pxStar(x,y,r);lx.fillStyle='#ffd25e';pxStar(x,y,r-2);if(s>=1){lx.fillStyle='#1a1430';pxText(lx,'POW',x-5,y-2);}}
     else if(f.k==='spark'){const r=2+Math.round(k*8);lx.fillStyle=k<.5?'#fff':'#ffd25e';for(const[dx,dy]of DIR8)lx.fillRect(x+dx*r,y+dy*r,2,2);}
+    else if(f.k==='z'){const zx=X(f.x+Math.sin(f.t*3)*2+f.t*4),zy=Y(f.y-f.t*10);lx.fillStyle=`rgba(255,255,255,${1-k})`;lx.fillRect(zx,zy,3,1);lx.fillRect(zx+1,zy+1,1,1);lx.fillRect(zx,zy+2,3,1);}
     else{const im=icImg(f.k);if(im.complete&&im.width){lx.globalAlpha=1-k*k;lx.drawImage(im,x-5+Math.round(Math.sin(f.t*6)*2),y-5-Math.round(k*14),10,10);lx.globalAlpha=1;}}}}
 // tap a player: two buttons pop up over their head
 function wlMenu(){$('#townMenu').classList.toggle('on',!!WL.sel);}
 document.querySelectorAll('#townMenu .btn').forEach(b=>b.onclick=()=>{const tg=WL.sel;if(!tg||WL.me.ko)return;WL.sel=null;wlMenu();wlDo(WL.me,b.dataset.a,tg);});
-$('#townDance').onclick=()=>{const m=WL.me;if(m.ko)return;m.path=[];m.todo=null;m.act={k:'dance',t:0};netEv('dance');sfx('dance');};
-$('#townWave').onclick=()=>{const m=WL.me;if(m.ko)return;m.path=[];m.todo=null;m.act={k:'wave',t:0};netEv('wave');sfx('wave');};
+$('#townShop').onclick=()=>openShop();$('#townColl').onclick=()=>openColl();   /* his call, 13 Nov: Shop + Collection in the lobby */
 
 /* ---- the Town Wheel: slices are as wide as their odds (they add up to 100) ---- */
 /* coins and odds (12 Nov, his prices): Mafia Case 500, Cabin Case 1000, a spin 300. A spin pays back about 200 on average
@@ -3258,15 +3287,20 @@ scenes.town={hud:'#townHud',
     else{WL.me=wlEnt(0,280,436);WL.bots=PEOPLE.slice(1).map((p,k)=>{const s=wlSpot();return wlEnt(k+1,s[0],s[1]);});}
     WL.fx=[];WL.sel=null;WL.feed=[];WL.fading=false;WL.shake=0;WL.wheel.busy=false;WL.wheel.by=null;wlMenu();paintCoins();$('#townCount').style.display='';$('#townCount').textContent=`${PEOPLE.length} of 10 players here`;
     $('#townHud').classList.toggle('net',NET.on);$('#townCodeT').textContent=NET.code||'';$('#townCodeBox').classList.remove('ok');wlHead();$('#townToast').className='';$('#wheelPop').className='';WL.pop=0;netApply();netMove();},
-  leave(){$('#phone').style.background='';WL.sel=null;wlMenu();},
+  leave(){$('#phone').style.background='';WL.sel=null;wlMenu();ckClose();$('#pcModal').classList.remove('on');},
   frame(dt,t){const m=WL.me;wheelTick(dt);
     for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.remote&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
     WL.shake=Math.max(0,WL.shake-dt);const sh=WL.shake>0?Math.round(Math.sin(t*.09)*8*WL.shake):0;
     const people=wlAll().filter(e=>e.loc===m.loc).map(e=>wlDraw(e,t));let hits;
     if(m.loc>=0){useRoom(roomOf(CABIN_OF.indexOf(m.loc)));view(IMG.room,97,121,186,{fit:true,topCss:80,void:ROOM_VOID});
       rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
-      hits=drawScene(people,null,IMG.room,ROOM_OBJS);wlFx(dt,m.loc);
-      const fl=.5+.5*noise(t*1.7,2);lights(roomLights(fl,0),t,ROOM_MASK);
+      hits=drawScene(people.filter(p=>!p.head),null,IMG.room,ROOM_OBJS);
+      for(const p of people){if(p.head){const d=SP[p.name]&&SP[p.name].front;if(!d)continue;const crop=Math.min(d.h,d.eyeBot+10),hx=X(ROOM.bed.head[0])-Math.floor(d.w/2),hy=Y(BED_LINE)-(d.eyeBot+3);
+          lx.drawImage(d.frames[0][1],0,0,d.w,crop,hx,hy,d.w,crop);drawQuilt(1);hits.set(p,{cx:X(ROOM.bed.head[0]),top:hy+PAD});}
+        else if(p.cover==='chairback')lx.drawImage(IMG.chairback,X(OBJ.chair.x),Y(OBJ.chair.y));
+        else if(p.cover){if(p.cover.quilt!=null)drawQuilt(p.cover.quilt);else patchObj(p.cover[0],p.cover[1]);}}
+      wlFx(dt,m.loc);
+      const fl=.5+.5*noise(t*1.7,2),RL=roomLights(fl,0);if(people.some(p=>p.e.seat&&p.e.seat.k==='chair'))RL.push([159,138,26,'120,220,255',.35,5]);lights(RL,t,ROOM_MASK);
     }else{dayMode=true;const img=dayImg('ground');view(img,m.x+sh,m.y+24,190,{loose:true});
       const hid=behindCabin(m.x,m.y);WL.cabA=WL.cabA||TOWN.cabins.map(()=>1);
       const huts=dayImg('cabins').map(o=>{const a=WL.cabA[o.ci]=clamp(WL.cabA[o.ci]+(o.ci===hid?-1:1)*dt*4,.4,1);return a<1?{...o,alpha:a}:o;});
@@ -3290,7 +3324,10 @@ cv.addEventListener('pointerdown',e=>{if(scene!==scenes.town||WL.fading||documen
   for(const[q,p]of WL.pos){if(q===m)continue;const d=Math.hypot(p.x-px,p.y+18-py);if(d<bd){bd=d;best=q;}}
   if(best){WL.sel=WL.sel===best?null:best;wlMenu();return;}
   WL.sel=null;wlMenu();
-  if(m.loc>=0){if(y>198||inR(ROOM.door.hit,x,y)){wlGo(m,98,226,()=>wlDoor(-1));return;}
+  if(m.loc>=0){if(m.seat){wlUp(m);return;}
+    if(inR(ROOM.pc.hit,x,y)){const s=ROOM.chair.stand;wlGo(m,s[0],s[1],()=>{wlSit(m,'chair');if(m.seat)setTimeout(()=>{if(scene===scenes.town&&m.seat&&!m.seat.out)$('#pcModal').classList.add('on');},450);});return;}
+    for(const k of SEATK)if(inR(ROOM[k].hit,x,y)){const s=ROOM[k].stand;wlGo(m,s[0],s[1],()=>wlSit(m,k));return;}
+    if(y>198||inR(ROOM.door.hit,x,y)){wlGo(m,98,226,()=>wlDoor(-1));return;}
     wlGo(m,clamp(x,17,179),clamp(y,77,231));holdWalk(e,scenes.town,(x,y)=>{const m=WL.me;if(m.loc>=0&&!m.ko&&y<=198)wlGo(m,clamp(x,17,179),clamp(y,77,231));});return;}
   if(Math.hypot(x-WHEEL_AT[0],y-(WHEEL_AT[1]-27))<26){wlGo(m,WHEEL_AT[0],WHEEL_AT[1]+14,()=>{m.dir='back';wheelOpen();});return;}
   const ci=TOWN.cabins.findIndex(c=>Math.abs(x-c.cx)<34&&y>c.top-32&&y<c.top+32);   // the walls and the door (the roof is not: tap it to walk round the back)
@@ -3382,10 +3419,12 @@ function netApply(){if(!NET.on)return;const pl=NET.players||{},mine=pl[NET.uid],
     if(!e){e=wlEnt(k+1,m.x,m.y);e.remote=true;e.uid=u;e.loc=m.loc;e.ms=-1;NET.ents.set(u,e);if(NET.sawRoster){wlSay(`${String(p.n).slice(0,10)} joined.`,'good');sfx('join');}}
     e.i=k+1;e.n=String(p.n).slice(0,10);
     if(m.s!==e.ms){e.ms=m.s;if(e.loc!==m.loc||Math.hypot(e.x-m.x,e.y-m.y)>48){e.loc=m.loc;e.x=m.x;e.y=m.y;e.path=[];e.walk=false;}
-      if(!e.ko&&!e.act){if(Math.hypot(m.tx-e.x,m.ty-e.y)>2)wlGo(e,m.tx,m.ty);else{e.path=[];e.walk=false;if(m.dir)e.dir=m.dir;}}}});
+      if(!e.ko&&!e.act){if(Math.hypot(m.tx-e.x,m.ty-e.y)>2)wlGo(e,m.tx,m.ty);else{e.path=[];e.walk=false;if(m.dir)e.dir=m.dir;}}
+      const sk=SEATK.includes(m.seat)?m.seat:null,cur=e.seat&&!e.seat.out?e.seat.k:null;
+      if(sk!==cur&&!e.ko&&e.loc>=0){if(sk){const s=wlSeat(sk,e);e.path=[];e.todo=null;e.walk=false;e.act=null;e.x=s.stand[0];e.y=s.stand[1];e.seat={k:sk,t:0};if(e.loc===WL.me.loc)sfx('sit');}else e.seat={k:cur,t:0,out:true};}}});
   for(const[u,e]of[...NET.ents])if(!keep.has(u)){NET.ents.delete(u);wlSay(`${e.n||'Someone'} left.`);}
   WL.bots=others.map(([u])=>NET.ents.get(u));NET.sawRoster=true;gameLobbyUI();if(WL.sel&&!WL.bots.includes(WL.sel)){WL.sel=null;wlMenu();}}
-const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,s:++NET.seq};};
+const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,seat:m.seat&&!m.seat.out?m.seat.k:null,s:++NET.seq};};
 // tell everyone where I am and where I am walking to (at most about five times a second)
 function netMove(){if(!NET.on||!WL.me)return;clearTimeout(NET.mt);const send=()=>{NET.ml=performance.now();if(NET.on)NET.me.child('m').set(netM()).catch(()=>{});};
   if(performance.now()-(NET.ml||0)>180)send();else NET.mt=setTimeout(send,180);}
@@ -3933,7 +3972,7 @@ let OBJ_META={};
   const names=[...SKINS.map(s=>s.id),'mafia','doctor','jester','detective'].filter(n=>!PL[n]&&!FINAL[n]);
   OBJ_META=await (await fetch('assets/room-objects/objects.json?v='+BUILD)).json();
   if(XMAS)fetch('assets/xmas/lights.json?v='+BUILD).then(r=>r.json()).then(j=>{XL=j;}).catch(()=>{});
-  const jobs=[load('townBase',XMAS?'assets/xmas/night.png':'assets/town4/night.png'),load('townDay',XMAS?'assets/xmas/day.png':'assets/town4/day.png'),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png'),load('cabinOpen','assets/case/cabin-open.png')];
+  const jobs=[load('townBase',XMAS?'assets/xmas/night.png':'assets/town4/night.png'),load('townDay',XMAS?'assets/xmas/day.png':'assets/town4/day.png'),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('armMask','assets/room-objects/armchair-arm-cover.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png'),load('cabinOpen','assets/case/cabin-open.png')];
   ROOMS.forEach(r=>{if(!r.base)load('room/'+r.id,r.art).catch(()=>{});});   /* the themed rooms come in behind the scenes */
   for(const n of Object.keys(OBJ_META))jobs.push(load('obj/'+n,`assets/room-objects/${n}.png`));
   for(const n of names)for(const d of['','back/','side/'])jobs.push(load(d+n,`assets/sprites/${d}${n}.png`));
