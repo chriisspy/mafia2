@@ -72,6 +72,9 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #tabs{position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;padding:8px 10px calc(10px + env(safe-area-inset-bottom));
   background:linear-gradient(#0000,#05040cee 40%);z-index:20}
 #tabs .btn{flex:1 0 auto;font-size:14px;padding:8px 7px}
+#labFilms{white-space:nowrap;flex:none}
+#filmList .fh{font-size:11px;letter-spacing:2px;opacity:.7;margin:10px 0 4px}#filmList .fr{display:flex;align-items:center;gap:5px;margin-top:5px}
+#filmList .fr b{flex:1;font-size:15px;min-width:0}#filmList .fr .btn{font-size:12px;padding:3px 7px 5px}#filmList .fr .btn.one{flex:none;min-width:86px}
 #labCoins{display:flex;align-items:center;gap:4px;white-space:nowrap;flex:none}
 #tabs{overflow-x:auto;scrollbar-width:none}#tabs::-webkit-scrollbar{display:none}
 #tabs .btn.sel{background:var(--gold);box-shadow:inset 0 -4px 0 #d39b2a,0 3px 0 #0009}
@@ -697,6 +700,11 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 
   <button class="btn dark" id="gameLeave">Leave</button>
   <button class="btn dark" id="menuBtn" title="Menu"><i data-ic="menu" data-c="solo"></i></button>
+  <div class="modal big panel" id="filmModal">
+    <div class="mhead"><b>NIGHT FILMS</b><button class="btn" id="filmX"><i data-ic="cross" data-c="solo"></i></button></div>
+    <div class="small" style="margin-bottom:6px">Lab only. Tap one to watch it.</div>
+    <div id="filmList"></div>
+  </div>
   <div class="modal panel" id="menuModal">
     <div class="mhead"><b>MENU</b><button class="btn" id="menuX"><i data-ic="cross" data-c="solo"></i></button></div>
     <button class="panel" id="menuCode"><small>LOBBY CODE</small><b id="menuCodeT"></b></button>
@@ -708,6 +716,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </div>
   <nav id="tabs">
     <button class="btn go" id="labCoins"><i data-ic="coin" data-c="solo"></i>+500</button>
+    <button class="btn dark" id="labFilms">Films</button>
     <button class="btn" data-s="home">Home</button>
     <button class="btn" data-s="lobby">Lobby</button>
     <button class="btn" data-s="town">Town</button>
@@ -954,7 +963,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131131'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131136'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1865,7 +1874,7 @@ function planNight(force){N.noteS=0;N.pillow=false;N.third=false;
   const net=GAME.on?N.net:null;   // online: who, saved or not, guarded or not, and which story all come from the host
   let alive=PEOPLE.map((_,i)=>i).filter(i=>i!==0&&PEOPLE[i].role!=='mafia'&&!V.dead.has(i));
   if(!net&&!alive.length){V.dead.clear();alive=PEOPLE.map((_,i)=>i).filter(i=>i!==0&&PEOPLE[i].role!=='mafia');}
-  const st=net?{kind:net.kind,end:net.heal?'doc':net.guard>=0?'guard':'dead'}:nextStory();
+  const st=net?{kind:net.kind,end:net.heal?'doc':net.guard>=0?'guard':'dead'}:N.force||nextStory();N.force=null;   /* N.force: the lab's Films list picked this one */
   N.victim=net?net.victim:force!=null?force:viewRole==='mafia'&&NIGHT.picks.length&&alive.includes(NIGHT.picks[0])?NIGHT.picks[0]:alive[Math.floor(Math.random()*alive.length)];
   // N.heal = the Doctor saves them. The story itself is always planned as the kill (N.saved=false), so nobody can
   // tell which night it is until the very end: either the Doctor comes running, or nobody does.
@@ -1892,7 +1901,7 @@ function planNight(force){N.noteS=0;N.pillow=false;N.third=false;
     N.shots.push([N.tHit+2.2,'The Bodyguard took the hit.','bad'],[tL+1.2,`${VN()} lives to see the morning.`,'good']);N.end=tL+4.4;
     /* THE THIRD SHADOW (13 Nov, his pick): on half the Bodyguard nights one extra shadow tails the Mafia the whole way.
        Everyone counts one Mafia too many... until it throws itself in front of the knife. */
-    if(N.forceThird||seedH()%2===0){N.third=true;N.trail=[];N.thirdPos=null;
+    if(N.forceThird??seedH()%2===0){N.third=true;N.trail=[];N.thirdPos=null;
       N.shots.forEach(s=>{s[1]=s[1].replace('Two shadows','Three shadows').replace(/^A shadow/,'Two shadows').replace('Somebody jumps in the way!','One of the shadows jumps in the way!').replace('The Bodyguard took the hit.','That one was never Mafia. The Bodyguard.');});}}
   }
   N.shots.sort((a,b)=>a[0]-b[0]);
@@ -2015,7 +2024,7 @@ PLAN.home=()=>{
       :[[tIn+7.5,'Footsteps. Someone is running.'],[tIn+10.2,'The Doctor. Just in time.','good'],[tIn+12.4,`${VN()} lives to see the morning.`,'good']]));N.end=tIn+15;}
   else{N.shots.push([tIn+6.6,`${VN()} won't see the morning.`,'bad']);N.end=tIn+9.6;}
   N.tCut=tIn+6.2;   // where the Mafia's own preview stops: after the kill, before anyone knows if the Doctor comes
-  if(N.heal&&!N.self&&(N.forcePillow||seedH()%2===0))planPillow();   /* half the Doctor's saves at home are The Pillow */
+  if(N.heal&&!N.self&&(N.forcePillow??seedH()%2===0))planPillow();   /* half the Doctor's saves at home are The Pillow */
 };
 // the inside of the victim's cabin, k seconds after the door opened
 function nightRoom(k,dt,t){$('#phone').style.background=ROOM_VOID;once('rdoor',()=>sfx('door'));const PW=N.pillow;
@@ -3623,6 +3632,20 @@ function go(name,after){
   },scene?200:0);
 }
 document.querySelectorAll('#tabs .btn[data-s]').forEach(b=>b.onclick=()=>go(b.dataset.s));
+/* lab only: THE FILMS LIST (13 Nov, his call): every night film, each with the ending you want, one tap away */
+const FILMS=[['NEW FILMS'],['The Note','note',['dead','doc','guard']],['The Pillow','home',['pillow']],['The Third Shadow','porch',['third']],['The Argument','argue',['quiet']],['The Bin','bin',['quiet']],
+  ['THE OTHERS'],['A knock at the door','home',['dead','doc']],['A walk','walk',['dead','doc','guard']],['Garden / firewood','chore',['dead','doc','guard']],['On the porch','porch',['dead','doc','guard']],
+  ['The stray cat','cat',['dead','doc','guard']],['Stargazing','stars',['dead','doc','guard']],['The mailbox','mail',['dead','doc','guard']]];
+const FILM_LBL={dead:'Dies',doc:'Doctor',guard:'Bodyguard',pillow:'Watch',third:'Watch',quiet:'Watch'};
+$('#filmList').innerHTML=FILMS.map(f=>f.length<2?`<div class="fh">${f[0]}</div>`:`<div class="fr"><b>${f[0]}</b>${f[2].map(e=>`<button class="btn${f[2].length<2?' go one':''}" data-k="${f[1]}" data-e="${e}">${FILM_LBL[e]}</button>`).join('')}</div>`).join('');
+function playFilm(kind,end){$('#filmModal').classList.remove('on');V.dead.clear();N.forcePillow=end==='pillow';N.forceThird=end==='third';
+  const start=()=>{if(end==='quiet'){N.forceQ=kind;planQuiet();N.forceQ=null;}
+    else{const ok=PEOPLE.map((q,i)=>i).filter(i=>i>0&&!['mafia','bodyguard','doctor'].includes(PEOPLE[i].role)),v=ok[Math.floor(Math.random()*ok.length)];
+      N.force={kind,end:end==='pillow'?'doc':end==='third'?'guard':end};planNight(v);}
+    N.forcePillow=N.forceThird=undefined;N.keepPlan=true;N.cut=false;go('night');};
+  if(scene===scenes.night||scene===scenes.dawn)go('home',start);else start();}
+$('#filmList').onclick=e=>{const b=e.target.closest('button');if(b)playFilm(b.dataset.k,b.dataset.e);};
+$('#labFilms').onclick=()=>{document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));$('#filmModal').classList.add('on');};$('#filmX').onclick=()=>$('#filmModal').classList.remove('on');
 /* lab only: 500 coins into this phone's wallet (it is the same wallet the real game uses on this browser) */
 $('#labCoins').onclick=()=>{coins+=500;saveInv();paintCoins();sfx('coin');toast(ic('coin')+' +500 coins. You have '+coins+'.');};
 $('#rainBtn').onclick=()=>{raining=!raining;$('#rainBtn').innerHTML=raining?ic('rain')+'Rain':ic('moon')+'Clear';};
