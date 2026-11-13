@@ -1047,7 +1047,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131629'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131640'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1078,20 +1078,36 @@ const lo=mk(1,1), lx=lo.getContext('2d');
 const lc=mk(1,1), lcx=lc.getContext('2d'); // light layer (kept inside the room)
 let S=1;const cam={x:0,y:0,img:null,lw:1,lh:1,void:'#07060f'};
 function view(img,cx,cy,viewW,o={}){
-  S=o.s||Math.max(1,o.fit?Math.floor(W/viewW):Math.round(W/viewW));const lw=Math.ceil(W/S)+1,lh=Math.ceil(H/S)+1; // o.s = an exact zoom (may be a fraction while it glides); +1 = room to slide by part of a pixel
-  if(lo.width!==lw||lo.height!==lh){lo.width=lw;lo.height=lh;lc.width=lw;lc.height=lh;}
+  S=o.s||Math.max(1,o.fit?Math.floor(W/viewW):Math.round(W/viewW));let lw=Math.ceil(W/S)+1,lh=Math.ceil(H/S)+1; // o.s = an exact zoom (may be a fraction while it glides); +1 = room to slide by part of a pixel
+  /* SMOOTH FOLLOW (o.hi, 13 Nov): the scene is drawn straight at the screen's own sharpness (every art pixel is still a clean S x S block),
+     so the camera AND the people can sit on screen pixels, not whole art pixels: the ground glides and whoever the camera follows stays
+     rock steady. Before, one of the two always had to jump a whole art pixel at a time (shimmer on the character, or a juddery ground). */
+  const hi=!!o.hi&&Number.isInteger(S)&&S>1;if(hi){if((lw*S)%2)lw++;if((lh*S)%2)lh++;}
+  const tw=hi?lw*S:lw,th=hi?lh*S:lh;
+  if(lo.width!==tw||lo.height!==th){lo.width=tw;lo.height=th;}if(lc.width!==lw||lc.height!==lh){lc.width=lw;lc.height=lh;}
+  cam.hi=hi;
   cam.img=img;cam.lw=lw;cam.lh=lh;cam.void=o.void||'#07060f';
   const iw=img.width,ih=img.height;
   let x=iw<=lw?(iw-lw)/2:clamp(cx-lw/2,0,iw-lw);
   // loose: the camera may run a little past the bottom of the map, so the lowest cabins are not hidden under the subtitles
   let y=ih<=lh?(o.topCss!=null?-o.topCss*DPR/S:(ih-lh)/2):clamp(cy-lh/2,0,ih-lh*(o.loose?.74:1));
+  if(hi){x=Math.round(x*S)/S;y=Math.round(y*S)/S;}   /* the camera on a whole screen pixel */
   cam.x=Math.floor(x);cam.y=Math.floor(y);cam.fx=x-cam.x;cam.fy=y-cam.y; // whole pixels for drawing; the leftover fraction is slid in present()
-  lx.setTransform(1,0,0,1,0,0);lx.imageSmoothingEnabled=false;lx.globalAlpha=1;lx.globalCompositeOperation='source-over';
+  lx.setTransform(hi?S:1,0,0,hi?S:1,0,0);lx.imageSmoothingEnabled=false;lx.globalAlpha=1;lx.globalCompositeOperation='source-over';
   lx.fillStyle=cam.void;lx.fillRect(0,0,lw,lh);lx.drawImage(img,-cam.x,-cam.y);
 }
 const X=wx=>Math.round(wx-cam.x), Y=wy=>Math.round(wy-cam.y);
+/* where a PERSON stands: on a whole art pixel, or on a whole screen pixel while the scene is in smooth-follow mode */
+const XP=wx=>cam.hi?Math.round((wx-cam.x)*S)/S:Math.round(wx-cam.x), YP=wy=>cam.hi?Math.round((wy-cam.y)*S)/S:Math.round(wy-cam.y);
+/* a soft shadow under someone. In smooth-follow mode it is stamped from a little picture drawn at art size, so it stays chunky pixels */
+const SHAD={};
+function shadow(fx,fy,rx,ry,a){lx.globalAlpha=a;lx.fillStyle='#000';
+  if(!cam.hi){lx.beginPath();lx.ellipse(fx,fy,rx,ry,0,0,7);lx.fill();}
+  else{const k=rx.toFixed(1)+'|'+ry.toFixed(1);let c=SHAD[k];if(!c){const w=2*Math.ceil(rx)+2,h=2*Math.ceil(ry)+2;c=SHAD[k]=mk(w,h);const x=c.getContext('2d');x.fillStyle='#000';x.beginPath();x.ellipse(w/2,h/2,rx,ry,0,0,7);x.fill();}
+    lx.drawImage(c,fx-c.width/2,fy-c.height/2);}
+  lx.globalAlpha=1;}
 const SX=wx=>(wx-cam.x)*S, SY=wy=>(wy-cam.y)*S;
-function present(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.fillStyle=cam.void;ctx.fillRect(0,0,W,H);ctx.drawImage(lo,-Math.round((cam.fx||0)*S),-Math.round((cam.fy||0)*S),lo.width*S,lo.height*S);}
+function present(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.fillStyle=cam.void;ctx.fillRect(0,0,W,H);const k=cam.hi?1:S;ctx.drawImage(lo,-Math.round((cam.fx||0)*S),-Math.round((cam.fy||0)*S),lo.width*k,lo.height*k);}
 const VOTE_WASH='rgba(6,14,72,.4)';
 let patchDim=null; // set to the night's wash while it is on, so a redrawn post is not brighter than the ground round it
 function patch(img,r){const w=r[2]-r[0],h=r[3]-r[1];lx.drawImage(img,r[0],r[1],w,h,X(r[0]),Y(r[1]),w,h);if(patchDim){lx.fillStyle=patchDim;lx.fillRect(X(r[0]),Y(r[1]),w,h);}} // redraw a bit of the art on top
@@ -1178,13 +1194,13 @@ function poseKey(c){const d=['left','right','back'].includes(c.dir)?c.dir:'front
   if(c.pose==='walk')return`walk_${d}_${Math.floor((c.t+(c.phase||0))/95)%8}`;return null;}
 function drawPose(c,set){const p=set.poses&&set.poses[poseKey(c)];if(!p)return null;let im=p.img;
   if(c.tint){const k='t'+c.tint;if(!p[k]){const[col,a]=c.tint.split('|');const cv=mk(im.width,im.height),x=cv.getContext('2d');x.drawImage(im,0,0);x.globalCompositeOperation='source-atop';x.globalAlpha=+a;x.fillStyle=col;x.fillRect(0,0,cv.width,cv.height);p[k]=cv;}im=p[k];}
-  const w=im.width,h=im.height,al=c.alpha??1,fx=X(c.x),fy=Y(c.y);
+  const w=im.width,h=im.height,al=c.alpha??1,fx=XP(c.x),fy=YP(c.y);
   const bx=fx-Math.round(p.ax),by=fy-h+1-Math.round(c.lift||0);
   if(c.pose==='dead'&&c.blood>0){const k=Math.sqrt(Math.min(1,c.blood)),rx=3+k*(w*.5+3),ry=1.5+k*(h*.34),cx=bx+w/2,cy=fy-h*.22;
     for(let yy=Math.floor(-ry);yy<=ry;yy++){const half=Math.round(rx*Math.sqrt(Math.max(0,1-(yy/ry)**2)));if(half<1)continue;
       const x0=Math.round(cx)-half,ww=half*2,py=Math.round(cy)+yy;lx.fillStyle='#4a0710';lx.fillRect(x0,py,ww,1);
       if(half>2){lx.fillStyle='#8a1220';lx.fillRect(x0+1,py,ww-2,1);}if(yy<0&&half>4){lx.fillStyle='#b01c2c';lx.fillRect(x0+3,py,Math.max(1,Math.round(ww*.3)),1);}}}
-  if(!c.noShadow&&!(c.pose==='dead'&&c.blood>0)){lx.globalAlpha=.35*al;lx.fillStyle='#000';lx.beginPath();const sw=c.pose==='dead'?w*.48:Math.max(3,set.front.w*(FLY[c.name]?.42:.3));lx.ellipse(c.pose==='dead'?bx+w/2:fx,fy,sw,Math.max(1.5,(c.pose==='dead'?w:set.front.w)*.09),0,0,7);lx.fill();lx.globalAlpha=1;}
+  if(!c.noShadow&&!(c.pose==='dead'&&c.blood>0)){const sw=c.pose==='dead'?w*.48:Math.max(3,set.front.w*(FLY[c.name]?.42:.3));shadow(c.pose==='dead'?bx+w/2:fx,fy,sw,Math.max(1.5,(c.pose==='dead'?w:set.front.w)*.09),.35*al);}
   lx.globalAlpha=al;lx.drawImage(im,bx,by);lx.globalAlpha=1;
   return{top:by,cx:c.pose==='dead'?bx+Math.round(w/2):fx,box:[bx,by,bx+w,by+h]};}
 function drawChar(c){
@@ -1198,10 +1214,10 @@ function drawChar(c){
   const b=c.dir!=='back'&&(c.sleep||((t+ph*3)%4300)<130)?1:0;
   const fr=c.tint?tinted(dset,o,b,c.tint):dset.frames[o][b];
   const w=dset.w,h=dset.h,al=c.alpha??1;
-  const fx=X(c.x),fy=Y(c.y);
+  const fx=XP(c.x),fy=YP(c.y);
   const bob=c.walk&&Math.floor(t/150)%2?1:0;
   const bx=fx-Math.floor(w/2),by=fy-h+1-bob-Math.round(c.lift||0);
-  if(!c.noShadow){lx.globalAlpha=.35*al;lx.fillStyle='#000';lx.beginPath();lx.ellipse(fx,fy,Math.max(3,w*.3),Math.max(1.5,w*.09),0,0,7);lx.fill();lx.globalAlpha=1;}
+  if(!c.noShadow)shadow(fx,fy,Math.max(3,w*.3),Math.max(1.5,w*.09),.35*al);
   lx.globalAlpha=al;
   if(dset.flip){lx.save();lx.translate(bx+w,by);lx.scale(-1,1);lx.drawImage(fr,0,0);lx.restore();}else lx.drawImage(fr,bx,by);
   lx.globalAlpha=1;
@@ -3341,7 +3357,7 @@ scenes.town={hud:'#townHud',
         else if(p.cover){if(p.cover.quilt!=null)drawQuilt(p.cover.quilt);else patchObj(p.cover[0],p.cover[1]);}}
       wlFx(dt,m.loc);
       const fl=.5+.5*noise(t*1.7,2),RL=roomLights(fl,0);if(people.some(p=>p.e.seat&&p.e.seat.k==='chair'))RL.push([159,138,26,'120,220,255',.35,5]);lights(RL,t,ROOM_MASK);
-    }else{dayMode=true;const img=dayImg('ground');view(img,Math.round(m.x)+sh,Math.round(m.y)+24,190,{loose:true});   /* the camera follows your whole-pixel spot: you and the ground move together, so you no longer shimmer as you walk (13 Nov) */
+    }else{dayMode=true;const img=dayImg('ground');view(img,m.x+sh,m.y+24,190,{loose:true,hi:true});   /* smooth follow: the ground glides and you stay steady (13 Nov) */
       const hid=behindCabin(m.x,m.y);WL.cabA=WL.cabA||TOWN.cabins.map(()=>1);
       const huts=dayImg('cabins').map(o=>{const a=WL.cabA[o.ci]=clamp(WL.cabA[o.ci]+(o.ci===hid?-1:1)*dt*4,.4,1);return a<1?{...o,alpha:a}:o;});
       if(WL.sel&&WL.sel.loc===m.loc){const q=Math.floor(t/200)%2;lx.strokeStyle=q?'#ffd25e':'#fff2a8';lx.lineWidth=1;lx.beginPath();lx.ellipse(X(WL.sel.x)+.5,Y(WL.sel.y)+.5,9+q,3+q*.5,0,0,7);lx.stroke();}
