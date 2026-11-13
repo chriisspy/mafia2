@@ -1021,7 +1021,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131511'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131514'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1774,7 +1774,7 @@ scenes.cabin={
     }else if(CAB.state==='bed'){ // just your head on the pillow, the quilt pulled up
       people.push({head:true,name:me});
       if(Math.random()<dt*1.2)CAB.zz.push({x:ROOM.bed.head[0]+6,y:BED_LINE-SP[me].front.eyeBot+2,t:0});
-    }else if(CAB.state==='chair'){people.push({name:me,dir:'back',pose:'sit',x:ROOM.chair.sit[0],y:ROOM.chair.sit[1],t,noShadow:true});cover='chairback';}
+    }else if(CAB.state==='chair'){people.push({name:me,dir:'back',pose:'sit',x:ROOM.chair.sit[0],y:ROOM.chair.sit[1],sortY:196,t,noShadow:true});cover='chairback';}
     else if(CAB.state==='arm'){people.push({name:me,dir:'right',pose:'sit',x:ROOM.arm.sit[0],y:ROOM.arm.sit[1],sortY:195,t,noShadow:true});cover=['armchair',ROOM.arm.front];}
     else people.push({name:me,dir:CAB.dir,x:CAB.x,y:CAB.y,t,walk:CAB.walk});
     // the room: objects and you, sorted by depth; the sleeping head is drawn after the bed, then the quilt goes back over the body
@@ -1831,11 +1831,11 @@ function goTo(stand,after){CAB.state='stand';CAB.path=findPath(CAB.x,CAB.y,stand
 // getting in and out, with a little hop instead of snapping
 const B=ROOM.bed,C=ROOM.chair,AR=ROOM.arm;
 function intoBed(){goTo(B.stand,()=>animTo(B.stand,bedIn(),.6,{dir:'back',lift:6,sortY:140,cover:k=>({quilt:ramp(k,.15,.6)}),end:()=>{CAB.state='bed';sfx('sit');toast('Lights out… tap to get up');}}));}
-function intoChair(cb){goTo(C.stand,()=>animTo(C.stand,C.sit,.45,{dir:'right',lift:3,sortY:180,end:()=>{CAB.state='chair';sfx('sit');cb&&cb();}}));}
+function intoChair(cb){goTo(C.stand,()=>animTo(C.stand,C.sit,.45,{dir:'right',lift:3,sortY:196,cover:k=>k>.55?'chairback':null,end:()=>{CAB.state='chair';sfx('sit');cb&&cb();}}));}
 function intoArm(){goTo(AR.stand,()=>animTo(AR.stand,AR.sit,.4,{dir:'left',lift:4,sortY:195,cover:k=>k>.6?['armchair',AR.front]:null,end:()=>{CAB.state='arm';sfx('sit');}}));}
 function getUp(){const s=CAB.state;
   if(s==='bed')animTo(bedIn(),B.stand,.55,{dir:'front',lift:6,sortY:140,cover:k=>({quilt:1-ramp(k,.35,.8)}),end:()=>{CAB.state='stand';CAB.dir='front';}});
-  else if(s==='chair')animTo(C.sit,C.stand,.45,{dir:'left',lift:3,sortY:180,end:()=>{CAB.state='stand';CAB.dir='left';}});
+  else if(s==='chair')animTo(C.sit,C.stand,.45,{dir:'left',lift:3,sortY:196,cover:k=>k<.45?'chairback':null,end:()=>{CAB.state='stand';CAB.dir='left';}});
   else if(s==='arm')animTo(AR.sit,AR.stand,.4,{dir:'right',lift:4,sortY:195,cover:k=>k<.35?['armchair',AR.front]:null,end:()=>{CAB.state='stand';CAB.dir='right';}});}
 let toastT;function toast(msg){const e=$('#toast');e.innerHTML=msg;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),2200);}
 // HOLD TO WALK: keep your finger down and you keep walking to wherever it is (cabin, ghost, waiting lobby)
@@ -2974,7 +2974,7 @@ function ghostRoom(dt,t){
   rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
   const people=[];let cover=null,head=false;
   if(act==='bed')head=true;
-  else if(act==='pc'){people.push({name:nm,dir:'back',pose:'sit',x:ROOM.chair.sit[0],y:ROOM.chair.sit[1],t,noShadow:true});cover='chairback';}
+  else if(act==='pc'){people.push({name:nm,dir:'back',pose:'sit',x:ROOM.chair.sit[0],y:ROOM.chair.sit[1],sortY:196,t,noShadow:true});cover='chairback';}
   else if(act==='arm'){people.push({name:nm,dir:'right',pose:'sit',x:ROOM.arm.sit[0],y:ROOM.arm.sit[1],sortY:195,t,noShadow:true});cover='arm';}
   else if(act==='fire')people.push({name:nm,dir:'back',x:38,y:106,t});
   else if(act==='pace'){const k=(t/1000*26)%120,gx=k<60?k:120-k;people.push({name:nm,dir:k<60?'right':'left',x:62+gx,y:150,t,walk:true});}
@@ -3191,7 +3191,7 @@ function wlStep(e,dt){
 const SEATK=['bed','chair','arm'];
 function wlSeat(k,e){const R=ROOM;
   if(k==='bed'){const sp=SP[PEOPLE[e.i]&&PEOPLE[e.i].skin],d=sp&&sp.front;return{stand:R.bed.stand,sit:[R.bed.head[0],d?BED_LINE-(d.eyeBot+3)+d.h-1:BED_LINE+16],zy:BED_LINE-(d?d.eyeBot:8)+2,din:'back',dout:'front',lift:6,sortY:140,dur:.6};}
-  if(k==='chair')return{stand:R.chair.stand,sit:R.chair.sit,din:'right',dout:'left',lift:3,sortY:180,dur:.45};
+  if(k==='chair')return{stand:R.chair.stand,sit:R.chair.sit,din:'right',dout:'left',lift:3,sortY:196,dur:.45};
   return{stand:R.arm.stand,sit:R.arm.sit,din:'left',dout:'right',lift:4,sortY:195,dur:.4};}
 const seatTaken=(e,k)=>wlAll().some(q=>q!==e&&q.loc===e.loc&&q.seat&&q.seat.k===k);
 function wlSit(e,k){if(e.ko||e.loc<0)return;if(seatTaken(e,k)){if(e===WL.me)wlSay('Someone is already there.');return;}
@@ -3203,7 +3203,7 @@ function wlDraw(e,t){const o={e,name:PEOPLE[e.i].skin,dir:e.dir,x:e.x,y:e.y,t,ph
   if(e.ko){const k=e.ko.t;o.walk=false;if(k<1.25){o.pose='dead';o.lift=k<.32?Math.sin(Math.PI*k/.32)*7:0;}else{o.lift=Math.sin(Math.PI*(k-1.25)/.25)*5;o.dir='front';}}
   else if(e.seat){const a=e.seat,s=wlSeat(a.k,e),k=clamp(a.t/s.dur,0,1),q=ease(a.out?1-k:k);o.walk=false;
     if(a.t<s.dur){o.x=lerp(s.stand[0],s.sit[0],q);o.y=lerp(s.stand[1],s.sit[1],q);o.sortY=s.sortY;o.lift=Math.sin(k*Math.PI)*s.lift;o.walk=true;o.dir=a.out?s.dout:s.din;o.noShadow=a.k!=='chair';
-      o.cover=a.k==='bed'?{quilt:a.out?1-ramp(k,.35,.8):ramp(k,.15,.6)}:a.k==='arm'&&(a.out?k<.35:k>.6)?['armchair',ROOM.arm.front]:null;}
+      o.cover=a.k==='bed'?{quilt:a.out?1-ramp(k,.35,.8):ramp(k,.15,.6)}:a.k==='arm'&&(a.out?k<.35:k>.6)?['armchair',ROOM.arm.front]:a.k==='chair'&&(a.out?k<.45:k>.55)?'chairback':null;}
     else if(a.k==='bed')o.head=true;
     else{o.x=s.sit[0];o.y=s.sit[1];o.pose='sit';o.dir=a.k==='chair'?'back':'right';o.sortY=s.sortY;o.noShadow=true;o.cover=a.k==='chair'?'chairback':['armchair',ROOM.arm.front];}}
   else if(e.act){const a=e.act,k=a.t;o.walk=false;
@@ -3327,7 +3327,7 @@ cv.addEventListener('pointerdown',e=>{if(scene!==scenes.town||WL.fading||documen
   if(best){WL.sel=WL.sel===best?null:best;wlMenu();return;}
   WL.sel=null;wlMenu();
   if(m.loc>=0){if(m.seat){wlUp(m);return;}
-    if(inR(ROOM.pc.hit,x,y)){const s=ROOM.chair.stand;wlGo(m,s[0],s[1],()=>{wlSit(m,'chair');if(m.seat)setTimeout(()=>{if(scene===scenes.town&&m.seat&&!m.seat.out)$('#pcModal').classList.add('on');},450);});return;}
+    if(inR(ROOM.pc.hit,x,y)){const s=ROOM.chair.stand;wlGo(m,s[0],s[1],()=>{wlSit(m,'chair');if(m.seat)setTimeout(()=>{if(scene===scenes.town&&m.seat&&!m.seat.out)ckOpen();},450);});return;}
     for(const k of SEATK)if(inR(ROOM[k].hit,x,y)){const s=ROOM[k].stand;wlGo(m,s[0],s[1],()=>wlSit(m,k));return;}
     if(y>198||inR(ROOM.door.hit,x,y)){wlGo(m,98,226,()=>wlDoor(-1));return;}
     wlGo(m,clamp(x,17,179),clamp(y,77,231));holdWalk(e,scenes.town,(x,y)=>{const m=WL.me;if(m.loc>=0&&!m.ko&&y<=198)wlGo(m,clamp(x,17,179),clamp(y,77,231));});return;}
