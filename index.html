@@ -954,7 +954,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131057'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131127'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1058,6 +1058,8 @@ function poseKey(c){const d=['left','right','back'].includes(c.dir)?c.dir:'front
   if(c.pose==='water')return`water_${sd}_${c.step??1+Math.floor(c.t/220)%3}`;
   if(c.pose==='bend')return'bend_'+sd;
   if(c.pose==='logs')return`logs_${sd}_${c.step??[0,1,2,1][Math.floor(c.t/380)%4]}`;
+  if(c.pose==='stab')return`stab_${d}_${c.step??0}`;                                  /* the Mafia's knife: right, left, back, front; 9 frames */
+  if(c.pose==='point'||c.pose==='argue'||c.pose==='scared')return`${c.pose}_${sd}_${c.step??0}`;   /* point + argue: the Mafia; scared: every outfit */
   if(c.pose==='walk')return`walk_${d}_${Math.floor((c.t+(c.phase||0))/95)%8}`;return null;}
 function drawPose(c,set){const p=set.poses&&set.poses[poseKey(c)];if(!p)return null;let im=p.img;
   if(c.tint){const k='t'+c.tint;if(!p[k]){const[col,a]=c.tint.split('|');const cv=mk(im.width,im.height),x=cv.getContext('2d');x.drawImage(im,0,0);x.globalCompositeOperation='source-atop';x.globalAlpha=+a;x.fillStyle=col;x.fillRect(0,0,cv.width,cv.height);p[k]=cv;}im=p[k];}
@@ -1852,14 +1854,14 @@ const VN=()=>N.victim===0?(GAME.on?myName:ME_NAME):PEOPLE[N.victim].n;
 const PLAN={},PLAY={};
 // four stories, each with a bad ending and a good one. You see all eight before any comes round again,
 // and never the same story twice in a row.
-const STORY_KINDS=['home','walk','chore','porch','cat','stars','mail'];
+const STORY_KINDS=['home','walk','chore','porch','cat','stars','mail','note'];
 function nextStory(){
   // every story once with a death and once with a rescue (the Doctor, or the Bodyguard stepping in), before any repeats
   if(!N.bag.length){N.flip=!N.flip;STORY_KINDS.forEach((kind,i)=>{N.bag.push({kind,end:'dead'},{kind,end:(i+(N.flip?1:0))%2?'guard':'doc'});});}
   const fresh=N.bag.filter(s=>s.kind!==N.last),pool=fresh.length?fresh:N.bag;
   const s=pool[Math.floor(Math.random()*pool.length)];N.bag.splice(N.bag.indexOf(s),1);N.last=s.kind;return s;
 }
-function planNight(force){
+function planNight(force){N.noteS=0;
   const net=GAME.on?N.net:null;   // online: who, saved or not, guarded or not, and which story all come from the host
   let alive=PEOPLE.map((_,i)=>i).filter(i=>i!==0&&PEOPLE[i].role!=='mafia'&&!V.dead.has(i));
   if(!net&&!alive.length){V.dead.clear();alive=PEOPLE.map((_,i)=>i).filter(i=>i!==0&&PEOPLE[i].role!=='mafia');}
@@ -1890,7 +1892,31 @@ function planNight(force){
     N.shots.push([N.tHit+2.2,'The Bodyguard took the hit.','bad'],[tL+1.2,`${VN()} lives to see the morning.`,'good']);N.end=tL+4.4;}
   }
   N.shots.sort((a,b)=>a[0]-b[0]);
+  planPause();
 }
+/* ---- THE PAUSE (13 Nov, his call) ----
+   After the strike the film stops dead for a moment, BEFORE the line that says they died and before the Doctor's
+   footsteps: the same pause either way, so nobody can tell early whether a rescue is coming. (Not on Bodyguard nights:
+   there the twist is the strike itself.) A pause is a HOLD: the film's own clock stops at .at for .dur seconds. */
+function planPause(){N.holds=[];const s=N.shots.find(q=>/scream|jumps in the way/i.test(q[1]));N.tStab=N.inside?null:s?s[0]:null;
+  if(N.guard<0&&N.tCut!=null)N.holds.push({at:N.tCut+.05,dur:2.2});}
+/* real seconds since the film began -> the film's own clock; N.hold = the pause going on now */
+function filmT(rt){N.hold=null;let ft=rt;for(const h of N.holds||[]){if(ft<=h.at)break;const into=ft-h.at;if(into<h.dur){N.hold=h;h.k=into;return h.at;}ft-=h.dur;}return ft;}
+/* THE KILL (13 Nov, his call: a knife, on every kill). Out of doors: a second before the strike the victim sees them and
+   jumps (the 'scared' pose); the first Mafia closes the last few steps and stabs (the 'stab' pose, 9 frames); a white
+   slash and the scream land together. The film's own darkness is held back just enough to see it. */
+function actKill(f,T){const s=N.tStab;if(s==null)return;const v=f.people.find(q=>q.kind==='vic'),m=f.people.find(q=>q.kind==='maf');if(!v||!m)return;const k=T-s;
+  if(k>-1.1&&k<0&&v.pose!=='dead'){v.pose='scared';v.step=clamp(1+Math.floor((k+1.1)/1.1*6),1,6);v.walk=false;v.dir=m.x<v.x?'left':'right';
+    if(!(SP[looksLike(N.victim)].poses||{}).scared_right_0){v.pose=null;v.lift=Math.sin(Math.PI*ramp(k,-1.1,-.6))*6;}}   /* an outfit with no scared pose just jumps */
+  if(k>-.75&&k<.55){const side=m.x<=v.x?-1:1,e=ease(ramp(k,-.75,-.3))*(1-ramp(k,.35,.55));m.x=lerp(m.x,v.x+side*15,e);m.y=lerp(m.y,v.y+1,e);m.dir=side<0?'right':'left';m.walk=false;m.al=Math.max(m.al,e);
+    m.pose='stab';m.step=clamp(Math.floor((k+.75)/1.3*9),0,8);if(f.dark>.4)f.dark=.4;
+    if(m.step>=5)f.knife=[m.x-side*(m.step>=7?11:8),m.y-9,-side];                                      /* the blade catches the light (the Mafia are only shadows) */
+    for(const o of f.people)if(o.kind==='maf'&&o!==m){const d=Math.hypot(o.x-v.x,o.y-v.y)||1;o.x+=(o.x-v.x)/d*12*e;o.y+=(o.y-v.y)/d*12*e;}}   /* the other one hangs back and watches */
+  if(k>0)once('stabfx',()=>sfx('stab'));
+  if(k>-.05&&k<.3)f.slash=[v.x,v.y-12,k];}
+function drawKnife(q){if(!q)return;const[x,y,d]=q;px(x+(d>0?0:-5),y,6,2,'#1a1430');px(x+(d>0?0:-4),y,5,1,'#ffffff');px(x+(d>0?0:-4),y+1,4,1,'#b0c4d8');}
+function drawSlash(s){if(!s)return;const[x,y,k]=s,n=k<.1?1:2;   /* a chunky white slash with a red edge: solid pixels, three frames */
+  for(let i=-n;i<=n;i++){px(x+i*2-1,y+i*2+2,3,2,'#e4544f');px(x+i*2,y+i*2,2,2,'#ffffff');}}
 const SCREAM=()=>N.wet?'A scream, lost in the rain.':'One scream. Then nothing.';
 const stepOut=(cab,T,t0)=>{const e=ramp(T,t0,t0+.6);return{x:cab.feet[0],y:lerp(cab.feet[1]-8,cab.feet[1],e),al:e,walk:e<1,dir:'front'};};
 const stepIn=(cab,T,t0)=>{const e=ramp(T,t0,t0+.5);return{x:cab.feet[0],y:lerp(cab.feet[1],cab.feet[1]-8,e),al:1-e,walk:true,dir:'back'};};
@@ -1969,6 +1995,68 @@ PLAY.home=T=>{
   return{cx,cy,vw,people:P,doors,texts,lights:{dark:N.vci,darkK,red:glow,tone:saved?'90,255,150':'255,40,40'},flash:[saved?'40,170,90':'170,10,20',glow*(saved?.16:.25)]};
 };
 
+/* ================= THE NOTE (13 Nov, his pick; a full film in two places) =================
+   IN THE CABIN: the victim is in the armchair by the fire. A note slides in under the door. They get up, walk over,
+   bend and pick it up, and the note fills the screen, written a letter at a time:  MEET ME IN THE SQUARE. COME ALONE.
+   They go out. IN THE TOWN: they walk down their path in the dark to the stage in the square. Nobody there. They look
+   left, right, left (a "?" over their head). Then the Mafia step out of the dark on both sides; the victim sees them
+   and jumps; the knife (actKill does the last second, as on every kill). The endings (dead, the Doctor, the Bodyguard)
+   are added by planNight like any outdoor story. */
+const NOTE_LINES=['MEET ME IN','THE SQUARE.','COME ALONE.'];
+PLAN.note=()=>{const n=VN(),c=N.vic,rt=N.rt=c.route,L=N.L=rt.len,st=TOWN.stage,two=mafCount()>1;
+  N.tR0=2.6;N.tR1=N.tR0+10.4;                                   /* the cabin part of the film */
+  const TW=N.TW=N.tR1+.2,VS=N.VS=32,end=rt.at(L);N.spot=[st.x,st.y+4];N.dEnd=Math.hypot(N.spot[0]-end.x,N.spot[1]-end.y);
+  const tSq=N.tSq=TW+.6+(L+N.dEnd)/VS,tM=N.tM=tSq+3.3,tA=N.tArr=tM+2.1,tS=tA+.25;
+  N.shots=[[.5,'Night '+NN()+'.'],[1.6,'The town is asleep…'],[N.tR0+.3,`${n} is still up, by the fire.`],[N.tR0+2.2,'Something slides under the door.'],[N.tR0+5.2,`${n} picks it up.`],[N.tR0+6.4,'A note. No name on it.'],
+    [TW+.8,`${n} goes out into the dark.`],[tSq+.4,'The square is empty.'],[tSq+2,'Nobody here.'],[tM+.3,two?'Footsteps. From both sides.':'Footsteps. Behind.','bad'],
+    [tS,SCREAM(),'bad'],[tS+2.6,'The note is still in their hand.'],[tS+4.6,`${n} won't see the morning.`,'bad']];
+  N.end=tS+7.4;};
+PLAY.note=(T,dt,t)=>{const{rt,L,TW,VS,tSq,tM,vic:c,spot}=N,tA=N.tArr,tS=tA+.25,P=[];let v=null;
+  if(T>=TW&&T<TW+.6)v=stepOut(c,T,TW);
+  else if(T>=TW+.6){const d=(T-TW-.6)*VS;
+    if(d<L){const a=rt.at(d);v={x:a.x,y:a.y,dir:dirFrom(a.dx,a.dy),walk:true,al:1};}
+    else if(d<L+N.dEnd){const e=rt.at(L),k=(d-L)/N.dEnd;v={x:lerp(e.x,spot[0],k),y:lerp(e.y,spot[1],k),dir:dirFrom(spot[0]-e.x,spot[1]-e.y),walk:true,al:1};}
+    else{const k=T-tSq,dead=T>=tS;   /* on the stage: left, right, left, and then they hear it */
+      v={x:spot[0],y:spot[1],walk:false,al:1,dir:dead?'front':k<.5?'front':k<1.3?'left':k<2.1?'right':k<2.9?'left':T<tA-.9?'front':'left',pose:dead?'dead':null,blood:dead?ramp(T,tS+.3,tS+5.5):0};}}
+  if(v)P.push({kind:'vic',...v});
+  for(let k=0;k<mafCount();k++){const side=k?1:-1,t0=tM+k*.25;if(T<t0)continue;const far=spot[0]+side*96,near=spot[0]+side*(19+k*3);
+    let x=lerp(far,near,ramp(T,t0,tA+k*.1)),al=ramp(T,t0,t0+.7),walk=T<tA+k*.1,dir=side<0?'right':'left';
+    if(T>tS+1.3){const b=ramp(T,tS+1.3+k*.2,tS+3.6);x=lerp(near,far,b);dir=side<0?'left':'right';walk=b>0&&b<1;al=1-ramp(T,tS+2.4,tS+3.6);}
+    P.push({kind:'maf',x,y:spot[1]+2+k*2,dir,walk,al,lbl:mafLbl(k)});}
+  /* camera: stays on the victim all the way down the path, then pulls back a little on the stage */
+  let cx,cy,vw;const f=v||{x:c.feet[0],y:c.feet[1]};
+  if(T<N.tR0){cx=280;cy=360;vw=230;}else{const k=ease(ramp(T,tSq-.6,tSq+1.2)),z=ease(ramp(T,tA-1,tA-.2));cx=f.x;cy=f.y-14;vw=lerp(lerp(150,172,k),122,z);if(T>=tSq){cx=spot[0];cy=spot[1]-14;}}   /* wide on the empty square, then a hard push in as they close on her */
+  const q=T>=tSq+.5&&T<tM+.2&&Math.floor((T-tSq)*1.2)%2===0,bang=T>tA-.9&&T<tS;
+  const texts=v&&q?[['?',v.x+7,v.y-34]]:v&&bang?[['!',v.x+7,v.y-36]]:[];
+  if(T>tS)once('scr',()=>{N.shake=5;sfx('scream');});
+  return{cx,cy,vw,people:P,doors:[[N.vci,doorK(T,TW-.2,TW+.8)]],texts,dark:Math.max(1-ramp(T,TW,TW+.7),0),lights:{dim:T<tSq-.5?.5:lerp(.5,.85,ramp(T,tSq-.5,tSq+.5)),lampK:T<tSq-.5?.55:1},flash:['170,10,20',pulse2(T,tS+.1)*.3]};};
+/* the cabin part: k = seconds since it began */
+function noteRoom(k,dt,t){$('#phone').style.background=ROOM_VOID;const nm=looksLike(N.victim),A=ROOM.arm,spot=[98,206],P=[];
+  useRoom(roomOf(N.victim));view(IMG.room,97,121,186,{fit:true,topCss:80,void:ROOM_VOID});
+  rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
+  const tUp=3,tAt=4.6,tPick=5.6,tRead=6,tDone=9.4,sit=k<tUp;
+  if(k>1.9)once('nslide',()=>sfx('copy'));if(k>tPick-.4)once('npick',()=>sfx('open'));
+  if(sit)P.push({name:nm,dir:'right',pose:'sit',x:A.sit[0],y:A.sit[1],sortY:195,t,noShadow:true,vic:true});
+  else if(k<tAt){const e=ramp(k,tUp,tAt);P.push({name:nm,dir:dirFrom(spot[0]-A.stand[0],spot[1]-A.stand[1]),x:lerp(A.stand[0],spot[0],e),y:lerp(A.stand[1],spot[1],e),t,walk:true,vic:true});}
+  else if(k<tPick)P.push({name:nm,dir:'right',pose:'bend',x:spot[0]-4,y:spot[1],t,vic:true});
+  else if(k<tDone)P.push({name:nm,dir:'front',x:spot[0],y:spot[1],t,vic:true});
+  else{const e=ramp(k,tDone,tDone+.8);P.push({name:nm,dir:'front',x:spot[0],y:lerp(spot[1],226,e),t,walk:true,alpha:1-ramp(k,tDone+.4,tDone+.9),vic:true});}
+  const hits=drawScene(P,null,IMG.room,ROOM_OBJS);if(sit)patchObj('armchair',A.front);
+  if(k>1.9&&k<tPick-.2){const ny=lerp(238,214,ease(ramp(k,1.9,2.5)));px(96,ny-1,9,6,'#1a1430');px(97,ny,7,4,'#f6ecd2');px(98,ny+1,4,1,'#b9a98a');px(98,ny+2,3,1,'#b9a98a');}   /* the note on the floor */
+  const fl=.5+.5*noise(t*1.7,2);lights(roomLights(fl,0),t,ROOM_MASK);
+  if(k>2.6&&k<tUp+.3){const h=hits.get(P[0]);if(h){lx.fillStyle='#1a1430';lx.fillRect(h.cx+5,h.top-9,4,8);lx.fillStyle='#ffd25e';lx.fillRect(h.cx+6,h.top-8,2,4);lx.fillRect(h.cx+6,h.top-3,2,1);}}   /* "!" : they noticed */
+  /* THE CLOSE-UP: the note, big, written out a letter at a time */
+  if(k>tRead&&k<tDone+.1){const a=Math.min(1,(k-tRead)/.35)*(1-ramp(k,tDone-.3,tDone+.1)),W=150,H=100,x0=Math.round(cam.lw/2-W/2),y0=Math.round(cam.lh*.38-H/2)+Math.round((1-a)*14);
+    lx.fillStyle=`rgba(4,3,14,${(.78*a).toFixed(3)})`;lx.fillRect(0,0,cam.lw,cam.lh);
+    if(a>.5){lx.fillStyle='#1a1430';lx.fillRect(x0-2,y0-2,W+4,H+4);lx.fillStyle='#f6ecd2';lx.fillRect(x0,y0,W,H);lx.fillStyle='#e6d6b0';lx.fillRect(x0,y0+H-6,W,6);lx.fillRect(x0+W-6,y0,6,H);
+      lx.fillStyle='#1a1430';lx.fillRect(x0+W-8,y0-2,10,8);lx.fillStyle='#e6d6b0';lx.fillRect(x0+W-8,y0+2,6,6);   /* a fold line, a turned corner */
+      const shown=Math.floor(Math.max(0,k-tRead-.5)*13);let n=0;lx.fillStyle='#2a2140';
+      NOTE_LINES.forEach((ln,r)=>{const lw=ln.length*12-3,sx=x0+Math.round((W-lw)/2),sy=y0+15+r*25;[...ln].forEach((ch,i)=>{if(ch!==' '&&n>=shown)return;if(ch!==' ')n++;const g=CK_FONT[ch];
+        if(g){for(let rr=0;rr<5;rr++)for(let qq=0;qq<3;qq++)if(g[rr]&(4>>qq))lx.fillRect(sx+i*12+qq*3,sy+rr*3,3,3);}else if(ch==='.')lx.fillRect(sx+i*12,sy+12,3,3);});});
+      if(n<=shown&&n>0&&N.noteN!==Math.min(n,shown)){N.noteN=Math.min(n,shown);} if(shown>(N.noteS||0)&&shown<=28){N.noteS=shown;sfx('tick');}}}
+  if(k<.5){lx.fillStyle=`rgba(4,3,14,${(1-k/.5).toFixed(3)})`;lx.fillRect(0,0,cam.lw,cam.lh);}
+  present();
+  for(const[q,h]of hits){if(q.vic&&!q.pose&&!(k>tRead&&k<tDone))nameTag(h,N.victim===0?'You':VN(),N.victim===0?'#ffd25e':'#fff');}}
 /* 2. WALK: can't sleep, out for a stroll, and somebody is coming the other way */
 PLAN.walk=()=>{
   const rt=N.rt=N.vic.route,L=N.L=rt.len,n=VN();
@@ -2136,14 +2224,16 @@ scenes.night={
     $('#nightTag').innerHTML=ic('rec')+'NIGHT '+NN()+(viewRole==='mafia'?' · YOUR TEAM':'');},
   leave(){$('#phone').style.background='';$('#barT').classList.remove('on');$('#barB').classList.remove('on');$('#fade').classList.remove('on');clearInterval(capTimer);fxStop();$('#bigMsg').className='';},
   frame(dt,t){
-    N.t+=dt;const T=N.t;
+    N.t+=dt;const T=filmT(N.t),HOLD=N.hold;
     while(N.capI<N.shots.length&&T>N.shots[N.capI][0]){const s=N.shots[N.capI++];caption($('#cap'),s[1],s[2]);}
     const endT=N.cut?N.tCut:N.end;
     if(T>endT-1.2)$('#fade').classList.add('on');
     if(T>endT){if(N.cut){N.cut=false;CAB.keep=true;go('cabin');}else dawn();return;}
     if(N.cut)CAB.clock=Math.max(1,CAB.clock-dt);
+    if(N.kind==='note'&&T>=N.tR0&&T<N.tR1){noteRoom(T-N.tR0,dt,t);return;}
     if(N.inside&&T>=N.tIn){nightRoom(T-N.tIn,dt,t);return;}
-    const f=PLAY[N.kind](T,dt,t);
+    const f=PLAY[N.kind](T,HOLD?0:dt,t);actKill(f,T);
+    if(HOLD)for(const q of f.people)q.walk=false;   /* the pause: nobody moves */
     if(N.heal&&T>N.tDoc){ // the Doctor runs up the cabin's path, kneels by them, and they get back up
       const k=T-N.tDoc,c=N.vic,vic=f.people.find(p=>p.kind==='vic'),tx=vic?vic.x:c.feet[0],ty=vic?vic.y:c.feet[1],from=c.route.at(86);
       const e=ease(ramp(k,.2,2.4)),gx=tx+(from.x>=tx?11:-11),dx=lerp(from.x,gx,e),dy=lerp(from.y,ty+1,e),kneel=e>=1&&k<4.4;
@@ -2165,13 +2255,13 @@ scenes.night={
     if(f.under)f.under();
     // the Mafia are only shadows with red eyes, unless you are one of them
     const mine=viewRole==='mafia';
-    const people=f.people.filter(p=>p.al>0).map(p=>({p,name:p.kind==='maf'?'mafia':p.kind==='doc'?'doctor':p.kind==='guard'?looksLike(N.guard):looksLike(N.victim),dir:p.dir,x:p.x,y:p.y,t,walk:p.walk,pose:p.pose,step:p.step,blood:p.blood,tint:p.kind==='maf'&&!mine?SHADOW_TINT:NIGHT_TINT,alpha:p.al}));
+    const people=f.people.filter(p=>p.al>0).map(p=>({p,name:p.kind==='maf'?'mafia':p.kind==='doc'?'doctor':p.kind==='guard'?looksLike(N.guard):looksLike(N.victim),dir:p.dir,x:p.x,y:p.y,t,walk:p.walk,pose:p.pose,step:p.step,lift:p.lift,blood:p.blood,tint:(p.kind==='maf'&&!mine)||p.shade?SHADOW_TINT:NIGHT_TINT,alpha:p.al}));
     for(const q of people)if(q.walk&&q.alpha>.5&&Math.random()<dt*5)kickDust(q.x,q.y);
     townLights(t,{dim:.85,...f.lights},'win');
     patchDim='rgba(6,8,30,.38)';const hits=drawScene(people,TOWN.occ,IMG.town);patchDim=null;
     if(!mine)for(const q of people){const h=hits.get(q);if(q.p.kind==='maf'&&h&&q.dir!=='back'&&q.alpha>.5){const ey=h.top+Math.round(SP.mafia.front.eyeBot-PAD)-1;lx.fillStyle='#ff3c3c';
       if(q.dir==='front'){lx.fillRect(h.cx-4,ey,2,2);lx.fillRect(h.cx+2,ey,2,2);}else lx.fillRect(h.cx+(q.dir==='right'?2:-4),ey,2,2);}}
-    if(f.over)f.over();
+    drawKnife(f.knife);drawSlash(f.slash);if(f.over)f.over();
     drawDust(dt);
     townLights(t,{dim:.85,...f.lights},'rest');
     if(f.dark>0){lx.fillStyle=`rgba(3,3,12,${f.dark*.74})`;lx.fillRect(0,0,cam.lw,cam.lh);}
@@ -2191,7 +2281,8 @@ const DAWN_DEAD={
   porch:['{n}\'s front door was wide open this morning. The porch was empty.','{n}\'s chair was still rocking on the porch. Nobody in it.'],
   cat:['A full saucer of milk outside {n}\'s cabin. The cat hasn\'t come back either.','{n} went out to feed a stray. Only the saucer was found.'],
   stars:['A blanket lay on the grass outside {n}\'s cabin, soaked with dew.','{n} went out to look at the sky. The blanket is still there.'],
-  mail:['{n}\'s mailbox was hanging open. A letter lay in the grass.','{n} went out for the post last night. Nobody has seen them since.']};
+  mail:['{n}\'s mailbox was hanging open. A letter lay in the grass.','{n} went out for the post last night. Nobody has seen them since.'],
+  note:['A note was found in the square this morning. So was {n}.','"Come alone," the note said. {n} did.']};
 const DAWN_SAFE={
   home:['The Mafia came for {n} last night. The Doctor was already there.','Somebody knocked on {n}\'s door last night. The Doctor answered it.'],
   walk:['{n} went for a walk last night and came home a lot faster than they left.','{n} is out of breath, and very much alive.'],
@@ -2271,9 +2362,11 @@ function fxHeal(quiet){if(!quiet)sfx('heal');const{c,x:ctx,W,H}=fxSetup();c.styl
 function killRoom(nm,k,heal,t){const P=[],hit=3.2,dead=k>=hit&&!(heal&&k>11);
   // they back away from the door until the foot of the bed stops them (the bed ends at y 129), and are pinned there
   const pin=136,shake=k>hit-1.2&&k<hit?Math.round(Math.sin(k*40)):0;
-  P.push({name:nm,dir:'front',x:98+shake,y:dead?pin+4:lerp(168,pin,ease(ramp(k,.2,hit-1.2))),t,walk:k>.2&&k<hit-1.2,pose:dead?'dead':null,blood:dead?ramp(k,hit+.3,hit+5)*(heal?1-ramp(k,9.6,11):1):0,vic:true});
+  const sc=!dead&&k>hit-1.2&&k<hit&&(SP[nm].poses||{}).scared_right_0;   /* pinned at the foot of the bed: they jump */
+  P.push({name:nm,dir:sc?'left':'front',x:98+(sc?0:shake),y:dead?pin+4:lerp(168,pin,ease(ramp(k,.2,hit-1.2))),t,walk:k>.2&&k<hit-1.2,pose:dead?'dead':sc?'scared':null,step:sc?clamp(1+Math.floor((k-hit+1.2)/1.2*6),1,6):undefined,blood:dead?ramp(k,hit+.3,hit+5)*(heal?1-ramp(k,9.6,11):1):0,vic:true});
   const nm2=mafCount();for(let j=0;j<nm2;j++){const a=ramp(k,.1+j*.3,hit-.2),b=ramp(k,hit+1.1+j*.2,hit+3.6);if(b>=1||k<.1+j*.3)continue;
-    P.push({name:'mafia',dir:b>0?'front':'back',x:98+(nm2>1?(j?12:-12):0),y:b>0?lerp(156,236,b):lerp(236,156,ease(a)),t,walk:(a>0&&a<1)||b>0,tint:SHADOW_TINT,alpha:b>0?1-ramp(b,.6,1):ramp(k,.1+j*.3,.5+j*.3),phase:j*300});}
+    const st=!j&&k>hit-.7&&k<hit+.45;   /* the first one in does it: the knife, seen from behind */
+    P.push({name:'mafia',dir:b>0?'front':'back',x:st?lerp(98+(nm2>1?-12:0),98,ease(ramp(k,hit-.7,hit-.3))):98+(nm2>1?(j?12:-12):0),y:b>0?lerp(156,236,b):st?lerp(156,150,ease(ramp(k,hit-.7,hit-.3))):lerp(236,156,ease(a)),t,pose:st?'stab':null,step:st?clamp(Math.floor((k-hit+.7)/1.15*9),0,8):undefined,walk:!st&&((a>0&&a<1)||b>0),tint:SHADOW_TINT,alpha:b>0?1-ramp(b,.6,1):ramp(k,.1+j*.3,.5+j*.3),phase:j*300});}
   if(heal&&k>7.4&&!N.self){const a=ease(ramp(k,7.4,9.4)),kn=a>=1&&k<11;P.push({name:'doctor',dir:kn?'left':'back',x:lerp(98,116,a),y:lerp(236,144,a),t,walk:a<1,pose:kn?'bend':null,alpha:ramp(k,7.4,7.9),doc:true});}
   return P;}
 
@@ -2296,7 +2389,7 @@ scenes.mydeath={hud:'#nightHud',
     $('#phone').style.background=ROOM_VOID;$('#nightTag').innerHTML=ic('rec')+'NIGHT '+NN()+' · YOUR CABIN';},
   leave(){$('#phone').style.background='';$('#fade').classList.remove('on');$('#bigMsg').className='';clearInterval(capTimer);fxStop();},
   frame(dt,t){
-    if(MD.town){const T=N.t+dt;
+    if(MD.town){const T=filmT(N.t+dt);
       if(T>MD.tK)once('hit',()=>{N.shake=6;if(N.guard<0)fxBleed(.9);});
       if(!N.heal&&N.guard<0&&T>MD.tK+2.2)once('big',()=>mdBig('bad'));
       if(N.heal&&T>N.tDoc+4.4)once('up',()=>{fxStop();fxHeal();mdBig('good');});
