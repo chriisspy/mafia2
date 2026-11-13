@@ -804,6 +804,7 @@ const SFX={
   wave(){tone(700,.12,{type:'triangle',vol:.14,to:1050});},
   spin(){tone(300,.25,{type:'triangle',vol:.12,to:700});},
   tick(){tone(1300,.018,{vol:.06});},
+  wtick(){tone(1300,.018,{vol:.025});},   /* the Town Wheel's clicks, quieter than the case reel (his call, 13 Nov) */
   prize(){arp([784,988,1175,1568],.07,{vol:.12});},
   thud(){tone(110,.2,{type:'triangle',vol:.35,to:45});hiss(.12,{vol:.2,lp:500});},
   rattle(){hiss(.03,{vol:.1,hp:3000});tone(1500,.02,{vol:.04});},
@@ -830,7 +831,7 @@ const SFX={
   heal(){arp([523,659,784,1047,1319],.11,{type:'triangle',vol:.16,len:.3});},
   dead(){tone(220,1.1,{type:'sawtooth',vol:.14,to:55});tone(110,1.3,{type:'triangle',vol:.2,to:40});},
   dawn(){arp([392,494,587,784],.14,{type:'triangle',vol:.14,len:.4});},
-  step_grass(){hiss(.2,{vol:.095,lp:3200,att:.045});hiss(.16,{vol:.072,bp:900,att:.04});},   /* more hiss, but it swells in softly: no sharp start, no crisp top (his call) */
+  step_grass(){hiss(.2,{vol:.06,lp:3200,att:.045});hiss(.16,{vol:.045,bp:900,att:.04});},   /* more hiss, but it swells in softly: no sharp start, no crisp top (his call) */
   step_stone(){tone(105,.055,{type:'triangle',vol:.14,to:62});hiss(.022,{vol:.06,bp:1200});},   /* lower than the wood step: a dull, heavy tap */
   step_snow(){hiss(.2,{vol:.1,lp:1300,att:.045});hiss(.16,{vol:.07,bp:550,att:.04});for(let i=0;i<6;i++)hiss(.012,{vol:.022+Math.random()*.018,bp:2600+Math.random()*1800,at:.025+i*.022+Math.random()*.01});},   /* his call, 13 Nov: the grass step, more muffled (lower), with crisp little grains crunching over it */
   step_wood(){tone(150,.06,{type:'triangle',vol:.1,to:95});hiss(.03,{vol:.03,lp:600});},
@@ -1023,7 +1024,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131527'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131530'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3264,7 +3265,7 @@ function wheelSpin(who,fix){const W=WL.wheel;if(W.busy&&!fix)return false;let r=
   to+=Math.ceil((W.a-to)/TAU)*TAU+(who.i===0?5:3)*TAU;
   Object.assign(W,{busy:true,from:W.a,to,t0:null,dur:who.i===0?4.6:3,res:k,by:who});return true;}
 function wheelTick(dt){const W=WL.wheel;if(!W.busy){W.a+=dt*.12;return;}
-  {const seg=Math.floor(W.a/(Math.PI*2)*24);if(seg!==W.seg){W.seg=seg;if(WL.me&&WL.me.loc<0)sfx('tick');}}
+  {const seg=Math.floor(W.a/(Math.PI*2)*24);if(seg!==W.seg){W.seg=seg;if(WL.me&&WL.me.loc<0)sfx('wtick');}}
   W.t0=(W.t0??0)+dt;const k=Math.min(1,W.t0/W.dur);W.a=W.from+(W.to-W.from)*(1-(1-k)*(1-k));
   if(k>=1){W.busy=false;W.a%=Math.PI*2;wheelPrize(W.by,WSEG[W.res],W.win);}}
 function wheelPrize(who,g,winId){
