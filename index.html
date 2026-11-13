@@ -105,8 +105,8 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #introSkip{position:absolute;right:14px;top:calc(14px + env(safe-area-inset-top));z-index:6;display:none;align-items:center;gap:6px;font-size:14px;padding:5px 10px 7px;pointer-events:auto}
 #nightHud.intro #introSkip{display:flex}
 #phone:not(.game) #introSkip{top:calc(66px + env(safe-area-inset-top))}
-#joy{position:absolute;left:14px;bottom:120px;width:130px;height:130px;z-index:8;display:none;touch-action:none;pointer-events:auto;background-size:100% 100%;image-rendering:pixelated}
-#joy.on{display:block}
+#joy{position:absolute;left:14px;bottom:120px;width:130px;height:130px;z-index:8;display:none;opacity:.72;touch-action:none;pointer-events:auto;background-size:100% 100%;image-rendering:pixelated}
+#joy.on{display:block}#joy.held{opacity:.9}
 #joy i{position:absolute;left:35px;top:35px;width:60px;height:60px;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
 #turnPhone{display:none;position:fixed;inset:0;z-index:9999;background:#140c24;color:#f6dfae;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
 #turnPhone b{font-size:22px}#turnPhone small{font-size:13px;opacity:.7}
@@ -1059,7 +1059,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131704'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131727'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1791,7 +1791,10 @@ const ROOM={
 const BED_LINE=80; // the fold of the sheet, in room pixels
 const CAB={x:98,y:190,tgt:null,path:null,dir:'back',walk:false,state:'stand',after:null,anim:null,clock:30,zz:[],pc:0};
 const inR=(r,x,y)=>x>=r[0]&&x<r[2]&&y>=r[1]&&y<r[3];
-function canStand(x,y){if(!(inR(ROOM.floor,x,y)||inR(ROOM.stairs,x,y)))return false;return!ROOM.block.some(r=>inR(r,x,y));}
+/* INTO BED ON FOOT (13 Nov, his ask): with the joystick you can walk in from the side or the foot of the bed, under the quilt.
+   Reach the middle (where your head lies on the pillow) and you settle down asleep; push the stick again and you wake up, still under the covers. */
+const BEDZ=[70,88,127,130];   /* a touch wider than the bed's block, so you step straight in from the side */
+function canStand(x,y,bed){if(!(inR(ROOM.floor,x,y)||inR(ROOM.stairs,x,y)))return false;if(bed&&inR(BEDZ,x,y))return true;return!ROOM.block.some(r=>inR(r,x,y));}
 let ROOM_MASK=null,ROOM_VOID='#000',ROOM_OBJS=[];
 function buildRoom(){
   const im=IMG.room,c=mk(im.width,im.height),x=c.getContext('2d');x.drawImage(im,0,0);
@@ -1846,8 +1849,11 @@ scenes.cabin={
     rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));
     fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
     {const J=joyVec();   /* the joystick */
-      if(J){if(CAB.state==='stand'){CAB.tgt=null;CAB.path=null;CAB.after=null;const[nx,ny]=joyStep(CAB.x,CAB.y,J,62*Math.min(1,.35+J.m)*dt,(x,y)=>canStand(x,y)&&y<=193),moved=Math.hypot(nx-CAB.x,ny-CAB.y)>.01;
-          CAB.x=nx;CAB.y=ny;CAB.dir=dirFrom(J.x,J.y);CAB.walk=moved;CAB.joy=true;if(moved)footstep(CAB,dt,'wood');}
+      if(J){if(CAB.state==='bed'){const s=bedIn();CAB.state='stand';CAB.x=s[0];CAB.y=s[1];CAB.dir='front';CAB.bedArm=false;}   /* you wake up, still under the quilt */
+        if(CAB.state==='stand'){CAB.tgt=null;CAB.path=null;CAB.after=null;const[nx,ny]=joyStep(CAB.x,CAB.y,J,62*Math.min(1,.35+J.m)*dt,(x,y)=>canStand(x,y,true)&&y<=193),moved=Math.hypot(nx-CAB.x,ny-CAB.y)>.01;
+          CAB.x=nx;CAB.y=ny;CAB.dir=dirFrom(J.x,J.y);CAB.walk=moved;CAB.joy=true;if(moved)footstep(CAB,dt,'wood');
+          const s=bedIn(),d=Math.hypot(CAB.x-s[0],CAB.y-s[1]);if(d>8)CAB.bedArm=true;
+          if(CAB.bedArm!==false&&inR(BEDZ,CAB.x,CAB.y)&&Math.abs(CAB.x-s[0])<9&&CAB.y<=s[1]+3){CAB.state='bed';CAB.x=s[0];CAB.y=s[1];CAB.walk=false;CAB.bedArm=false;sfx('sit');toast('Lights out… move to wake up');}}   /* the middle of the bed: asleep */
         else if(CAB.state!=='anim')getUp();}
       else if(CAB.joy){CAB.joy=false;if(!CAB.tgt)CAB.walk=false;}}
     // walking
@@ -1866,6 +1872,7 @@ scenes.cabin={
       if(Math.random()<dt*1.2)CAB.zz.push({x:ROOM.bed.head[0]+6,y:BED_LINE-SP[me].front.eyeBot+2,t:0});
     }else if(CAB.state==='chair'){people.push({name:me,dir:'back',pose:'sit',x:ROOM.chair.sit[0],y:ROOM.chair.sit[1],sortY:196,t,noShadow:true});cover='chairback';}
     else if(CAB.state==='arm'){people.push({name:me,dir:'right',pose:'sit',x:ROOM.arm.sit[0],y:ROOM.arm.sit[1],sortY:195,t,noShadow:true});cover=['armchair',ROOM.arm.front];}
+    else if(inR(BEDZ,CAB.x,CAB.y)){people.push({name:me,dir:CAB.dir,x:CAB.x,y:CAB.y,t,walk:CAB.walk,sortY:OBJ.bed.base+1,noShadow:true});cover={quilt:1};}   /* under the covers */
     else people.push({name:me,dir:CAB.dir,x:CAB.x,y:CAB.y,t,walk:CAB.walk});
     // the room: objects and you, sorted by depth; the sleeping head is drawn after the bed, then the quilt goes back over the body
     const hd=people.find(p=>p.head);
@@ -1935,12 +1942,12 @@ let HOLD=null;
 const JOY={on:false,x:0,y:0,m:0,id:null};
 function joyVec(){return JOY.on&&JOY.m>.18?JOY:null;}
 /* the stick as pixel art (his call): a 26 x 26 px base and a 12 x 12 px knob, shown 5x (made a bit bigger, his call). Christmas: red rims */
-function joyArt(){const P=5,col=XMAS?{o:'#2a0d14',r:'#9b1c2e',f:'#2a2346',s:'#1f1936',a:'#c9b8ff',ko:'#7d1522',kr:'#b3202f'}:{o:'#1a1430',r:'#3a3160',f:'#2a2346',s:'#1f1936',a:'#8f84c4',ko:'#5a3420',kr:'#5a3420'};
+function joyArt(){const P=5,col=XMAS?{o:'#fff4f4',f:'#e7a3ab',s:'#d98b95',a:'#ffffff',ko:'#c9505c'}:{o:'#ffffff',f:'#b3a9e0',s:'#9f95d2',a:'#ffffff',ko:'#c58a4a'};   /* light, a thin rim (his call) */
   const disc=(n,fn)=>{const c=mk(n,n),x=c.getContext('2d'),m=(n-1)/2,R=n/2-.15;for(let y=0;y<n;y++)for(let i=0;i<n;i++){const d=Math.hypot(i-m,y-m),k=fn(d,R,i-m,y-m);if(k){x.fillStyle=k;x.fillRect(i,y,1,1);}}return c;};
-  const base=disc(26,(d,R,dx,dy)=>d>R?null:d>R-1.3?col.o:d>R-2.4?col.r:Math.hypot(dx,dy+1.6)>R-2.4?col.s:col.f),bx=base.getContext('2d');
+  const base=disc(26,(d,R,dx,dy)=>d>R?null:d>R-1?col.o:Math.hypot(dx,dy+1.4)>R-1?col.s:col.f),bx=base.getContext('2d');
   bx.fillStyle=col.a;for(const[cx,cy,ux,uy]of[[12.5,5,0,1],[12.5,20,0,-1],[5,12.5,1,0],[20,12.5,-1,0]])for(let k=0;k<3;k++)for(let w=-k;w<=k;w++){   /* four little arrows */
     const x=Math.round(cx+(uy?w:k*ux)-(uy?0:ux)),y=Math.round(cy+(ux?w:k*uy)-(ux?0:uy));bx.fillRect(x,y,1,1);}
-  const knob=disc(12,(d,R,dx,dy)=>d>R?null:d>R-1.3?col.ko:(dy>1.2&&Math.hypot(dx,dy-1.4)>R-1.3)?'#e9c88a':(Math.hypot(dx+1.6,dy+1.8)<1.6)?'#fff6df':'#f6dfae');
+  const knob=disc(12,(d,R,dx,dy)=>d>R?null:d>R-1?col.ko:(dy>1.2&&Math.hypot(dx,dy-1.4)>R-1)?'#e9c88a':(Math.hypot(dx+1.6,dy+1.8)<1.6)?'#fffaf0':'#f6dfae');
   $('#joy').style.backgroundImage=`url(${base.toDataURL()})`;$('#joy i').style.backgroundImage=`url(${knob.toDataURL()})`;}
 joyArt();
 (()=>{const el=$('#joy'),knob=el.querySelector('i');
@@ -2976,6 +2983,25 @@ function ghostSide(){let w=G.watch>0?G.watch:G.inCab>=0?CABIN_OF.indexOf(G.inCab
   const h=w>0?`<div><small>${roleName(w)} · TONIGHT</small>${ghostTonight(w)}</div><div><small>LAST VOTE</small>${ghostVote(w)}</div>`:'';
   if(h!==G.didH){G.didH=h;const e=$('#ghostDid');e.innerHTML=h;e.classList.toggle('on',!!h);}
   for(const s of G.spots||[]){const u=G.heads&&G.heads[s.i],dd=s.st==='dead';if(u&&G.headSt[s.i]!==dd){G.headSt[s.i]=dd;u.src=face(looksLike(s.i),dd);u.parentNode.classList.toggle('dead',dd);}}}
+/* WHAT THEY CHOSE, OVER THEIR HEADS (13 Nov, his ask): for anyone spectating (the dead, late joiners), each player who has
+   locked a choice tonight gets a small tag above them: their face, the verb in their role's colour, then the name(s).
+   Out on the map it sits over their head, or over their cabin while they are inside; in a cabin, over them. */
+const PICK_VERB={mafia:'Kill',doctor:'Save',framer:'Frame',bodyguard:'Guard',detective:'Investigate'};
+function ghostPick(i){if(!i||V.dead.has(i))return null;const r=PEOPLE[i].role||'civilian',v=PICK_VERB[r];if(!v)return null;let names=null;
+  if(GAME.on){const a=gAct(i);if(a&&a.r===GAME.g.round&&a.pick&&a.pick.length)names=a.pick.map(u=>u===NET.uid?'You':((GAME.g.pl[u]||{}).n||'?'));}
+  else if(N.t>=G.lockAt[i]&&G.pick[i]!=null)names=[G.pick[i]===0?'You':PEOPLE[G.pick[i]].n];
+  return names?{verb:v,names,col:ROLES[r].accent}:null;}
+const PFACE={};
+function pickTag(sx,sy,i,pk){const k=looksLike(i);let im=PFACE[k];if(!im){im=PFACE[k]=new Image();im.src=face(k);}
+  const d=DPR,fs=Math.round(12.5*d),pad=Math.round(6*d),fw=Math.round(15*d),h=Math.round(22*d),b=Math.max(2,Math.round(2*d));
+  ctx.font=`600 ${fs}px "Pixelify Sans"`;ctx.textBaseline='middle';ctx.textAlign='left';
+  const v=pk.verb+' ',n=pk.names.join(' & '),wv=ctx.measureText(v).width,wn=ctx.measureText(n).width,w=Math.round(pad+fw+Math.round(4*d)+wv+wn+pad);
+  const x=Math.round(sx-w/2),y=Math.round(sy-h);
+  ctx.fillStyle='#1a1430';ctx.fillRect(x-b,y-b,w+2*b,h+2*b);                                   /* a dark outline, square-cornered like the rest of the pixel UI */
+  ctx.fillStyle=pk.col;ctx.fillRect(x,y,w,h);ctx.fillStyle='#231b3d';ctx.fillRect(x+b,y+b,w-2*b,h-2*b);   /* the role's colour as a thin rim */
+  ctx.fillStyle='#1a1430';ctx.fillRect(Math.round(sx-3*d),y+h+b-1,Math.round(6*d),Math.round(2*d));ctx.fillRect(Math.round(sx-1.5*d),y+h+b-1+Math.round(2*d),Math.round(3*d),Math.round(2*d));   /* a little point down to them */
+  if(im.complete&&im.naturalWidth){ctx.imageSmoothingEnabled=false;ctx.drawImage(im,x+pad,Math.round(y+(h-fw)/2),fw,fw);}
+  const tx=x+pad+fw+Math.round(4*d),ty=Math.round(y+h/2+d*.5);ctx.fillStyle=pk.col;ctx.fillText(v,tx,ty);ctx.fillStyle='#fff';ctx.fillText(n,tx+wv,ty);}
 function ghostList(){$('#ghostList').innerHTML=PEOPLE.map((p,i)=>!i?'':V.dead.has(i)?`<div class="gl dead"><img class="f" src="${face(looksLike(i),true)}" alt=""><div class="who">${esc(p.n)}<small>${roleName(i)}</small></div><div class="col">Dead</div></div>`:
   `<div class="gl"><img class="f" src="${face(looksLike(i))}" alt=""><div class="who">${esc(p.n)}<small>${roleName(i)}</small></div><div class="col"><small>TONIGHT</small>${ghostTonight(i)}</div><div class="col"><small>LAST VOTE</small>${ghostVote(i)}</div></div>`).join('');}
 $('#ghostAll').onclick=()=>{ghostList();$('#ghostModal').classList.add('on');};$('#ghostAllX').onclick=()=>$('#ghostModal').classList.remove('on');
@@ -3061,6 +3087,9 @@ scenes.ghost={hud:'#ghostHud',
     if(f.over)f.over();
     drawDust(dt);townLights(t,{dim:.85,...f.lights},'rest');rain(dt);ghostFx(dt);present();
     for(const q of people){if(q===me)nameTag(hits.get(q),'You','#9fd8ff');else if(q.p.kind==='out'){if(q.alpha>.8)nameTag(hits.get(q),PEOPLE[q.p.i].n,'#ffd9a8');}else if(q.p.kind==='vic'&&q.alpha>.8)nameTag(hits.get(q),VN(),'#fff');}
+    PEOPLE.forEach((_,i)=>{const pk=ghostPick(i);if(!pk)return;const q=people.find(z=>z.p&&z.p.kind==='out'&&z.p.i===i&&z.alpha>.8),h=q&&hits.get(q);let sx,sy;
+      if(h){sx=(h.cx-(cam.fx||0))*S;sy=(h.top-(cam.fy||0))*S-(TAG+12)*DPR;}else{const c=TOWN.cabins[CABIN_OF[i]];if(!c||ghostAway(i))return;sx=(c.cx-cam.x-(cam.fx||0))*S;sy=(c.top-30-cam.y-(cam.fy||0))*S;}
+      if(sx<-80*DPR||sx>W+80*DPR||sy<0||sy>H)return;pickTag(sx,sy,i,pk);});
     drawMini(f,t);
   }};
 function ghostFx(dt){for(let k=G.fx.length-1;k>=0;k--){const e=G.fx[k];e.t+=dt;if(e.t>1.6||!G.fxAt){G.fx.splice(k,1);continue;}
@@ -3114,6 +3143,8 @@ function ghostRoom(dt,t){
   lights(L,t,ROOM_MASK);
   G.fxAt=kk>0?[98,130]:act==='bed'?[98,80]:act==='pc'?[157,168]:act==='arm'?[36,172]:act==='fire'?[38,96]:people.length>1?[people[0].x,people[0].y-10]:[98,150];ghostFx(dt);present();
   for(const[q,h]of hits){if(q===gme)nameTag(h,'You','#9fd8ff');else if(q.doc&&(q.alpha??1)>.8)nameTag(h,'Doctor','#9fe8b0');else if(q.name!=='mafia'&&i>=0&&!q.doc)nameTag(h,PEOPLE[i].n,'#fff');}
+  {const pk=home&&i>0?ghostPick(i):null;if(pk){const q=people.find(z=>z!==gme&&z.name===nm),h=q&&hits.get(q);
+    const sx=h?(h.cx-(cam.fx||0))*S:(ROOM.bed.head[0]-cam.x-(cam.fx||0))*S,sy=h?(h.top-(cam.fy||0))*S-(TAG+12)*DPR:(BED_LINE-18-cam.y-(cam.fy||0))*S;pickTag(sx,sy,i,pk);}}
   drawMini(GAME.on?ghostOut():PLAY[N.kind](N.t,0,t),t);ghostHud();}
 cv.addEventListener('pointerdown',e=>{if(scene!==scenes.ghost||G.fading||document.querySelector('.modal.on'))return;
   holdWalk(e,scenes.ghost,(x,y)=>{if(G.fading)return;if(G.inCab>=0){if(y<=186){G.rtx=clamp(x,20,176);G.rty=clamp(y+12,74,190);}}else{G.tx=clamp(x,20,540);G.ty=clamp(y+12,40,740);G.goCab=-1;}});
@@ -3336,6 +3367,7 @@ function wlDraw(e,t){const o={e,name:PEOPLE[e.i].skin,dir:e.dir,x:e.x,y:e.y,t,ph
     else if(a.k==='five')o.lift=Math.sin(Math.PI*clamp(k/.5,0,1))*6;
     else if(a.k==='dance'){o.dir=['front','right','back','left'][Math.floor(k/.16)%4];o.lift=Math.abs(Math.sin(k*9))*3;}
     else{o.lift=Math.abs(Math.sin(k*7))*4;o.dir='front';}}
+  else if(e.loc>=0&&!e.ko&&inR(BEDZ,e.x,e.y)){o.sortY=OBJ.bed.base+1;o.noShadow=true;o.cover={quilt:1};}   /* walking about under the quilt */
   return o;}
 // little pixel effects: POW, a high-five spark, music notes, a heart
 function pxStar(x,y,r){for(let dy=-r;dy<=r;dy++){const w=r-Math.abs(dy);lx.fillRect(x-w,y+dy,2*w+1,1);}const h=Math.round(r*.62);lx.fillRect(x-h,y-h,2*h+1,2*h+1);}
@@ -3418,9 +3450,12 @@ scenes.town={hud:'#townHud',
   frame(dt,t){const m=WL.me;wheelTick(dt);
     for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.remote&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
     {const J=joyVec();   /* the joystick: you walk the way it is pushed; push into a door to go through it */
-      if(J&&!m.ko&&!WL.fading){if(m.seat)wlUp(m);else if(!m.act||m.act.k!=='punch'){m.path=[];m.todo=null;m.act=null;WL.sel=null;wlMenu();
-          const[nx,ny]=joyStep(m.x,m.y,J,76*Math.min(1,.35+J.m)*dt,(x,y)=>wlOk(m.loc,x,y)),moved=Math.hypot(nx-m.x,ny-m.y)>.01;
+      if(J&&!m.ko&&!WL.fading){if(m.seat&&m.seat.k==='bed'&&!m.seat.out&&m.seat.t>=wlSeat('bed',m).dur){const s=wlSeat('bed',m).sit;m.seat=null;m.x=s[0];m.y=s[1];m.dir='front';m.bedArm=false;}   /* wake up under the quilt */
+        if(m.seat)wlUp(m);else if(!m.act||m.act.k!=='punch'){m.path=[];m.todo=null;m.act=null;WL.sel=null;wlMenu();
+          const[nx,ny]=joyStep(m.x,m.y,J,76*Math.min(1,.35+J.m)*dt,(x,y)=>m.loc>=0?canStand(x,y,true):townOk(x,y)),moved=Math.hypot(nx-m.x,ny-m.y)>.01;
           m.x=nx;m.y=ny;m.dir=dirFrom(J.x,J.y);m.walk=moved;if(moved)footstep(m,dt,m.loc<0?groundAt(m.x,m.y):'wood');
+          if(m.loc>=0){const B=wlSeat('bed',m),d=Math.hypot(m.x-B.sit[0],m.y-B.sit[1]);if(d>8)m.bedArm=true;
+            if(m.bedArm!==false&&inR(BEDZ,m.x,m.y)&&Math.abs(m.x-B.sit[0])<9&&m.y<=B.sit[1]+3&&!seatTaken(m,'bed')){m.seat={k:'bed',t:9};m.x=B.stand[0];m.y=B.stand[1];m.walk=false;m.bedArm=false;sfx('sit');wlSay('Lights out. Move to wake up.');}}
           m.joyT=[m.x+J.x*14,m.y+J.y*14];netMove();
           if(m.loc>=0){if(m.y>=194.5&&J.y>.5)wlDoor(-1);}
           else if(J.y<-.5){const ci=TOWN.cabins.findIndex(c=>Math.abs(m.x-c.cx)<9&&m.y<c.top+40&&m.y>c.top+28);if(ci>=0)wlDoor(ci);}}}
@@ -3434,6 +3469,7 @@ scenes.town={hud:'#townHud',
           lx.drawImage(d.frames[0][1],0,0,d.w,crop,hx,hy,d.w,crop);drawQuilt(1);hits.set(p,{cx:X(ROOM.bed.head[0]),top:hy+PAD});}
         else if(p.cover==='chairback')lx.drawImage(IMG.chairback,X(OBJ.chair.x),Y(OBJ.chair.y));
         else if(p.cover){if(p.cover.quilt!=null)drawQuilt(p.cover.quilt);else patchObj(p.cover[0],p.cover[1]);}}
+      if(people.some(p=>p.head||(p.cover&&p.cover.quilt!=null))){const bb=OBJ.bed.base+1;for(const p of people)if(!p.head&&!p.cover&&(p.sortY??p.y)>bb){const h=drawChar({...p,noShadow:true});if(h)hits.set(p,h);}}   /* the quilt never covers someone standing in front of the bed */
       wlFx(dt,m.loc);
       const fl=.5+.5*noise(t*1.7,2),RL=roomLights(fl,0);if(people.some(p=>p.e.seat&&p.e.seat.k==='chair'))RL.push([159,138,26,'120,220,255',.35,5]);lights(RL,t,ROOM_MASK);
     }else{dayMode=true;const img=dayImg('ground');{const tp=$('#townHud .tpanel'),r=tp&&tp.getBoundingClientRect(),cr=cv.getBoundingClientRect();   /* the map's bottom edge stops at the bottom panel: no black strip above it (his catch, 13 Nov) */
