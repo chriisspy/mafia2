@@ -1073,7 +1073,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131804'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131810'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2856,7 +2856,7 @@ const CK_THEMES={
 const ckTheme=()=>CK_THEMES[CK.theme]||CK_THEMES.classic;
 /* THE CLICKER CASE (13 Nov, his call): the themes are no longer picked on the clicker screen, they come out of a case.
    Night Town is everyone's from the start. Each theme is a prize {id:'ck_<key>'}; its little picture is drawn here. */
-const CK_RAR={flames:'common',ice:'common',sunny:'common',deepsea:'common',wind:'rare',acid:'rare',sakura:'rare',candy:'rare',blood:'epic',galaxy:'epic',storm:'epic',grave:'epic',vapor:'legendary',glitch:'legendary'};
+const CK_RAR={flames:'common',ice:'common',sunny:'legendary',deepsea:'common',wind:'rare',acid:'rare',sakura:'rare',candy:'rare',blood:'epic',galaxy:'epic',storm:'epic',grave:'epic',vapor:'legendary',glitch:'legendary'};
 const CK_ITEMS=Object.keys(CK_RAR).filter(k=>CK_THEMES[k]).map(k=>({id:'ck_'+k,ck:k,name:CK_THEMES[k].name,rar:CK_RAR[k]}));
 const CK_ALL=[{id:'ck_classic',ck:'classic',name:CK_THEMES.classic.name,rar:'common',base:true},...CK_ITEMS];
 const CKT={};
