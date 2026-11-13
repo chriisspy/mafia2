@@ -1014,7 +1014,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131312'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131319'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1355,7 +1355,7 @@ scenes.lobby={
   hud:'#lobbyHud',
   enter(){paintSkin();paintCoins();},
   frame(dt,t){
-    view(IMG.town,280,112,120);
+    view(IMG.town,280,112,120);homeHut();
     fireflies(t,[220,60,120,90]);
     const name=peek?(ROLE_SPR[viewRole]||'mafia'):SKINS[skinIdx].id;
     const lockedSkin=!peek&&!OWNED.has(name);
@@ -3765,10 +3765,12 @@ scenes.intro={hud:'#nightHud',
    flicker, and fade out; a low drone; and as the light comes back, for a moment, two red eyes at the window. */
 function nightOne(n,after){const el=$('#nightOne');el.querySelector('b').textContent='NIGHT '+n;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');sfx('omen');CAB.eyesAt=performance.now()+3350;
   clearTimeout(nightOne.t);nightOne.t=setTimeout(()=>{el.classList.remove('on');if(after)after();},4300);}
+/* the menu shows the standard hut (his cabin1), not the pale one that stands at the top spot in the town (his call, 13 Nov) */
+function homeHut(){const im=IMG[cabinKey(1)],c=TOWN.cabins[0];if(!im||!c)return;lx.save();lx.translate(-cam.x,-cam.y);lx.drawImage(im,c.cx+CABIN_FRAME.dx,c.top+CABIN_FRAME.dy);cabinSign(lx,0);lx.restore();}
 scenes.home={hud:'#homeHud',
   enter(){document.documentElement.style.setProperty('--accent','#4a7bd0');paintCoins();homePaint();homeMsg('');},
   /* the old lobby picture (his call, 12 Nov): you, standing on the porch of your cabin */
-  frame(dt,t){view(IMG.town,280,112,120);
+  frame(dt,t){view(IMG.town,280,112,120);homeHut();
     fireflies(t,[220,60,120,90]);townLights(t,{},'win');
     const hit=drawChar({name:PEOPLE[0].skin,x:280,y:118,t,tint:'#2a2f7a|0.12'});
     townLights(t,{},'rest');lights([[280,98,40,'255,200,130',.22,1]],t);
