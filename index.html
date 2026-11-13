@@ -340,15 +340,15 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .fade.on{opacity:1}
 /* dawn card */
 #dawnHud .panel{position:absolute;left:14px;right:14px;top:50%;transform:translateY(-55%);padding:16px;text-align:center;z-index:3}
-#dawnHud h2{font-size:28px;color:var(--red);letter-spacing:1px;line-height:1.02;text-shadow:0 3px 0 rgba(0,0,0,.18)}
-#dawnHud h2 b{display:block;font-size:46px;letter-spacing:2px;margin:2px 0 2px;animation:bigPop .55s cubic-bezier(.2,1.6,.4,1)}
-#dawnHud h2 img{display:block;margin:0 auto 4px}
+#dawnHud h2{font-size:32px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0 2px;color:var(--red);letter-spacing:1px;line-height:1.02;text-shadow:0 3px 0 rgba(0,0,0,.18)}
+#dawnHud h2 b{display:inline;font-size:inherit;letter-spacing:inherit;margin:0 7px 0 0;animation:bigPop .55s cubic-bezier(.2,1.6,.4,1)}
+#dawnHud h2 img{display:block;margin:0 8px 0 0}
 #dawnHud .sun{position:absolute;right:12px;top:calc(110px + env(safe-area-inset-top));font-size:13px;letter-spacing:2px;color:#ffd25e;display:flex;align-items:center;gap:6px;text-shadow:0 2px 0 #0b0714,2px 0 0 #0b0714,-2px 0 0 #0b0714,0 -2px 0 #0b0714;z-index:3}
-#dawnHud .story{font-size:16px;line-height:1.35;margin:12px 0 4px;padding:10px 12px;background:var(--paper2);border:3px solid #0002;border-radius:4px}
+#dawnHud .story{font-size:16px;line-height:1.35;margin:2px 0 4px;padding:10px 12px;background:var(--paper2);border:3px solid #0002;border-radius:4px}
 /* the dawn card (13 Nov, his ask to improve it): a label on top, the face in a frame with a badge, the big words, the story in its own box */
-#dawnHud .dchip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;letter-spacing:2px;color:#fff;background:var(--red);border:3px solid var(--ink);border-radius:4px;padding:3px 10px 5px;box-shadow:0 3px 0 #0004;text-shadow:0 2px 0 #0005}
+#dawnHud .dchip{position:relative;top:-10px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;letter-spacing:2px;color:#fff;background:var(--red);border:3px solid var(--ink);border-radius:4px;padding:3px 10px 5px;box-shadow:0 3px 0 #0004;text-shadow:0 2px 0 #0005}
 #dawnCard.safe .dchip{background:#2f7a3f}
-#dawnHud .dport{position:relative;width:112px;height:112px;margin:14px auto 10px;border:4px solid var(--ink);border-radius:6px;background:#eeb9b2;box-shadow:inset 0 -10px 0 #0002,0 4px 0 #0004;display:flex;align-items:center;justify-content:center;animation:bigPop .5s cubic-bezier(.2,1.6,.4,1)}
+#dawnHud .dport{position:relative;width:112px;height:112px;margin:12px auto 0;border:4px solid var(--ink);border-radius:6px;background:#eeb9b2;box-shadow:inset 0 -10px 0 #0002,0 4px 0 #0004;display:flex;align-items:center;justify-content:center;animation:bigPop .5s cubic-bezier(.2,1.6,.4,1)}
 #dawnCard.safe .dport{background:#bfe3c2}
 #dawnHud .dport img.big{width:96px;height:96px;margin:0}
 #dawnCard.dead .dport img.big{filter:grayscale(1) contrast(1.15)}
@@ -674,9 +674,9 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <div class="hud" id="dawnHud">
     <div class="sun" id="dawnSun"><i data-ic="sun"></i>DAWN · DAY 3</div>
     <div class="panel" id="dawnCard">
-      <div class="dchip" id="dawnChip"></div>
-      <div class="dport" id="dawnPort"><img class="big" id="dawnFace" alt=""><span class="dbadge" id="dawnBadge"></span></div>
       <h2 id="dawnTitle">TOM IS DEAD</h2>
+      <div class="dport" id="dawnPort"><img class="big" id="dawnFace" alt=""></div>
+      <div class="dchip" id="dawnChip"></div>
       <div class="story" id="dawnStory"></div>
       <div class="lastnote" id="dawnNote"></div>
       <div class="spy" id="dawnSpy"></div>
@@ -1037,7 +1037,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131607'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131609'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2531,10 +2531,10 @@ const DAWN_GUARD=['The Mafia came for {n} last night. {g} stepped in the way. {g
 function storyPick(list){if(!(GAME.on&&GAME.g))return list[Math.floor(Math.random()*list.length)];let h=7;for(const c of GAME.id+'|'+GAME.g.round)h=(h*31+c.charCodeAt(0))>>>0;return list[h%list.length];}
 const DAWN_PILLOW=['A knife hole in {n}\'s pillow this morning. {n} wasn\'t under it.','Feathers all over {n}\'s floor. {n} slept somewhere else.'];
 const DAWN_THIRD=['Three shadows went out last night. Only two were Mafia. {g} was the Bodyguard.','{n} is alive because the third shadow was {g}. The Bodyguard did the job.'];
-function dawnCard(kind,chip,badge){const c=$('#dawnCard');c.classList.remove('safe','dead','quiet');c.classList.add(kind==='dead'?'dead':'safe');if(kind==='quiet')c.classList.add('quiet');$('#dawnChip').textContent=chip;$('#dawnBadge').innerHTML=badge?ic(badge,2,'solo'):'';}
+function dawnCard(kind,chip,badge){const c=$('#dawnCard');c.classList.remove('safe','dead','quiet');c.classList.add(kind==='dead'?'dead':'safe');if(kind==='quiet')c.classList.add('quiet');$('#dawnChip').textContent=chip;$('#dawnChip').style.display=kind==='quiet'?'none':'';}
 function dawn(){const g=N.guard>=0&&!N.heal?N.guard:-1,v=g>=0?g:N.victim,key=N.variant||N.kind,list=N.heal?(N.pillow?DAWN_PILLOW:DAWN_DOC):g>=0?(N.third?DAWN_THIRD:DAWN_GUARD):DAWN_DEAD[key],h=$('#dawnTitle');
-  if(N.heal){h.innerHTML=(v===0?'THE DOCTOR SAVED<b>YOU</b>':'<b>NOBODY</b>DIED');h.classList.add('safe');dawnCard('safe','SAVED BY THE DOCTOR','heart');}
-  else{if(v!==0)V.dead.add(v);h.innerHTML=(v===0?'<b>YOU</b>ARE DEAD':`<b>${esc(PEOPLE[v].n.toUpperCase())}</b>IS DEAD`);h.classList.remove('safe');dawnCard('dead','KILLED IN THE NIGHT','skull');}
+  if(N.heal){h.innerHTML=ic('heart',3,'solo')+(v===0?'THE DOCTOR SAVED YOU':'NOBODY DIED');h.classList.add('safe');dawnCard('safe','SAVED BY THE DOCTOR','heart');}
+  else{if(v!==0)V.dead.add(v);h.innerHTML=ic('skull',3,'solo')+(v===0?'YOU ARE DEAD':`${esc(PEOPLE[v].n.toUpperCase())} IS DEAD`);h.classList.remove('safe');dawnCard('dead','KILLED IN THE NIGHT','skull');}
   $('#dawnGo').textContent=v===0&&!N.heal?'Rise as a ghost':'To the square';N.meDead=v===0&&!N.heal;
   setTimeout(()=>{if(scene===scenes.dawn){if(N.heal)fxHeal(1);else fxBleed(.5);}},350);
   $('#dawnFace').src=face(looksLike(v));
@@ -3548,7 +3548,7 @@ function gFilm(g){const nt=g.night||{};GAME.filmDone=false;clearTimeout(GAME.daw
   if(nt.died){const di=GAME.idx[nt.died];if(di>0)NOTE.of[di]=nt.note||'';}
   N.keepPlan=false;N.cut=false;
   go(N.net.victim===0?'mydeath':'night');}
-function quietDawn(){dawnCard('quiet','A QUIET NIGHT','');const h=$('#dawnTitle');h.innerHTML=ic('heart',4)+'<b>NOBODY</b>DIED';h.classList.add('safe');$('#dawnFace').src=face(looksLike(0));
+function quietDawn(){dawnCard('quiet','A QUIET NIGHT','');const h=$('#dawnTitle');h.innerHTML=ic('heart',3,'solo')+'NOBODY DIED';h.classList.add('safe');$('#dawnFace').src=face(looksLike(0));
   $('#dawnStory').textContent={argue:'Raised voices in the square last night. Nobody came to any harm.',bin:'A bin went over in the night and woke the whole street. Nobody came to any harm.'}[N.quiet?N.qv:'']||'A quiet night. Nobody came to any harm.';$('#dawnNote').style.display='none';$('#dawnGo').textContent='To the square';N.meDead=false;go('dawn',gameDawn);}
 // my film is over (the host waits for everyone's, so the town wakes up together)
 // the Detective's stakeout: at dawn they can watch it back through the binoculars, then the notes stay on the dawn card
