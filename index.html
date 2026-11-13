@@ -1049,7 +1049,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131649'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131651'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1264,10 +1264,13 @@ function snowMask(day){const k=day?'day':'night';if(SNOWM[k])return SNOWM[k];con
   for(let i=0;i<m.length;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2],l=(r+g+b)/3;m[i]=day?(b>=r-6&&l>160&&g>=r-10?1:0):(b>r+40&&l>70?1:0);}
   return SNOWM[k]={m,w:c.width,h:c.height};}
 function footprints(people,day){const M=snowMask(day);if(!M)return;const now=performance.now();
+  /* one print each time a foot lands in the walk cycle (his note: not two per step). The walk cycle is 8 frames of 95 ms, a foot
+     lands every 4 frames; the old sprites bob every 150 ms. Left and right feet take turns, either side of the path. */
   for(const p of people){if(!p.walk||p.pose||(p.alpha??1)<.4||FLY[p.name])continue;const key=p.e||((p.p&&(p.p.kind+(p.p.lbl||p.p.i||'')))||p.name+(p.phase||''));
-    const L=FOOTK.get(key),x=Math.round(p.x),y=Math.round(p.y);if(L&&Math.hypot(x-L.x,y-L.y)<5)continue;
-    const side=L?-L.side:1;FOOTK.set(key,{x,y,side});if(x<0||y<0||x>=M.w||y>=M.h||!M.m[y*M.w+x])continue;
-    const dx=L?x-L.x:0,dy=L?y-L.y:1,up=Math.abs(dy)>Math.abs(dx);FOOT.push({x:x+(up?side*2:0),y:y+(up?0:side*2),up,t:now,day});}
+    const set=SP[p.name],cyc=set&&set.poses&&set.poses.walk_front_0?380:150,st=Math.floor(((p.t??now)+(p.phase||0))/cyc);
+    const L=FOOTK.get(key),x=Math.round(p.x),y=Math.round(p.y);if(L&&L.st===st)continue;FOOTK.set(key,{st});if(!L)continue;
+    if(x<0||y<0||x>=M.w||y>=M.h||!M.m[y*M.w+x])continue;const up=p.dir==='front'||p.dir==='back',side=st%2?1:-1;
+    FOOT.push({x:x+(up?side*2:0),y:y+(up?0:side*2),up,t:now,day});}
   while(FOOT.length&&now-FOOT[0].t>1600)FOOT.shift();if(FOOT.length>400)FOOT.splice(0,FOOT.length-400);
   for(const f of FOOT){if(f.day!==day)continue;lx.globalAlpha=Math.max(0,1-(now-f.t)/1600);lx.fillStyle=day?'#7fb4e0':'#174883';   /* the snow's own shading blue (his call, 13 Nov), and a size bigger */
     if(f.up)lx.fillRect(X(f.x),Y(f.y)-1,2,3);else lx.fillRect(X(f.x)-1,Y(f.y),3,2);}
