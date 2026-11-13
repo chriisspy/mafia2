@@ -100,6 +100,13 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #nightOne.on b{animation:n1tx 4.3s linear forwards}
 @keyframes n1bg{0%{opacity:0}14%{opacity:.9}74%{opacity:.9}100%{opacity:0}}
 @keyframes n1tx{0%,16%{opacity:0;letter-spacing:2px}34%{opacity:1}37%{opacity:.25}39%{opacity:1}52%{opacity:1}53.5%{opacity:.4}55%{opacity:1}72%{opacity:1;letter-spacing:12px}88%,100%{opacity:0;letter-spacing:15px}}
+/* THE JOYSTICK (13 Nov, his ask: tapping exactly where to go tires the fingers). Bottom right, just above the bottom panel. */
+#joy{position:absolute;right:16px;bottom:120px;width:104px;height:104px;border-radius:50%;background:#2a2346;border:4px solid #1a1430;box-shadow:inset 0 0 0 4px #3a3160,inset 0 -8px 0 #1f1936,0 4px 0 #0008;z-index:8;display:none;touch-action:none;pointer-events:auto}
+#joy.on{display:block}
+#joy i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:var(--paper);border:4px solid var(--wood);box-shadow:inset 0 -6px 0 var(--paper2),inset 0 3px 0 #fff6df,0 4px 0 #0008;pointer-events:none}
+#joy.held i{background:#fff2c8}
+#phone.xmas #joy{border-color:#2a0d14;box-shadow:inset 0 0 0 4px #9b1c2e,inset 0 -8px 0 #1f1936,0 4px 0 #0008}
+#phone.xmas #joy i{border-color:#9b1c2e}
 #turnPhone{display:none;position:fixed;inset:0;z-index:9999;background:#140c24;color:#f6dfae;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
 #turnPhone b{font-size:22px}#turnPhone small{font-size:13px;opacity:.7}
 @media (orientation:landscape) and (max-height:520px) and (pointer:coarse){#turnPhone{display:flex}}
@@ -747,6 +754,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <button class="btn dark" id="gameLeave">Leave</button>
   <button class="btn dark" id="menuBtn" title="Menu"><i data-ic="menu" data-c="solo"></i></button>
   <div id="nightOne"><b>NIGHT 1</b></div>
+  <div id="joy"><i></i></div>
   <div id="turnPhone"><i data-ic="phone" data-s="5" data-c="solo"></i><b>Turn your phone upright</b><small>MAFIA plays in portrait</small></div>
   <div class="modal big panel" id="filmModal">
     <div class="mhead"><b>NIGHT FILMS</b><button class="btn" id="filmX"><i data-ic="cross" data-c="solo"></i></button></div>
@@ -1049,7 +1057,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131651'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131656'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1263,6 +1271,15 @@ function snowMask(day){const k=day?'day':'night';if(SNOWM[k])return SNOWM[k];con
   const c=mk(im.width,im.height),x=c.getContext('2d');x.drawImage(im,0,0);const d=x.getImageData(0,0,c.width,c.height).data,m=new Uint8Array(c.width*c.height);
   for(let i=0;i<m.length;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2],l=(r+g+b)/3;m[i]=day?(b>=r-6&&l>160&&g>=r-10?1:0):(b>r+40&&l>70?1:0);}
   return SNOWM[k]={m,w:c.width,h:c.height};}
+/* A FOOTPRINT (his call, 13 Nov: rounded, pixelated, a little shading): a rounded toe and a heel with a gap between (a shoe print), pressed into the snow.
+   d = the deep side of the dent, m = the print (the snow's own shading blue), l = a faint lip of snow pushed up behind the heel.
+   Drawn toe-up, then turned for the way they walk and mirrored for the left foot. */
+const FOOT_PAT=['.dd.','dmmd','dmmd','.mm.','....','.dd.','.mm.','.ll.'],FOOT_COL={day:{d:'#6a9fd0',m:'#86b9e2',l:'#eef8ff'},night:{d:'#0f3a70',m:'#1a4c88',l:'#3a6cad'}},FOOTI={};
+function footImg(day,dir,side){const k=(day?'d':'n')+dir+side;if(FOOTI[k])return FOOTI[k];const C=FOOT_COL[day?'day':'night'],H=FOOT_PAT.length,W=FOOT_PAT[0].length;
+  const rot=dir==='front'?2:dir==='right'?1:dir==='left'?3:0,cw=rot%2?H:W,ch=rot%2?W:H,c=mk(cw,ch),x=c.getContext('2d');
+  for(let y=0;y<H;y++)for(let i=0;i<W;i++){const ch2=FOOT_PAT[y][side>0?W-1-i:i];if(ch2==='.')continue;x.fillStyle=C[ch2];
+    const[a,b]=rot===0?[i,y]:rot===1?[H-1-y,i]:rot===2?[W-1-i,H-1-y]:[y,W-1-i];x.fillRect(a,b,1,1);}
+  return FOOTI[k]=c;}
 function footprints(people,day){const M=snowMask(day);if(!M)return;const now=performance.now();
   /* one print each time a foot lands in the walk cycle (his note: not two per step). The walk cycle is 8 frames of 95 ms, a foot
      lands every 4 frames; the old sprites bob every 150 ms. Left and right feet take turns, either side of the path. */
@@ -1270,10 +1287,10 @@ function footprints(people,day){const M=snowMask(day);if(!M)return;const now=per
     const set=SP[p.name],cyc=set&&set.poses&&set.poses.walk_front_0?380:150,st=Math.floor(((p.t??now)+(p.phase||0))/cyc);
     const L=FOOTK.get(key),x=Math.round(p.x),y=Math.round(p.y);if(L&&L.st===st)continue;FOOTK.set(key,{st});if(!L)continue;
     if(x<0||y<0||x>=M.w||y>=M.h||!M.m[y*M.w+x])continue;const up=p.dir==='front'||p.dir==='back',side=st%2?1:-1;
-    FOOT.push({x:x+(up?side*2:0),y:y+(up?0:side*2),up,t:now,day});}
+    FOOT.push({x:x+(up?side*2:0),y:y+(up?0:side*2),dir:p.dir,side,t:now,day});}
   while(FOOT.length&&now-FOOT[0].t>1600)FOOT.shift();if(FOOT.length>400)FOOT.splice(0,FOOT.length-400);
-  for(const f of FOOT){if(f.day!==day)continue;lx.globalAlpha=Math.max(0,1-(now-f.t)/1600);lx.fillStyle=day?'#7fb4e0':'#174883';   /* the snow's own shading blue (his call, 13 Nov), and a size bigger */
-    if(f.up)lx.fillRect(X(f.x),Y(f.y)-1,2,3);else lx.fillRect(X(f.x)-1,Y(f.y),3,2);}
+  for(const f of FOOT){if(f.day!==day)continue;const im=footImg(day,f.dir,f.side);lx.globalAlpha=Math.max(0,1-(now-f.t)/1600);
+    lx.drawImage(im,X(f.x)-(im.width>>1),Y(f.y)-(im.height>>1));}
   lx.globalAlpha=1;}
 function drawScene(people,occ,img,objs){
   if(XMAS&&img&&(img===IMG.town||img===IMG.townBase||img===DAYIMG.town||img===DAYIMG.ground))footprints(people,img===DAYIMG.town||img===DAYIMG.ground);
@@ -1826,6 +1843,11 @@ scenes.cabin={
     useRoom(roomOf(0));view(IMG.room,97,121,186,{s:lerp(Sin,CAB.sOut??Sin,CAB.zk),topCss:lerp(topIn,topOut,CAB.zk),void:ROOM_VOID});
     rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));
     fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
+    {const J=joyVec();   /* the joystick */
+      if(J){if(CAB.state==='stand'){CAB.tgt=null;CAB.path=null;CAB.after=null;const[nx,ny]=joyStep(CAB.x,CAB.y,J,62*Math.min(1,.35+J.m)*dt,(x,y)=>canStand(x,y)&&y<=193),moved=Math.hypot(nx-CAB.x,ny-CAB.y)>.01;
+          CAB.x=nx;CAB.y=ny;CAB.dir=dirFrom(J.x,J.y);CAB.walk=moved;CAB.joy=true;if(moved)footstep(CAB,dt,'wood');}
+        else if(CAB.state!=='anim')getUp();}
+      else if(CAB.joy){CAB.joy=false;if(!CAB.tgt)CAB.walk=false;}}
     // walking
     if(CAB.state==='stand'&&CAB.tgt){const dx=CAB.tgt[0]-CAB.x,dy=CAB.tgt[1]-CAB.y,dd=Math.hypot(dx,dy),sp=62*dt;
       if(dd<=sp){CAB.x=CAB.tgt[0];CAB.y=CAB.tgt[1];CAB.tgt=(CAB.path&&CAB.path.shift())||null;
@@ -1906,6 +1928,25 @@ function getUp(){const s=CAB.state;
 let toastT;function toast(msg){const e=$('#toast');e.innerHTML=msg;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),2200);}
 // HOLD TO WALK: keep your finger down and you keep walking to wherever it is (cabin, ghost, waiting lobby)
 let HOLD=null;
+/* THE JOYSTICK: push the knob the way you want to walk. JOY.x / JOY.y run -1..1 (screen directions), JOY.m is how far it is pushed.
+   It shows in the waiting lobby (town and cabins), your cabin at night and as a ghost; tapping to walk still works too. */
+const JOY={on:false,x:0,y:0,m:0,id:null};
+function joyVec(){return JOY.on&&JOY.m>.18?JOY:null;}
+(()=>{const el=$('#joy'),knob=el.querySelector('i');
+  const set=e=>{const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,R=r.width/2-14;let dx=e.clientX-cx,dy=e.clientY-cy;const d=Math.hypot(dx,dy);
+    if(d>R){dx*=R/d;dy*=R/d;}JOY.x=d?dx/Math.max(d,1):0;JOY.y=d?dy/Math.max(d,1):0;JOY.m=Math.min(1,d/R);knob.style.transform=`translate(${Math.round(dx)}px,${Math.round(dy)}px)`;};
+  const end=e=>{if(JOY.id!==e.pointerId)return;JOY.on=false;JOY.m=0;JOY.id=null;el.classList.remove('held');knob.style.transform='';};
+  el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();JOY.on=true;JOY.id=e.pointerId;el.classList.add('held');try{el.setPointerCapture(e.pointerId);}catch(_){}set(e);});
+  el.addEventListener('pointermove',e=>{if(JOY.on&&JOY.id===e.pointerId)set(e);});
+  ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>el.addEventListener(ev,end));})();
+/* where it sits: just above the bottom panel of the screen you are on; hidden when there is no room or a window is open */
+function joyPlace(){const el=$('#joy'),ok=[scenes.town,scenes.cabin,scenes.ghost].includes(scene)&&!document.querySelector('.modal.on')&&!$('#clk').classList.contains('on');
+  let show=false;if(ok){const hud=$(scene.hud),ph=$('#phone').getBoundingClientRect();let top=ph.bottom;
+    for(const e of hud.querySelectorAll('.panel')){if(!e.offsetParent||e.classList.contains('modal')||e.classList.contains('toast'))continue;const r=e.getBoundingClientRect();if(r.bottom>ph.bottom-260&&r.top<top)top=r.top;}
+    const b=ph.bottom-top+22;show=top-ph.top>330;if(show)el.style.bottom=b+'px';}
+  if(el.classList.contains('on')!==show)el.classList.toggle('on',show);if(!show&&JOY.on){JOY.on=false;JOY.m=0;}}
+/* walk a step with the stick: slide along walls instead of stopping dead */
+function joyStep(x,y,J,sp,ok){let nx=x+J.x*sp,ny=y+J.y*sp;if(ok(nx,ny))return[nx,ny];if(ok(nx,y))return[nx,y];if(ok(x,ny))return[x,ny];return[x,y];}
 function wxy(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*DPR/S+cam.x+(cam.fx||0),(e.clientY-r.top)*DPR/S+cam.y+(cam.fy||0)];}
 function holdWalk(e,sc,fn){HOLD={id:e.pointerId,t:performance.now(),sc,fn};}
 cv.addEventListener('pointermove',e=>{if(!HOLD||HOLD.id!==e.pointerId)return;if(scene!==HOLD.sc||document.querySelector('.modal.on')){HOLD=null;return;}
@@ -2982,6 +3023,9 @@ scenes.ghost={hud:'#ghostHud',
     // the night plays out live, the same one everybody will be shown afterwards; the body stays where it falls
     if(GAME.on)ghostLive();else{const stop=N.end-1.4;N.t=Math.min(N.t+dt,stop);if(N.t>=stop){G.hold+=dt;if(G.hold>12)ghostNight();}}
     ghostSide();
+    {const J=joyVec();if(J&&!G.fading){G.watch=-1;G.goCab=-1;   /* the joystick: float that way (down through the door to leave a cabin) */
+      if(G.inCab>=0){const door=Math.abs(G.rx-98)<14;G.rtx=clamp(G.rx+J.x*20,20,176);G.rty=clamp(G.ry+J.y*20,74,door?197:190);}
+      else{G.tx=clamp(G.x+J.x*30,20,540);G.ty=clamp(G.y+J.y*30,40,740);}}}
     if(G.inCab>=0){ghostRoom(dt,t);return;}
     const dx=G.tx-G.x,dy=G.ty-G.y,dd=Math.hypot(dx,dy),sp=95*dt;
     if(dd>sp){G.x+=dx/dd*sp;G.y+=dy/dd*sp;G.dir=dirFrom(dx,dy);}else{G.x=G.tx;G.y=G.ty;G.dir='front';if(G.goCab>=0){const ci=G.goCab;G.goCab=-1;ghostDoor(ci);}}
@@ -3362,6 +3406,14 @@ scenes.town={hud:'#townHud',
   leave(){$('#phone').style.background='';WL.sel=null;wlMenu();ckClose();$('#pcModal').classList.remove('on');},
   frame(dt,t){const m=WL.me;wheelTick(dt);
     for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.remote&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
+    {const J=joyVec();   /* the joystick: you walk the way it is pushed; push into a door to go through it */
+      if(J&&!m.ko&&!WL.fading){if(m.seat)wlUp(m);else if(!m.act||m.act.k!=='punch'){m.path=[];m.todo=null;m.act=null;WL.sel=null;wlMenu();
+          const[nx,ny]=joyStep(m.x,m.y,J,76*Math.min(1,.35+J.m)*dt,(x,y)=>wlOk(m.loc,x,y)),moved=Math.hypot(nx-m.x,ny-m.y)>.01;
+          m.x=nx;m.y=ny;m.dir=dirFrom(J.x,J.y);m.walk=moved;if(moved)footstep(m,dt,m.loc<0?groundAt(m.x,m.y):'wood');
+          m.joyT=[m.x+J.x*14,m.y+J.y*14];netMove();
+          if(m.loc>=0){if(m.y>=194.5&&J.y>.5)wlDoor(-1);}
+          else if(J.y<-.5){const ci=TOWN.cabins.findIndex(c=>Math.abs(m.x-c.cx)<9&&m.y<c.top+40&&m.y>c.top+28);if(ci>=0)wlDoor(ci);}}}
+      else if(m.joyT){m.joyT=null;m.walk=false;netMove();}}
     WL.shake=Math.max(0,WL.shake-dt);const sh=WL.shake>0?Math.round(Math.sin(t*.09)*8*WL.shake):0;
     const people=wlAll().filter(e=>e.loc===m.loc).map(e=>wlDraw(e,t));let hits;
     if(m.loc>=0){useRoom(roomOf(CABIN_OF.indexOf(m.loc)));view(IMG.room,97,121,186,{fit:true,topCss:80,void:ROOM_VOID});
@@ -3497,7 +3549,7 @@ function netApply(){if(!NET.on)return;const pl=NET.players||{},mine=pl[NET.uid],
       if(sk!==cur&&!e.ko&&e.loc>=0){if(sk){const s=wlSeat(sk,e);e.path=[];e.todo=null;e.walk=false;e.act=null;e.x=s.stand[0];e.y=s.stand[1];e.seat={k:sk,t:0};if(e.loc===WL.me.loc)sfx('sit');}else e.seat={k:cur,t:0,out:true};}}});
   for(const[u,e]of[...NET.ents])if(!keep.has(u)){NET.ents.delete(u);wlSay(`${e.n||'Someone'} left.`);}
   WL.bots=others.map(([u])=>NET.ents.get(u));NET.sawRoster=true;gameLobbyUI();if(WL.sel&&!WL.bots.includes(WL.sel)){WL.sel=null;wlMenu();}}
-const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,seat:m.seat&&!m.seat.out?m.seat.k:null,s:++NET.seq};};
+const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:m.joyT||[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,seat:m.seat&&!m.seat.out?m.seat.k:null,s:++NET.seq};};
 // tell everyone where I am and where I am walking to (at most about five times a second)
 function netMove(){if(!NET.on||!WL.me)return;clearTimeout(NET.mt);const send=()=>{NET.ml=performance.now();if(NET.on)NET.me.child('m').set(netM()).catch(()=>{});};
   if(performance.now()-(NET.ml||0)>180)send();else NET.mt=setTimeout(send,180);}
@@ -4033,7 +4085,7 @@ $('#roleBtn').onclick=()=>{viewRole=VIEW_ROLES[(VIEW_ROLES.indexOf(viewRole)+1)%
   if(scene===scenes.night)scene.enter();};
 
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(scene&&IMG.town)scene.frame(dt,now);requestAnimationFrame(loop);}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(scene&&IMG.town){scene.frame(dt,now);joyPlace();}requestAnimationFrame(loop);}
 
 let OBJ_META={};
 (async()=>{
