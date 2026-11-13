@@ -795,9 +795,11 @@ const cv=$('#c'), ctx=cv.getContext('2d');
    console makes. Nothing to download, so they play at once. (PixelLab's sound tools need a higher plan than his.)
    sfx('name') plays one; SND.on is the speaker button on the welcome screen (kept in localStorage 'm2_snd'). Phones only
    let a page make sound after a tap, so the engine wakes on the first tap. */
-const SND={ctx:null,out:null,on:true,mus:true,nb:null,cs:true,caseLive:false};try{SND.on=localStorage.getItem('m2_snd')!=='0';SND.mus=localStorage.getItem('m2_mus')!=='0';SND.cs=localStorage.getItem('m2_csnd')!=='0';}catch(e){}
+const SND={ctx:null,out:null,on:true,mus:false,nb:null,cs:true,caseLive:false};try{SND.on=localStorage.getItem('m2_snd')!=='0';SND.mus=localStorage.getItem('m2_mus')==='1';/* music starts OFF, sound effects ON (his call, 13 Nov) */SND.cs=localStorage.getItem('m2_csnd')!=='0';}catch(e){}
 /* the case opening's own speaker button (his call, 13 Nov): it only quiets the case (the rattle, the pop, the reel, the prize), every other sound carries on */
-const CASE_SFX=new Set(['pop','rattle','thud','tick','prize','rare']),caseQuiet=()=>!SND.cs&&SND.caseLive;
+/* (his call, 13 Nov) the case's own noises only: its rattle, thud and pop, and the harp + bells of the gold rays. The card slider's
+   clicks and the reveal sounds always play */
+const CASE_SFX=new Set(['pop','rattle','thud']),caseQuiet=()=>!SND.cs&&SND.caseLive;
 function sndCtx(){if(!SND.ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;SND.ctx=new C();SND.out=SND.ctx.createGain();SND.out.gain.value=.5;SND.out.connect(SND.ctx.destination);
     const n=SND.ctx.sampleRate,b=SND.ctx.createBuffer(1,n,n),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;SND.nb=b;}
   if(SND.ctx.state==='suspended')SND.ctx.resume();return SND.ctx;}
@@ -931,7 +933,7 @@ function groundAt(x,y){const st=TOWN.stage;if(((x-st.x)/46)**2+((y-st.y-2)/26)**
   if(XMAS){const M=snowMask(true),xi=Math.round(x),yi=Math.round(y);if(M&&xi>=0&&yi>=0&&xi<M.w&&yi<M.h&&M.m[yi*M.w+xi])return'snow';}   /* Christmas: the snowy ground crunches */
   if(!GROUND){const im=IMG.townDay;if(!im)return'grass';const c=mk(560,750),g=c.getContext('2d');g.drawImage(im,0,0);GROUND=g.getImageData(0,0,560,750).data;}
   const i=(Math.max(0,Math.min(749,Math.round(y)))*560+Math.max(0,Math.min(559,Math.round(x))))*4,r=GROUND[i],gg=GROUND[i+1],b=GROUND[i+2];return gg>r+18&&gg>b+18?'grass':'stone';}
-function footstep(e,dt,surf){e.stepT=(e.stepT||0)+dt;if(e.stepT<.42)return;e.stepT=0;sfx('step_'+surf);}
+function footstep(e,dt,surf){if(FLY[looksLike(0)])return;   /* on a flying carpet: no feet on the ground */e.stepT=(e.stepT||0)+dt;if(e.stepT<.42)return;e.stepT=0;sfx('step_'+surf);}
 /* the gold shine while a case is open (his call: grand, and it keeps going until the prize shows). v2, softer and richer:
    - the pop: a deep boom and a cymbal that swells up
    - a warm chord (soft triangle and sine waves, no buzzy saws) that wobbles gently and slowly opens up
@@ -972,7 +974,7 @@ function sparkleStop(now){clearInterval(SPARK.timer);SPARK.timer=0;const g=SPARK
    d = how long the card waits before it shows (WIN_FX.delay): the hit lands with the reveal, and anything before it is
    the build-up. Epic: a boom, a rising run, a wide chord, and a few soft sparkles. Legendary: a riser while the sparks pull in, then a burst, a fanfare, a shower of sparkles
    and a long bright shine. */
-function winSound(rar,d){if(!SND.on||caseQuiet()||!sndCtx())return;const chord=(fs,dur,vol,at,type)=>fs.forEach((f,i)=>{tone(f,dur,{type:type||'square',vol,at});tone(f*1.004,dur,{type:'triangle',vol:vol*.8,at});});
+function winSound(rar,d){if(!SND.on||!sndCtx())return;const chord=(fs,dur,vol,at,type)=>fs.forEach((f,i)=>{tone(f,dur,{type:type||'square',vol,at});tone(f*1.004,dur,{type:'triangle',vol:vol*.8,at});});
   const bells=(n,from,span,vol)=>{for(let i=0;i<n;i++){const f=[2093,2349,2637,3136,3520,4186,4699][Math.floor(Math.random()*7)],at=from+i/n*span+Math.random()*.05;tone(f,.5,{type:'sine',vol:vol*(1-i/n*.6),at});tone(f*2.76,.18,{type:'sine',vol:vol*.3,at});}};
   if(rar==='epic'){tone(90,.6,{type:'sine',vol:.45,to:38,at:d});hiss(.3,{vol:.2,lp:900,at:d});arp([392,523,659,784,1047,1319],.06,{vol:.12,at:d});
     chord([523,784,1047,1319,1568],1.1,.045,d+.36);hiss(.2,{vol:.14,hp:3000,at:d+.36});bells(7,d+.5,1.2,.035);}
@@ -1047,7 +1049,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131645'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131649'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1262,13 +1264,13 @@ function snowMask(day){const k=day?'day':'night';if(SNOWM[k])return SNOWM[k];con
   for(let i=0;i<m.length;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2],l=(r+g+b)/3;m[i]=day?(b>=r-6&&l>160&&g>=r-10?1:0):(b>r+40&&l>70?1:0);}
   return SNOWM[k]={m,w:c.width,h:c.height};}
 function footprints(people,day){const M=snowMask(day);if(!M)return;const now=performance.now();
-  for(const p of people){if(!p.walk||p.pose||(p.alpha??1)<.4)continue;const key=p.e||((p.p&&(p.p.kind+(p.p.lbl||p.p.i||'')))||p.name+(p.phase||''));
+  for(const p of people){if(!p.walk||p.pose||(p.alpha??1)<.4||FLY[p.name])continue;const key=p.e||((p.p&&(p.p.kind+(p.p.lbl||p.p.i||'')))||p.name+(p.phase||''));
     const L=FOOTK.get(key),x=Math.round(p.x),y=Math.round(p.y);if(L&&Math.hypot(x-L.x,y-L.y)<5)continue;
     const side=L?-L.side:1;FOOTK.set(key,{x,y,side});if(x<0||y<0||x>=M.w||y>=M.h||!M.m[y*M.w+x])continue;
-    const dx=L?x-L.x:0,dy=L?y-L.y:1,up=Math.abs(dy)>Math.abs(dx);FOOT.push({x:x+(up?side*2:0),y:y+(up?0:side),up,t:now,day});}
+    const dx=L?x-L.x:0,dy=L?y-L.y:1,up=Math.abs(dy)>Math.abs(dx);FOOT.push({x:x+(up?side*2:0),y:y+(up?0:side*2),up,t:now,day});}
   while(FOOT.length&&now-FOOT[0].t>1600)FOOT.shift();if(FOOT.length>400)FOOT.splice(0,FOOT.length-400);
-  for(const f of FOOT){if(f.day!==day)continue;lx.globalAlpha=Math.max(0,1-(now-f.t)/1600);lx.fillStyle=day?'#9fb8d8':'#3d528c';
-    if(f.up)lx.fillRect(X(f.x),Y(f.y)-1,1,2);else lx.fillRect(X(f.x)-1,Y(f.y),2,1);}
+  for(const f of FOOT){if(f.day!==day)continue;lx.globalAlpha=Math.max(0,1-(now-f.t)/1600);lx.fillStyle=day?'#7fb4e0':'#174883';   /* the snow's own shading blue (his call, 13 Nov), and a size bigger */
+    if(f.up)lx.fillRect(X(f.x),Y(f.y)-1,2,3);else lx.fillRect(X(f.x)-1,Y(f.y),3,2);}
   lx.globalAlpha=1;}
 function drawScene(people,occ,img,objs){
   if(XMAS&&img&&(img===IMG.town||img===IMG.townBase||img===DAYIMG.town||img===DAYIMG.ground))footprints(people,img===DAYIMG.town||img===DAYIMG.ground);
