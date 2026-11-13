@@ -168,7 +168,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 @keyframes raySpin{to{transform:rotate(360deg)}}@keyframes rayIn{to{opacity:var(--ray,0)}}
 #winCv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none}
 #winFx .wflash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
-#winFx.on .wflash{animation:wFlash .8s ease-out var(--delay,0s) backwards}
+#winFx.on .wflash{animation:wFlash .5s ease-out var(--delay,0s)}   /* no 'backwards': that held the screen white for the whole wait before a Legendary (his note, 13 Nov). Now it is a quick flash at the reveal only. */
 @keyframes wFlash{0%{opacity:var(--flash,0)}100%{opacity:0}}
 #winFx .wwrap{position:absolute;left:0;right:0;top:44%;transform:translateY(-50%);text-align:center;perspective:700px}
 #winFx.shake .wwrap{animation:wShake .5s steps(8)}
@@ -989,7 +989,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131204'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131206'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
