@@ -1019,7 +1019,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131443'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131445'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3291,7 +3291,7 @@ const NET={on:false,code:null,uid:null,db:null,ref:null,me:null,slot:0,host:null
 const LAB_PEOPLE=PEOPLE.map(p=>({...p})),LAB_CABINS=[...CABIN_OF];
 let myName=ME_NAME==='Chris'?'Player':ME_NAME;try{const n=localStorage.getItem('m2_name');if(n&&n.trim())myName=n.trim().slice(0,10);}catch(e){}
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
-async function freshCheck(){if(LAB||freshCheck.busy||GAME.on)return false;freshCheck.busy=true;
+async function freshCheck(){if(freshCheck.busy||GAME.on)return false;   /* the lab updates itself too (his phone kept an old lab) */freshCheck.busy=true;
   try{const h=await (await fetch(location.pathname+'?fresh='+Date.now(),{cache:'no-store'})).text(),m=h.match(/const BUILD='(\d+)'/);
     if(m&&m[1]!==BUILD){let tried='';try{tried=sessionStorage.getItem('m2_fresh')||'';}catch(e){}
       if(tried!==m[1]){try{sessionStorage.setItem('m2_fresh',m[1]);if(NET.on)sessionStorage.setItem('m2_rejoin',NET.code);}catch(e){}
