@@ -1024,7 +1024,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131554'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131556'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2925,7 +2925,7 @@ scenes.ghost={hud:'#ghostHud',
     if(G.watch>0&&!G.fading){const sp=ghostSpots(f).find(q=>q.i===G.watch);
       if(sp&&sp.st==='home'&&!ghostAway(G.watch)){ghostWatch(G.watch);return;}                 // they went back in: follow them inside
       if(sp){G.x=G.tx=sp.x+12;G.y=G.ty=sp.y+20;G.fxAt=[sp.x,sp.y];}}
-    view(IMG.town,G.x,G.y-14,175,{loose:true});
+    view(IMG.town,Math.round(G.x),Math.round(G.y)-14,175,{loose:true});
     // walking behind a hut (his call, 12 Nov): that hut is rubbed out of the town picture (the bare ground goes back in),
     // then drawn again in order with the people, see-through, so the ghost shows behind it
     const hid=behindCabin(G.x,G.y),huts=[];G.cabA=G.cabA||TOWN.cabins.map(()=>1);
@@ -3309,7 +3309,7 @@ scenes.town={hud:'#townHud',
         else if(p.cover){if(p.cover.quilt!=null)drawQuilt(p.cover.quilt);else patchObj(p.cover[0],p.cover[1]);}}
       wlFx(dt,m.loc);
       const fl=.5+.5*noise(t*1.7,2),RL=roomLights(fl,0);if(people.some(p=>p.e.seat&&p.e.seat.k==='chair'))RL.push([159,138,26,'120,220,255',.35,5]);lights(RL,t,ROOM_MASK);
-    }else{dayMode=true;const img=dayImg('ground');view(img,m.x+sh,m.y+24,190,{loose:true});
+    }else{dayMode=true;const img=dayImg('ground');view(img,Math.round(m.x)+sh,Math.round(m.y)+24,190,{loose:true});   /* the camera follows your whole-pixel spot: you and the ground move together, so you no longer shimmer as you walk (13 Nov) */
       const hid=behindCabin(m.x,m.y);WL.cabA=WL.cabA||TOWN.cabins.map(()=>1);
       const huts=dayImg('cabins').map(o=>{const a=WL.cabA[o.ci]=clamp(WL.cabA[o.ci]+(o.ci===hid?-1:1)*dt*4,.4,1);return a<1?{...o,alpha:a}:o;});
       if(WL.sel&&WL.sel.loc===m.loc){const q=Math.floor(t/200)%2;lx.strokeStyle=q?'#ffd25e':'#fff2a8';lx.lineWidth=1;lx.beginPath();lx.ellipse(X(WL.sel.x)+.5,Y(WL.sel.y)+.5,9+q,3+q*.5,0,0,7);lx.stroke();}
