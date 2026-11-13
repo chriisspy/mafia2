@@ -969,7 +969,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131149'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131150'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2010,8 +2010,10 @@ PLAY.bin=(T,dt,t)=>{const TA=N.TA,tF=N.tFlee,tC=TA+1.9,f=PLAY.home(Math.min(T,TA
   if(T>tF){const k=ease(ramp(T,tF,tF+1.6));f.cy+=5*k;f.vw=lerp(f.vw||150,162,k);}   /* stays on the cabin: just eases back to watch them go down the path */
   if(T>tC)once('crash',()=>{N.shake=7;sfx('crash');});if(T>TA+1.2)once('meow',()=>sfx('meow'));if(T>tC+.25)once('meow2',()=>sfx('meow'));
   const down=T>tC,roll=down?Math.min(9,(T-tC)*14):0,jump=ramp(T,TA+1.2,tC),run=T>tC+.2;
-  f.over=()=>{drawBin(bx,by,down,roll);
+  const prop=()=>{drawBin(bx,by,down,roll);
     const cx2=down?bx+10+(T-tC-.2)*70:lerp(bx,bx+6,jump),cy2=down?by-2:by-17-Math.sin(Math.PI*jump)*9;if(!run||cx2<bx+120)drawCat(cx2,cy2,1,run||jump>0,t);};
+  /* the bin and the cat stand BEHIND anyone who is nearer the camera (his call, 13 Nov: the Mafia walk past in front of them) */
+  if(f.people.some(q=>q.kind==='maf'&&q.al>0&&q.y>by-2))f.under=prop;else f.over=prop;
   f.texts=T>tC&&T<tC+.9?[['CRASH!',bx+4,by-26]]:[];
   const lit=ramp(T,TA+2.8,TA+3.4);f.lights={...f.lights,dim:.85+.55*lit,dark:-1,red:0};f.flash=['255,220,130',.12*pulse2(T,TA+3)];return f;};
 /* 1. HOME: they knock on the door */
