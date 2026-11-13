@@ -1073,7 +1073,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131801'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131804'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2845,7 +2845,7 @@ const CK_THEMES={
   acid:{name:'Acid',sky:['#06120a','#0a2010','#103016','#18421c'],grid:'rgba(163,230,53,.06)',tw:['#0a1a08','#3f6212','#84cc16','#1f3a0c','#d9f99d','#f7fee7'],floor:['#365314','#a3e635'],ball:'#bef264',glow:'163,230,53'},
   vapor:{name:'Vaporwave',sky:['#1b0a3a','#3a1466','#6a1f8a','#b8338f'],grid:'rgba(1,205,254,.08)',tw:['#1b0a3a','#b967ff','#ff71ce','#5a2a9a','#01cdfe','#fffb96'],floor:['#12052a','#ff71ce'],ball:'#fffb96',glow:'255,113,206'},
   /* 13 Nov, his ask: a bunch of new themes, all out of the Clicker Case */
-  sunny:{name:'Sunny Day',sky:['#6cc6f0','#6cc6f0','#6cc6f0','#6cc6f0'],grid:'rgba(255,255,255,.03)',tw:['#1f4a14','#4caf3a','#7fd65a','#36882a','#9be86a','#e4ffc8'],floor:['#3f8f3a','#7bd36a'],ball:'#ffd34d',glow:'255,211,77'},
+  sunny:{name:'Sunny Day',sky:['#53c1ce','#53c1ce','#53c1ce','#53c1ce'],grid:'rgba(255,255,255,.03)',tw:['#1f4a14','#4caf3a','#7fd65a','#36882a','#9be86a','#e4ffc8'],floor:['#3f8f3a','#7bd36a'],ball:'#ffd34d',glow:'255,211,77'},
   deepsea:{name:'Deep Sea',sky:['#021a33','#03264a','#053466','#08447f'],grid:'rgba(120,200,255,.04)',tw:['#0e1a2e','#3b6e8f','#5aa0c0','#2a5470','#ff8a5c','#ffd2b8'],floor:['#0e2a3a','#c2a36b'],ball:'#ffb347',glow:'255,179,71'},
   sakura:{name:'Sakura',sky:['#ff9fb8','#ffb8c8','#ffd0da','#ffe6e6'],grid:'rgba(255,255,255,.04)',tw:['#3a1418','#b8323c','#d8505a','#8a2028','#ffd6e0','#ffffff'],floor:['#4a6b30','#8fbf5a'],ball:'#ff5f8f',glow:'255,95,143'},
   candy:{name:'Candyland',sky:['#ff8fcf','#ffa8da','#ffc2e6','#ffdcf1'],grid:'rgba(255,255,255,.05)',tw:['#a3123a','#fff4f8','#ffffff','#ff4d6d','#7ee8fa','#d6fbff'],floor:['#5a2a14','#c8743a'],ball:'#7ee8fa',glow:'126,232,250'},
@@ -2886,11 +2886,10 @@ function ckBack(x,W0,H0){const k=CK.theme,T=CK.t,sc=CK.scroll;
   else if(k==='vapor'){for(let j=-24;j<=24;j++){if(j>2&&j%5<2)continue;const hw=Math.round(Math.sqrt(576-j*j));x.fillStyle=j<-8?'#fffb96':j<6?'#ff9a6a':'#ff71ce';x.fillRect(66-hw,82+j,hw*2,1);}
     x.fillStyle='#12052a';x.fillRect(0,H0-44,W0,44);x.fillStyle='rgba(255,113,206,.8)';for(let q=0;q<7;q++){const gy=H0-44+Math.round(Math.pow((q+((sc*.05)%1))/7,2)*44);x.fillRect(0,gy,W0,1);}
     x.fillStyle='rgba(1,205,254,.7)';for(let q=-8;q<=8;q++)for(let yy=0;yy<44;yy+=2)x.fillRect(Math.round(66+q*(6+yy*.55)),H0-44+yy,1,2);}
-  else if(k==='sunny'){   /* one flat sky colour, a low city skyline, two low rows of hills (his call: no sun, no clouds, no trail) */
+  else if(k==='sunny'){   /* one flat sky colour, a low city skyline, a solid green treeline (his call: no sun, clouds, stars or trail) */
     for(let i=0;i<8;i++){const bw=12+(i*5)%10,bh=16+(i*23)%22,bx=Math.round(((i*19-sc*.1)%170+170)%170-20),by=H0-24-bh;   /* the city skyline, far back (his call) */
       x.fillStyle=i%2?'#9fcbe0':'#b5d8ea';x.fillRect(bx,by,bw,bh+38);x.fillStyle='#d8eef7';for(let wy=by+4;wy<H0-26;wy+=6)for(let wx=bx+2;wx<bx+bw-2;wx+=4)x.fillRect(wx,wy,2,3);}
-    for(let i=0;i<W0;i+=2){const h1=20+Math.round(5*Math.sin((i+sc*.2)*.045)+3*Math.sin((i+sc*.2)*.11));x.fillStyle='#7ccf6a';x.fillRect(i,H0-h1,2,h1);x.fillStyle='#9be28a';x.fillRect(i,H0-h1,2,2);}
-    for(let i=0;i<W0;i+=2){const h2=11+Math.round(4*Math.sin((i+sc*.45)*.07+1));x.fillStyle='#4fae4a';x.fillRect(i,H0-h2,2,h2);x.fillStyle='#6fc95f';x.fillRect(i,H0-h2,2,1);}}
+    x.fillStyle='#4fae4a';for(let i=0;i<W0;i++){const u=i+Math.round(sc*.3),c=((u%9)+9)%9,tc=Math.floor(u/9),h=17+((tc*7)%5)+Math.round(Math.sqrt(Math.max(0,16-(c-4)*(c-4))));x.fillRect(i,H0-h,1,h);}}   /* one solid green treeline of round crowns (his call) */
   else if(k==='deepsea'){   /* light shafts, swaying kelp, little fish, rising bubbles */
     x.fillStyle='#0a3b70';for(let i=0;i<4;i++){const rx=Math.round(((i*40-sc*.08)%200+200)%200-30);for(let yy=0;yy<H0;yy+=2)x.fillRect(rx+Math.round(yy*.35),yy,8,2);}
     for(let i=0;i<7;i++){const kx=Math.round(((i*23-sc*.35)%170+170)%170-20),kh=40+(i*13)%40;for(let yy=0;yy<kh;yy+=2){const sw=Math.round(Math.sin(T*1.6+yy*.12+i)*3*(yy/kh));x.fillStyle=yy%6<2?'#2f8f5a':'#1f6b45';x.fillRect(kx+sw,H0-yy-2,3,2);}}
@@ -3000,8 +2999,8 @@ function ckLoop(now){CK.raf=requestAnimationFrame(ckLoop);let dt=Math.min(.033,(
   // sky, a level tint that washes in as the run heats up, stars drifting by, a faint grid
   const TH=ckTheme();TH.sky.forEach((col,i)=>{x.fillStyle=col;x.fillRect(-4,i*50-4,W0+8,58);});
   if(CK.level>1){x.fillStyle=`hsla(${(CK.level*47)%360},80%,55%,${Math.min(.1,.028*CK.level)})`;x.fillRect(0,0,W0,H0);}
-  for(let i=0;i<26;i++){const z=.4+(i%3)*.3,sx=((i*53+7-CK.scroll*z*.12)%W0+W0)%W0,sy=(i*37+11)%170;x.fillStyle=`rgba(240,239,245,${(.25+.35*Math.abs(Math.sin(CK.t*1.5+i)))*z})`;x.fillRect(Math.round(sx),sy,z>.8?2:1,1);}
-  x.fillStyle=TH.grid;const off=CK.scroll%22;for(let gx=-off;gx<W0;gx+=22)x.fillRect(Math.round(gx),0,1,H0);for(let gy=22;gy<H0;gy+=22)x.fillRect(0,gy,W0,1);
+  if(CK.theme!=='sunny')for(let i=0;i<26;i++){const z=.4+(i%3)*.3,sx=((i*53+7-CK.scroll*z*.12)%W0+W0)%W0,sy=(i*37+11)%170;x.fillStyle=`rgba(240,239,245,${(.25+.35*Math.abs(Math.sin(CK.t*1.5+i)))*z})`;x.fillRect(Math.round(sx),sy,z>.8?2:1,1);}
+  if(CK.theme!=='sunny'){x.fillStyle=TH.grid;const off=CK.scroll%22;for(let gx=-off;gx<W0;gx+=22)x.fillRect(Math.round(gx),0,1,H0);for(let gy=22;gy<H0;gy+=22)x.fillRect(0,gy,W0,1);}   /* Sunny Day: a plain sky, no stars or grid (his call) */
   if(CK.state==='play'&&(speedK>1.25||CK.boost>0)){x.fillStyle=CK.boost>0?'rgba(34,211,238,.3)':`rgba(240,239,245,${Math.min(.14,(speedK-1.25)*.3)})`;for(let i=0;i<7;i++){const ly=(i*51+((CK.t*37)%H0))%H0,lx2=W0-((CK.scroll*1.7+i*111)%(W0+60));x.fillRect(Math.round(lx2),Math.round(ly),30,1);}}
   // the score, huge and faint in the background, kicking on every point
   if(CK.theme==='sunny'){const sy=14-CK.pulse*3,ss=4+(CK.pulse>.5?1:0);for(const[ox,oy]of[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]])ckText(x,CK.score,W0/2+ox,sy+oy,ss,'#000000',1);ckText(x,CK.score,W0/2,sy,ss,'#ffffff',1);}   /* Sunny Day: a white score with a black outline, a bit smaller (his call) */
