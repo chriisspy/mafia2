@@ -14,10 +14,19 @@ for name, src, w, h in (("stop", "1-busstop", 360, 482), ("road", "2-road", 990,
     small = Image.fromarray(a[ys][:, xs])
     small.quantize(160, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(f"{OUT}/{name}.png", optimize=True)
     print(name, small.size)
-b = np.asarray(Image.open(f"{SRC}/bus.png").convert("RGBA")).copy()
+# THE COACH (13 Nov, his call: a big commercial coach, nobody visible in the driver's seat, players behind tinted glass).
+# PixelLab map object 7daf1fba (176x80, side view, facing right) saved as coachD.png. The pale driver's window is
+# painted the same dark tint as the passenger glass, and a navy outline goes only where the edge is not already dark
+# (so no outline gets thicker).
+b = np.asarray(Image.open(f"{SRC}/coachD.png").convert("RGBA")).copy()
 b[b[..., 3] < 128] = 0; b[b[..., 3] >= 128, 3] = 255
 ys, xs = np.nonzero(b[..., 3]); b = b[ys.min() - 1:ys.max() + 2, xs.min() - 1:xs.max() + 2]
-op = b[..., 3] > 0; edge = np.zeros_like(op)
-edge[1:] |= op[:-1]; edge[:-1] |= op[1:]; edge[:, 1:] |= op[:, :-1]; edge[:, :-1] |= op[:, 1:]; edge &= ~op
-b[edge] = (26, 20, 48, 255)                                   # the navy outline
+rgb = b[..., :3].astype(int); lum = rgb.sum(2) / 3
+pale = (b[..., 3] > 0) & (rgb[..., 2] > rgb[..., 0] + 12) & (lum > 120)            # the light blue driver's glass
+pale[:, :b.shape[1] * 2 // 3] = False
+pale[40:] = False                                                               # (not the wheel hubs)
+b[pale] = (34, 44, 70, 255)
+op = b[..., 3] > 0; light = op & (lum > 70); edge = np.zeros_like(op)
+edge[1:] |= light[:-1]; edge[:-1] |= light[1:]; edge[:, 1:] |= light[:, :-1]; edge[:, :-1] |= light[:, 1:]; edge &= ~op
+b[edge] = (26, 20, 48, 255)
 Image.fromarray(b).save(f"{OUT}/bus.png", optimize=True); print("bus", b.shape[1], b.shape[0])

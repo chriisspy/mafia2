@@ -1000,7 +1000,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131230'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131237'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3628,77 +3628,84 @@ setInterval(()=>{const now=performance.now();document.querySelectorAll('.logoCv'
    four are the faces in the bus windows.
    ART: backgrounds from Nano Banana with the town art as the style reference; the bus is a PixelLab object
    (tools/make_intro.py -> assets/intro). They load when you join a lobby, well before the game starts.
-   FULL (the first game in a lobby, about 26 s) and SHORT (every game after, about 6 s): the host decides and writes
+   FULL (the first game in a lobby, about 26 s) and SHORT (every game after, about 6 s; FULL is about 43 s since v2): the host decides and writes
    game.intro, so every phone plays the same one, and Night 1 gets that much longer.
    SHOTS (full): stop (the bus stop: they board) > road (day into sunset) > forest (night, headlights, eyes in the trees)
    > inside (close on the windows: everyone asleep, one awake) > dead (clunk, smoke, the lights die) > out (they climb
    out and look about: "?" then "!") > town (the camera climbs from the dark road to the glowing town) > settle (top-down:
    each walks to a cabin and the doors shut). Then your own cabin, and NIGHT 1 fades in and out (nightOne). */
 const INTRO={t:0,mode:'full',ok:false,p:null,capI:0,kicks:{},S:[],shots:[],end:0};
-const INTRO_MS={full:31000,short:10000};   /* how much longer the host makes Night 1 */
+const INTRO_MS={full:50000,short:10000};   /* how much longer the host makes Night 1 */
 function introLoad(){return INTRO.p||(INTRO.p=Promise.all(['stop','road','forest','town','bus'].map(n=>load('intro/'+n,`assets/intro/${n}.png`))).then(()=>{INTRO.ok=true;}).catch(()=>{INTRO.p=null;}));}
 const iOnce=(k,fn)=>{if(!INTRO.kicks[k]){INTRO.kicks[k]=1;fn();}};
 const introCast=()=>PEOPLE.slice(0,10).map(q=>SP[q.skin]?q.skin:'beanie');   /* their own outfits: never a role outfit */
 function introPlan(){const I=INTRO,n=introCast().length;
   if(I.mode==='short'){I.S=[['out',0,2.6],['town',2.6,5.8]];I.end=5.8;I.shots=[[.3,'The bus broke down in the woods.'],[2.9,'But there was a town.'],[4.4,'Every light on. Nobody home.']];return;}
-  const tB=I.tB=1.8+(n-1)*.18+1.7,a=tB+1.5;let s=0;const add=(nm,d)=>{const r=[nm,s,s+d];s+=d;return r;};
-  I.S=[add('stop',a),add('road',2.8),add('forest',2.8),add('inside',2.3),add('dead',3.5),add('out',2.7),add('town',3.7),add('settle',3.9)];I.end=s;const at=nm=>I.S.find(q=>q[0]===nm)[1];
-  I.shots=[[.4,'A weekend away.'],[1.9,'Everybody on!'],[at('road')+.3,'The open road.'],[at('road')+1.6,'Hours later…'],[at('forest')+.3,'The road gets darker.'],[at('inside')+.3,'Everyone is asleep. Almost everyone.'],
-    [at('dead')+.3,'CLUNK.','bad'],[at('dead')+2.2,'The engine is dead.','bad'],[at('out')+.4,'No signal. No cars. Nothing.'],[at('out')+1.9,'Wait. Lights.','good'],
-    [at('town')+.5,'A town. Every light on.'],[at('town')+2.3,'Nobody home.','bad'],[at('settle')+.3,'They take a cabin each.'],[at('settle')+2.5,'This one is yours.']];}
-const BUS_WIN=[[85,101],[64,76],[44,57],[26,39]];   /* the bus windows, front to back (x from, x to); the glass is rows 21-31 */
-/* the bus as a thing in the scene: o.faces = which players look out of which window, o.sleep = eyes shut (all but .awake) */
+  /* v2 timing: about 43 s. Every shot now has room to breathe: the coach idles before anyone boards, the forest is
+     held long enough to notice the eyes, and after the lights die there is a long dark silence before anyone moves. */
+  const tB=I.tB=3+(n-1)*.25+2.5,a=tB+2.7;let s=0;const add=(nm,d)=>{const r=[nm,s,s+d];s+=d;return r;};
+  I.S=[add('stop',a),add('road',3.8),add('forest',4.4),add('inside',3.2),add('dead',6.4),add('out',5.2),add('town',6.4),add('settle',5.4)];I.end=s;const at=nm=>I.S.find(q=>q[0]===nm)[1];
+  I.shots=[[.5,'A weekend away.'],[3.1,'Everybody on!'],[at('road')+.4,'The open road.'],[at('road')+2.2,'Hours later…'],[at('forest')+.5,'The road gets darker.'],[at('inside')+.6,'Everyone is asleep. Almost everyone.'],
+    [at('dead')+.9,'CLUNK.','bad'],[at('dead')+3.7,'The engine is dead.','bad'],[at('out')+1.2,'No signal. No cars. Nothing.'],[at('out')+3.7,'Wait. Lights.','good'],
+    [at('town')+2.4,'A town.'],[at('town')+3.8,'Every light on.'],[at('town')+5.2,'Nobody home.','bad'],[at('settle')+.5,'They take a cabin each.'],[at('settle')+3.2,'This one is yours.']];}
+/* THE COACH (v2, his call: a big commercial coach). 156 x 53. The driver's cab at the front is dark: that seat is the
+   driver's, and nobody sees who is in it. The players sit behind, in the six passenger windows, filled from the BACK,
+   and the smoked glass is drawn over their faces. */
+const BUS={w:156,h:53,win:[[8,25],[26,43],[44,61],[62,78],[79,96],[97,113]],gy:8,gh:14,door:[134,15,11,27],tint:'rgba(22,30,54,.6)'};
 function introBus(bx,by,o={}){const cast=introCast(),yy=Math.round(by)+(o.bounce?Math.round(Math.sin(INTRO.t*21)*.9):0),x0=Math.round(bx);
-  return{img:IMG['intro/bus'],x:x0,y:yy,w:112,h:67,base:by+67,after(){
-    (o.faces||[]).forEach((pi,s)=>{const d=SP[cast[pi]]&&SP[cast[pi]].front;if(!d||s>3)return;const[w0,w1]=BUS_WIN[s],fr=d.frames[0][o.sleep&&pi!==o.awake?1:0]||d.frames[0][0];
-      lx.save();lx.beginPath();lx.rect(X(x0+w0),Y(yy+21),w1-w0+1,11);lx.clip();lx.drawImage(fr,X(x0+(w0+w1)/2-d.w/2+.5),Y(yy+29-d.eyeBot));lx.restore();});
-    if(o.door)px(x0+65,yy+34,11,25,'#1a1430');
-    if(o.dark>0){lx.globalAlpha=o.dark;lx.globalCompositeOperation='source-atop';lx.globalCompositeOperation='source-over';lx.globalAlpha=1;}}};}
+  return{img:IMG['intro/bus'],x:x0,y:yy,w:BUS.w,h:BUS.h,base:by+BUS.h,after(){
+    (o.faces||[]).forEach((pi,s)=>{const d=SP[cast[pi]]&&SP[cast[pi]].front;if(pi==null||!d||s>=BUS.win.length)return;const[w0,w1]=BUS.win[s],fr=d.frames[0][o.sleep&&pi!==o.awake?1:0]||d.frames[0][0];
+      lx.save();lx.beginPath();lx.rect(X(x0+w0),Y(yy+BUS.gy),w1-w0+1,BUS.gh);lx.clip();lx.drawImage(fr,X(x0+(w0+w1)/2-d.w/2+.5),Y(yy+BUS.gy+10-d.eyeBot));
+      lx.fillStyle=BUS.tint;lx.fillRect(X(x0+w0),Y(yy+BUS.gy),w1-w0+1,BUS.gh);lx.restore();});   /* the tint goes over the face */
+    if(o.door)px(x0+BUS.door[0],yy+BUS.door[1],BUS.door[2],BUS.door[3],'#0b0918');}};}
+const introFaces=n=>Array.from({length:Math.min(6,n==null?introCast().length:n)},(_,i)=>i);
+const busLights=(bx,by,t)=>lights([[bx+BUS.w+16,by+40,44,'255,230,150',.36,1],[bx+BUS.w+56,by+43,38,'255,230,150',.22,2]],t);
 const iBlob=(x,y,r,col)=>{if(r<1)return;px(x-r,y-r/2,2*r,r,col);px(x-r/2,y-r,r,2*r,col);};
 function introSmoke(x,y,k){for(let j=0;j<7;j++){const age=((k+j*.26)%1.82);iBlob(x-age*7+Math.sin(j*2.3+age*3)*3,y-age*17,2+age*3.2,age<.5?'#3a3350':age<1.1?'#5b5478':'#7d76a0');}}
 const INTRO_DRAW={
-  stop(k,len,dt,t){const I=INTRO,cast=introCast(),PY=313,BX=128,BY=305,door=BX+70,P=[],faces=[];
-    const bx=lerp(-135,BX,ease(ramp(k,0,1.6)))+Math.pow(ramp(k,I.tB+.5,len),2)*330;
-    cast.forEach((nm,i)=>{const q=[118-(i%5)*14,PY-(i>=5?7:0)],t0=1.8+i*.18,tA=t0+(door-q[0])/80;
-      if(k<t0)P.push({name:nm,dir:k<1.2?'front':'right',x:q[0],y:q[1],t:t+i*130});
-      else if(k<tA){const e=(k-t0)/(tA-t0);P.push({name:nm,dir:'right',walk:true,x:lerp(q[0],door,e),y:lerp(q[1],PY,e),t:t+i*130,alpha:1-ramp(k,tA-.18,tA),lift:e>.86?Math.sin(Math.PI*(e-.86)/.14)*4:0});}
-      else{if(i<4)faces[i]=i;iOnce('on'+i,()=>sfx('join'));}});
-    if(k>1.5)iOnce('door',()=>sfx('door'));if(k>I.tB+.5)iOnce('go',()=>sfx('spin'));
-    const vw=lerp(206,168,ease(ramp(k,.2,3.2)));view(IMG['intro/stop'],lerp(150,186,ease(ramp(k,0,len))),330,vw,{s:W/vw});
-    drawScene(P,null,null,[introBus(bx,BY,{faces,door:k>1.6&&k<I.tB+.4,bounce:k<1.5||k>I.tB+.5})]);return{};},
-  road(k,len,dt,t){const bx=lerp(40,810,k/len),by=348-67;view(IMG['intro/road'],bx+72,300,188,{s:W/188});
-    drawScene([],null,null,[introBus(bx,by,{faces:[0,1,2,3],bounce:true})]);return{};},
-  forest(k,len,dt,t){const bx=lerp(30,370,k/len),by=342-67,vw=lerp(188,152,ease(k/len));view(IMG['intro/forest'],bx+82,300,vw,{s:W/vw});
-    drawScene([],null,null,[introBus(bx,by,{faces:[0,1,2,3],bounce:true,sleep:true,awake:3})]);
-    lights([[bx+132,by+50,44,'255,230,150',.36,1],[bx+172,by+54,38,'255,230,150',.22,2]],t);
-    if(k>1.3&&k<2&&Math.floor(k*9)%3){const ex=Math.round(bx+215),ey=by-14;px(ex,ey,2,2,'#ff3c3c');px(ex+5,ey,2,2,'#ff3c3c');}   /* something in the trees */
+  stop(k,len,dt,t){const I=INTRO,cast=introCast(),PY=313,BX=74,BY=372-BUS.h,door=BX+BUS.door[0]+5,P=[],faces=[],tGo=I.tB+.9;
+    const bx=lerp(-170,BX,ease(ramp(k,0,2.4)))+Math.pow(ramp(k,tGo,len),2)*360;
+    cast.forEach((nm,i)=>{const q=[118-(i%5)*14,PY-(i>=5?7:0)],t0=3+i*.25,tA=t0+(door-q[0])/70;
+      if(k<t0)P.push({name:nm,dir:k<1.6?'front':'right',x:q[0],y:q[1],t:t+i*130});
+      else if(k<tA){const e=(k-t0)/(tA-t0);P.push({name:nm,dir:'right',walk:true,x:lerp(q[0],door,e),y:lerp(q[1],PY+(e>.8?(e-.8)/.2*12:0),1),t:t+i*130,alpha:1-ramp(k,tA-.15,tA)});}
+      else{if(i<6)faces[i]=i;iOnce('on'+i,()=>sfx('join'));}});
+    if(k>2.6)iOnce('door',()=>sfx('door'));if(k>tGo-.5)iOnce('shut',()=>sfx('door'));if(k>tGo)iOnce('go',()=>sfx('spin'));
+    const vw=lerp(210,192,ease(ramp(k,.3,4)));view(IMG['intro/stop'],lerp(150,166,ease(ramp(k,0,len))),330,vw,{s:W/vw});
+    drawScene(P,null,null,[introBus(bx,BY,{faces,door:k>2.6&&k<tGo-.5,bounce:k<2.2||k>tGo})]);return{};},
+  road(k,len,dt,t){const bx=lerp(30,790,k/len),by=348-BUS.h;view(IMG['intro/road'],bx+BUS.w/2,300,190,{s:W/190});
+    drawScene([],null,null,[introBus(bx,by,{faces:introFaces(),bounce:true})]);return{};},
+  forest(k,len,dt,t){const bx=lerp(20,330,k/len),by=342-BUS.h,vw=lerp(190,168,ease(k/len));view(IMG['intro/forest'],bx+BUS.w/2+8,300,vw,{s:W/vw});
+    drawScene([],null,null,[introBus(bx,by,{faces:introFaces(),bounce:true,sleep:true,awake:0})]);busLights(bx,by,t);
+    if(k>2&&k<3.5&&(k<2.5||k>2.75)){const ex=Math.round(bx+BUS.w+38),ey=by-22;px(ex,ey,2,2,'#ff3c3c');px(ex+5,ey,2,2,'#ff3c3c');}   /* something in the trees: it looks, it blinks, it is gone */
     return{};},
-  inside(k,len,dt,t){const bx=lerp(370,455,k/len),by=342-67,vw=lerp(152,76,ease(ramp(k,0,.7)));view(IMG['intro/forest'],bx+62,by+30,vw,{s:W/vw});
-    drawScene([],null,null,[introBus(bx,by,{faces:[0,1,2,3],bounce:true,sleep:true,awake:3})]);
-    const texts=[];[0,1,2].forEach(s=>{if(introCast()[s]&&Math.floor(k*1.6+s*.6)%2)texts.push(['z',bx+(BUS_WIN[s][0]+BUS_WIN[s][1])/2+3,by+17,'#cfd8ff']);});return{texts};},
-  dead(k,len,dt,t){const I=INTRO,bx=455+105*ease(ramp(k,0,2.2)),by=342-67,moving=k<2.2,on=k<1.6||(k<2.5&&Math.floor(k*11)%2===0);
-    if(k>.3)iOnce('bang',()=>{I.shake=7;sfx('crash');});if(k>2.5)iOnce('off',()=>sfx('lampoff'in SFX?'lampoff':'close'));
-    const vw=k<1?lerp(76,186,ease(ramp(k,.25,.95))):lerp(186,160,ramp(k,1,len));let cx=bx+70,cy=300;if(I.shake>0){cx+=(Math.random()-.5)*I.shake;cy+=(Math.random()-.5)*I.shake;I.shake=Math.max(0,I.shake-dt*18);}
-    view(IMG['intro/forest'],cx,cy,vw,{s:W/vw});drawScene([],null,null,[introBus(bx,by,{faces:[0,1,2,3],bounce:moving&&k>.3,sleep:k<.3,awake:3})]);
-    if(k>.3)introSmoke(bx+3,by+47,k-.3);if(on)lights([[bx+132,by+50,44,'255,230,150',.36,1],[bx+172,by+54,38,'255,230,150',.22,2]],t);
-    return{texts:k>.3&&k<1?[['BANG!',bx+2,by+22,'#ff8a8a']]:[]};},
-  out(k,len,dt,t){const I=INTRO,cast=introCast(),bx=560,by=342-67,FY=345,P=[],texts=[],kk=I.mode==='short'?k+6:k,see=I.mode!=='short'&&k>len-.95;
-    cast.forEach((nm,i)=>{const t0=.2+i*.14,tx=bx+126+(i%5)*15,ty=FY+(i>=5?8:0),d=tx-(bx+70),tA=t0+d/75;if(kk<t0)return;
-      if(kk<tA){const e=(kk-t0)/(tA-t0);P.push({name:nm,dir:'right',walk:true,x:lerp(bx+70,tx,e),y:lerp(FY-3,ty,e),t:t+i*130,tint:NIGHT_TINT,alpha:ramp(kk,t0,t0+.2)});}
-      else{const dir=see?'right':Math.floor((kk+i*.7)*.9)%2?'left':'right';P.push({name:nm,dir,x:tx,y:ty,t:t+i*130,tint:NIGHT_TINT});
-        if(see&&i===0)texts.push(['!',tx+7,ty-36,'#ffd25e']);else if(!see&&i%3===0&&Math.floor(kk*1.1+i)%2)texts.push(['?',tx+7,ty-36,'#f6dfae']);}});
-    view(IMG['intro/forest'],lerp(bx+96,bx+150,ease(ramp(k,0,len))),300,186,{s:W/186});
-    drawScene(P,null,null,[introBus(bx,by,{door:true})]);introSmoke(bx+3,by+47,kk);return{texts};},
-  town(k,len,dt,t){const cast=introCast(),P=cast.map((nm,i)=>({name:nm,dir:'back',walk:true,x:150+((i%5)-(Math.min(cast.length,5)-1)/2)*10,y:512+Math.floor(i/5)*10-k*11,t:t+i*130,tint:NIGHT_TINT}));
-    view(IMG['intro/town'],150,lerp(452,150,ease(ramp(k,.4,len-.2))),150,{s:W/150});drawScene(P,null,null,[]);return{};},
-  settle(k,len,dt,t){const cast=introCast(),P=[],doors=[],tIn=len-1.15;
-    {const c0=TOWN.cabins[CABIN_OF[0]],e=ease(ramp(k,.5,tIn+.2));let fx=280,fy=372;if(c0){const d0=c0.route.len*(1-Math.min(1,k/tIn)),a0=c0.route.at(Math.max(0,d0));fx=lerp(280,a0.x,e);fy=lerp(372,a0.y-18,e);}   /* everyone fans out from the square; the camera goes with YOU to your own door */
+  inside(k,len,dt,t){const bx=lerp(330,405,k/len),by=342-BUS.h,vw=lerp(168,84,ease(ramp(k,0,1.1)));view(IMG['intro/forest'],lerp(bx+BUS.w/2,bx+48,ease(ramp(k,0,1.1))),by+22,vw,{s:W/vw});
+    drawScene([],null,null,[introBus(bx,by,{faces:introFaces(),bounce:true,sleep:true,awake:0})]);
+    const texts=[];introFaces().forEach(s=>{if(s&&Math.floor(k*1.3+s*.6)%2)texts.push(['z',bx+(BUS.win[s][0]+BUS.win[s][1])/2+3,by+4,'#cfd8ff']);});return{texts};},
+  dead(k,len,dt,t){const I=INTRO,B=.8,bx=405+135*ease(ramp(k,0,3.4)),by=342-BUS.h,moving=k<3.4,on=k<3.6||(k<4.8&&Math.floor(k*10)%2===0);
+    if(k>B)iOnce('bang',()=>{I.shake=7;sfx('crash');});if(k>4.8)iOnce('off',()=>sfx('close'));
+    const vw=k<B+.8?lerp(84,190,ease(ramp(k,B,B+.7))):lerp(190,150,ease(ramp(k,4.8,len)));let cx=bx+BUS.w/2,cy=300;if(I.shake>0){cx+=(Math.random()-.5)*I.shake;cy+=(Math.random()-.5)*I.shake;I.shake=Math.max(0,I.shake-dt*18);}
+    if(k<B){cx=bx+48;cy=by+22;}
+    view(IMG['intro/forest'],cx,cy,vw,{s:W/vw});drawScene([],null,null,[introBus(bx,by,{faces:introFaces(),bounce:moving,sleep:k<B,awake:0})]);
+    if(k>B)introSmoke(bx+3,by+38,k-B);if(on)busLights(bx,by,t);
+    return{texts:k>B&&k<B+.7?[['BANG!',bx+4,by+10,'#ff8a8a']]:[]};},
+  out(k,len,dt,t){const I=INTRO,cast=introCast(),bx=540,by=342-BUS.h,FY=345,P=[],texts=[],sh=I.mode==='short',kk=sh?k+9:k,see=!sh&&k>len-1.6,door=bx+BUS.door[0]+5;
+    cast.forEach((nm,i)=>{const t0=.9+i*.26,tx=bx+BUS.w+12+(i%5)*15,ty=FY+(i>=5?8:0),tA=t0+(tx-door)/60;if(kk<t0)return;
+      if(kk<tA){const e=(kk-t0)/(tA-t0);P.push({name:nm,dir:'right',walk:true,x:lerp(door,tx,e),y:lerp(FY-1,ty,e),t:t+i*130,tint:NIGHT_TINT,alpha:ramp(kk,t0,t0+.25)});}
+      else{const dir=see?'right':Math.floor((kk+i*.7)*.7)%2?'left':'right';P.push({name:nm,dir,x:tx,y:ty,t:t+i*130,tint:NIGHT_TINT});
+        if(see&&i===0)texts.push(['!',tx+7,ty-36,'#ffd25e']);else if(!see&&i%3===0&&Math.floor(kk*.9+i)%2)texts.push(['?',tx+7,ty-36,'#f6dfae']);}});
+    if(!sh&&k>.4)iOnce('odoor',()=>sfx('door'));
+    view(IMG['intro/forest'],lerp(bx+110,bx+BUS.w+40,ease(ramp(k,0,len))),300,190,{s:W/190});
+    drawScene(P,null,null,[introBus(bx,by,{door:sh||k>.4})]);introSmoke(bx+3,by+38,kk);return{texts};},
+  town(k,len,dt,t){const sh=INTRO.mode==='short',cast=introCast(),P=cast.map((nm,i)=>({name:nm,dir:'back',walk:sh||k>.9,x:150+((i%5)-(Math.min(cast.length,5)-1)/2)*10,y:512+Math.floor(i/5)*10-Math.max(0,k-(sh?0:.9))*9,t:t+i*130,tint:NIGHT_TINT}));
+    view(IMG['intro/town'],150,lerp(452,150,ease(sh?ramp(k,.4,len-.2):ramp(k,1.3,len-1.3))),150,{s:W/150});drawScene(P,null,null,[]);return{};},   /* a held breath on the dark road, a slow climb, and a long look at the town */
+  settle(k,len,dt,t){const cast=introCast(),P=[],doors=[],tIn=len-1.7;
+    {const c0=TOWN.cabins[CABIN_OF[0]],e=ease(ramp(k,.8,tIn+.2));let fx=280,fy=372;if(c0){const d0=c0.route.len*(1-Math.min(1,k/tIn)),a0=c0.route.at(Math.max(0,d0));fx=lerp(280,a0.x,e);fy=lerp(372,a0.y-18,e);}   /* everyone fans out from the square; the camera goes with YOU to your own door */
       const vw=lerp(232,172,e);view(IMG.town,fx,fy,vw,{loose:true,s:W/vw});}
     lx.fillStyle='rgba(6,8,30,.38)';lx.fillRect(0,0,cam.lw,cam.lh);
     cast.forEach((nm,i)=>{const ci=CABIN_OF[i],c=TOWN.cabins[ci];if(!c)return;const rt=c.route,d=rt.len*(1-k/tIn);
       if(d>0){const a=rt.at(d);P.push({name:nm,x:a.x,y:a.y,dir:dirFrom(-a.dx,-a.dy),walk:true,t:t+i*130,tint:NIGHT_TINT});}
-      else{const s=stepIn(c,k,tIn);P.push({name:nm,x:s.x,y:s.y,dir:'back',walk:true,t,tint:NIGHT_TINT,alpha:s.al});iOnce('shut'+i,()=>sfx('door'));}
-      doors.push([ci,doorK(k,tIn-.15,tIn+.55)]);});
+      else{const s=stepIn(c,k,tIn+.25);P.push({name:nm,x:s.x,y:s.y,dir:'back',walk:k>tIn+.25,t,tint:NIGHT_TINT,alpha:s.al});if(k>tIn+.7)iOnce('shut'+i,()=>sfx('door'));}
+      doors.push([ci,doorK(k,tIn,tIn+.85)]);});
     for(const[ci,a]of doors)doorOpen(ci,a);townLights(t,{dim:.85},'win');patchDim='rgba(6,8,30,.38)';drawScene(P,TOWN.occ,IMG.town);patchDim=null;townLights(t,{dim:.85},'rest');return{};}};
 function introDone(){CAB.keep=true;go('cabin',()=>nightOne(1,()=>{if(GAME.on)toast(ic(viewRole)+'You are '+roleA(viewRole));}));}
 scenes.intro={hud:'#nightHud',
