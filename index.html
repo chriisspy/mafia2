@@ -101,9 +101,13 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 @keyframes n1bg{0%{opacity:0}14%{opacity:.9}74%{opacity:.9}100%{opacity:0}}
 @keyframes n1tx{0%,16%{opacity:0;letter-spacing:2px}34%{opacity:1}37%{opacity:.25}39%{opacity:1}52%{opacity:1}53.5%{opacity:.4}55%{opacity:1}72%{opacity:1;letter-spacing:12px}88%,100%{opacity:0;letter-spacing:15px}}
 /* THE JOYSTICK (13 Nov, his ask: tapping exactly where to go tires the fingers). Bottom LEFT, just above the bottom panel, drawn as pixel art (joyArt) */
-#joy{position:absolute;left:14px;bottom:120px;width:104px;height:104px;z-index:8;display:none;touch-action:none;pointer-events:auto;background-size:100% 100%;image-rendering:pixelated}
+/* SKIP INTRO (his ask, 13 Nov): small, top right, only while the coach film plays */
+#introSkip{position:absolute;right:14px;top:calc(14px + env(safe-area-inset-top));z-index:6;display:none;align-items:center;gap:6px;font-size:14px;padding:5px 10px 7px;pointer-events:auto}
+#nightHud.intro #introSkip{display:flex}
+#phone:not(.game) #introSkip{top:calc(66px + env(safe-area-inset-top))}
+#joy{position:absolute;left:14px;bottom:120px;width:130px;height:130px;z-index:8;display:none;touch-action:none;pointer-events:auto;background-size:100% 100%;image-rendering:pixelated}
 #joy.on{display:block}
-#joy i{position:absolute;left:28px;top:28px;width:48px;height:48px;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
+#joy i{position:absolute;left:35px;top:35px;width:60px;height:60px;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
 #turnPhone{display:none;position:fixed;inset:0;z-index:9999;background:#140c24;color:#f6dfae;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
 #turnPhone b{font-size:22px}#turnPhone small{font-size:13px;opacity:.7}
 @media (orientation:landscape) and (max-height:520px) and (pointer:coarse){#turnPhone{display:flex}}
@@ -677,6 +681,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 
   <!-- NIGHT CUTAWAY -->
   <div class="hud" id="nightHud">
+    <button class="btn dark" id="introSkip"><i data-ic="skip" data-s="2" data-c="solo"></i>Skip intro</button>
     <div id="bigMsg"></div>
     <div class="bar t" id="barT"></div><div class="bar b" id="barB"></div>
     <div class="tag" id="nightTag"><i data-ic="rec"></i>NIGHT 2</div>
@@ -1054,7 +1059,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131658'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131704'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1929,8 +1934,8 @@ let HOLD=null;
    It shows in the waiting lobby (town and cabins), your cabin at night and as a ghost; tapping to walk still works too. */
 const JOY={on:false,x:0,y:0,m:0,id:null};
 function joyVec(){return JOY.on&&JOY.m>.18?JOY:null;}
-/* the stick as pixel art (his call): a 26 x 26 px base and a 12 x 12 px knob, shown 4x. Christmas: red rims */
-function joyArt(){const P=4,col=XMAS?{o:'#2a0d14',r:'#9b1c2e',f:'#2a2346',s:'#1f1936',a:'#c9b8ff',ko:'#7d1522',kr:'#b3202f'}:{o:'#1a1430',r:'#3a3160',f:'#2a2346',s:'#1f1936',a:'#8f84c4',ko:'#5a3420',kr:'#5a3420'};
+/* the stick as pixel art (his call): a 26 x 26 px base and a 12 x 12 px knob, shown 5x (made a bit bigger, his call). Christmas: red rims */
+function joyArt(){const P=5,col=XMAS?{o:'#2a0d14',r:'#9b1c2e',f:'#2a2346',s:'#1f1936',a:'#c9b8ff',ko:'#7d1522',kr:'#b3202f'}:{o:'#1a1430',r:'#3a3160',f:'#2a2346',s:'#1f1936',a:'#8f84c4',ko:'#5a3420',kr:'#5a3420'};
   const disc=(n,fn)=>{const c=mk(n,n),x=c.getContext('2d'),m=(n-1)/2,R=n/2-.15;for(let y=0;y<n;y++)for(let i=0;i<n;i++){const d=Math.hypot(i-m,y-m),k=fn(d,R,i-m,y-m);if(k){x.fillStyle=k;x.fillRect(i,y,1,1);}}return c;};
   const base=disc(26,(d,R,dx,dy)=>d>R?null:d>R-1.3?col.o:d>R-2.4?col.r:Math.hypot(dx,dy+1.6)>R-2.4?col.s:col.f),bx=base.getContext('2d');
   bx.fillStyle=col.a;for(const[cx,cy,ux,uy]of[[12.5,5,0,1],[12.5,20,0,-1],[5,12.5,1,0],[20,12.5,-1,0]])for(let k=0;k<3;k++)for(let w=-k;w<=k;w++){   /* four little arrows */
@@ -1940,7 +1945,7 @@ function joyArt(){const P=4,col=XMAS?{o:'#2a0d14',r:'#9b1c2e',f:'#2a2346',s:'#1f
 joyArt();
 (()=>{const el=$('#joy'),knob=el.querySelector('i');
   const set=e=>{const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,R=r.width/2-14;let dx=e.clientX-cx,dy=e.clientY-cy;const d=Math.hypot(dx,dy);
-    JOY.x=d?dx/d:0;JOY.y=d?dy/d:0;JOY.m=Math.min(1,d/R);if(d>R){dx*=R/d;dy*=R/d;}   /* direction from the finger, before the knob is held to the rim (it was shrinking the further you pulled) */knob.style.transform=`translate(${Math.round(dx/4)*4}px,${Math.round(dy/4)*4}px)`;   /* the knob moves a whole art pixel at a time */};
+    JOY.x=d?dx/d:0;JOY.y=d?dy/d:0;JOY.m=Math.min(1,d/R);if(d>R){dx*=R/d;dy*=R/d;}   /* direction from the finger, before the knob is held to the rim (it was shrinking the further you pulled) */knob.style.transform=`translate(${Math.round(dx/5)*5}px,${Math.round(dy/5)*5}px)`;   /* the knob moves a whole art pixel at a time */};
   const end=e=>{if(JOY.id!==e.pointerId)return;JOY.on=false;JOY.m=0;JOY.id=null;el.classList.remove('held');knob.style.transform='';};
   el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();JOY.on=true;JOY.id=e.pointerId;el.classList.add('held');try{el.setPointerCapture(e.pointerId);}catch(_){}set(e);});
   el.addEventListener('pointermove',e=>{if(JOY.on&&JOY.id===e.pointerId)set(e);});
@@ -1952,7 +1957,7 @@ function joyPlace(){const el=$('#joy'),ok=[scenes.town,scenes.cabin,scenes.ghost
     const b=ph.bottom-top+22;show=top-ph.top>330;if(show)el.style.bottom=b+'px';}
   if(el.classList.contains('on')!==show)el.classList.toggle('on',show);if(!show&&JOY.on){JOY.on=false;JOY.m=0;}}
 /* walk a step with the stick: slide along walls instead of stopping dead */
-function joyStep(x,y,J,sp,ok){let nx=x+J.x*sp,ny=y+J.y*sp;if(ok(nx,ny))return[nx,ny];if(ok(nx,y))return[nx,y];if(ok(x,ny))return[x,ny];return[x,y];}
+function joyStep(x,y,J,sp,ok){let nx=x+J.x*sp,ny=y+J.y*sp;if(ok(nx,ny)||!ok(x,y))return[nx,ny];   /* standing somewhere you should not be: you can always walk out */if(ok(nx,y))return[nx,y];if(ok(x,ny))return[x,ny];return[x,y];}
 function wxy(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*DPR/S+cam.x+(cam.fx||0),(e.clientY-r.top)*DPR/S+cam.y+(cam.fy||0)];}
 function holdWalk(e,sc,fn){HOLD={id:e.pointerId,t:performance.now(),sc,fn};}
 cv.addEventListener('pointermove',e=>{if(!HOLD||HOLD.id!==e.pointerId)return;if(scene!==HOLD.sc||document.querySelector('.modal.on')){HOLD=null;return;}
@@ -3642,7 +3647,7 @@ function gameCast(g){const others=Object.entries(g.pl).filter(([u])=>u!==NET.uid
   PEOPLE.length=0;PEOPLE.push({n:'You',skin:my.skin,role:g.roles[NET.uid]||null});CABIN_OF.length=0;CABIN_OF.push(me.slot);
   others.forEach(([u,p])=>{PEOPLE.push({n:p.n,skin:SP[p.skin]?p.skin:'beanie',room:p.room,role:g.roles[u],uid:u});CABIN_OF.push(p.slot);});
   viewRole=g.roles[NET.uid]||'civilian';NOTE.mine='';NOTE.of={};T.notes={};T.muted.clear();V.ring=[];NIGHT.mateN=null;buildTown();}
-function gNight(g){sfx('night');GAME.filmDone=true;$('#dawnGo').disabled=false;CAB.sentSt=null;CAB.spTxt=null;resetNight();NOTE.mine='';Object.assign(CAB,{state:'stand',x:98,y:200,tgt:null,path:null,dir:'back',walk:false,anim:null});
+function gNight(g){sfx('night');GAME.filmDone=true;$('#dawnGo').disabled=false;CAB.sentSt=null;CAB.spTxt=null;resetNight();NOTE.mine='';Object.assign(CAB,{state:'stand',x:98,y:188,tgt:null,path:null,dir:'back',walk:false,anim:null});
   if(GAME.meDead){go('ghost');return;}
   const fresh=g.round===1&&serverNow()<g.t0+6000,role=()=>{if(GAME.on)toast(ic(viewRole)+'You are '+roleA(viewRole));};   /* fresh: the game has only just begun (not a reload half way through the night) */
   if(fresh&&g.intro&&INTRO.ok){INTRO.mode=g.intro==='short'?'short':'full';go('intro');return;}
@@ -3994,6 +3999,8 @@ scenes.intro={hud:'#nightHud',
     present();for(const[txt,wx,wy,col]of f.texts||[])label(txt,SX(wx),SY(wy),11*DPR,col||'#f6dfae');}};
 /* NIGHT 1 (his call: ominous, a little spooky): in your own cabin the screen sinks into the dark, the words fade in,
    flicker, and fade out; a low drone; and as the light comes back, for a moment, two red eyes at the window. */
+/* skip the coach film: jump to its last moment, so it fades out and carries on exactly as if it had played */
+$('#introSkip').onclick=e=>{e.stopPropagation();const I=INTRO;if(scene!==scenes.intro||!I.ok||I.t>=I.end-.8)return;sfx('tap');music(null);engineOff();clearInterval(capTimer);$('#cap').textContent='';I.capI=I.shots.length;I.t=I.end-.8;};
 function nightOne(n,after){const el=$('#nightOne');el.querySelector('b').textContent='NIGHT '+n;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');sfx('omen');CAB.eyesAt=performance.now()+3350;
   clearTimeout(nightOne.t);nightOne.t=setTimeout(()=>{el.classList.remove('on');if(after)after();},4300);}
 /* the menu shows the standard hut (his cabin1), not the pale one that stands at the top spot in the town (his call, 13 Nov) */
