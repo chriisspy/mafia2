@@ -1054,7 +1054,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131657'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131658'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1940,7 +1940,7 @@ function joyArt(){const P=4,col=XMAS?{o:'#2a0d14',r:'#9b1c2e',f:'#2a2346',s:'#1f
 joyArt();
 (()=>{const el=$('#joy'),knob=el.querySelector('i');
   const set=e=>{const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,R=r.width/2-14;let dx=e.clientX-cx,dy=e.clientY-cy;const d=Math.hypot(dx,dy);
-    if(d>R){dx*=R/d;dy*=R/d;}JOY.x=d?dx/Math.max(d,1):0;JOY.y=d?dy/Math.max(d,1):0;JOY.m=Math.min(1,d/R);knob.style.transform=`translate(${Math.round(dx/4)*4}px,${Math.round(dy/4)*4}px)`;   /* the knob moves a whole art pixel at a time */};
+    JOY.x=d?dx/d:0;JOY.y=d?dy/d:0;JOY.m=Math.min(1,d/R);if(d>R){dx*=R/d;dy*=R/d;}   /* direction from the finger, before the knob is held to the rim (it was shrinking the further you pulled) */knob.style.transform=`translate(${Math.round(dx/4)*4}px,${Math.round(dy/4)*4}px)`;   /* the knob moves a whole art pixel at a time */};
   const end=e=>{if(JOY.id!==e.pointerId)return;JOY.on=false;JOY.m=0;JOY.id=null;el.classList.remove('held');knob.style.transform='';};
   el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();JOY.on=true;JOY.id=e.pointerId;el.classList.add('held');try{el.setPointerCapture(e.pointerId);}catch(_){}set(e);});
   el.addEventListener('pointermove',e=>{if(JOY.on&&JOY.id===e.pointerId)set(e);});
