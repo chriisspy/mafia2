@@ -100,13 +100,10 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #nightOne.on b{animation:n1tx 4.3s linear forwards}
 @keyframes n1bg{0%{opacity:0}14%{opacity:.9}74%{opacity:.9}100%{opacity:0}}
 @keyframes n1tx{0%,16%{opacity:0;letter-spacing:2px}34%{opacity:1}37%{opacity:.25}39%{opacity:1}52%{opacity:1}53.5%{opacity:.4}55%{opacity:1}72%{opacity:1;letter-spacing:12px}88%,100%{opacity:0;letter-spacing:15px}}
-/* THE JOYSTICK (13 Nov, his ask: tapping exactly where to go tires the fingers). Bottom right, just above the bottom panel. */
-#joy{position:absolute;right:16px;bottom:120px;width:104px;height:104px;border-radius:50%;background:#2a2346;border:4px solid #1a1430;box-shadow:inset 0 0 0 4px #3a3160,inset 0 -8px 0 #1f1936,0 4px 0 #0008;z-index:8;display:none;touch-action:none;pointer-events:auto}
+/* THE JOYSTICK (13 Nov, his ask: tapping exactly where to go tires the fingers). Bottom LEFT, just above the bottom panel, drawn as pixel art (joyArt) */
+#joy{position:absolute;left:14px;bottom:120px;width:104px;height:104px;z-index:8;display:none;touch-action:none;pointer-events:auto;background-size:100% 100%;image-rendering:pixelated}
 #joy.on{display:block}
-#joy i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:var(--paper);border:4px solid var(--wood);box-shadow:inset 0 -6px 0 var(--paper2),inset 0 3px 0 #fff6df,0 4px 0 #0008;pointer-events:none}
-#joy.held i{background:#fff2c8}
-#phone.xmas #joy{border-color:#2a0d14;box-shadow:inset 0 0 0 4px #9b1c2e,inset 0 -8px 0 #1f1936,0 4px 0 #0008}
-#phone.xmas #joy i{border-color:#9b1c2e}
+#joy i{position:absolute;left:28px;top:28px;width:48px;height:48px;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
 #turnPhone{display:none;position:fixed;inset:0;z-index:9999;background:#140c24;color:#f6dfae;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
 #turnPhone b{font-size:22px}#turnPhone small{font-size:13px;opacity:.7}
 @media (orientation:landscape) and (max-height:520px) and (pointer:coarse){#turnPhone{display:flex}}
@@ -1057,7 +1054,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131656'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131657'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1932,9 +1929,18 @@ let HOLD=null;
    It shows in the waiting lobby (town and cabins), your cabin at night and as a ghost; tapping to walk still works too. */
 const JOY={on:false,x:0,y:0,m:0,id:null};
 function joyVec(){return JOY.on&&JOY.m>.18?JOY:null;}
+/* the stick as pixel art (his call): a 26 x 26 px base and a 12 x 12 px knob, shown 4x. Christmas: red rims */
+function joyArt(){const P=4,col=XMAS?{o:'#2a0d14',r:'#9b1c2e',f:'#2a2346',s:'#1f1936',a:'#c9b8ff',ko:'#7d1522',kr:'#b3202f'}:{o:'#1a1430',r:'#3a3160',f:'#2a2346',s:'#1f1936',a:'#8f84c4',ko:'#5a3420',kr:'#5a3420'};
+  const disc=(n,fn)=>{const c=mk(n,n),x=c.getContext('2d'),m=(n-1)/2,R=n/2-.15;for(let y=0;y<n;y++)for(let i=0;i<n;i++){const d=Math.hypot(i-m,y-m),k=fn(d,R,i-m,y-m);if(k){x.fillStyle=k;x.fillRect(i,y,1,1);}}return c;};
+  const base=disc(26,(d,R,dx,dy)=>d>R?null:d>R-1.3?col.o:d>R-2.4?col.r:Math.hypot(dx,dy+1.6)>R-2.4?col.s:col.f),bx=base.getContext('2d');
+  bx.fillStyle=col.a;for(const[cx,cy,ux,uy]of[[12.5,5,0,1],[12.5,20,0,-1],[5,12.5,1,0],[20,12.5,-1,0]])for(let k=0;k<3;k++)for(let w=-k;w<=k;w++){   /* four little arrows */
+    const x=Math.round(cx+(uy?w:k*ux)-(uy?0:ux)),y=Math.round(cy+(ux?w:k*uy)-(ux?0:uy));bx.fillRect(x,y,1,1);}
+  const knob=disc(12,(d,R,dx,dy)=>d>R?null:d>R-1.3?col.ko:(dy>1.2&&Math.hypot(dx,dy-1.4)>R-1.3)?'#e9c88a':(Math.hypot(dx+1.6,dy+1.8)<1.6)?'#fff6df':'#f6dfae');
+  $('#joy').style.backgroundImage=`url(${base.toDataURL()})`;$('#joy i').style.backgroundImage=`url(${knob.toDataURL()})`;}
+joyArt();
 (()=>{const el=$('#joy'),knob=el.querySelector('i');
   const set=e=>{const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,R=r.width/2-14;let dx=e.clientX-cx,dy=e.clientY-cy;const d=Math.hypot(dx,dy);
-    if(d>R){dx*=R/d;dy*=R/d;}JOY.x=d?dx/Math.max(d,1):0;JOY.y=d?dy/Math.max(d,1):0;JOY.m=Math.min(1,d/R);knob.style.transform=`translate(${Math.round(dx)}px,${Math.round(dy)}px)`;};
+    if(d>R){dx*=R/d;dy*=R/d;}JOY.x=d?dx/Math.max(d,1):0;JOY.y=d?dy/Math.max(d,1):0;JOY.m=Math.min(1,d/R);knob.style.transform=`translate(${Math.round(dx/4)*4}px,${Math.round(dy/4)*4}px)`;   /* the knob moves a whole art pixel at a time */};
   const end=e=>{if(JOY.id!==e.pointerId)return;JOY.on=false;JOY.m=0;JOY.id=null;el.classList.remove('held');knob.style.transform='';};
   el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();JOY.on=true;JOY.id=e.pointerId;el.classList.add('held');try{el.setPointerCapture(e.pointerId);}catch(_){}set(e);});
   el.addEventListener('pointermove',e=>{if(JOY.on&&JOY.id===e.pointerId)set(e);});
