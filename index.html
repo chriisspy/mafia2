@@ -772,7 +772,9 @@ const cv=$('#c'), ctx=cv.getContext('2d');
    console makes. Nothing to download, so they play at once. (PixelLab's sound tools need a higher plan than his.)
    sfx('name') plays one; SND.on is the speaker button on the welcome screen (kept in localStorage 'm2_snd'). Phones only
    let a page make sound after a tap, so the engine wakes on the first tap. */
-const SND={ctx:null,out:null,on:true,mus:true,nb:null};try{SND.on=localStorage.getItem('m2_snd')!=='0';SND.mus=localStorage.getItem('m2_mus')!=='0';}catch(e){}
+const SND={ctx:null,out:null,on:true,mus:true,nb:null,cs:true,caseLive:false};try{SND.on=localStorage.getItem('m2_snd')!=='0';SND.mus=localStorage.getItem('m2_mus')!=='0';SND.cs=localStorage.getItem('m2_csnd')!=='0';}catch(e){}
+/* the case opening's own speaker button (his call, 13 Nov): it only quiets the case (the rattle, the pop, the reel, the prize), every other sound carries on */
+const CASE_SFX=new Set(['pop','rattle','thud','tick','prize','rare']),caseQuiet=()=>!SND.cs&&SND.caseLive;
 function sndCtx(){if(!SND.ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;SND.ctx=new C();SND.out=SND.ctx.createGain();SND.out.gain.value=.5;SND.out.connect(SND.ctx.destination);
     const n=SND.ctx.sampleRate,b=SND.ctx.createBuffer(1,n,n),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;SND.nb=b;}
   if(SND.ctx.state==='suspended')SND.ctx.resume();return SND.ctx;}
@@ -846,7 +848,7 @@ const SFX={
   lose(){arp([392,370,349,330],.2,{type:'triangle',vol:.16,len:.4});tone(196,1,{type:'sawtooth',vol:.08,at:.8});},
 };
 let sfxLast={};
-function sfx(n){if(!SND.on||!SFX[n])return;const now=performance.now();if(now-(sfxLast[n]||0)<25)return;sfxLast[n]=now;try{if(sndCtx())SFX[n]();}catch(e){}}
+function sfx(n){if(!SND.on||!SFX[n]||(CASE_SFX.has(n)&&caseQuiet()))return;const now=performance.now();if(now-(sfxLast[n]||0)<25)return;sfxLast[n]=now;try{if(sndCtx())SFX[n]();}catch(e){}}
 /* every button makes a small click (the ones with their own sound still get it underneath, quietly) */
 addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button,.card,.ocard,.gc');if(b&&!b.disabled)sfx(b.id==='shopX'||b.id==='collX'||b.id==='howX'||b.id==='wheelX'?'close':'click');},true);
 /* ================= MUSIC (12 Nov 2026): chiptune loops, written as notes and played by the same little synth =================
@@ -911,7 +913,7 @@ function footstep(e,dt,surf){e.stepT=(e.stepT||0)+dt;if(e.stepT<.42)return;e.ste
    - bell twinkles up high
    Everything goes through an echo, so it sounds like a big hall. sparkleStart() at the pop, sparkleStop() when the prize shows. */
 const SPARK={g:null,os:[],timer:0};
-function sparkleStart(){sparkleStop(true);if(!SND.on||!sndCtx())return;const c=SND.ctx,t0=c.currentTime;
+function sparkleStart(){sparkleStop(true);if(!SND.on||caseQuiet()||!sndCtx())return;const c=SND.ctx,t0=c.currentTime;
   const g=c.createGain(),dl=c.createDelay(1),fb=c.createGain(),wet=c.createBiquadFilter(),bus=c.createGain();
   dl.delayTime.value=.24;fb.gain.value=.42;wet.type='lowpass';wet.frequency.value=3800;
   bus.connect(g);bus.connect(dl);dl.connect(wet);wet.connect(fb);fb.connect(dl);wet.connect(g);g.connect(SND.out);
@@ -934,7 +936,7 @@ function sparkleStart(){sparkleStop(true);if(!SND.on||!sndCtx())return;const c=S
   const SCALE=[523,587,659,784,880,1047,1175,1319,1568,1760,2093,2349];let k=0,run=0;
   const harp=()=>{const lift=Math.min(1,.55+run*.12);SCALE.forEach((f,i)=>note(f,.9,'triangle',.038*lift,i*.085));note(SCALE[SCALE.length-1]*2,1.3,'sine',.022*lift,SCALE.length*.085);run++;};   /* slower, quieter runs with more space between (his call) */
   harp();bell(3136,.022,.6);
-  SPARK.timer=setInterval(()=>{if(!SND.on){sparkleStop();return;}k++;
+  SPARK.timer=setInterval(()=>{if(!SND.on||caseQuiet()){sparkleStop();return;}k++;
     if(k%30===0)harp();
     else if(k%7===0&&Math.random()<.8){const f=[2093,2637,3136,3520,4186][Math.floor(Math.random()*5)];bell(f,.016+Math.random()*.01,0);}},110);}   /* fewer, quieter, more spaced bells (his call) */
 function sparkleStop(now){clearInterval(SPARK.timer);SPARK.timer=0;const g=SPARK.g,os=SPARK.os;SPARK.g=null;SPARK.os=[];if(!g||!SND.ctx)return;
@@ -944,7 +946,7 @@ function sparkleStop(now){clearInterval(SPARK.timer);SPARK.timer=0;const g=SPARK
    d = how long the card waits before it shows (WIN_FX.delay): the hit lands with the reveal, and anything before it is
    the build-up. Epic: a boom, a rising run, a wide chord, and a few soft sparkles. Legendary: a riser while the sparks pull in, then a burst, a fanfare, a shower of sparkles
    and a long bright shine. */
-function winSound(rar,d){if(!SND.on||!sndCtx())return;const chord=(fs,dur,vol,at,type)=>fs.forEach((f,i)=>{tone(f,dur,{type:type||'square',vol,at});tone(f*1.004,dur,{type:'triangle',vol:vol*.8,at});});
+function winSound(rar,d){if(!SND.on||caseQuiet()||!sndCtx())return;const chord=(fs,dur,vol,at,type)=>fs.forEach((f,i)=>{tone(f,dur,{type:type||'square',vol,at});tone(f*1.004,dur,{type:'triangle',vol:vol*.8,at});});
   const bells=(n,from,span,vol)=>{for(let i=0;i<n;i++){const f=[2093,2349,2637,3136,3520,4186,4699][Math.floor(Math.random()*7)],at=from+i/n*span+Math.random()*.05;tone(f,.5,{type:'sine',vol:vol*(1-i/n*.6),at});tone(f*2.76,.18,{type:'sine',vol:vol*.3,at});}};
   if(rar==='epic'){tone(90,.6,{type:'sine',vol:.45,to:38,at:d});hiss(.3,{vol:.2,lp:900,at:d});arp([392,523,659,784,1047,1319],.06,{vol:.12,at:d});
     chord([523,784,1047,1319,1568],1.1,.045,d+.36);hiss(.2,{vol:.14,hp:3000,at:d+.36});bells(7,d+.5,1.2,.035);}
@@ -960,7 +962,7 @@ function winSound(rar,d){if(!SND.on||!sndCtx())return;const chord=(fs,dur,vol,at
     /* a shower of sparkles, and the shine: two high notes a hair apart, shimmering, with a bright hiss sweeping over the top */
     bells(22,d+.3,2.6,.05);
     tone(3136,2.4,{type:'sine',vol:.035,at:d+.5,vib:[7,14]});tone(3148,2.4,{type:'sine',vol:.035,at:d+.5});tone(4186,2,{type:'sine',vol:.02,at:d+.7,vib:[9,18]});hiss(1.8,{vol:.05,hp:7500,at:d+.5});}}
-function sndUI(){for(const id of['#homeSnd','#caseSnd']){const b=$(id);if(b)b.innerHTML=ic(SND.on?'sound':'mute',3,'solo');}}
+function sndUI(){const h=$('#homeSnd'),c=$('#caseSnd');if(h)h.innerHTML=ic(SND.on?'sound':'mute',3,'solo');if(c)c.innerHTML=ic(SND.on&&SND.cs?'sound':'mute',3,'solo');}
 // THE LOADER (his design, 12 Nov): the Mafia chase someone with a knife. Both run on the spot, bobbing, while the cobbles
 // slide past to the right. The Mafia's knife run is a PixelLab animation (assets/loader/mafia-run.png, 4 frames of 48 x 46).
 // Everything goes through his Photoshop gradient map, so it is two colours: near-black and cream, and the darkest pixels
@@ -1019,7 +1021,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131507'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131511'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1479,7 +1481,7 @@ function shopLoop(now){if(!$('#shopModal').classList.contains('on')){SHOP.raf=0;
   SHOP.raf=requestAnimationFrame(shopLoop);}
 function openShop(){$('#collModal').classList.remove('on');$('#reelBox').classList.remove('on');document.querySelectorAll('#caseResult,#cabResult').forEach(e=>e.innerHTML='');paintShop();$('#shopModal').classList.add('on');if(!SHOP.raf)SHOP.raf=requestAnimationFrame(shopLoop);}
 function rollCase(){let r=Math.random(),rar='common';for(const[k,q]of Object.entries(CASE.odds)){if(r<q){rar=k;break;}r-=q;}const pool=CASE.pool.filter(s=>s.rar===rar);return pool[Math.floor(Math.random()*pool.length)];}
-function openCase(kind){if(CASE.busy)return;if(typeof kind==='string')CASE.kind=kind;if(coins<CASE.price)return;coins-=CASE.price;CASE.busy=true;saveInv();paintShop();
+function openCase(kind){if(CASE.busy)return;if(typeof kind==='string')CASE.kind=kind;if(coins<CASE.price)return;coins-=CASE.price;CASE.busy=true;SND.caseLive=true;saveInv();paintShop();
   const win=rollCase(),WIN=30,strip=[];for(let i=0;i<36;i++)strip.push(i===WIN?win:rollCase());
   const reel=$('#reel'),box=$('#reelBox');caseRes().innerHTML='';
   reel.innerHTML=strip.map(s=>`<div class="rc" style="--rc:${RAR_COL[s.rar]}"><img${s.art?' class="rm"':''} src="${thumb(s)}" alt=""><i></i></div>`).join('');reel.style.transform='translateX(0)';
@@ -1593,7 +1595,7 @@ function showWin(item,dupe,back){sparkleStop();if(item.rar==='epic'||item.rar===
       g.globalAlpha=Math.min(1,q.l*2.5);g.fillStyle=q.c;const x=Math.round(q.x),y=Math.round(q.y);
       if(q.tw){g.fillRect(x,y-1,1,3);g.fillRect(x-1,y,3,1);}else g.fillRect(x,y,q.s,q.s);}
     g.globalAlpha=1;},33);}
-function closeWin(){if(!WIN.on)return;WIN.on=false;clearInterval(WIN.timer);$('#winFx').classList.remove('on','shake');paintShop();}
+function closeWin(){if(!WIN.on)return;WIN.on=false;SND.caseLive=false;clearInterval(WIN.timer);$('#winFx').classList.remove('on','shake');paintShop();}
 $('#winFx').onclick=closeWin;
 $('#winEquip').onclick=e=>{e.stopPropagation();const it=WIN.item;(it.art?setRoom:wear)(it.id);closeWin();caseRes().innerHTML=it.art?`You moved into the ${esc(it.name)} room.`:`You are wearing ${esc(it.name)}.`;};
 $('#winAgain').onclick=e=>{e.stopPropagation();closeWin();openCase();};
@@ -3899,7 +3901,7 @@ function sndSet(all,mus){if(all!=null)SND.on=all;if(mus!=null)SND.mus=mus;try{lo
   sndUI();menuPaint();if(SND.on&&SND.mus){const w=MUS.want;sndCtx();MUS.name=null;music(w);}else{const w=MUS.want;musStop();MUS.want=w;}}
 $('#homeSnd').onclick=()=>{sndSet(!SND.on);if(SND.on)sfx('coin');};
 /* the same switch on the case-opening screen (his call): it must not skip the film when tapped */
-$('#caseSnd').onclick=e=>{e.stopPropagation();sndSet(!SND.on);if(!SND.on)sparkleStop(true);};sndUI();
+$('#caseSnd').onclick=e=>{e.stopPropagation();if(!SND.on){SND.cs=true;sndSet(true);}else SND.cs=!SND.cs;try{localStorage.setItem('m2_csnd',SND.cs?'1':'0');}catch(e){}sndUI();if(caseQuiet())sparkleStop(true);};sndUI();
 /* THE MENU (the three bars, top left on every screen): the lobby code, the two mutes, How to play, and Leave */
 $('#phone').insertBefore($('#howModal'),$('#tabs'));$('#phone').insertBefore($('#howX'),$('#tabs'));
 function menuPaint(){$('#menuMus').innerHTML='Music<b>'+(SND.on&&SND.mus?'ON':'OFF')+'</b>';$('#menuSnd').innerHTML='All sounds<b>'+(SND.on?'ON':'OFF')+'</b>';$('#menuMus').disabled=!SND.on;
