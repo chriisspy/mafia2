@@ -910,6 +910,26 @@ function sparkleStart(){sparkleStop(true);if(!SND.on||!sndCtx())return;const c=S
 function sparkleStop(now){clearInterval(SPARK.timer);SPARK.timer=0;const g=SPARK.g,os=SPARK.os;SPARK.g=null;SPARK.os=[];if(!g||!SND.ctx)return;
   const c=SND.ctx,t=c.currentTime,end=now?.05:.9;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+end);
   os.forEach(o=>{try{o.stop(t+end+.05);}catch(e){}});setTimeout(()=>{try{g.disconnect();}catch(e){}},(end+.3)*1000);}
+/* ---- THE PRIZE SOUNDS (13 Nov, his call): epic and legendary (common and rare keep their own) ----
+   d = how long the card waits before it shows (WIN_FX.delay): the hit lands with the reveal, and anything before it is
+   the build-up. Epic: a boom, a rising run, a wide chord, and a few soft sparkles. Legendary: a riser while the sparks pull in, then a burst, a fanfare, a shower of sparkles
+   and a long bright shine. */
+function winSound(rar,d){if(!SND.on||!sndCtx())return;const chord=(fs,dur,vol,at,type)=>fs.forEach((f,i)=>{tone(f,dur,{type:type||'square',vol,at});tone(f*1.004,dur,{type:'triangle',vol:vol*.8,at});});
+  const bells=(n,from,span,vol)=>{for(let i=0;i<n;i++){const f=[2093,2349,2637,3136,3520,4186,4699][Math.floor(Math.random()*7)],at=from+i/n*span+Math.random()*.05;tone(f,.5,{type:'sine',vol:vol*(1-i/n*.6),at});tone(f*2.76,.18,{type:'sine',vol:vol*.3,at});}};
+  if(rar==='epic'){tone(90,.6,{type:'sine',vol:.45,to:38,at:d});hiss(.3,{vol:.2,lp:900,at:d});arp([392,523,659,784,1047,1319],.06,{vol:.12,at:d});
+    chord([523,784,1047,1319,1568],1.1,.045,d+.36);hiss(.2,{vol:.14,hp:3000,at:d+.36});bells(7,d+.5,1.2,.035);}
+  else{/* the build-up: a note climbing and a hiss swelling while the sparks pull in */
+    if(d>.2){tone(110,d,{type:'sawtooth',vol:.07,to:880});tone(220,d,{type:'triangle',vol:.08,to:1760});
+      const c=SND.ctx,t0=c.currentTime,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=SND.nb;s.loop=true;f.type='bandpass';f.frequency.setValueAtTime(500,t0);f.frequency.exponentialRampToValueAtTime(7000,t0+d);
+      g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(.16,t0+d);g.gain.linearRampToValueAtTime(0,t0+d+.05);s.connect(f);f.connect(g);g.connect(SND.out);s.start(t0);s.stop(t0+d+.1);}
+    /* the burst */
+    tone(70,.9,{type:'sine',vol:.55,to:30,at:d});hiss(.5,{vol:.3,lp:1400,at:d});hiss(.35,{vol:.22,hp:5000,at:d});
+    /* the fanfare: three rising chords */
+    chord([523,659,784],.22,.06,d+.05);chord([587,740,880],.22,.06,d+.27);chord([784,988,1175,1568],1.6,.055,d+.5);tone(196,1.6,{type:'triangle',vol:.2,at:d+.5});tone(98,1.6,{type:'sine',vol:.22,at:d+.5});
+    arp([1568,1976,2349,3136],.07,{type:'triangle',vol:.08,at:d+.5});
+    /* a shower of sparkles, and the shine: two high notes a hair apart, shimmering, with a bright hiss sweeping over the top */
+    bells(22,d+.3,2.6,.05);
+    tone(3136,2.4,{type:'sine',vol:.035,at:d+.5,vib:[7,14]});tone(3148,2.4,{type:'sine',vol:.035,at:d+.5});tone(4186,2,{type:'sine',vol:.02,at:d+.7,vib:[9,18]});hiss(1.8,{vol:.05,hp:7500,at:d+.5});}}
 function sndUI(){const b=$('#homeSnd');if(b)b.innerHTML=ic(SND.on?'sound':'mute',3,'solo');}
 // THE LOADER (his design, 12 Nov): the Mafia chase someone with a knife. Both run on the spot, bobbing, while the cobbles
 // slide past to the right. The Mafia's knife run is a PixelLab animation (assets/loader/mafia-run.png, 4 frames of 48 x 46).
@@ -969,7 +989,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131153'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131204'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1455,7 +1475,7 @@ const WIN_FX={
   epic:     {ray:.5, ray2:.2, flash:.55,sh:7, burst:100,rain:.5, spark:1.1,glow:46,glint:1, delay:.5, pop:.6, word:5},
   legendary:{ray:.75,ray2:.4, flash:.95,sh:13,burst:210,rain:1.3,spark:2,  glow:70,glint:1, delay:1.1,pop:.75,word:6}};
 const WIN={on:false,parts:[],timer:0,item:null};
-function showWin(item,dupe,back){sparkleStop();sfx(item.rar==='common'?'prize':'rare');const el=$('#winFx'),fx=WIN_FX[item.rar],col=RAR_COL[item.rar],src=item.art?null:SP[item.id].front.frames[0][0];
+function showWin(item,dupe,back){sparkleStop();if(item.rar==='epic'||item.rar==='legendary')winSound(item.rar,WIN_FX[item.rar].delay);else sfx(item.rar==='common'?'prize':'rare');   /* common and rare keep the sounds he already likes */const el=$('#winFx'),fx=WIN_FX[item.rar],col=RAR_COL[item.rar],src=item.art?null:SP[item.id].front.frames[0][0];
   WIN.item=item;WIN.on=true;WIN.parts=[];el.classList.remove('on','shake');void el.offsetWidth;
   for(const[k,v]of Object.entries({rc:col,ray:fx.ray,ray2:fx.ray2,flash:fx.flash,sh:fx.sh+'px',glow:fx.glow+'px',glint:fx.glint,delay:fx.delay+'s',pop:fx.pop+'s'}))el.style.setProperty('--'+k,v);
   const im=$('#winImg');if(item.art){im.src=thumb(item);im.style.width='152px';im.style.height='152px';}else{im.src=src.toDataURL();im.style.width=src.width*4+'px';im.style.height=src.height*4+'px';}
@@ -3659,7 +3679,9 @@ function playFilm(kind,end){$('#filmModal').classList.remove('on');V.dead.clear(
       N.force={kind,end:end==='pillow'?'doc':end==='third'?'guard':end};planNight(v);}
     N.forcePillow=N.forceThird=undefined;N.keepPlan=true;N.cut=false;go('night');};
   if(scene===scenes.night||scene===scenes.dawn)go('home',start);else start();}
-$('#filmList').onclick=e=>{const b=e.target.closest('button');if(b)playFilm(b.dataset.k,b.dataset.e);};
+/* and the prize card for each rarity, so the win sounds can be heard without opening fifty cases */
+$('#filmList').insertAdjacentHTML('beforeend','<div class="fh">PRIZE CARDS (the win sounds)</div><div class="fr"><b>Show a win</b>'+['common','rare','epic','legendary'].map(r=>`<button class="btn" data-w="${r}">${r[0].toUpperCase()+r.slice(1)}</button>`).join('')+'</div>');
+$('#filmList').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.w){$('#filmModal').classList.remove('on');const it=SKINS.find(s=>s.rar===b.dataset.w);showWin(it,true,0);$('#winAgain').style.display='none';$('#winEquip').style.display='none';return;}playFilm(b.dataset.k,b.dataset.e);};
 $('#labFilms').onclick=()=>{document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));$('#filmModal').classList.add('on');};$('#filmX').onclick=()=>$('#filmModal').classList.remove('on');
 /* lab only: 500 coins into this phone's wallet (it is the same wallet the real game uses on this browser) */
 $('#labCoins').onclick=()=>{coins+=500;saveInv();paintCoins();sfx('coin');toast(ic('coin')+' +500 coins. You have '+coins+'.');};
