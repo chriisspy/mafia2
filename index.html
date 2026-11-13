@@ -1047,7 +1047,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131643'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131645'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1090,7 +1090,7 @@ function view(img,cx,cy,viewW,o={}){
   const iw=img.width,ih=img.height;
   let x=iw<=lw?(iw-lw)/2:clamp(cx-lw/2,0,iw-lw);
   // loose: the camera may run a little past the bottom of the map, so the lowest cabins are not hidden under the subtitles
-  let y=ih<=lh?(o.topCss!=null?-o.topCss*DPR/S:(ih-lh)/2):clamp(cy-lh/2,0,ih-lh*(o.loose?.74:1));
+  let y=ih<=lh?(o.topCss!=null?-o.topCss*DPR/S:(ih-lh)/2):clamp(cy-lh/2,0,ih-lh*(o.loose===true?.74:o.loose||1));   /* loose can be a number: how far down the screen the map must reach */
   if(hi){x=Math.round(x*S)/S;y=Math.round(y*S)/S;}   /* the camera on a whole screen pixel */
   cam.x=Math.floor(x);cam.y=Math.floor(y);cam.fx=x-cam.x;cam.fy=y-cam.y; // whole pixels for drawing; the leftover fraction is slid in present()
   lx.setTransform(hi?S:1,0,0,hi?S:1,0,0);lx.imageSmoothingEnabled=false;lx.globalAlpha=1;lx.globalCompositeOperation='source-over';
@@ -3368,7 +3368,8 @@ scenes.town={hud:'#townHud',
         else if(p.cover){if(p.cover.quilt!=null)drawQuilt(p.cover.quilt);else patchObj(p.cover[0],p.cover[1]);}}
       wlFx(dt,m.loc);
       const fl=.5+.5*noise(t*1.7,2),RL=roomLights(fl,0);if(people.some(p=>p.e.seat&&p.e.seat.k==='chair'))RL.push([159,138,26,'120,220,255',.35,5]);lights(RL,t,ROOM_MASK);
-    }else{dayMode=true;const img=dayImg('ground');view(img,m.x+sh,m.y+24,190,{loose:true,hi:true});   /* smooth follow: the ground glides and you stay steady (13 Nov) */
+    }else{dayMode=true;const img=dayImg('ground');{const tp=$('#townHud .tpanel'),r=tp&&tp.getBoundingClientRect(),cr=cv.getBoundingClientRect();   /* the map's bottom edge stops at the bottom panel: no black strip above it (his catch, 13 Nov) */
+        view(img,m.x+sh,m.y+24,190,{loose:r&&r.height?clamp((r.top-cr.top+6)/cr.height,.6,1):.8,hi:true});}   /* smooth follow: the ground glides and you stay steady (13 Nov) */
       const hid=behindCabin(m.x,m.y);WL.cabA=WL.cabA||TOWN.cabins.map(()=>1);
       const huts=dayImg('cabins').map(o=>{const a=WL.cabA[o.ci]=clamp(WL.cabA[o.ci]+(o.ci===hid?-1:1)*dt*4,.4,1);return a<1?{...o,alpha:a}:o;});
       if(WL.sel&&WL.sel.loc===m.loc){const q=Math.floor(t/200)%2;lx.strokeStyle=q?'#ffd25e':'#fff2a8';lx.lineWidth=1;lx.beginPath();lx.ellipse(X(WL.sel.x)+.5,Y(WL.sel.y)+.5,9+q,3+q*.5,0,0,7);lx.stroke();}
