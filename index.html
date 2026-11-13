@@ -969,7 +969,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131150'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131153'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1920,7 +1920,11 @@ function planNight(force){N.noteS=0;N.pillow=false;N.third=false;
 function planPause(){N.holds=[];const s=N.shots.find(q=>/scream|jumps in the way/i.test(q[1]));N.tStab=N.inside?null:s?s[0]:null;
   if(N.guard<0&&N.tCut!=null)N.holds.push({at:N.tCut+.05,dur:2.2});}
 /* real seconds since the film began -> the film's own clock; N.hold = the pause going on now */
-function filmT(rt){N.hold=null;let ft=rt;for(const h of N.holds||[]){if(ft<=h.at)break;const into=ft-h.at;if(into<h.dur){N.hold=h;h.k=into;return h.at;}ft-=h.dur;}return ft;}
+function filmT(rt){N.hold=null;N.lead=0;let ft=rt;for(const h of N.holds||[]){if(ft<=h.at)break;const into=ft-h.at;if(into<h.dur){N.hold=h;h.k=into;N.lead=rt-h.at;return h.at;}ft-=h.dur;}N.lead=rt-ft;return ft;}
+/* THE MAFIA NEVER PAUSE (13 Nov, his call): while the film holds its breath after the strike, they keep running and fade
+   away. N.lead = how many seconds the pauses have put the real clock ahead of the film; the Mafia are drawn that much
+   further on, and stay that far ahead for the rest of the film. (Not on a Pillow night: there they are still at the bed.) */
+const mafLead=()=>N.pillow?0:(N.lead||0);
 /* THE KILL (13 Nov, his call: a knife, on every kill). Out of doors: a second before the strike the victim sees them and
    jumps (the 'scared' pose); the first Mafia closes the last few steps and stabs (the 'stab' pose, 9 frames); a white
    slash and the scream land together. The film's own darkness is held back just enough to see it. */
@@ -2322,7 +2326,8 @@ scenes.night={
     if(N.kind==='note'&&T>=N.tR0&&T<N.tR1){noteRoom(T-N.tR0,dt,t);return;}
     if(N.inside&&T>=N.tIn){nightRoom(T-N.tIn,dt,t);return;}
     const f=PLAY[N.kind](T,HOLD?0:dt,t);actKill(f,T);
-    if(HOLD)for(const q of f.people)q.walk=false;   /* the pause: nobody moves */
+    if(HOLD)for(const q of f.people)q.walk=false;   /* the pause: nobody moves... */
+    if(mafLead()>0){const f2=PLAY[N.kind](T+mafLead(),0,t);f.people=f.people.filter(q=>q.kind!=='maf').concat(f2.people.filter(q=>q.kind==='maf'));}   /* ...except the Mafia, who are already running */
     if(N.heal&&T>N.tDoc){ // the Doctor runs up the cabin's path, kneels by them, and they get back up
       const k=T-N.tDoc,c=N.vic,vic=f.people.find(p=>p.kind==='vic'),tx=vic?vic.x:c.feet[0],ty=vic?vic.y:c.feet[1],from=c.route.at(86);
       const e=ease(ramp(k,.2,2.4)),gx=tx+(from.x>=tx?11:-11),dx=lerp(from.x,gx,e),dy=lerp(from.y,ty+1,e),kneel=e>=1&&k<4.4;
@@ -2459,9 +2464,11 @@ function killRoom(nm,k,heal,t){const P=[],hit=3.2,dead=k>=hit&&!(heal&&k>11);
   const pin=136,shake=k>hit-1.2&&k<hit?Math.round(Math.sin(k*40)):0;
   const sc=!dead&&k>hit-1.2&&k<hit&&(SP[nm].poses||{}).scared_right_0;   /* pinned at the foot of the bed: they jump */
   P.push({name:nm,dir:sc?'left':'front',x:98+(sc?0:shake),y:dead?pin+4:lerp(168,pin,ease(ramp(k,.2,hit-1.2))),t,walk:k>.2&&k<hit-1.2,pose:dead?'dead':sc?'scared':null,step:sc?clamp(1+Math.floor((k-hit+1.2)/1.2*6),1,6):undefined,blood:dead?ramp(k,hit+.3,hit+5)*(heal?1-ramp(k,9.6,11):1):0,vic:true});
-  const nm2=mafCount();for(let j=0;j<nm2;j++){const a=ramp(k,.1+j*.3,hit-.2),b=ramp(k,hit+1.1+j*.2,hit+3.6);if(b>=1||k<.1+j*.3)continue;
+  const nm2=mafCount(),kv=k;k=k+mafLead();   /* from here on k is the Mafia's own clock: they do not stop for the pause */
+  for(let j=0;j<nm2;j++){const a=ramp(k,.1+j*.3,hit-.2),b=ramp(k,hit+1.1+j*.2,hit+3.6);if(b>=1||k<.1+j*.3)continue;
     const st=!j&&k>hit-.7&&k<hit+.45;   /* the first one in does it: the knife, seen from behind */
     P.push({name:'mafia',dir:b>0?'front':'back',x:st?lerp(98+(nm2>1?-12:0),98,ease(ramp(k,hit-.7,hit-.3))):98+(nm2>1?(j?12:-12):0),y:b>0?lerp(156,236,b):st?lerp(156,150,ease(ramp(k,hit-.7,hit-.3))):lerp(236,156,ease(a)),t,pose:st?'stab':null,step:st?clamp(Math.floor((k-hit+.7)/1.15*9),0,8):undefined,walk:!st&&((a>0&&a<1)||b>0),tint:SHADOW_TINT,alpha:b>0?1-ramp(b,.6,1):ramp(k,.1+j*.3,.5+j*.3),phase:j*300});}
+  k=kv;
   if(heal&&k>7.4&&!N.self){const a=ease(ramp(k,7.4,9.4)),kn=a>=1&&k<11;P.push({name:'doctor',dir:kn?'left':'back',x:lerp(98,116,a),y:lerp(236,144,a),t,walk:a<1,pose:kn?'bend':null,alpha:ramp(k,7.4,7.9),doc:true});}
   return P;}
 
