@@ -1059,7 +1059,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131732'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131734'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1850,7 +1850,7 @@ scenes.cabin={
     fireAcc+=dt;while(fireAcc>.06){stepFire();fireAcc-=.06;}
     {const J=joyVec();   /* the joystick */
       if(CAB.state==='bed'){if(!J){CAB.held=0;CAB.relax=true;}else if(CAB.relax){CAB.held=(CAB.held||0)+dt;}}   /* asleep: let go of the stick, then hold it half a second to wake (his call) */
-      if(J&&(CAB.state!=='bed'||(CAB.relax&&CAB.held>=.5))){if(CAB.state==='bed'){const s=bedIn();CAB.state='stand';CAB.x=s[0];CAB.y=s[1];CAB.dir='front';CAB.bedArm=false;CAB.held=0;}   /* you wake up, still under the quilt */
+      if(J&&(CAB.state!=='bed'||(CAB.relax&&CAB.held>=.3))){if(CAB.state==='bed'){const s=bedIn();CAB.state='stand';CAB.x=s[0];CAB.y=s[1];CAB.dir='front';CAB.bedArm=false;CAB.held=0;}   /* you wake up, still under the quilt */
         if(CAB.state==='stand'){CAB.tgt=null;CAB.path=null;CAB.after=null;const[nx,ny]=joyStep(CAB.x,CAB.y,J,62*Math.min(1,.35+J.m)*dt,(x,y)=>canStand(x,y,true)&&y<=193),moved=Math.hypot(nx-CAB.x,ny-CAB.y)>.01;
           CAB.x=nx;CAB.y=ny;CAB.dir=dirFrom(J.x,J.y);CAB.walk=moved;CAB.joy=true;if(moved)footstep(CAB,dt,'wood');
           const s=bedIn(),d=Math.hypot(CAB.x-s[0],CAB.y-s[1]);if(d>18)CAB.bedArm=true;
@@ -1943,7 +1943,7 @@ let HOLD=null;
 const JOY={on:false,x:0,y:0,m:0,id:null};
 function joyVec(){return JOY.on&&JOY.m>.18?JOY:null;}
 /* the stick as pixel art (his call): a 26 x 26 px base and a 12 x 12 px knob, shown 5x (made a bit bigger, his call). Christmas: red rims */
-function joyArt(){const P=5,col=XMAS?{o:'#fff4f4',f:'#1f2b57',s:'#18214a',a:'#ffffff',ko:'#c9505c'}:{o:'#ffffff',f:'#1f2b57',s:'#18214a',a:'#ffffff',ko:'#c58a4a'};   /* dark navy with a thin light rim (his call) */
+function joyArt(){const P=5,col=XMAS?{o:'#5a6fb0',f:'#1f2b57',s:'#18214a',a:'#5a6fb0',ko:'#c9505c'}:{o:'#5a6fb0',f:'#1f2b57',s:'#18214a',a:'#5a6fb0',ko:'#c58a4a'};   /* dark navy with a thin light rim (his call) */
   const disc=(n,fn)=>{const c=mk(n,n),x=c.getContext('2d'),m=(n-1)/2,R=n/2-.15;for(let y=0;y<n;y++)for(let i=0;i<n;i++){const d=Math.hypot(i-m,y-m),k=fn(d,R,i-m,y-m);if(k){x.fillStyle=k;x.fillRect(i,y,1,1);}}return c;};
   const base=disc(26,(d,R,dx,dy)=>d>R?null:d>R-1?col.o:Math.hypot(dx,dy+1.4)>R-1?col.s:col.f),bx=base.getContext('2d');
   bx.fillStyle=col.a;for(const[cx,cy,ux,uy]of[[12.5,5,0,1],[12.5,20,0,-1],[5,12.5,1,0],[20,12.5,-1,0]])for(let k=0;k<3;k++)for(let w=-k;w<=k;w++){   /* four little arrows */
@@ -3452,7 +3452,7 @@ scenes.town={hud:'#townHud',
     for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.remote&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
     {const J=joyVec();   /* the joystick: you walk the way it is pushed; push into a door to go through it */
       const asleep=m.seat&&m.seat.k==='bed'&&!m.seat.out;if(asleep){if(!J){m.held=0;m.relax=true;}else if(m.relax)m.held=(m.held||0)+dt;}   /* asleep: let go, then hold the stick half a second to wake */
-      if(J&&!m.ko&&!WL.fading&&(!asleep||(m.relax&&m.held>=.5))){if(asleep&&m.seat.t>=wlSeat('bed',m).dur){const s=wlSeat('bed',m).sit;m.seat=null;m.x=s[0];m.y=s[1];m.dir='front';m.bedArm=false;m.held=0;}   /* wake up under the quilt */
+      if(J&&!m.ko&&!WL.fading&&(!asleep||(m.relax&&m.held>=.3))){if(asleep&&m.seat.t>=wlSeat('bed',m).dur){const s=wlSeat('bed',m).sit;m.seat=null;m.x=s[0];m.y=s[1];m.dir='front';m.bedArm=false;m.held=0;}   /* wake up under the quilt */
         if(m.seat)wlUp(m);else if(!m.act||m.act.k!=='punch'){m.path=[];m.todo=null;m.act=null;WL.sel=null;wlMenu();
           const[nx,ny]=joyStep(m.x,m.y,J,76*Math.min(1,.35+J.m)*dt,(x,y)=>m.loc>=0?canStand(x,y,true):townOk(x,y)),moved=Math.hypot(nx-m.x,ny-m.y)>.01;
           m.x=nx;m.y=ny;m.dir=dirFrom(J.x,J.y);m.walk=moved;if(moved)footstep(m,dt,m.loc<0?groundAt(m.x,m.y):'wood');
