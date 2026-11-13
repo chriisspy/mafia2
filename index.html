@@ -1019,7 +1019,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131450'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131456'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1064,6 +1064,24 @@ const VOTE_WASH='rgba(6,14,72,.4)';
 let patchDim=null; // set to the night's wash while it is on, so a redrawn post is not brighter than the ground round it
 function patch(img,r){const w=r[2]-r[0],h=r[3]-r[1];lx.drawImage(img,r[0],r[1],w,h,X(r[0]),Y(r[1]),w,h);if(patchDim){lx.fillStyle=patchDim;lx.fillRect(X(r[0]),Y(r[1]),w,h);}} // redraw a bit of the art on top
 const noise=(t,s)=>Math.sin(t*.011+s)*.5+Math.sin(t*.027+s*2.3)*.3+Math.sin(t*.053+s*5.1)*.2;
+/* CHRISTMAS LIGHTS ON THE HUTS (13 Nov, his call): the cross over every door glows, and the little red, green, blue
+   and gold bulbs on the strings twinkle, each in its own time. Which pixels are lights (and which are walls or roofs)
+   was worked out once from his art by tools/find_xmas_lights.py -> assets/xmas/lights.json. Night only. The glows
+   are small pre-drawn sprites added on top ('lighter'), so a whole town of bulbs costs almost nothing. */
+let XL=null;const XGLOW={},XCOL={r:['#ff7a7a','255,90,90'],g:['#8dff9a','90,255,120'],b:['#8fc4ff','110,170,255'],y:['#ffe27a','255,220,110'],c:['#fff6cf','255,214,130']};
+function xGlow(rgb,r){const k=rgb+'|'+r;if(XGLOW[k])return XGLOW[k];const c=mk(2*r+1,2*r+1),x=c.getContext('2d');glowOn(x,r+.5,r+.5,r,rgb,1);return XGLOW[k]=c;}
+function xmasLights(t,dark,darkK){if(!XMAS||!XL||dayMode)return;lx.save();lx.globalCompositeOperation='lighter';
+  TOWN.cabins.forEach((cb,ci)=>{const L=XL[ci===0&&(scene===scenes.home||scene===scenes.lobby)?1:ci];if(!L)return;   /* the menu shows hut 1 in spot 0 (homeHut) */const ox=cb.cx+CABIN_FRAME.dx,oy=cb.top+CABIN_FRAME.dy,sx=X(ox),sy=Y(oy);
+    if(sx>cam.lw+10||sy>cam.lh+10||sx+CABIN_FRAME.w<-10||sy+CABIN_FRAME.h<-10)return;
+    const off=ci===dark?Math.min(...(darkK&&darkK.length?darkK:[1])):1;if(off<=0)return;
+    let cx=0,cy=0,cn=0;const pulse=.82+.18*Math.sin(t*.0021+ci*1.3);
+    L.forEach(([x,y,k],i)=>{if(k==='c'){cx+=x;cy+=y;cn++;return;}
+      const on=Math.sin(t*.0017*(1+(i%4)*.23)+i*2.1+ci)>-.35;if(!on)return;
+      lx.globalAlpha=.55*off;lx.drawImage(xGlow(XCOL[k][1],4),sx+x-4,sy+y-4);
+      lx.globalAlpha=off;lx.globalCompositeOperation='source-over';lx.fillStyle=XCOL[k][0];lx.fillRect(sx+x,sy+y,1,1);lx.globalCompositeOperation='lighter';});
+    if(cn){lx.globalAlpha=.5*pulse*off;lx.drawImage(xGlow(XCOL.c[1],14),Math.round(sx+cx/cn-14),Math.round(sy+cy/cn-14));
+      lx.globalAlpha=off;lx.globalCompositeOperation='source-over';lx.fillStyle=XCOL.c[0];L.forEach(([x,y,k])=>{if(k==='c')lx.fillRect(sx+x,sy+y,1,1);});lx.globalCompositeOperation='lighter';}});
+  lx.restore();}
 function glowOn(c,x,y,r,col,a){if(r<=0||a<=0)return;const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);c.fillStyle=g;c.fillRect(x-r,y-r,2*r,2*r);}
 // lights: [x,y,radius,"r,g,b",alpha,seed]; with a mask they only land on the room, never the void outside
 function lights(list,t,mask){
@@ -1314,6 +1332,7 @@ function townLights(t,o={},part){ // part 'win' = only the cabin windows (draw b
     if(red>0&&dark>=0)TOWN.cabins[dark].win.forEach(([x,y])=>L.push([x,y,26,tone,.9*red,0]));
   }
   lights(L,t);
+  if(part!=='win')xmasLights(t,dark,darkK);
   if(part==='rest')return;
   lx.save();lx.globalCompositeOperation='lighter';
   TOWN.cabins.forEach((c,ci)=>c.win.forEach(([x,y],i)=>{const k=ci===dark?(darkK[i]??1):1;if(k<=0)return;lx.fillStyle=`rgba(255,160,60,${.38*dim*k})`;winFill(x,y,i);}));
@@ -3913,6 +3932,7 @@ let OBJ_META={};
   const FINAL=Object.fromEntries(['beanie','brownhair','ponytail','curly','farmer','raincoat','redcap','mafia','doctor','jester','detective','batman','alfa','golf','ferrari','bape','fisher','sheik'].map(n=>[n,'assets/final/'+n]));
   const names=[...SKINS.map(s=>s.id),'mafia','doctor','jester','detective'].filter(n=>!PL[n]&&!FINAL[n]);
   OBJ_META=await (await fetch('assets/room-objects/objects.json?v='+BUILD)).json();
+  if(XMAS)fetch('assets/xmas/lights.json?v='+BUILD).then(r=>r.json()).then(j=>{XL=j;}).catch(()=>{});
   const jobs=[load('townBase',XMAS?'assets/xmas/night.png':'assets/town4/night.png'),load('townDay',XMAS?'assets/xmas/day.png':'assets/town4/day.png'),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png'),load('cabinOpen','assets/case/cabin-open.png')];
   ROOMS.forEach(r=>{if(!r.base)load('room/'+r.id,r.art).catch(()=>{});});   /* the themed rooms come in behind the scenes */
   for(const n of Object.keys(OBJ_META))jobs.push(load('obj/'+n,`assets/room-objects/${n}.png`));
