@@ -60,16 +60,27 @@ for spot in range(10):
                             if best is None or sc > best[0]: best = (sc, [(int(y), int(x)) for y, x in zip(iy, ix) if v[y, x] > .6])
     cross = best[1] if best else []
     L += [[x, y, 'c'] for y, x in cross]
-    # THE BULBS: tiny, strongly coloured, much brighter than what is round them
+    # THE BULBS (v2, his note: bits of wood were glowing): only true red, green and blue bulbs. No gold/yellow ones
+    # (the wood highlights are gold). A bulb is 1-2 pixels, very strongly coloured, and brighter than every pixel
+    # touching it.
     for pts in comps:
-        ys = [p[0] for p in pts]; xs = [p[1] for p in pts]; hh = np.mean([hue[p] for p in pts]); sz = len(pts); sv = np.mean([s[p] for p in pts])
-        if sz <= 3 and sv > .5:
-            k = 'r' if (hh < 22 or hh > 330) else 'g' if 70 <= hh <= 170 else 'b' if 180 <= hh <= 260 else 'y' if 30 <= hh <= 62 else None
-            if k and not any(abs(p[1] - xs[0]) <= 2 and abs(p[0] - ys[0]) <= 2 for p in cross): L.append([int(round(np.mean(xs))), int(round(np.mean(ys))), k])
+        if len(pts) > 2: continue
+        ys = [p[0] for p in pts]; xs = [p[1] for p in pts]; hh = np.mean([hue[p] for p in pts]); sv = np.mean([s[p] for p in pts]); vv = np.mean([v[p] for p in pts])
+        k = 'r' if (hh < 10 or hh > 345) and sv > .6 else 'g' if 95 <= hh <= 165 and sv > .5 else 'b' if 195 <= hh <= 250 and sv > .45 else None
+        if not k or vv < .78: continue
+        ring = [(y + dy, x + dx) for (y, x) in pts for dy in (-1, 0, 1) for dx in (-1, 0, 1) if (y + dy, x + dx) not in pts and 0 <= y + dy < H and 0 <= x + dx < W]
+        if any(v[q] > vv - .12 for q in ring if op[q]): continue
+        if any(abs(p[1] - xs[0]) <= 2 and abs(p[0] - ys[0]) <= 2 for p in cross): continue
+        L.append([int(round(np.mean(xs))), int(round(np.mean(ys))), k])
+    # a real string of lights changes colour bulb to bulb: keep a bulb only if a bulb of ANOTHER colour sits close to it
+    # (holly berries and red bows are red next to red, so they drop out)
+    B = [q for q in L if q[2] != 'c']
+    keep = [q for q in B if any(o is not q and o[2] != q[2] and abs(o[0] - q[0]) <= 7 and abs(o[1] - q[1]) <= 7 for o in B)]
+    L = [q for q in L if q[2] == 'c'] + keep
     out[spot] = L
     if '--sheet' in sys.argv:
         m = im.copy(); px = m.load()
-        for x, y, k in L: px[x, y] = (255, 0, 255, 255) if k == 'c' else (255, 255, 255, 255)
+        for x, y, k in L: px[x, y] = (255, 0, 255, 255)
         sheet.append(m)
     print(spot, sum(1 for q in L if q[2] == 'c'), 'cross px,', sum(1 for q in L if q[2] != 'c'), 'bulbs')
 json.dump(out, open('assets/xmas/lights.json', 'w'))

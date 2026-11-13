@@ -1019,7 +1019,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131456'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131458'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1077,10 +1077,10 @@ function xmasLights(t,dark,darkK){if(!XMAS||!XL||dayMode)return;lx.save();lx.glo
     let cx=0,cy=0,cn=0;const pulse=.82+.18*Math.sin(t*.0021+ci*1.3);
     L.forEach(([x,y,k],i)=>{if(k==='c'){cx+=x;cy+=y;cn++;return;}
       const on=Math.sin(t*.0017*(1+(i%4)*.23)+i*2.1+ci)>-.35;if(!on)return;
-      lx.globalAlpha=.55*off;lx.drawImage(xGlow(XCOL[k][1],4),sx+x-4,sy+y-4);
-      lx.globalAlpha=off;lx.globalCompositeOperation='source-over';lx.fillStyle=XCOL[k][0];lx.fillRect(sx+x,sy+y,1,1);lx.globalCompositeOperation='lighter';});
-    if(cn){lx.globalAlpha=.5*pulse*off;lx.drawImage(xGlow(XCOL.c[1],14),Math.round(sx+cx/cn-14),Math.round(sy+cy/cn-14));
-      lx.globalAlpha=off;lx.globalCompositeOperation='source-over';lx.fillStyle=XCOL.c[0];L.forEach(([x,y,k])=>{if(k==='c')lx.fillRect(sx+x,sy+y,1,1);});lx.globalCompositeOperation='lighter';}});
+      lx.globalAlpha=.16*off;lx.drawImage(xGlow(XCOL[k][1],3),sx+x-3,sy+y-3);   /* his note: way less glow */
+      lx.globalAlpha=.7*off;lx.globalCompositeOperation='source-over';lx.fillStyle=XCOL[k][0];lx.fillRect(sx+x,sy+y,1,1);lx.globalCompositeOperation='lighter';});
+    if(cn){lx.globalAlpha=.13*pulse*off;lx.drawImage(xGlow(XCOL.c[1],9),Math.round(sx+cx/cn-9),Math.round(sy+cy/cn-9));
+      lx.globalAlpha=.45*off;lx.globalCompositeOperation='source-over';lx.fillStyle=XCOL.c[0];L.forEach(([x,y,k])=>{if(k==='c')lx.fillRect(sx+x,sy+y,1,1);});lx.globalCompositeOperation='lighter';}});
   lx.restore();}
 function glowOn(c,x,y,r,col,a){if(r<=0||a<=0)return;const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);c.fillStyle=g;c.fillRect(x-r,y-r,2*r,2*r);}
 // lights: [x,y,radius,"r,g,b",alpha,seed]; with a mask they only land on the room, never the void outside
