@@ -1073,7 +1073,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131756'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131757'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3007,7 +3007,8 @@ function ckLoop(now){CK.raf=requestAnimationFrame(ckLoop);let dt=Math.min(.033,(
   x.fillStyle=TH.grid;const off=CK.scroll%22;for(let gx=-off;gx<W0;gx+=22)x.fillRect(Math.round(gx),0,1,H0);for(let gy=22;gy<H0;gy+=22)x.fillRect(0,gy,W0,1);
   if(CK.state==='play'&&(speedK>1.25||CK.boost>0)){x.fillStyle=CK.boost>0?'rgba(34,211,238,.3)':`rgba(240,239,245,${Math.min(.14,(speedK-1.25)*.3)})`;for(let i=0;i<7;i++){const ly=(i*51+((CK.t*37)%H0))%H0,lx2=W0-((CK.scroll*1.7+i*111)%(W0+60));x.fillRect(Math.round(lx2),Math.round(ly),30,1);}}
   // the score, huge and faint in the background, kicking on every point
-  ckText(x,CK.score,W0/2,14-CK.pulse*4,6+(CK.pulse>.5?1:0),'#f0eff5',.14+CK.pulse*.45);
+  if(CK.theme==='sunny'){const sy=14-CK.pulse*3,ss=4+(CK.pulse>.5?1:0);for(const[ox,oy]of[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]])ckText(x,CK.score,W0/2+ox,sy+oy,ss,'#000000',1);ckText(x,CK.score,W0/2,sy,ss,'#ffffff',1);}   /* Sunny Day: a white score with a black outline, a bit smaller (his call) */
+  else ckText(x,CK.score,W0/2,14-CK.pulse*4,6+(CK.pulse>.5?1:0),'#f0eff5',.14+CK.pulse*.45);
   // far cabins, then the towers (wooden posts with a lit cap on each side of the gap)
   ckBack(x,W0,H0);
   for(const p of CK.pipes){const px0=Math.round(p.x),ty=Math.round(p.top),by0=Math.round(p.top+p.gap),fl=p.flash;
