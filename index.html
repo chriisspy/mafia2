@@ -1024,7 +1024,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11131530'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11131538'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3100,10 +3100,13 @@ function behindCabin(x,y){for(let ci=0;ci<TOWN.cabins.length;ci++){const cb=TOWN
     for(const dy of[-3,-12,-22]){const px=Math.round(x-cb.cx-CABIN_FRAME.dx),py=Math.round(y+dy-cb.top-CABIN_FRAME.dy);if(px>=0&&py>=0&&px<m.width&&py<m.height&&m.data[(py*m.width+px)*4+3]>0)return ci;}}return -1;}
 /* where each post and lamp stands: the middle of its foot, and its bottom row */
 const POST_FEET=[[233,288],[328,288],[233,493],[328,493],[179,348],[383,348],[179,420],[383,420],[163,347],[398,347],[164,463],[397,463]];
-function buildTownGrid(){TOWNG=new Uint8Array(TGW*TGH);   // you can walk anywhere but through a hut's floor or the wheel (puddles are fine)
+function buildTownGrid(){TOWNG=new Uint8Array(TGW*TGH);
+  /* Christmas: the trees and bushes painted on his ground, white in assets/xmas/block.png (tools/find_xmas_trees.py, he can touch it up), are solid */
+  let BM=null;if(XMAS&&IMG.xmasBlock){const im=IMG.xmasBlock,c=mk(im.width,im.height),x=c.getContext('2d');x.drawImage(im,0,0);BM={d:x.getImageData(0,0,im.width,im.height).data,w:im.width,h:im.height};}   // you can walk anywhere but through a hut's floor or the wheel (puddles are fine)
   for(let gy=0;gy<TGH;gy++)for(let gx=0;gx<TGW;gx++){const px=gx*TG+3,py=gy*TG+3;let ok=px>18&&px<542&&py>58&&py<736;
     if(ok&&TOWN.cabins.some(cb=>px>cb.cx-50&&px<cb.cx+50&&py>cb.top+CABIN_BACK&&py<cb.top+31))ok=false;               // the floor of a hut
-    if(ok&&((px-WHEEL_AT[0])/14)**2+((py-WHEEL_AT[1])/8)**2<1)ok=false;                                              // the wheel's stand
+    if(ok&&((px-WHEEL_AT[0])/14)**2+((py-WHEEL_AT[1])/8)**2<1)ok=false;
+    if(ok&&BM&&px<BM.w&&py<BM.h&&BM.d[(py*BM.w+px)*4]>127)ok=false;                                              // the wheel's stand
     if(ok&&POST_FEET.some(([fx,fy])=>Math.abs(px-fx)<=7&&py>=fy-7&&py<=fy+2))ok=false;                                  /* the foot of a post or lamp: you can stand behind it, not in it */
     TOWNG[gy*TGW+gx]=ok?1:0;}}
 const townOk=(x,y)=>{const gx=Math.floor(x/TG),gy=Math.floor(y/TG);return gx>=0&&gy>=0&&gx<TGW&&gy<TGH&&!!TOWNG[gy*TGW+gx];};
@@ -3977,7 +3980,7 @@ let OBJ_META={};
   const names=[...SKINS.map(s=>s.id),'mafia','doctor','jester','detective'].filter(n=>!PL[n]&&!FINAL[n]);
   OBJ_META=await (await fetch('assets/room-objects/objects.json?v='+BUILD)).json();
   if(XMAS)fetch('assets/xmas/lights.json?v='+BUILD).then(r=>r.json()).then(j=>{XL=j;}).catch(()=>{});
-  const jobs=[load('townBase',XMAS?'assets/xmas/night.png':'assets/town4/night.png'),load('townDay',XMAS?'assets/xmas/day.png':'assets/town4/day.png'),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('armMask','assets/room-objects/armchair-arm-cover.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png'),load('cabinOpen','assets/case/cabin-open.png')];
+  const jobs=[load('townBase',XMAS?'assets/xmas/night.png':'assets/town4/night.png'),load('townDay',XMAS?'assets/xmas/day.png':'assets/town4/day.png'),...(XMAS?[load('xmasBlock','assets/xmas/block.png')]:[]),load('room','assets/room-objects/room-empty.png'),load('quilt','assets/room-objects/bed-quilt.png'),load('armMask','assets/room-objects/armchair-arm-cover.png'),load('chairback','assets/room-objects/chair-backing.png'),load('log','assets/final/log.png'),load('caseSheet','assets/case/open.png'),load('cabinOpen','assets/case/cabin-open.png')];
   ROOMS.forEach(r=>{if(!r.base)load('room/'+r.id,r.art).catch(()=>{});});   /* the themed rooms come in behind the scenes */
   for(const n of Object.keys(OBJ_META))jobs.push(load('obj/'+n,`assets/room-objects/${n}.png`));
   for(const n of names)for(const d of['','back/','side/'])jobs.push(load(d+n,`assets/sprites/${d}${n}.png`));
