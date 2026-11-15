@@ -51,15 +51,30 @@ def wipe(a):
     pm = is_par(a); a[pm] = 0
     nv = is_navy(a); solid = (a[..., 3] > 0) & ~nv
     a[nv & grow(pm, 2) & ~grow(solid)] = 0
+    return a, pm
+
+def fill_holes(a, pm):
+    """where an old parrot sat INSIDE his body and the new one does not cover it: fill it from the pixels round it,
+    so no parrot-shaped hole is left in him (his catch, 15 Nov)"""
+    for _ in range(4):
+        hole = pm & (a[..., 3] == 0)
+        if not hole.any(): break
+        for y, x in zip(*np.nonzero(hole)):
+            nb = [a[y + dy, x + dx] for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)) if 0 <= y + dy < a.shape[0] and 0 <= x + dx < a.shape[1] and a[y + dy, x + dx, 3] > 0 and not is_navy(a[y + dy:y + dy + 1, x + dx:x + dx + 1])[0, 0]]
+            if len(nb) >= 2: a[y, x] = nb[0]
     return a
 
-def pin(frame, base, pmask, lift=0):
+def pin(frame, base, pmask, lift=0, side=False):
     P = 6; H, W = frame.shape[:2]; a = np.zeros((H + P, W + 2 * P, 4), np.uint8); a[P:, P:P + W] = frame    # room above and to the sides
-    a = wipe(a)
-    dy, dx = find_head(frame, base, pmask); dy += P; dx += P
+    a, old = wipe(a)
+    oy, ox = np.nonzero(old); py, px = np.nonzero(is_par(base))
+    if side and len(oy) >= 8:      # side views (one parrot): put his parrot where PixelLab's parrot is, so it stays on the shoulder when he bends
+        dy, dx = int(round(oy.mean() - py.mean())), int(round(ox.mean() - px.mean()))
+    else:
+        dy, dx = find_head(frame, base, pmask); dy += P; dx += P
     ys, xs = np.nonzero(pmask); ty, tx = ys + dy - lift, xs + dx; ok = (ty >= 0) & (ty < a.shape[0]) & (tx >= 0) & (tx < a.shape[1])
     a[ty[ok], tx[ok]] = base[ys[ok], xs[ok]]
-    return a, P
+    return fill_holes(a, old), P
 
 def view_of(k):
     for v in ('front', 'back', 'right', 'left'):
@@ -68,7 +83,7 @@ def view_of(k):
 
 def lying_parrots(dead, front, pmask):
     """take the parrots off his dead pose and lay his two front-view parrots on top of him, on their sides"""
-    a = wipe(dead.copy())
+    a, _ = wipe(dead.copy())
     pc = is_par(front); ys, xs = np.nonzero(pc); cut = []
     for side in (xs < front.shape[1] / 2, xs >= front.shape[1] / 2):   # each parrot: its own colours, with a fresh navy outline all round
         y0, y1, x0, x1 = ys[side].min(), ys[side].max() + 1, xs[side].min(), xs[side].max() + 1
@@ -96,7 +111,7 @@ for k in sorted(meta):
         v = view_of(k)
         if not v: continue
         lift = JUMP_LIFT[min(int(k.rsplit('_', 1)[1]), len(JUMP_LIFT) - 1)] if k.startswith('scared_') else 0
-        out, P = pin(fr, base[v], pm[v], lift)
+        out, P = pin(fr, base[v], pm[v], lift, side=v in ('right', 'left'))
     ys, xs = np.nonzero(out[..., 3] > 0); x0, x1, y0 = xs.min(), xs.max() + 1, ys.min()
     out = out[y0:, x0:x1]; Image.fromarray(out).save(f)
     shift = P - x0 if k != 'dead' else -x0
