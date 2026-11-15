@@ -12,6 +12,11 @@ from PIL import Image
 NAME = 'matias'; ROOT = f'assets/final/{NAME}/'; NAVY = (1, 3, 46)
 PARROT = {(0x6a, 0xc0, 0x54), (0x34, 0x7f, 0x61), (0x01, 0x59, 0x57), (0x32, 0x46, 0x33), (0xd3, 0x33, 0x3c), (0xad, 0x2f, 0x2d),
           (0x28, 0x4c, 0x90), (0x35, 0x70, 0xae), (0x34, 0x56, 0x8f), (0xc9, 0xac, 0x3f), (0xb1, 0x4e, 0x30), (0x20, 0x1d, 0x44)}
+# his touch-ups made AFTER the PixelLab import (15 Nov: a darker beard line on the side views): pixels of his own view,
+# put on every frame of that view at the head's place, but only where the frame still has the old skin there
+SHEET_FIX = {'right': [(14, 15, '#b5755e'), (15, 15, '#48272e'), (15, 16, '#b5755e'), (15, 17, '#b5755e')],
+             'left': [(14, 6, '#b5755e'), (15, 4, '#b5755e'), (15, 5, '#b5755e'), (15, 6, '#48272e')]}
+SKIN = {(0xcf, 0x88, 0x6a), (0xe7, 0xa4, 0x87)}
 HEAD_ROWS = 13                     # rows of his own view used to find where his head is in a frame
 JUMP_LIFT = [0, 1, 3, 4, 3, 1, 0]  # scared_* frames: how far the parrots rise above his shoulders (a beat behind him)
 
@@ -64,6 +69,19 @@ def fill_holes(a, pm):
             if len(nb) >= 2: a[y, x] = nb[0]
     return a
 
+def touch_up(a, frame, base, pmask, v, P):
+    fix = SHEET_FIX.get(v)
+    if not fix: return a
+    dy, dx = find_head(frame, base, pmask); dy += P; dx += P
+    on_skin = lambda oy, ox: sum(1 for y, x, _ in fix if 0 <= y + oy < a.shape[0] and 0 <= x + ox < a.shape[1] and tuple(int(c) for c in a[y + oy, x + ox, :3]) in SKIN)
+    best = max(((dy + ey, dx + ex) for ey in (-2, -1, 0, 1, 2) for ex in (-2, -1, 0, 1, 2)), key=lambda o: (on_skin(*o), -abs(o[0] - dy) - abs(o[1] - dx)))
+    if on_skin(*best) < 3: return a           # his head is too turned in this frame to place it safely
+    for y, x, col in fix:
+        ty, tx = y + best[0], x + best[1]
+        if 0 <= ty < a.shape[0] and 0 <= tx < a.shape[1] and tuple(int(c) for c in a[ty, tx, :3]) in SKIN:
+            a[ty, tx] = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), 255)
+    return a
+
 def pin(frame, base, pmask, lift=0, side=False):
     P = 6; H, W = frame.shape[:2]; a = np.zeros((H + P, W + 2 * P, 4), np.uint8); a[P:, P:P + W] = frame    # room above and to the sides
     a, old = wipe(a)
@@ -112,6 +130,7 @@ for k in sorted(meta):
         if not v: continue
         lift = JUMP_LIFT[min(int(k.rsplit('_', 1)[1]), len(JUMP_LIFT) - 1)] if k.startswith('scared_') else 0
         out, P = pin(fr, base[v], pm[v], lift, side=v in ('right', 'left'))
+        out = touch_up(out, fr, base[v], pm[v], v, P)
     ys, xs = np.nonzero(out[..., 3] > 0); x0, x1, y0 = xs.min(), xs.max() + 1, ys.min()
     out = out[y0:, x0:x1]; Image.fromarray(out).save(f)
     shift = P - x0 if k != 'dead' else -x0
