@@ -1095,7 +1095,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11162148'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11162214'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2055,7 +2055,7 @@ function paintNight(){
   const names=NIGHT.picks.map(i=>PEOPLE[i].n).join(' & ');
   const mm=GAME.on&&viewRole==='mafia'?mafMates():[],mDiff=mm.filter(m=>m.p>=0&&m.p!==NIGHT.picks[0]),mWait=mm.filter(m=>m.p<0),mSet=mm.find(m=>m.p>=0);
   if(mm.length)$('#rline').textContent=!NIGHT.locked?(mSet?`${mSet.n} picked ${PEOPLE[mSet.p].n}. Pick the same or nobody dies.`:'Pick a target. All the Mafia must pick the same person.')
-    :mDiff.length?`${mDiff[0].n} picked ${PEOPLE[mDiff[0].p].n}, you picked ${names}. Nobody dies.`:mWait.length?`Locked in: ${names}. ${mWait.map(m=>m.n).join(' and ')} must pick the same.`:`Locked in: ${names}. You all agree.`;
+    :mDiff.length?`${mDiff[0].n} picked ${PEOPLE[mDiff[0].p].n}, you picked ${names}. Tap ${PEOPLE[mDiff[0].p].n} to match.`:mWait.length?`Locked in: ${names}. ${mWait.map(m=>m.n).join(' and ')} must pick the same.`:`Locked in: ${names}. You all agree.`;
   else $('#rline').textContent=NIGHT.locked?(Ro.watch?(GAME.on?`Watching ${names}. You find out at dawn.`:`Watched ${names}. Check your notes.`):`Locked in: ${names}. Sit tight.`):GAME.on&&viewRole==='mafia'?'Pick tonight\'s target.':Ro.line;
   $('#subtabs').style.display=Ro.chat?'flex':'none';
   $('#restPane').style.display=Ro.pick?'none':'block';
@@ -2069,7 +2069,8 @@ function paintNight(){
     document.querySelectorAll('#nightCards .card').forEach(c=>{const i=+c.dataset.i;c.querySelector('.stamp').textContent=Ro.pick;
       c.classList.toggle('sel',NIGHT.picks.includes(i));
       if(viewRole==='mafia'&&NIGHT.mate===i)c.insertAdjacentHTML('beforeend','<span class="mate">'+esc(NIGHT.mateN||'Leo')+ic('check')+'</span>');
-      c.onclick=()=>{if(NIGHT.locked)return;const max=Ro.max||1;
+      c.onclick=()=>{if(NIGHT.locked){if(GAME.on&&viewRole==='mafia'&&!NIGHT.picks.includes(i)){NIGHT.picks=[i];paintNight();gameAct();sfx('lock');}return;}   /* the Mafia may move their lock, so they can end up on the same person (16 Nov) */
+        const max=Ro.max||1;
         if(NIGHT.picks.includes(i))NIGHT.picks=NIGHT.picks.filter(x=>x!==i);else{NIGHT.picks.push(i);if(NIGHT.picks.length>max)NIGHT.picks.shift();}paintNight();};});
     const lb=$('#lockBtn');lb.disabled=(!NIGHT.picks.length||NIGHT.locked)&&!NIGHT.notes;
     lb.innerHTML=NIGHT.notes?ic('notes')+'See my notes':NIGHT.locked?ic('lock')+`${Ro.lock}: ${names}`:!NIGHT.picks.length?(Ro.max>1?'Pick up to 2 people':'Pick someone'):`${Ro.watch?ic('binoculars'):''}Lock in: ${Ro.lock} ${names}`;
@@ -2264,7 +2265,7 @@ function mafWalkers(){if(!GAME.on)return[{cab:TOWN.cabins[CABIN_OF[0]],ci:CABIN_
    (the shadows walk out of empty cabins), so it tells the town nothing about who is who. */
 function planQuiet(){const H=seedH();N.qv=N.forceQ||(H%2?'bin':'argue');
   Object.assign(N,{quiet:true,heal:false,saved:false,guard:-1,self:false,variant:null,inside:false,red:0,wet:raining,holds:[],tStab:null,pillow:false,third:false});
-  if(N.qv==='bin'){const live=PEOPLE.map((_,i)=>i).filter(i=>!V.dead.has(i)&&!(GAME.watcher&&!i)),v=live.length?live[(H>>2)%live.length]:0;
+  if(N.qv==='bin'){const live=PEOPLE.map((_,i)=>i).filter(i=>!V.dead.has(i)&&!(GAME.watcher&&!i)),v=live.length?live[(H>>>2)%live.length]:0;   /* >>> not >> (16 Nov): a big seed went negative, picked nobody, and the film threw, leaving the phone in its cabin */
     N.victim=v;N.vci=CABIN_OF[v];N.vic=TOWN.cabins[N.vci];PLAN.home();N.kind='bin';N.inside=false;N.pillow=false;const TA=N.TA,two=N.walkers.length>1;N.tFlee=TA+3.2;
     N.shots=[[.5,'Night '+NN()+'.'],[1.7,'The town is asleep…'],[3.0,'…but not everyone.'],[N.tMeet-.4,two?'They meet in the square.':'A shadow crosses the square.'],[TA-.6,'Quiet. Nearly there.'],
       [TA+1.2,'The cat jumps.'],[TA+1.9,'CRASH!','bad'],[TA+3,'Lights come on, all down the street.'],[N.tFlee+.4,two?'They run for it.':'The shadow runs for it.','good'],[N.tFlee+3,'Nobody dies tonight.','good']];
@@ -3816,7 +3817,11 @@ function gameSync(g){const mine=!!(g&&g.roles&&g.roles[NET.uid]),watch=!!(NET.on
   const key=g.id+'|'+g.round+'|'+g.phase;if(key===GAME.key)return;GAME.key=key;
   if(g.phase!=='film'&&!GAME.filmDone&&[scenes.night,scenes.mydeath,scenes.dawn].includes(scene))return;   // still watching the night: carry on when it ends
   gRoute(g);}
-function gRoute(g){const f={night:gNight,film:gFilm,day:gDay,vote:gVote,over:gOver}[g.phase];if(f)f(g);}
+function gRoute(g){const f={night:gNight,film:gFilm,day:gDay,vote:gVote,over:gOver}[g.phase];if(!f)return;
+  try{f(g);}catch(e){console.warn('route',g.phase,e);if(g.phase!=='film')return;   /* a night film that cannot be planned must never leave a phone behind: straight to the morning card */
+    try{const nt=g.night||{},vi=nt.victim?GAME.idx[nt.victim]:null;if(vi==null){N.quiet=true;N.qv='';quietDawn();}
+      else{Object.assign(N,{quiet:false,victim:vi,heal:!!nt.heal,guard:nt.guard&&GAME.idx[nt.guard]!=null?GAME.idx[nt.guard]:-1,kind:'home',variant:null,pillow:false,third:false});dawn();}}
+    catch(e2){console.warn('dawn',e2);go('dawn',gameDawn);}}}
 // who is who on this phone: you first, then the others in the order they joined
 function gameCast(g){const others=Object.entries(g.pl).filter(([u])=>u!==NET.uid).sort((a,b)=>a[1].o-b[1].o),me=g.pl[NET.uid]||{slot:NET.slot},my=PEOPLE[0];
   GAME.ids=[NET.uid,...others.map(([u])=>u)];GAME.idx={};GAME.ids.forEach((u,i)=>GAME.idx[u]=i);
@@ -3914,7 +3919,10 @@ function hostTick(){const g=GAME.g;if(!NET.on||!NET.players||!g||!g.roles||NET.h
   {const real=Object.keys(g.pl).filter(u=>!isBot(u));if(real.length&&!real.some(u=>NET.players[u])){GAME.empty=GAME.empty||now;if(now-GAME.empty>30000){hostDo(GAME.key+':empty',()=>gRef().remove().catch(()=>{}));return;}}else GAME.empty=0;}
   const acted=u=>{const a=GAME.acts[u];return!!(a&&a.g===g.id&&a.r===g.round&&a.pick);};
   // the bots: each makes its night pick a few seconds in (a different moment each), and votes a few seconds into its turn
-  if(g.phase==='night')for(const u of alive.filter(isBot)){const role=g.roles[u],k=+u.slice(3);if(!ROLES[role].pick||acted(u)||now<g.t0+5000+k*3500)continue;
+  if(g.phase==='night')for(const u of alive.filter(isBot)){const role=g.roles[u],k=+u.slice(3);
+    if(role==='mafia'&&acted(u)){const hp=alive.filter(x=>!isBot(x)&&g.roles[x]==='mafia'&&acted(x)).map(x=>GAME.acts[x].pick[0])[0];   /* a real Mafia moved their lock: the bot Mafia goes with them */
+      if(hp&&hp!==GAME.acts[u].pick[0]&&alive.includes(hp)&&g.roles[hp]!=='mafia'){hostDo(GAME.key+':botm:'+u+hp,()=>gRef().child('bact/'+u).set({g:g.id,r:g.round,pick:[hp],lt:now}));return;}continue;}
+    if(!ROLES[role].pick||acted(u)||now<g.t0+5000+k*3500)continue;
     const rnd=l=>l[Math.floor(Math.random()*l.length)],others=alive.filter(x=>x!==u),pool=role==='mafia'?others.filter(x=>g.roles[x]!=='mafia'):role==='doctor'?alive:others;if(!pool.length)continue;
     const mateP=role==='mafia'?alive.filter(x=>x!==u&&g.roles[x]==='mafia'&&acted(x)).map(x=>GAME.acts[x].pick[0]).find(q=>pool.includes(q)):null;   /* a bot Mafia goes along with a fellow Mafia who has already locked */
     const pick=[mateP||rnd(pool)];if(role==='detective'&&pool.length>1){const b=rnd(pool.filter(x=>x!==pick[0]));pick.push(b);}
