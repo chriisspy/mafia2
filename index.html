@@ -115,6 +115,10 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #floatX.on{display:flex;align-items:center;justify-content:center}
 #joy{position:absolute;left:14px;bottom:120px;width:130px;height:130px;z-index:8;display:none;opacity:.72;touch-action:none;pointer-events:auto;background-size:100% 100%;image-rendering:pixelated}
 #joy.on{display:block}#joy.held{opacity:.9}
+#punchBtn{position:absolute;right:22px;bottom:143px;width:84px;height:84px;z-index:8;display:none;align-items:center;justify-content:center;border:0;padding:0;background:none;touch-action:none;pointer-events:auto;cursor:pointer}
+#punchBtn::before{content:'';position:absolute;inset:0;background:var(--pb) 0 0/100% 100%;image-rendering:pixelated;opacity:.72}   /* the disc is see-through like the stick's; the fist on it is solid */
+#punchBtn img{position:relative;image-rendering:pixelated}
+#punchBtn.on{display:flex}#punchBtn.hit{animation:pbHit .22s ease-out}@keyframes pbHit{0%{transform:scale(.86)}100%{transform:scale(1)}}
 #joy i{position:absolute;left:35px;top:35px;width:60px;height:60px;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
 #turnPhone{display:none;position:fixed;inset:0;z-index:9999;background:#140c24;color:#f6dfae;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
 #turnPhone b{font-size:22px}#turnPhone small{font-size:13px;opacity:.7}
@@ -290,10 +294,21 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .tbtn.shop{background:#4a7bd0;box-shadow:inset 0 -6px 0 #2b4a8a,inset 0 3px 0 #7fa6e8,0 4px 0 #0009}
 .tbtn.coll{background:#f07ab0;box-shadow:inset 0 -6px 0 #b8457e,inset 0 3px 0 #ffb0d2,0 4px 0 #0009}
 .tbtn:active{transform:translateY(3px)}
+.tbtn.daily{flex:0 0 52px;position:relative;background:#e9b25a;box-shadow:inset 0 -6px 0 #b5651d,inset 0 3px 0 #ffe08a,0 4px 0 #0009}
+#dailyDot{display:none;position:absolute;right:-7px;top:-8px;min-width:20px;height:20px;padding:0 4px;border-radius:5px;background:#e4544f;border:2px solid #0f0b1e;color:#fff;font:700 13px/16px "Pixelify Sans";text-shadow:none;text-align:center}
+.tbtn.daily.new #dailyDot{display:block;animation:ddPop .3s ease-out}@keyframes ddPop{0%{transform:scale(.4)}100%{transform:scale(1)}}
+#dailyModal{text-align:left;padding:12px}
+.dcard{display:flex;align-items:center;gap:10px;background:#fff6df;border:3px solid var(--wood);border-radius:6px;padding:8px 10px;margin-top:8px;box-shadow:inset 0 -4px 0 #0000001a}
+.dcard .dic{flex:0 0 52px;height:52px;display:flex;align-items:center;justify-content:center;background:#ffe9a8;border:2px solid var(--wood);border-radius:5px}
+.dcard .dtx{flex:1;min-width:0}.dcard .dtx b{display:block;font-size:20px;line-height:1.1}.dcard .dtx .small:empty{display:none}
+.dcard .btn{flex:0 0 auto;min-width:104px;white-space:nowrap;--accent:#5fc46f}
+.dcard.done{background:#efe3c6}.dcard.done .dic{background:#e4d6b4}.dcard.done .dic img{opacity:.45}.dcard.done .dtx b{opacity:.55}
+.dcard.got{animation:dcGot .3s ease-out}@keyframes dcGot{0%{transform:scale(1.04)}100%{transform:scale(1)}}
+.wal.bump{animation:walBump .3s ease-out}@keyframes walBump{0%{transform:scale(1.3)}100%{transform:scale(1)}}
 #townToast{position:absolute;left:50%;top:calc(182px + env(safe-area-inset-top));transform:translateX(-50%);max-width:92%;white-space:nowrap;font-size:18px;font-weight:700;color:#fff;background:#0b0918f0;border:3px solid #f6dfae;border-radius:6px;box-shadow:0 0 0 3px #0b0918,0 5px 0 #0009;padding:4px 12px 6px;z-index:6;opacity:0;transform:translate(-50%,10px);transition:opacity .22s ease-out,transform .22s ease-out;pointer-events:none}
 #townToast.on{opacity:1;transform:translate(-50%,0)}#townToast.bad{border-color:#e4544f;color:#ffd9d6}#townToast.good{border-color:#6fd08a;color:#dcffe6}
-#wheelPop{position:absolute;transform:translate(-50%,-100%);display:none;align-items:center;gap:8px;white-space:nowrap;background:#0b0918f0;color:#fff;border:3px solid #ffd25e;border-radius:6px;box-shadow:0 0 0 3px #0b0918,0 5px 0 #0009;padding:5px 12px 6px 6px;z-index:4;font-size:18px;font-weight:700;line-height:1.1}
-#wheelPop.on{display:flex}#wheelPop img.f{width:36px;height:36px;image-rendering:pixelated}#wheelPop small{display:block;font-size:11px;font-weight:600;letter-spacing:1px;color:#ffe9a8}#wheelPop b{display:flex;align-items:center;gap:5px}
+#wheelPop,#casePop{position:absolute;transform:translate(-50%,-100%);display:none;align-items:center;gap:8px;white-space:nowrap;background:#0b0918f0;color:#fff;border:3px solid #ffd25e;border-radius:6px;box-shadow:0 0 0 3px #0b0918,0 5px 0 #0009;padding:5px 12px 6px 6px;z-index:4;font-size:18px;font-weight:700;line-height:1.1}
+#wheelPop.on,#casePop.on{display:flex}#wheelPop img.f,#casePop img.f{width:36px;height:36px;image-rendering:pixelated}#wheelPop small,#casePop small{display:block;font-size:11px;font-weight:600;letter-spacing:1px;color:#ffe9a8}#wheelPop b,#casePop b{display:flex;align-items:center;gap:5px}#casePop img.rm{border-radius:3px}
 #wheelModal{text-align:center}#wheelModal .mhead{text-align:left}
 #wheelCv{display:block;width:min(303px,78%);margin:8px auto 2px;image-rendering:pixelated}
 #wheelRes{min-height:30px;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
@@ -593,7 +608,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div class="title banner"><small id="townCode">PRACTICE TOWN</small>THE TOWN<div class="tcount" id="townCount"></div></div>
     <div id="townMenu"><button class="btn" data-a="punch" title="Punch"><i data-ic="fist" data-s="3" data-c="solo"></i></button><button class="btn" data-a="five" title="High five"><i data-ic="hand" data-s="3" data-c="solo"></i></button></div>
     <div id="townToast"></div>
-    <div id="wheelPop"></div>
+    <div id="wheelPop"></div><div id="casePop"></div>
     <div class="bottom"><div class="panel tpanel">
       <div class="thead"><div class="tt"><b id="townLine">Waiting for the host</b><div class="small" id="townSub"></div></div></div>
       <div id="townRoles"><button class="rtog" data-r="d"><i data-ic="detective" data-c="solo"></i>Detective</button><button class="rtog" data-r="b"><i data-ic="bodyguard" data-c="solo"></i>Bodyguard</button><button class="rtog" data-r="j"><i data-ic="jester" data-c="solo"></i>Jester</button><button class="rtog" data-r="f"><i data-ic="framer" data-c="solo"></i>Framer</button><button class="rtog rand" data-r="r"><i data-ic="dice" data-c="solo"></i>Random</button></div>
@@ -603,8 +618,14 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <div class="row" style="margin-top:10px;gap:10px">
         <button class="tbtn shop" id="townShop"><i data-ic="bag" data-s="3" data-c="solo"></i>Shop</button>
         <button class="tbtn coll" id="townColl"><i data-ic="shirt" data-s="3" data-c="solo"></i>Collection</button>
+        <button class="tbtn daily" id="townDaily" title="Daily"><i data-ic="coin" data-s="3" data-c="solo"></i><span id="dailyDot"></span></button>
       </div>
     </div></div>
+    <div class="modal panel" id="dailyModal">
+      <div class="mhead"><b>DAILY</b><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><button class="btn" id="dailyX"><i data-ic="cross" data-c="solo"></i></button></div>
+      <div class="dcard" id="dcCoins"><span class="dic"><i data-ic="coin" data-s="4" data-c="solo"></i></span><div class="dtx"><b>250 coins</b><div class="small" id="dcCoinsSub"></div></div><button class="btn go" id="dcCoinsBtn">Collect</button></div>
+      <div class="dcard" id="dcSpin"><span class="dic"><i data-ic="wheel" data-s="4" data-c="solo"></i></span><div class="dtx"><b>Free spin</b><div class="small" id="dcSpinSub"></div></div><button class="btn go" id="dcSpinBtn">Spin</button></div>
+    </div>
     <div class="modal big panel" id="wheelModal">
       <div class="mhead"><b>TOWN WHEEL</b><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><button class="btn" id="wheelX"><i data-ic="cross" data-c="solo"></i></button></div>
       <div class="small">Spin for coins and outfits. A slice is as wide as its odds.</div>
@@ -792,6 +813,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </div>
   <div id="nightOne"><b>NIGHT 1</b></div>
   <div id="joy"><i></i></div>
+  <button id="punchBtn" title="Punch"></button>
   <button class="btn" id="floatX" title="Close"><i data-ic="cross" data-c="solo"></i></button>
   <div id="turnPhone"><i data-ic="phone" data-s="5" data-c="solo"></i><b>Turn your phone upright</b><small>MAFIA plays in portrait</small></div>
   <div class="modal big panel" id="filmModal">
@@ -870,6 +892,8 @@ const SFX={
   join(){tone(660,.07,{vol:.1});tone(880,.12,{vol:.1,at:.08});},
   leave(){tone(520,.07,{vol:.09});tone(390,.14,{vol:.09,at:.08});},
   punch(){hiss(.12,{vol:.3,lp:900});tone(150,.14,{type:'triangle',vol:.3,to:60});},
+  shove(){hiss(.08,{vol:.2,lp:1300});tone(200,.09,{type:'triangle',vol:.16,to:120});},
+  swish(){hiss(.09,{vol:.1,hp:1800});},
   five(){hiss(.05,{vol:.18,hp:2500});tone(1047,.06,{vol:.1,at:.02});tone(1568,.12,{vol:.1,at:.07});},
   dance(){arp([523,659,784,659,523,784],.09,{vol:.09});},
   wave(){tone(700,.12,{type:'triangle',vol:.14,to:1050});},
@@ -1095,7 +1119,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11162214'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11162216'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1405,7 +1429,7 @@ function fireflies(t,area){if(raining||XMAS)return;lx.save();lx.globalCompositeO
     lx.fillStyle=`rgba(240,255,190,${a})`;lx.fillRect(x,y,1,1);}
   lx.restore();}
 const puffs=[];
-function puffAt(wx,wy){for(let i=0;i<16;i++)puffs.push({x:wx,y:wy,vx:(Math.random()-.5)*50,vy:-Math.random()*45-8,t:0,l:.4+Math.random()*.3});}
+function puffAt(wx,wy,n=16){for(let i=0;i<n;i++)puffs.push({x:wx,y:wy,vx:(Math.random()-.5)*50,vy:-Math.random()*45-8,t:0,l:.4+Math.random()*.3});}
 function drawPuffs(dt){for(let i=puffs.length-1;i>=0;i--){const p=puffs[i];p.t+=dt;if(p.t>p.l){puffs.splice(i,1);continue;}
   p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=60*dt;const k=1-p.t/p.l;lx.fillStyle=`rgba(255,255,255,${k})`;const z=k>.5?2:1;lx.fillRect(X(p.x),Y(p.y),z,z);}}
 const dust=[];
@@ -1606,7 +1630,19 @@ function shopLoop(now){if(!$('#shopModal').classList.contains('on')){SHOP.raf=0;
   SHOP.raf=requestAnimationFrame(shopLoop);}
 function openShop(){$('#collModal').classList.remove('on');$('#reelBox').classList.remove('on');document.querySelectorAll('#caseResult,#cabResult,#ckResult').forEach(e=>e.innerHTML='');paintShop();$('#shopModal').classList.add('on');if(!SHOP.raf)SHOP.raf=requestAnimationFrame(shopLoop);}
 function rollCase(){let r=Math.random(),rar='common';for(const[k,q]of Object.entries(CASE.odds)){if(r<q){rar=k;break;}r-=q;}const pool=CASE.pool.filter(s=>s.rar===rar);return pool[Math.floor(Math.random()*pool.length)];}
-function openCase(kind){if(CASE.busy)return;if(typeof kind==='string')CASE.kind=kind;if(coins<CASE.price)return;coins-=CASE.price;CASE.busy=true;SND.caseLive=true;saveInv();paintShop();
+/* A CASE OPENED IN THE LOBBY (16 Nov, his ask): the case drops in front of whoever is opening it, its lid pops, and when
+   their reel lands a plate over their head says what came out. Two little messages go round the lobby: 'case' (which
+   case, when they tap Open) and 'casewin' (the prize, when the reel stops). e.caseFx = {kind, t, win, wt} on that player. */
+const caseItem=id=>[...SKINS,...ROOMS,...CK_ITEMS].find(s=>s.id===id)||null;
+function caseTell(k,o){if(scene!==scenes.town||!WL.me)return;const m=WL.me;if(k==='case')m.caseFx={kind:o.kind,t:0,win:null,wt:0};else if(m.caseFx){m.caseFx.win=caseItem(o.win);m.caseFx.wt=0;}
+  if(NET.on)NET.ref.child('ev').push({k,by:NET.uid,...o,x:Math.round(m.x),y:Math.round(m.y),loc:m.loc,ts:TS()}).catch(()=>{});}
+function casePop(e,it){const p=$('#casePop');p.innerHTML=`<img class="f${it.art||it.ck?' rm':''}" src="${thumb(it)}" alt=""><div><small>${esc(wlName(e).toUpperCase())} GOT</small><b style="color:${RAR_COL[it.rar]}">${esc(it.name)}</b></div>`;
+  p.style.borderColor=RAR_COL[it.rar];WL.cpop={e,t:3.6};if(WL.me&&e.loc===WL.me.loc)sfx(it.rar==='common'?'prize':'rare');}
+function wlCases(dt,loc){for(const e of wlAll()){const c=e.caseFx;if(!c)continue;c.t+=dt;if(c.win){c.wt+=dt;if(c.wt>2.8){e.caseFx=null;continue;}}else if(c.t>20){e.caseFx=null;continue;}
+    if(e.loc!==loc)continue;const im=IMG[(CASE_DEF[c.kind]||CASE_DEF.mafia).sheet]||IMG.caseSheet;if(!im)continue;
+    const f=clamp(Math.floor((c.t-.7)/.11),0,12),drop=c.t<.3?Math.round((1-c.t/.3)*16):0;lx.globalAlpha=c.win&&c.wt>2.3?Math.max(0,1-(c.wt-2.3)/.5):1;
+    lx.drawImage(im,f*96,0,96,96,X(e.x)-16,Y(e.y+14)-28-drop,32,32);lx.globalAlpha=1;}}
+function openCase(kind){if(CASE.busy)return;if(typeof kind==='string')CASE.kind=kind;if(coins<CASE.price)return;coins-=CASE.price;CASE.busy=true;SND.caseLive=true;saveInv();paintShop();caseTell('case',{kind:CASE.kind});
   const win=rollCase(),WIN=30,strip=[];for(let i=0;i<36;i++)strip.push(i===WIN?win:rollCase());
   const reel=$('#reel'),box=$('#reelBox');caseRes().innerHTML='';
   reel.innerHTML=strip.map(s=>`<div class="rc" style="--rc:${RAR_COL[s.rar]}"><img${s.art||s.ck?' class="rm"':''} src="${thumb(s)}" alt=""><i></i></div>`).join('');reel.style.transform='translateX(0)';
@@ -1617,7 +1653,7 @@ function openCase(kind){if(CASE.busy)return;if(typeof kind==='string')CASE.kind=
     if(k>=1){clearInterval(tick);const dupe=OWNED.has(win.id),back=Math.round(CASE.price*CASE.dupe);
       if(dupe){coins+=back;caseRes().innerHTML=`${esc(win.name)} again. ${ic('coin',2)} +${back} back`;}
       else{OWNED.add(win.id);caseRes().innerHTML=`NEW! ${esc(win.name)} <span class="rar ${win.rar==='common'?'':win.rar}">${win.rar.toUpperCase()}</span>`;}
-      saveInv();paintSkin();setTimeout(()=>{CASE.busy=false;paintShop();caseFilmEnd();showWin(win,dupe,back);},380);}},16);});}
+      saveInv();paintSkin();caseTell('casewin',{win:win.id});setTimeout(()=>{CASE.busy=false;paintShop();caseFilmEnd();showWin(win,dupe,back);},380);}},16);});}
 /* ---------- OPENING A CASE: a little film ----------
    The case (drawn and animated in PixelLab, facing the camera: assets/case/open.png, 13 frames of 96 px) drops in from
    above, lands with a thud, the latch works loose, the lid pops and light pours out; then the reel of outfits pops in.
@@ -1941,7 +1977,7 @@ scenes.cabin={
     lights(L,t,ROOM_MASK);
     lx.save();lx.globalCompositeOperation='lighter';for(let i=0;i<14;i++){const px=X(40+((i*37+t*.004*(1+i%3))%120)),py=Y(90+((i*29+t*.006)%90));lx.fillStyle=`rgba(255,200,140,${.18+.18*Math.sin(t*.002+i)})`;lx.fillRect(px,py,1,1);}lx.restore();
     if(CAB.pc>0&&CAB.state!=='chair')CAB.pc=Math.max(0,CAB.pc-dt);
-    present();
+    drawPuffs(dt);present();
     // anyone dead can be watching you: you are told who, and now and then they haunt you
     if(GAME.on){if(CAB.state!=='anim'&&CAB.state!==CAB.sentSt){CAB.sentSt=CAB.state;NET.ref.child('act/'+NET.uid).update({g:GAME.id,st:CAB.state,sr:GAME.g.round}).catch(()=>{});}
       const ws=Object.entries(NET.players||{}).filter(([u,q])=>q&&q.spec===NET.uid&&GAME.g.dead&&GAME.g.dead[u]).map(([u])=>(GAME.g.pl[u]||{}).n||'A ghost'),txt=ws.length?ws.join(', ')+(ws.length>1?' are':' is')+' spectating you':'';
@@ -1999,7 +2035,9 @@ function joyArt(){const P=5,col=XMAS?{o:'#5a6fb0',f:'#1f2b57',s:'#18214a',a:'#5a
   bx.fillStyle=col.a;for(const[cx,cy,ux,uy]of[[12.5,5,0,1],[12.5,20,0,-1],[5,12.5,1,0],[20,12.5,-1,0]])for(let k=0;k<3;k++)for(let w=-k;w<=k;w++){   /* four little arrows */
     const x=Math.round(cx+(uy?w:k*ux)-(uy?0:ux)),y=Math.round(cy+(ux?w:k*uy)-(ux?0:uy));bx.fillRect(x,y,1,1);}
   const knob=disc(12,(d,R,dx,dy)=>d>R?null:d>R-1?col.ko:(dy>1.2&&Math.hypot(dx,dy-1.4)>R-1)?'#e9c88a':(Math.hypot(dx+1.6,dy+1.8)<1.6)?'#fffaf0':'#f6dfae');
-  $('#joy').style.backgroundImage=`url(${base.toDataURL()})`;$('#joy i').style.backgroundImage=`url(${knob.toDataURL()})`;}
+  $('#joy').style.backgroundImage=`url(${base.toDataURL()})`;$('#joy i').style.backgroundImage=`url(${knob.toDataURL()})`;
+  /* the punch button, across from the stick: the same navy disc, smaller, with the fist on it */
+  const pb=disc(17,(d,R,dx,dy)=>d>R?null:d>R-1?col.o:Math.hypot(dx,dy+1.2)>R-1?col.s:col.f);$('#punchBtn').style.setProperty('--pb',`url(${pb.toDataURL()})`);$('#punchBtn').innerHTML=ic('fist',5,'solo');}
 joyArt();
 (()=>{const el=$('#joy'),knob=el.querySelector('i');
   const set=e=>{const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,R=r.width/2-14;let dx=e.clientX-cx,dy=e.clientY-cy;const d=Math.hypot(dx,dy);
@@ -2019,7 +2057,13 @@ function joyPlace(){floatXTick();const el=$('#joy'),ok=[scenes.town,scenes.cabin
   let show=false;if(ok){const hud=$(scene.hud),ph=$('#phone').getBoundingClientRect();let top=ph.bottom;
     for(const e of hud.querySelectorAll('.panel')){if(!e.offsetParent||e.classList.contains('modal')||e.classList.contains('toast'))continue;const r=e.getBoundingClientRect();if(r.bottom>ph.bottom-260&&r.top<top)top=r.top;}
     const b=ph.bottom-top+22;show=top-ph.top>330;if(show)el.style.bottom=b+'px';}
-  if(el.classList.contains('on')!==show)el.classList.toggle('on',show);if(!show&&JOY.on){JOY.on=false;JOY.m=0;}}
+  if(el.classList.contains('on')!==show)el.classList.toggle('on',show);if(!show&&JOY.on){JOY.on=false;JOY.m=0;}
+  const pb=$('#punchBtn'),ps=show&&scene===scenes.ghost;if(ps)pb.style.bottom=(parseFloat(el.style.bottom)+23)+'px';if(pb.classList.contains('on')!==ps)pb.classList.toggle('on',ps);}
+/* THE PUNCH BUTTON (16 Nov, his ask): for spectators only. A ghost punches the ghost next to it, or the living player
+   whose cabin it is in. The living never see the ghosts, but they see a puff come off them and feel a little bump. */
+const PUNCH={at:0};
+$('#punchBtn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const now=performance.now();if(now<PUNCH.at||document.querySelector('.modal.on'))return;PUNCH.at=now+450;
+  const b=$('#punchBtn');b.classList.remove('hit');void b.offsetWidth;b.classList.add('hit');if(scene===scenes.ghost)ghostPunch();});
 /* walk a step with the stick: slide along walls instead of stopping dead */
 function joyStep(x,y,J,sp,ok){let nx=x+J.x*sp,ny=y+J.y*sp;if(ok(nx,ny)||!ok(x,y))return[nx,ny];   /* standing somewhere you should not be: you can always walk out */if(ok(nx,y))return[nx,y];if(ok(x,ny))return[x,ny];return[x,y];}
 function wxy(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*DPR/S+cam.x+(cam.fx||0),(e.clientY-r.top)*DPR/S+cam.y+(cam.fy||0)];}
@@ -2977,7 +3021,7 @@ function ckTrail(speed){const k=CK.theme,bx=CK_BX-CK_R,by=CK.y;if(k==='classic'|
 function ckText(x,str,cx,y,sc,col,al){str=String(str).toUpperCase();const w=str.length*4*sc-sc;let px=Math.round(cx-w/2);x.globalAlpha=al??1;x.fillStyle=col;
   for(const ch of str){const g=CK_FONT[ch==='×'?'x':ch];if(g)for(let r=0;r<5;r++)for(let c=0;c<3;c++)if(g[r]&(4>>c))x.fillRect(px+c*sc,Math.round(y)+r*sc,sc,sc);px+=4*sc;}x.globalAlpha=1;}
 function ckDiff(score){const k=Math.min(score,70),s=CKS,h=CKH;return{speed:145*s*(1+k*.011),gap:Math.max(Math.max(94*s,h*.235),Math.max(120*s,h*.33)-k*1.5*s),spacing:Math.max(175*s,212*s-k*.6*s),moveChance:score<10?0:Math.min(.65,(score-8)*.03),moveAmp:Math.min(46*s,12*s+k*.55*s)};}
-function ckReset(){Object.assign(CK,{y:CKH*.45,v:0,sq:0,pipes:[],orbs:[],fx:[],floaters:[],banner:null,score:0,level:1,combo:0,boost:0,invuln:0,coins:0,state:'ready',t:0,scroll:0,spawn:0,pulse:0,flash:0,flashCol:'#fff',shake:0,slow:0,newBest:false});
+function ckReset(){Object.assign(CK,{y:CKH*.45,v:0,sq:0,pipes:[],orbs:[],fx:[],floaters:[],banner:null,score:0,level:1,combo:0,boost:0,invuln:0,coins:0,b50:false,state:'ready',t:0,scroll:0,spawn:0,pulse:0,flash:0,flashCol:'#fff',shake:0,slow:0,newBest:false});
   $('#clkScore').textContent=0;$('#clkMsg').textContent='TAP TO START\nkeep Chrispy in the air';$('#clkSub').textContent='Tap to flap · dodge the gaps';}
 function ckOpen(){ckReset();try{CK.best=+(localStorage.getItem('cg_clicker_best')||0);CK.theme=localStorage.getItem('m2_ck_theme')||'classic';}catch(e){}if(!CK_THEMES[CK.theme]||!ckOwned(CK.theme))CK.theme='classic';ckThemeUI();$('#clkBest').textContent=CK.best;$('#clk').classList.add('on');CK.last=performance.now();cancelAnimationFrame(CK.raf);CK.raf=requestAnimationFrame(ckLoop);}
 function ckClose(){$('#clk').classList.remove('on');cancelAnimationFrame(CK.raf);
@@ -2987,6 +3031,7 @@ const ckRing=(x0,y0,col,grow)=>CK.fx.push({ring:1,x:x0,y:y0,r:3,grow:grow*CKS*6,
 const ckFloat=(txt,x0,y0,col)=>CK.floaters.push({txt,x:x0,y:y0,l:.9,col});
 const ckBanner=(txt,sub,col)=>CK.banner={txt,sub:sub||'',col,l:1.6};
 function ckAfterScore(cap){
+  if(!CK.b50&&CK.score>=50){CK.b50=true;coins+=500;saveInv();paintCoins();sfx('rare');ckBanner('+500 COINS','SCORE 50','#ffd86b');ckBurst(CKW/2,CKH*.3,'#ffd86b',34,240);ckRing(CKW/2,CKH/2,'#ffd86b',11);}   /* (16 Nov, his call) reach 50 in one run: 500 coins, paid on the spot, on top of a coin a point */
   if(!CK.newBest&&CK.best>0&&CK.score>CK.best){CK.newBest=true;ckBanner('NEW BEST','KEEP GOING','#ffd86b');ckBurst(CKW/2,CKH*.3,'#ffd86b',26,220);}
   const lvl=1+Math.floor(CK.score/10);if(lvl>CK.level){CK.level=lvl;CK.flash=.5;CK.flashCol=cap;CK.shake=Math.max(CK.shake,.35);ckBanner('LEVEL '+lvl,lvl===2?'SPEEDING UP':lvl===3?'GAPS ARE MOVING':'FASTER',cap);ckRing(CKW/2,CKH/2,cap,9);}}
 function ckPass(p){sfx('pass');const pts=CK.boost>0?2:1;CK.score+=pts;CK.pulse=1;p.flash=1;$('#clkScore').textContent=CK.score;
@@ -3179,14 +3224,51 @@ function ghostHud(){const ci=G.inCab,i=CABIN_OF.indexOf(ci);$('#haunts').classLi
   if(performance.now()<(G.subHold||0))return;
   $('#ghostLine').textContent=ci<0?(GAME.watcher?'You are watching. Fly anywhere.':'You are a ghost. Fly anywhere.'):i<0?'An empty cabin.':ghostAway(i)?`${PEOPLE[i].n}'s cabin. Nobody home.`:`Watching ${PEOPLE[i].n}: ${G_ACTS[G.acts[i]]}.`;
   $('#ghostSub').textContent=ci<0?'Tap the map to fly. Tap a cabin to look inside.':'Tap to fly round the room. Fly to the door to leave.';}
-const ghostMe=(x,y,t)=>({name:looksLike(0),dir:G.dir,x,y,t,lift:13+Math.sin(t*.004)*2.5,alpha:.6,tint:'#bfe6ff|0.5',noShadow:true,sortY:1e7});
+const gLunge=l=>{const k=l?(performance.now()-l.t0)/260:1;return k<1?[l.dx*7*Math.sin(Math.PI*k),l.dy*7*Math.sin(Math.PI*k)]:[0,0];};
+const ghostMe=(x,y,t)=>{const[ox,oy]=gLunge(G.lunge);return{name:looksLike(0),dir:G.dir,x:x+ox,y:y+oy,t,lift:13+Math.sin(t*.004)*2.5,alpha:.6,tint:'#bfe6ff|0.5',noShadow:true,sortY:1e7};};
+/* THE OTHER GHOSTS (16 Nov, his ask): everyone spectating (the dead and late joiners) sees the others flying about.
+   Each ghost sends where it is a few times a second (players/{uid}/gh = {g, r, c: the cabin it is in or -1, x, y, d});
+   every phone glides them there. The punch button knocks the ghost beside you a step, with a puff. */
+function ghostSend(){if(!GAME.on||!NET.on||!GAME.g)return;const c=G.inCab,x=Math.round(c>=0?G.rx:G.x),y=Math.round(c>=0?G.ry:G.y),sig=c+'|'+x+'|'+y;if(sig===G.sentSig)return;
+  const now=performance.now();if(now-(G.sentAt||0)<200)return;G.sentAt=now;G.sentSig=sig;NET.me.child('gh').set({g:GAME.id,r:GAME.g.round,c,x,y,d:G.dir}).catch(()=>{});}
+function ghostPeers(dt){const g=GAME.g,keep=new Set();G.peers=G.peers||new Map();
+  if(GAME.on&&g)for(const[u,p]of Object.entries(NET.players||{})){const h=p&&p.gh;if(u===NET.uid||!h||h.g!==GAME.id||h.r!==g.round)continue;keep.add(u);let o=G.peers.get(u);
+    if(!o){o={uid:u,x:h.x,y:h.y,c:h.c,dir:h.d||'front'};G.peers.set(u,o);}
+    o.n=String(p.n||'Ghost').slice(0,10);o.name=ROLE_SPR[g.roles&&g.roles[u]]||(SP[p.skin]?p.skin:'beanie');
+    if(o.c!==h.c){o.c=h.c;o.x=h.x;o.y=h.y;}
+    if(o.kn){const f=1-(performance.now()-o.kn.t0)/220;if(f>0){o.x+=o.kn.vx*f*dt;o.y+=o.kn.vy*f*dt;continue;}o.kn=null;}
+    const dx=h.x-o.x,dy=h.y-o.y,dd=Math.hypot(dx,dy),sp=(h.c>=0?80:95)*1.2*dt;
+    if(dd>70){o.x=h.x;o.y=h.y;}else if(dd>sp){o.x+=dx/dd*sp;o.y+=dy/dd*sp;if(dd>3)o.dir=dirFrom(dx,dy);}else{o.x=h.x;o.y=h.y;o.dir=h.d||'front';}}
+  for(const u of[...G.peers.keys()])if(!keep.has(u))G.peers.delete(u);}
+const ghostPeer=(o,t)=>{const[ox,oy]=gLunge(o.lunge);return{peer:o,name:o.name,dir:o.dir,x:o.x+ox,y:o.y+oy,t,phase:o.uid.length*91,lift:13+Math.sin(t*.004+o.uid.charCodeAt(0))*2.5,alpha:.55,tint:'#bfe6ff|0.5',noShadow:true,sortY:1e7-1};};
+function ghostPunch(){if(G.fading)return;const inC=G.inCab>=0,mx=inC?G.rx:G.x,my=inC?G.ry:G.y;let best=null,bd=34;
+  for(const o of(G.peers||new Map()).values()){if(o.c!==G.inCab)continue;const d=Math.hypot(o.x-mx,(o.y-my)*1.4);if(d<bd){bd=d;best={uid:o.uid,x:o.x,y:o.y,n:o.n,o};}}
+  if(!best&&inC){const i=CABIN_OF.indexOf(G.inCab);if(i>0&&!V.dead.has(i)&&!ghostAway(i)&&G.fxAt&&Math.hypot(G.fxAt[0]-mx,G.fxAt[1]+10-my)<64)best={uid:GAME.on?GAME.ids[i]:null,x:G.fxAt[0],y:G.fxAt[1]+10,n:PEOPLE[i].n};}   /* the living player whose cabin this is */
+  if(!best){const v={front:[0,1],back:[0,-1],left:[-1,0],right:[1,0]}[G.dir]||[0,1];G.lunge={t0:performance.now(),dx:v[0],dy:v[1]};sfx('swish');return;}
+  const d0=Math.hypot(best.x-mx,best.y-my)||1,dx=(best.x-mx)/d0,dy=(best.y-my)/d0;G.dir=dirFrom(dx,dy);G.lunge={t0:performance.now(),dx,dy};puffAt(best.x,best.y-(best.o?20:10),7);sfx('shove');
+  if(best.o)best.o.kn={t0:performance.now(),vx:dx*85,vy:dy*85};
+  if(GAME.on&&best.uid)NET.ref.child('ev').push({k:'gpunch',by:NET.uid,to:best.uid,dx:Math.round(dx*100)/100,dy:Math.round(dy*100)/100,ts:TS()}).catch(()=>{});
+  $('#ghostLine').textContent=best.o?`You punched ${best.n}.`:`You punched ${best.n}. They feel a bump.`;G.subHold=performance.now()+1800;}
+// a ghost's punch lands on this phone
+function ghostPunched(v){const dx=clamp(+v.dx||0,-1,1),dy=clamp(+v.dy||0,-1,1),who=String((NET.players&&NET.players[v.by]&&NET.players[v.by].n)||'A ghost').slice(0,10);
+  if(v.to===NET.uid){
+    if(GAME.meDead){if(scene!==scenes.ghost)return;const c=G.inCab>=0;G.knock={t0:performance.now(),vx:dx*85,vy:dy*85};puffAt(c?G.rx:G.x,(c?G.ry:G.y)-20,7);sfx('shove');$('#ghostLine').textContent=`${who} punched you.`;G.subHold=performance.now()+1800;}
+    else if(scene===scenes.cabin){const q=CAB.state==='bed'?[ROOM.bed.head[0],BED_LINE+6]:CAB.state==='chair'?ROOM.chair.sit:CAB.state==='arm'?ROOM.arm.sit:[CAB.x,CAB.y];puffAt(q[0],q[1]-12,8);sfx('shove');toast(ic('ghost')+'A ghost bumped you.');   /* the living feel it: a puff, a small bump */
+      if(CAB.state==='stand'){const nx=CAB.x+dx*7,ny=CAB.y+dy*7;if(canStand(nx,ny,true)&&ny<=193){CAB.x=nx;CAB.y=ny;CAB.tgt=null;CAB.path=null;CAB.walk=false;}}}
+    return;}
+  if(scene!==scenes.ghost||!G.peers)return;const by=G.peers.get(v.by),o=G.peers.get(v.to);if(by)by.lunge={t0:performance.now(),dx,dy};
+  if(o){o.kn={t0:performance.now(),vx:dx*85,vy:dy*85};if(o.c===G.inCab){puffAt(o.x,o.y-20,7);sfx('shove');}}
+  else{const i=GAME.idx[v.to];if(i!=null&&G.inCab>=0&&CABIN_OF[i]===G.inCab&&G.fxAt){puffAt(G.fxAt[0],G.fxAt[1],7);sfx('shove');}}}
 scenes.ghost={hud:'#ghostHud',
-  enter(){document.documentElement.style.setProperty('--accent','#9fd8ff');G.inCab=-1;G.goCab=-1;G.watch=-1;G.fading=false;G.fx=[];G.x=G.tx=280;G.y=G.ty=372;ghostNight();ghostCards();ghostHud();},
-  leave(){$('#phone').style.background='';if(GAME.on||NET.on){G.specW=-2;NET.me.child('spec').remove().catch(()=>{});}},
+  enter(){document.documentElement.style.setProperty('--accent','#9fd8ff');G.inCab=-1;G.goCab=-1;G.watch=-1;G.fading=false;G.fx=[];G.x=G.tx=280;G.y=G.ty=372;G.peers=new Map();G.sentSig=null;G.knock=null;G.lunge=null;G.wasOn=GAME.on;ghostNight();ghostCards();ghostHud();},
+  leave(){$('#phone').style.background='';if(GAME.on||NET.on){G.specW=-2;NET.me.child('spec').remove().catch(()=>{});NET.me.child('gh').remove().catch(()=>{});}},
   frame(dt,t){
+    if(G.wasOn&&!GAME.on)return;   /* you pressed Leave as a ghost: the game is gone, the welcome screen is a moment away (this used to throw and stop the whole picture) */
     // the night plays out live, the same one everybody will be shown afterwards; the body stays where it falls
     if(GAME.on)ghostLive();else{const stop=N.end-1.4;N.t=Math.min(N.t+dt,stop);if(N.t>=stop){G.hold+=dt;if(G.hold>12)ghostNight();}}
-    ghostSide();
+    ghostSide();ghostPeers(dt);ghostSend();
+    if(G.knock){const k=G.knock,f=1-(performance.now()-k.t0)/220;if(f>0){const mx=k.vx*f*dt,my=k.vy*f*dt;   /* punched by another ghost: knocked a step */
+        if(G.inCab>=0){G.rx=G.rtx=clamp(G.rx+mx,20,176);G.ry=G.rty=clamp(G.ry+my,74,190);}else{G.x=G.tx=clamp(G.x+mx,20,540);G.y=G.ty=clamp(G.y+my,40,740);}}else G.knock=null;}
     {const J=joyVec();if(J&&!G.fading){G.watch=-1;G.goCab=-1;   /* the joystick: float that way (down through the door to leave a cabin) */
       if(G.inCab>=0){const door=Math.abs(G.rx-98)<14;G.rtx=clamp(G.rx+J.x*20,20,176);G.rty=clamp(G.ry+J.y*20,74,door?197:190);}
       else{G.tx=clamp(G.x+J.x*30,20,540);G.ty=clamp(G.y+J.y*30,40,740);}}}
@@ -3208,12 +3290,12 @@ scenes.ghost={hud:'#ghostHud',
     for(const[ci,a]of f.doors||[])if(G.cabA[ci]>=1)doorOpen(ci,a);
     if(f.under)f.under();
     const people=f.people.filter(p=>p.al>0).map(p=>({p,name:p.kind==='out'?(ROLE_SPR[PEOPLE[p.i].role]||PEOPLE[p.i].skin):p.kind==='maf'?'mafia':p.kind==='doc'?'doctor':p.kind==='guard'?looksLike(N.guard):looksLike(N.victim),dir:p.dir,x:p.x,y:p.y,t,walk:p.walk,pose:p.pose,step:p.step,blood:p.blood,tint:p.kind==='maf'?SHADOW_TINT:NIGHT_TINT,alpha:p.al}));
-    const me=ghostMe(G.x,G.y,t);people.push(me);
+    const me=ghostMe(G.x,G.y,t);people.push(me);for(const o of G.peers.values())if(o.c<0)people.push(ghostPeer(o,t));
     townLights(t,{dim:.85,...f.lights},'win');
     patchDim='rgba(6,8,30,.38)';const hits=drawScene(people,TOWN.occ,IMG.town,huts);patchDim=null;
     if(f.over)f.over();
-    drawDust(dt);townLights(t,{dim:.85,...f.lights},'rest');rain(dt);ghostFx(dt);present();
-    for(const q of people){if(q===me)nameTag(hits.get(q),'You','#9fd8ff');else if(q.p.kind==='out'){if(q.alpha>.8)nameTag(hits.get(q),PEOPLE[q.p.i].n,'#ffd9a8');}else if(q.p.kind==='vic'&&q.alpha>.8)nameTag(hits.get(q),VN(),'#fff');}
+    drawDust(dt);townLights(t,{dim:.85,...f.lights},'rest');rain(dt);drawPuffs(dt);ghostFx(dt);present();
+    for(const q of people){if(q===me)nameTag(hits.get(q),'You','#9fd8ff');else if(q.peer)nameTag(hits.get(q),q.peer.n,'#9fd8ff');else if(q.p.kind==='out'){if(q.alpha>.8)nameTag(hits.get(q),PEOPLE[q.p.i].n,'#ffd9a8');}else if(q.p.kind==='vic'&&q.alpha>.8)nameTag(hits.get(q),VN(),'#fff');}
     PEOPLE.forEach((_,i)=>{const pk=ghostPick(i);if(!pk)return;const q=people.find(z=>z.p&&z.p.kind==='out'&&z.p.i===i&&z.alpha>.8),h=q&&hits.get(q);let sx,sy;
       if(h){sx=(h.cx-(cam.fx||0))*S;sy=(h.top-(cam.fy||0))*S-(TAG+12)*DPR;}else{const c=TOWN.cabins[CABIN_OF[i]];if(!c||ghostAway(i))return;sx=(c.cx-cam.x-(cam.fx||0))*S;sy=(c.top-30-cam.y-(cam.fy||0))*S;}
       if(sx<-80*DPR||sx>W+80*DPR||sy<0||sy>H)return;pickTag(sx,sy,i,pk);});
@@ -3261,16 +3343,16 @@ function ghostRoom(dt,t){
   if(kk>0){people.length=0;cover=null;head=false;people.push(...killRoom(looksLike(i),kk,N.heal,t));}
   {const dx=G.rtx-G.rx,dy=G.rty-G.ry,dd=Math.hypot(dx,dy),sp=80*dt;
     if(dd>sp){G.rx+=dx/dd*sp;G.ry+=dy/dd*sp;G.dir=dirFrom(dx,dy);}else{G.rx=G.rtx;G.ry=G.rty;if(G.ry>=195&&!G.fading){G.watch=-1;ghostDoor(-1);}}}   // you chose to leave: stop following
-  const gme=ghostMe(G.rx,G.ry,t);people.push(gme);
+  const nOcc=people.length,gme=ghostMe(G.rx,G.ry,t);people.push(gme);for(const o of G.peers.values())if(o.c===ci)people.push(ghostPeer(o,t));
   const hits=drawScene(people,null,IMG.room,ROOM_OBJS);
   if(head){const d=SP[nm].front,crop=Math.min(d.h,d.eyeBot+10),hx=X(ROOM.bed.head[0])-Math.floor(d.w/2),hy=Y(BED_LINE)-(d.eyeBot+3);lx.drawImage(d.frames[0][1],0,0,d.w,crop,hx,hy,d.w,crop);drawQuilt(1);}
   if(cover==='chairback')lx.drawImage(IMG.chairback,X(OBJ.chair.x),Y(OBJ.chair.y));else if(cover==='arm')patchObj('armchair',ROOM.arm.front);
   const fl=.5+.5*noise(t*1.7,2),L=roomLights(fl,0);
   if(act==='pc')L.push([159,138,26,'120,220,255',.35,5]);
   lights(L,t,ROOM_MASK);
-  G.fxAt=kk>0?[98,130]:act==='bed'?[98,80]:act==='pc'?[157,168]:act==='arm'?[36,172]:act==='fire'?[38,96]:people.length>1?[people[0].x,people[0].y-10]:[98,150];ghostFx(dt);present();
-  for(const[q,h]of hits){if(q===gme)nameTag(h,'You','#9fd8ff');else if(q.doc&&(q.alpha??1)>.8)nameTag(h,'Doctor','#9fe8b0');else if(q.name!=='mafia'&&i>=0&&!q.doc)nameTag(h,PEOPLE[i].n,'#fff');}
-  {const pk=home&&i>0?ghostPick(i):null;if(pk){const q=people.find(z=>z!==gme&&z.name===nm),h=q&&hits.get(q);
+  G.fxAt=kk>0?[98,130]:act==='bed'?[98,80]:act==='pc'?[157,168]:act==='arm'?[36,172]:act==='fire'?[38,96]:nOcc>0?[people[0].x,people[0].y-10]:[98,150];drawPuffs(dt);ghostFx(dt);present();
+  for(const[q,h]of hits){if(q===gme)nameTag(h,'You','#9fd8ff');else if(q.peer)nameTag(h,q.peer.n,'#9fd8ff');else if(q.doc&&(q.alpha??1)>.8)nameTag(h,'Doctor','#9fe8b0');else if(q.name!=='mafia'&&i>=0&&!q.doc)nameTag(h,PEOPLE[i].n,'#fff');}
+  {const pk=home&&i>0?ghostPick(i):null;if(pk){const q=people.find(z=>z!==gme&&!z.peer&&z.name===nm),h=q&&hits.get(q);
     const sx=h?(h.cx-(cam.fx||0))*S:(ROOM.bed.head[0]-cam.x-(cam.fx||0))*S,sy=h?(h.top-(cam.fy||0))*S-(TAG+12)*DPR:(BED_LINE-18-cam.y-(cam.fy||0))*S;pickTag(sx,sy,i,pk);}}
   drawMini(GAME.on?ghostOut():PLAY[N.kind](N.t,0,t),t);ghostHud();}
 cv.addEventListener('pointerdown',e=>{if(scene!==scenes.ghost||G.fading||document.querySelector('.modal.on'))return;
@@ -3316,7 +3398,8 @@ scenes.talk={hud:'#talkHud',
     if(raining)for(let i=0;i<8;i++){const gx=[230,250,300,330,220,340,235,325][i]+Math.round(Math.sin(t*.0007+i*2)*5),gy=[250,258,246,255,262,264,528,535][i];if(Math.sin(t*.004+i*1.7)>.82){lx.fillStyle='rgba(255,255,255,.8)';lx.fillRect(X(gx),Y(gy),2,1);}}
     // same rules as the original Mafia: everyone talks freely for 5 minutes, then the vote.
     // (speech bubbles are kept for later: they will show who is on the mic or typing when it is online)
-    if(T.st>0){T.st-=dt;if(T.st<=0)$('#talkPanel').classList.remove('on');}   /* no idle chatter any more: the panel goes away again */
+    if(T.st>0){T.st-=dt;if(T.st<=0)$('#talkPanel').classList.remove('on');}
+    {const b=$('#talkSkip'),d=GAME.on&&NET.host===NET.uid?'':'none';if(b.style.display!==d)b.style.display=d;}   /* "Vote now" belongs to whoever is the host right now */   /* no idle chatter any more: the panel goes away again */
     const alive=V.ring.filter(r=>!V.dead.has(r.i));
     if(GAME.on&&GAME.g)T.clock=Math.max(0,(GAME.g.ends-serverNow())/1000);else{T.clock-=dt;if(T.clock<=0){T.clock=300;go('vote');}}const s=Math.ceil(T.clock);$('#talkClock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
     const spec=GAME.on&&GAME.meDead;   /* the dead and late joiners: everyone in their role's outfit, the role written over their name (16 Nov) */
@@ -3424,13 +3507,17 @@ function wlSpot(){for(let k=0;k<30;k++){const sq=Math.random()<.7,x=sq?150+Math.
 // walk up beside someone, then punch or high-five them
 function wlDo(e,kind,tg,again){if(!again)e.tries=0;const a=Math.atan2(e.y-tg.y,e.x-tg.x);wlGo(e,tg.x+Math.cos(a)*16,tg.y+Math.sin(a)*8,()=>wlAct(e,kind,tg));}
 function wlAct(e,kind,tg){if(tg.loc!==e.loc||tg.ko)return;const d=Math.hypot(tg.x-e.x,tg.y-e.y);
+  if(kind==='shove'){if(e===WL.me)netEv('shove',tg.uid);const d0=d||1;e.path=[];e.todo=null;e.walk=false;e.dir=dirFrom(tg.x-e.x,tg.y-e.y);e.act={k:'punch',t:0,tg,dx:(tg.x-e.x)/d0,dy:(tg.y-e.y)/d0,soft:true};return;}   /* the punch button: no walking up, a small shove */
   if(d>26&&!e.remote){if(e.i===0&&(e.tries=(e.tries||0)+1)<5)wlDo(e,kind,tg,true);return;}     // they wandered off: you keep after them (a real player's phone already decided it reached)
   if(e===WL.me)netEv(kind,tg.uid);
   e.dir=dirFrom(tg.x-e.x,tg.y-e.y);const dd=d||1;
   if(kind==='punch')e.act={k:'punch',t:0,tg,dx:(tg.x-e.x)/dd,dy:(tg.y-e.y)/dd};
   else{e.act={k:'five',t:0,tg};if(!tg.act){tg.path=[];tg.todo=null;tg.walk=false;tg.dir=dirFrom(e.x-tg.x,e.y-tg.y);tg.act={k:'five',t:0,tg:e,slave:true};}
     if(e.i===0||tg.i===0)wlSay(`${wlName(e)} high-fived ${wlName(tg,1)}!`,'good');}}
-function wlHit(e,a){const tg=a.tg;if(tg.loc!==e.loc||tg.ko||(!e.remote&&Math.hypot(tg.x-e.x,tg.y-e.y)>32)){if(e.i===0)wlSay('You missed.');return;}
+function wlHit(e,a){const tg=a.tg;if(!tg)return;
+  if(a.soft){if(tg.loc!==e.loc||tg.ko||(!e.remote&&Math.hypot(tg.x-e.x,tg.y-e.y)>42))return;if(!tg.seat)tg.nudge={t:0,vx:a.dx*85,vy:a.dy*85};
+    if(e.loc===WL.me.loc){puffAt(tg.x-a.dx*3,tg.y-13,7);sfx('shove');}if(tg.i===0)WL.shake=.1;return;}
+  if(tg.loc!==e.loc||tg.ko||(!e.remote&&Math.hypot(tg.x-e.x,tg.y-e.y)>32)){if(e.i===0)wlSay('You missed.');return;}
   wlSeatOff(tg);tg.ko={t:0,vx:a.dx*100,vy:a.dy*100};tg.act=null;tg.path=[];tg.todo=null;tg.walk=false;tg.grudge=e;
   WL.fx.push({k:'pow',x:tg.x-a.dx*4,y:tg.y-16,t:0,loc:e.loc});if(e.loc===WL.me.loc)sfx('punch');
   if(tg.i===0){WL.shake=.35;WL.sel=null;wlMenu();}else if(e.i===0)WL.shake=.12;
@@ -3457,6 +3544,7 @@ function wlThink(b){const r=Math.random();b.wait=1+Math.random()*3.5;
   else if(r<.82){const ci=Math.floor(Math.random()*8),c=TOWN.cabins[ci];wlGo(b,c.cx,c.top+36,()=>wlBotDoor(b,ci));}
   else b.act={k:r<.92?'dance':'wave',t:0};}
 function wlStep(e,dt){
+  if(e.nudge){const k=e.nudge;k.t+=dt;const f=1-k.t/.2;if(f>0&&!e.ko){const nx=e.x+k.vx*f*dt,ny=e.y+k.vy*f*dt;if(wlOk(e.loc,nx,ny)){e.x=nx;e.y=ny;}}else{e.nudge=null;if(e===WL.me)netMove();}}   /* shoved: slide a step */
   if(e.ko){const k=e.ko;k.t+=dt;if(k.t<.32){const f=1-k.t/.32,nx=e.x+k.vx*f*dt,ny=e.y+k.vy*f*dt;if(wlOk(e.loc,nx,ny)){e.x=nx;e.y=ny;}}if(k.t>1.5){e.ko=null;e.dir='front';e.wait=.3;if(e===WL.me)netMove();}return;}
   if(e.seat){const a=e.seat,s=wlSeat(a.k,e);a.t+=dt;if(a.out&&a.t>=s.dur)wlSeatOff(e);
     else if(!a.out&&a.k==='bed'&&a.t>s.dur&&e.loc===WL.me.loc&&Math.random()<dt*1.2)WL.fx.push({k:'z',x:ROOM.bed.head[0]+6,y:s.zy,t:0,loc:e.loc});
@@ -3515,7 +3603,7 @@ $('#townShop').onclick=()=>openShop();$('#townColl').onclick=()=>openColl();   /
 
 /* ---- the Town Wheel: slices are as wide as their odds (they add up to 100) ---- */
 /* coins and odds (12 Nov, his prices): Mafia Case 500, Cabin Case 1000, a spin 300. A spin pays back about 200 on average
-   (about 110 in coins, the rest in outfits), with a 4% shot at 1000. A game pays 250 for a win, 100 for a loss (about 3 games a Mafia Case, 6 a Cabin Case). */
+   (about 110 in coins, the rest in outfits), with a 4% shot at 1000. A game pays 250 for a win (500 as Mafia, 1000 as the Jester), 100 for a loss. */
 const WHEEL=[['c',50,13],['o','common',8],['c',100,9],['c',250,10],['o','rare',6],['c',50,13],['c',100,9],['o','epic',4],['c',50,13],['c',1000,4],['c',100,9],['o','legendary',2]];
 const hexRGB=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
 const WSEG=(()=>{let s=0;return WHEEL.map(w=>{const col=w[0]==='o'?RAR_COL[w[1]]:w[1]>=1000?'#e4544f':w[1]>=250?'#ff9a4a':w[1]>=100?'#e9b25a':'#f6dfae';const o={kind:w[0],v:w[1],w:w[2],s0:s/100,s1:(s+w[2])/100,rgb:hexRGB(col)};s+=w[2];return o;});})();
@@ -3563,11 +3651,29 @@ function wheelPrize(who,g,winId){
     $('#wheelRes').innerHTML=dupe?`${esc(win.name)} again. ${ic('coin',2)} +${back} back`:`NEW! ${esc(win.name)}`;
     showWin(win,dupe,back);$('#winAgain').style.display='none';}
   const r=$('#wheelRes');r.classList.remove('pop');void r.offsetWidth;r.classList.add('pop');wheelUI();}
-function wheelUI(){paintCoins();const b=$('#wheelSpin'),W=WL.wheel;const other=W.busy&&W.by&&W.by.i!==0;b.innerHTML=other?esc(wlName(W.by))+' is spinning…':ic('coin',2)+' Spin · '+SPIN_PRICE;b.disabled=W.busy||coins<SPIN_PRICE;
+/* DAILY (16 Nov, his ask): once a day, 250 coins to collect and one free spin of the Town Wheel. The day turns over at the
+   phone's own midnight. Kept on the phone ('m2_daily': the day each was last taken). The gold coin button beside Shop and
+   Collection opens it and wears a red count while something is waiting; the wheel wears a FREE tag until the spin is used. */
+const DAY_COINS=250,DAILY={c:'',s:''};try{const d=JSON.parse(localStorage.getItem('m2_daily')||'null');if(d){DAILY.c=String(d.c||'');DAILY.s=String(d.s||'');}}catch(e){}
+function dayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function dayCoins(){return DAILY.c!==dayKey();}
+function daySpin(){return DAILY.s!==dayKey();}
+function daySave(){try{localStorage.setItem('m2_daily',JSON.stringify({c:DAILY.c,s:DAILY.s}));}catch(e){}}
+function dayLeft(){const n=new Date(),m=Math.max(1,Math.ceil((new Date(n.getFullYear(),n.getMonth(),n.getDate()+1)-n)/60000));return(m>=60?Math.floor(m/60)+'h ':'')+(m%60)+'m';}
+function dayPaint(){const c=dayCoins(),s=daySpin(),n=(c?1:0)+(s?1:0),sig=c+'|'+s+'|'+dayLeft();if(sig===dayPaint.sig)return;dayPaint.sig=sig;
+  $('#townDaily').classList.toggle('new',n>0);$('#dailyDot').textContent=n||'';
+  $('#dcCoins').classList.toggle('done',!c);$('#dcCoinsBtn').disabled=!c;$('#dcCoinsBtn').textContent=c?'Collect':'Collected';$('#dcCoinsSub').textContent=c?'':'Back in '+dayLeft();
+  $('#dcSpin').classList.toggle('done',!s);$('#dcSpinBtn').disabled=!s;$('#dcSpinBtn').textContent=s?'Spin':'Used';$('#dcSpinSub').textContent=s?'':'Back in '+dayLeft();}
+$('#townDaily').onclick=()=>{document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));dayPaint.sig=null;dayPaint();paintCoins();$('#dailyModal').classList.add('on');};
+$('#dailyX').onclick=()=>$('#dailyModal').classList.remove('on');
+$('#dcCoinsBtn').onclick=()=>{if(!dayCoins())return;DAILY.c=dayKey();daySave();coins+=DAY_COINS;saveInv();paintCoins();sfx('coin');setTimeout(()=>sfx('coin'),110);dayPaint();
+  for(const e of[$('#dcCoins'),$('#dailyModal .wal')]){const k=e.id?'got':'bump';e.classList.remove(k);void e.offsetWidth;e.classList.add(k);}};
+$('#dcSpinBtn').onclick=()=>{if(!daySpin())return;$('#dailyModal').classList.remove('on');wheelOpen();};
+function wheelUI(){paintCoins();dayPaint();const b=$('#wheelSpin'),W=WL.wheel,free=daySpin();const other=W.busy&&W.by&&W.by.i!==0;b.innerHTML=other?esc(wlName(W.by))+' is spinning…':free?'Free spin':ic('coin',2)+' Spin · '+SPIN_PRICE;b.disabled=W.busy||(!free&&coins<SPIN_PRICE);b.classList.toggle('go',free&&!other);b.classList.toggle('red',!(free&&!other));b.style.setProperty('--accent','#5fc46f');
   $('#wheelOdds').innerHTML=[['COINS',76,''],['COMMON',8,''],['RARE',6,'rare'],['EPIC',4,'epic'],['LEGENDARY',2,'legendary']].map(o=>`<span class="rar ${o[2]}">${o[0]} ${o[1]}%</span>`).join('');}
 function wheelOpen(){$('#wheelRes').innerHTML='';wheelUI();$('#wheelModal').classList.add('on');}
 $('#wheelX').onclick=()=>$('#wheelModal').classList.remove('on');
-$('#wheelSpin').onclick=()=>{const W=WL.wheel;if(W.busy||coins<SPIN_PRICE)return;coins-=SPIN_PRICE;saveInv();$('#wheelRes').innerHTML='';wheelSpin(WL.me);wheelUI();};
+$('#wheelSpin').onclick=()=>{const W=WL.wheel,free=daySpin();if(W.busy||(!free&&coins<SPIN_PRICE))return;if(free){DAILY.s=dayKey();daySave();}else{coins-=SPIN_PRICE;saveInv();}$('#wheelRes').innerHTML='';wheelSpin(WL.me);wheelUI();};   /* today's first spin is free */
 $('#spinTest').onclick=()=>{coins+=500;saveInv();wheelUI();};
 
 scenes.town={hud:'#townHud',
@@ -3575,7 +3681,7 @@ scenes.town={hud:'#townHud',
     if(NET.on){const c=TOWN.cabins[NET.slot];WL.me=wlEnt(0,c.cx,c.top+40);WL.bots=[];NET.ents.clear();NET.sig=null;NET.sawRoster=false;}   // online: the others are real, they arrive in netApply
     else{WL.me=wlEnt(0,280,436);WL.bots=PEOPLE.slice(1).map((p,k)=>{const s=wlSpot();return wlEnt(k+1,s[0],s[1]);});}
     WL.fx=[];WL.sel=null;WL.feed=[];WL.fading=false;WL.shake=0;WL.wheel.busy=false;WL.wheel.by=null;wlMenu();paintCoins();$('#townCount').style.display='';$('#townCount').textContent=`${PEOPLE.length} of 10 players here`;
-    $('#townHud').classList.toggle('net',NET.on);$('#townCodeT').textContent=NET.code||'';$('#townCodeBox').classList.remove('ok');wlHead();$('#townToast').className='';$('#wheelPop').className='';WL.pop=0;netApply();netMove();},
+    $('#townHud').classList.toggle('net',NET.on);$('#townCodeT').textContent=NET.code||'';$('#townCodeBox').classList.remove('ok');wlHead();$('#townToast').className='';$('#wheelPop').className='';$('#casePop').className='';WL.pop=0;WL.cpop=null;netApply();netMove();},
   leave(){$('#phone').style.background='';WL.sel=null;wlMenu();ckClose();$('#pcModal').classList.remove('on');},
   frame(dt,t){const m=WL.me;wheelTick(dt);
     for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.remote&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
@@ -3604,14 +3710,15 @@ scenes.town={hud:'#townHud',
         else if(p.cover==='chairback')lx.drawImage(IMG.chairback,X(OBJ.chair.x),Y(OBJ.chair.y));
         else if(p.cover){if(p.cover.quilt!=null)drawQuilt(p.cover.quilt);else patchObj(p.cover[0],p.cover[1]);}}
       if(people.some(p=>p.head||(p.cover&&p.cover.quilt!=null))){const bb=OBJ.bed.base+1;for(const p of people)if(!p.head&&!p.cover&&(p.sortY??p.y)>bb){const h=drawChar({...p,noShadow:true});if(h)hits.set(p,h);}}   /* the quilt never covers someone standing in front of the bed */
-      wlFx(dt,m.loc);
+      wlFx(dt,m.loc);drawPuffs(dt);wlCases(dt,m.loc);
       const fl=.5+.5*noise(t*1.7,2),RL=roomLights(fl,0);if(people.some(p=>p.e.seat&&p.e.seat.k==='chair'))RL.push([159,138,26,'120,220,255',.35,5]);lights(RL,t,ROOM_MASK);
     }else{dayMode=true;const img=dayImg('ground');{const tp=$('#townHud .tpanel'),r=tp&&tp.getBoundingClientRect(),cr=cv.getBoundingClientRect();   /* the map's bottom edge stops at the bottom panel: no black strip above it (his catch, 13 Nov) */
         view(img,m.x+sh,m.y+24,190,{loose:r&&r.height?clamp((r.top-cr.top+6)/cr.height,.6,1):.8,hi:true});}   /* smooth follow: the ground glides and you stay steady (13 Nov) */
       const hid=behindCabin(m.x,m.y);WL.cabA=WL.cabA||TOWN.cabins.map(()=>1);
       const huts=dayImg('cabins').map(o=>{const a=WL.cabA[o.ci]=clamp(WL.cabA[o.ci]+(o.ci===hid?-1:1)*dt*4,.4,1);return a<1?{...o,alpha:a}:o;});
       if(WL.sel&&WL.sel.loc===m.loc){const q=Math.floor(t/200)%2;lx.strokeStyle=q?'#ffd25e':'#fff2a8';lx.lineWidth=1;lx.beginPath();lx.ellipse(X(WL.sel.x)+.5,Y(WL.sel.y)+.5,9+q,3+q*.5,0,0,7);lx.stroke();}
-      hits=drawScene(people,TOWN.occ,img,[wheelObj(),...huts]);wlFx(dt,-1);
+      hits=drawScene(people,TOWN.occ,img,[wheelObj(),...huts]);wlFx(dt,-1);drawPuffs(dt);wlCases(dt,-1);
+      if(daySpin()&&!WL.wheel.busy){const fx0=X(WHEEL_AT[0])-9,fy0=Y(WHEEL_AT[1])-64+Math.round(Math.sin(t*.005)*1.5);lx.fillStyle='#1a1430';lx.fillRect(fx0-1,fy0-1,19,9);lx.fillRect(fx0+7,fy0+8,3,2);lx.fillStyle='#5fc46f';lx.fillRect(fx0,fy0,17,7);lx.fillStyle='#fff';pxText(lx,'FREE',fx0+1,fy0+1);}   /* today's free spin has not been used: a little tag over the wheel */
       lx.fillStyle='rgba(255,236,190,.06)';lx.fillRect(0,0,cam.lw,cam.lh);}
     // stars going round the head of anyone knocked flat
     for(const p of people){const k=p.e.ko,h=hits.get(p);if(!k||k.t>1.25||!h)continue;lx.fillStyle='#ffd25e';for(let i=0;i<3;i++){const a=t*.009+i*2.1;lx.fillRect(Math.round(h.cx+Math.cos(a)*8),Math.round(h.top-3+Math.sin(a)*2.5),2,2);}}
@@ -3620,10 +3727,13 @@ scenes.town={hud:'#townHud',
     if(WL.sel){const q=WL.pos.get(WL.sel);if(!q||WL.sel.ko){WL.sel=null;wlMenu();}else{const mn=$('#townMenu');mn.style.left=clamp(q.x,50,cv.clientWidth-50)+'px';mn.style.top=(q.y-TAG-10)+'px';}}
     {const wp=$('#wheelPop');WL.pop=Math.max(0,(WL.pop||0)-dt);const on=WL.pop>0&&m.loc<0;if(wp.classList.contains('on')!==on)wp.classList.toggle('on',on);
       if(on){wp.style.left=clamp((WHEEL_AT[0]-cam.x-(cam.fx||0))*S/DPR,90,cv.clientWidth-90)+'px';wp.style.top=((WHEEL_AT[1]-58-cam.y-(cam.fy||0))*S/DPR)+'px';}}
+    {const cp=$('#casePop'),P=WL.cpop;if(P)P.t-=dt;const q=P&&P.t>0&&P.e.loc===m.loc?WL.pos.get(P.e):null;if(cp.classList.contains('on')!==!!q)cp.classList.toggle('on',!!q);   /* what came out of a case, over the head of whoever opened it */
+      if(q){cp.style.left=clamp(q.x,96,cv.clientWidth-96)+'px';cp.style.top=(q.y-TAG-8)+'px';}}
     // the big wheel in its window
     if($('#wheelModal').classList.contains('on')){const wc=$('#wheelCv').getContext('2d');wc.clearRect(0,0,101,110);wc.drawImage(wheelPaint(48,WL.wheel.a,true),2,11);
       wc.fillStyle='#1a1430';for(let r=0;r<7;r++)wc.fillRect(50-6+r,2+r,13-2*r,1);wc.fillStyle='#e4544f';for(let r=0;r<5;r++)wc.fillRect(50-4+r,3+r,9-2*r,1);
-      if(!WL.wheel.busy&&$('#wheelSpin').disabled&&coins>=SPIN_PRICE)wheelUI();}
+      if(!WL.wheel.busy&&$('#wheelSpin').disabled&&(coins>=SPIN_PRICE||daySpin()))wheelUI();}
+    dayPaint();
   }};
 cv.addEventListener('pointerdown',e=>{if(scene!==scenes.town||WL.fading||document.querySelector('.modal.on'))return;const[x,y]=wxy(e),m=WL.me;if(m.ko)return;
   const r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;let best=null,bd=30;
@@ -3693,7 +3803,7 @@ async function netBack(code){await netLoad();const r=NET.db.ref('lobbies/'+code)
   if(!g||!g.roles||!g.pl||!g.pl[NET.uid]||(g.left&&g.left[NET.uid])||Date.now()+NET.off-(g.t0||0)>3600000){try{localStorage.removeItem('m2_game');}catch(e){}return false;}   /* over an hour since anything happened: that game is dead */
   await netEnter(code,ps.val()||{});return true;}
 const freeSlot=pl=>{const used=new Set(Object.entries(pl).filter(([u])=>u!==NET.uid).map(([,p])=>p.slot));let s=0;while(used.has(s))s++;return s;};
-async function netEnter(code,pl,fresh){NET.code=code;NET.ref=NET.db.ref('lobbies/'+code);NET.slot=freeSlot(pl);NET.me=NET.ref.child('players/'+NET.uid);
+async function netEnter(code,pl,fresh){NET.myAt=null;NET.code=code;NET.ref=NET.db.ref('lobbies/'+code);NET.slot=freeSlot(pl);NET.me=NET.ref.child('players/'+NET.uid);
   const c=TOWN.cabins[NET.slot];
   await NET.me.onDisconnect().remove();
   await NET.me.set({n:myName,skin:PEOPLE[0].skin,room:myRoom,slot:NET.slot,v:BUILD,at:TS(),m:{x:c.cx,y:c.top+40,tx:c.cx,ty:c.top+40,loc:-1,dir:'front',s:0}});
@@ -3714,7 +3824,8 @@ function netLeave(){$('#phone').classList.remove('ingame');try{localStorage.remo
 function netApply(){if(!NET.on)return;const pl=NET.players||{},mine=pl[NET.uid],c0=TOWN.cabins[NET.slot];
   if(Object.values(pl).some(p=>p&&p.v&&p.v!==BUILD&&+p.v>+BUILD))freshCheck();   // a friend has a newer version than me
   if(!mine){NET.me.onDisconnect().remove().catch(()=>{});       // we dropped off for a moment: go back in
-    NET.me.set({n:myName,skin:PEOPLE[0].skin,room:myRoom,slot:NET.slot,v:BUILD,at:TS(),m:WL.me&&!GAME.on?netM():{x:c0.cx,y:c0.top+40,tx:c0.cx,ty:c0.top+40,loc:-1,dir:'front',s:++NET.seq}}).catch(()=>{});return;}
+    NET.me.set({n:myName,skin:PEOPLE[0].skin,room:myRoom,slot:NET.slot,v:BUILD,at:NET.myAt||TS(),m:WL.me&&!GAME.on?netM():{x:c0.cx,y:c0.top+40,tx:c0.cx,ty:c0.top+40,loc:-1,dir:'front',s:++NET.seq}}).catch(()=>{});return;}
+  if(mine.at)NET.myAt=mine.at;   /* (16 Nov) a phone that drops for a moment comes back with the time it first joined, so the host stays the host. It used to come back as the newest player: the host's "Vote now" then did nothing and nobody else had the button. */
   const older=(a,ua,b,ub)=>(a.at||0)<(b.at||0)||((a.at||0)===(b.at||0)&&ua<ub);
   {const a0=Object.entries(pl).filter(([u,p])=>p&&p.n&&p.m).sort((a,b)=>older(a[1],a[0],b[1],b[0])?-1:1);NET.host=a0.length?a0[0][0]:NET.uid;}
   if(GAME.on||!WL.me||scene!==scenes.town){gameLobbyUI();return;}
@@ -3743,9 +3854,12 @@ function netMove(){if(!NET.on||!WL.me)return;clearTimeout(NET.mt);const send=()=
 function netEv(k,to){if(!NET.on)return;const m=WL.me;NET.ref.child('ev').push({k,by:NET.uid,to:to||null,x:Math.round(m.x),y:Math.round(m.y),loc:m.loc,ts:TS()}).catch(()=>{});}
 function netEvent(s){const v=s.val();if(!NET.on||!v||v.by===NET.uid||!(v.ts>NET.t0))return;
   if(v.k==='dm'){if(GAME.on&&v.to===NET.uid&&!GAME.meDead){const i=GAME.idx[v.by];if(i!=null&&!T.muted.has(i)&&scene===scenes.talk){talkSay(`${PEOPLE[i].n}: ${String(v.text).slice(0,80)}`,'A private message. Tap them to reply.');T.st=10;}}return;}
-  if(v.k==='haunt'){if(GAME.on&&v.to===NET.uid&&!GAME.meDead)hauntFx(HAUNTS.includes(v.h)?v.h:'ghost');return;}   // a ghost haunts you: it swoops across your screen
+  if(v.k==='haunt'){if(GAME.on&&v.to===NET.uid&&!GAME.meDead)hauntFx(HAUNTS.includes(v.h)?v.h:'ghost');return;}
+  if(v.k==='gpunch'){if(GAME.on)ghostPunched(v);return;}   // a ghost haunts you: it swoops across your screen
   if(scene!==scenes.town)return;const e=NET.ents.get(v.by);if(!e)return;
-  if(v.k==='spin'){wheelSpin(e,{k:v.res,f:v.fr,win:v.win});wheelUI();return;}                                      // somebody spun the Town Wheel
+  if(v.k==='spin'){wheelSpin(e,{k:v.res,f:v.fr,win:v.win});wheelUI();return;}
+  if(v.k==='case'){e.caseFx={kind:CASE_DEF[v.kind]?v.kind:'mafia',t:0,win:null,wt:0};return;}                       // somebody is opening a case
+  if(v.k==='casewin'){const it=caseItem(v.win);if(!it)return;if(!e.caseFx)e.caseFx={kind:'mafia',t:9,win:null,wt:0};e.caseFx.win=it;e.caseFx.wt=0;casePop(e,it);return;}                                      // somebody spun the Town Wheel
   if(e.ko)return;
   e.loc=v.loc;e.x=v.x;e.y=v.y;e.path=[];e.todo=null;e.walk=false;
   if(v.k==='dance'||v.k==='wave'){e.act={k:v.k,t:0};return;}
@@ -3940,7 +4054,7 @@ function hostTick(){const g=GAME.g;if(!NET.on||!NET.players||!g||!g.roles||NET.h
       const w=g.out!=='none'&&g.roles[g.out]==='jester'?'jester':hostWin(g,dead);
       gRef().update(w?{...up,phase:'over',win:w,t0:now}:{...up,lastVote:(g.vote&&g.vote.cast)||null,phase:'night',round:g.round+1,t0:now,ends:now+NIGHT_MS,nkind:newKind(g.nkind),vote:null,out:null,outAt:null,night:null});});}}
 function hostVote(){const g=GAME.g;if(!g||g.phase!=='day'||NET.host!==NET.uid)return;hostDo(GAME.key+':vote',()=>{const dead=g.dead||{},order=Object.keys(g.pl).filter(u=>!dead[u]);
-  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}const now=serverNow();gRef().update({phase:'vote',t0:now,vote:{order,t:now},out:null,outAt:null});});}
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}const now=serverNow();gRef().update({phase:'vote',t0:now,vote:{order,t:now},out:null,outAt:null}).catch(()=>{GAME.busy='';});});}   /* a write that failed can be tried again */
 function hostNight(g,alive,acted){const pickOf=role=>{const n={};alive.filter(u=>g.roles[u]===role&&acted(u)).forEach(u=>{const p=GAME.acts[u].pick[0];n[p]=(n[p]||0)+1;});
     const top=Math.max(0,...Object.values(n));return Object.keys(n).find(u=>n[u]===top)||null;};
   // THE KILL NEEDS ALL THE MAFIA (his call, 16 Nov): it used to go to whoever most of them picked, so one Mafia locking a
@@ -3951,8 +4065,9 @@ function hostNight(g,alive,acted){const pickOf=role=>{const n={};alive.filter(u=
   const doc=pickOf('doctor'),bgU=alive.find(u=>g.roles[u]==='bodyguard'&&acted(u)),bgP=bgU?GAME.acts[bgU].pick[0]:null;
   const heal=!!victim&&doc===victim,guard=!heal&&victim&&bgU&&bgP===victim&&bgU!==victim?bgU:null,died=!victim||heal?null:guard||victim;
   const kind=PLAN[g.nkind]&&!(guard&&g.nkind==='home')?g.nkind:newKind('home'),now=serverNow(),up={phase:'film',t0:now,ends:now+FILM_MAX,
-    // who LEFT THE HOUSE (his rule): a Mafia who chose a target, the Doctor going to save someone else, the Bodyguard guarding
-    night:{left:alive.filter(u=>acted(u)&&(g.roles[u]==='mafia'||g.roles[u]==='bodyguard'||(g.roles[u]==='doctor'&&GAME.acts[u].pick[0]!==u))).concat(alive.filter(u=>g.roles[u]==='framer'&&acted(u)).map(u=>GAME.acts[u].pick[0])),victim:victim||null,heal,guard:guard||null,kind,died:died||null,note:died&&GAME.acts[died]&&GAME.acts[died].g===g.id&&GAME.acts[died].note||null}};
+    // who LEFT THE HOUSE (his rule): the Mafia when they went out to kill (16 Nov: they stay in when they never agreed on a
+    // target, so there was nobody to go for; a kill the Doctor stopped still counts), the Doctor going to save someone else, the Bodyguard guarding
+    night:{left:alive.filter(u=>acted(u)&&((g.roles[u]==='mafia'&&!!victim)||g.roles[u]==='bodyguard'||(g.roles[u]==='doctor'&&GAME.acts[u].pick[0]!==u))).concat(alive.filter(u=>g.roles[u]==='framer'&&acted(u)).map(u=>GAME.acts[u].pick[0])),victim:victim||null,heal,guard:guard||null,kind,died:died||null,note:died&&GAME.acts[died]&&GAME.acts[died].g===g.id&&GAME.acts[died].note||null}};
   if(died)up['dead/'+died]=true;GAME.fdAt=0;gRef().update(up);}
 setInterval(hostTick,1000);
 
@@ -3968,7 +4083,8 @@ function overPaint(g){const won=gWon(g,g.roles[NET.uid]);
   $('#overTitle').textContent={town:'THE TOWN WINS',mafia:'MAFIA WINS',jester:'THE JESTER WINS'}[g.win]||'GAME OVER';
   $('#overTitle').style.color={town:'#9fe8b0',mafia:'#ff8a8a',jester:'#d9a8ff'}[g.win]||'#fff';
   $('#overNames').textContent=PEOPLE.map((p,i)=>gWon(g,p.role)?(i===0?'You':p.n):null).filter(Boolean).join(' · ');
-  const pay=won?250:100;if(!GAME.watcher&&GAME.paid!==g.id){GAME.paid=g.id;coins+=pay;saveInv();paintCoins();}
+  const mine=g.roles[NET.uid],pay=won?(mine==='jester'?1000:mine==='mafia'?500:250):100;   /* (16 Nov, his call) a win as Mafia pays 500, as the Jester 1000; any other win 250, a loss 100 */
+  if(!GAME.watcher&&GAME.paid!==g.id){GAME.paid=g.id;coins+=pay;saveInv();paintCoins();}
   $('#overLine').innerHTML=GAME.watcher?'You watched this one. You are in the next game.':(won?'You won!':'You lost.')+` <span class="wal">+${pay} ${ic('coin',2,'solo')}</span>`;
   $('#overList').innerHTML=PEOPLE.map((p,i)=>GAME.watcher&&!i?'':roleRow(i)).join('');
   const host=NET.host===NET.uid;$('#overBack').style.display=host?'':'none';$('#overWait').textContent=host?'':'Waiting for the host to go back to the lobby…';}
@@ -4326,7 +4442,8 @@ $('#roleBtn').onclick=()=>{viewRole=VIEW_ROLES[(VIEW_ROLES.indexOf(viewRole)+1)%
   if(scene===scenes.night)scene.enter();};
 
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(scene&&IMG.town){scene.frame(dt,now);joyPlace();}requestAnimationFrame(loop);}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(scene&&IMG.town){try{scene.frame(dt,now);}catch(e){if(loop.err!==String(e)){loop.err=String(e);console.warn('frame',e);}}   /* one bad frame must never stop the picture for good */
+  joyPlace();}requestAnimationFrame(loop);}
 
 let OBJ_META={};
 (async()=>{
