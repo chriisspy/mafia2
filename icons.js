@@ -18,6 +18,9 @@ dice:['.KKKKKKKK.','KWWWWWWWSK','KWKWWWWKSK','KWWWWWWWSK','KWWWKKWWSK','KWWWKKWW
 framer:[E,'.KKKKKKKK.','KNMMMMMMMK','KMKKMMKKMK','KMKKMMKKMK','KMMMMMMMmK','KMKMMMMKmK','.KMKKKKmK.','..KmmmmK..','...KKKK...'],
 eye:[E,E,'..KKKKKK..','.KWWWWWWK.','KWWBLKBWSK','KWWBKKBWSK','.KSWWWSSK.','..KKKKKK..',E,E],
 eyeoff:[E,'.......KR.','..KKKKKR..','.KWWWKRWK.','KWWBKRBWSK','KWWKRKBWSK','.KKRWWSSK.','.KRKKKKK..','KR........',E],
+// 16 by 16, the size of the Shop's stall and the Collection's shirt: the lobby's Coin flip and Daily buttons (16 Nov). coinbig is the wallet's coin (same chunky ring, glint and sheen) on a rounder outline, his call.
+coinbig:['................','.....KKKKKK.....','....KGGGYYYK....','...KGGGGGGGYK...','..KGGAAAAAAGYK..','..KGAAAAAAAaYK..','.KGGAAGGYYAaGGK.','.KGGAAGGGYAaGGK.','.KGGAAGGGGAaGGK.','.KGGAAGGGGAaGGK.','..KYAAAAAAAaGK..','..KYGaaaaaaGGK..','...KYGGGGGGGK...','....KYYYGGGK....','.....KKKKKK.....','................'],
+giftbig:['................','....KK....KK....','...KGGK..KGGK...','...KGYGKKGGgK...','....KKGGGGKK....','.KKKKKKGGKKKKKK.','KTRRRRRGYRRRRRrK','KRRRRRRGGRRRRRrK','KKKKKKKGGKKKKKKK','.KTRRRRGYRRRRrK.','.KRRRRRGGRRRRrK.','.KRRRRRGGRRRRrK.','.KRRRRRGGRRRrrK.','.KrrrrrggrrrrrK.','.KKKKKKKKKKKKKK.','................'],
 rain:[E,'...KKK....','.KKWWWKK..','KWWWWWWWK.','KSSSSSSsK.','.KKKKKKK..',E,'.L..L..L..','B..B..B...',E],
 moon:['...KKKK...','..KYGGK...','.KYGGK....','.KGGK...Y.','.KGGK..YGY','.KGGK...Y.','.KGGgK....','..KGggK...','...KKKK...',E],
 sun:['....GG....','.G......G.','...KKKK...','..KYYGGK..','G.KYGGGK.G','G.KGGGgK.G','..KGGggK..','...KKKK...','.G......G.','....GG....'],
