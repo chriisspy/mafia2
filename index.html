@@ -466,6 +466,14 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #menuCode{display:flex;flex-direction:column;align-items:center;width:100%;padding:4px 10px 6px;cursor:pointer;font-family:inherit}#menuCode small{font-size:10px;letter-spacing:3px;opacity:.7}#menuCode b{font-size:30px;letter-spacing:8px;margin-right:-8px;line-height:1.1}
 #menuCode.ok{border-color:#2f7a45;background:#dff5e3;color:#1f5a31;box-shadow:inset 0 0 0 3px #7fc98f,inset 0 -6px 0 #b9e3c2,0 5px 0 #0008}#menuCode.ok b{font-size:24px;letter-spacing:3px;margin-right:-3px;line-height:33px}
 #phone.game #menuModal{bottom:auto}
+#hideBtn,#spyBtn{position:absolute;left:10px;z-index:22;padding:6px 7px 8px;display:none;align-items:center;justify-content:center}
+#hideBtn{top:calc(58px + env(safe-area-inset-top))}#spyBtn{top:calc(100px + env(safe-area-inset-top))}#hideBtn:not(.on)+#spyBtn{top:calc(58px + env(safe-area-inset-top))}
+#phone.ingame #hideBtn.on,#phone.ingame #spyBtn.on{display:flex}
+#nightHud.on~#hideBtn,#nightHud.on~#spyBtn,#watchHud.on~#hideBtn,#watchHud.on~#spyBtn,#overHud.on~#hideBtn,#overHud.on~#spyBtn{display:none!important}   /* not over the night film, the binoculars or the win */
+#spyModal{z-index:25;text-align:left;padding:12px;top:calc(58px + env(safe-area-inset-top));bottom:auto;left:52px;right:10px}#phone.game #spyModal{bottom:auto}#spyModal .notes small{letter-spacing:1px;opacity:.7;margin-top:4px}#spyModal .note img+img{margin-left:-6px}.spy .note img+img{margin-left:-6px}
+#voteScore{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-top:8px}#voteScore:empty{display:none}
+.vs{display:inline-flex;align-items:center;gap:5px;background:#fff6df;border:2px solid var(--wood);border-radius:5px;padding:2px 7px 3px 4px;font-size:14px;line-height:1}.vs img.face{width:20px;height:20px;vertical-align:0}
+.vs b{font-size:16px;color:var(--ink)}.vs.top b{color:var(--red)}.vs.none{padding-left:7px;opacity:.75}
 #gameLeave{position:absolute;left:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:22;display:none}
 #phone.ingame #gameLeave{display:block}#gameLeave.sure{background:#e4544f;color:#fff;border-color:#6b1416}
 #howModal{bottom:calc(14px + env(safe-area-inset-bottom))}
@@ -637,6 +645,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div class="bottom">
       <div class="panel" style="padding:10px 12px">
         <div id="voteInfo"><div id="voteMsg">Everyone to the square</div><div class="small" id="voteSub">One at a time, step up and vote</div></div>
+        <div id="voteScore"></div>
         <div id="votePick">
           <div style="font-size:19px;font-weight:700;text-align:center">Your turn. Who's Mafia?</div>
           <div class="cards" id="voteCards"></div>
@@ -773,6 +782,13 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 
   <button class="btn dark" id="gameLeave">Leave</button>
   <button class="btn dark" id="menuBtn" title="Menu"><i data-ic="menu" data-c="solo"></i></button>
+  <button class="btn dark" id="hideBtn" title="Hide my role outfit"></button>
+  <button class="btn dark" id="spyBtn" title="Notes"><i data-ic="notes" data-c="solo"></i></button>
+  <div class="modal panel" id="spyModal">
+    <div class="mhead"><b>NOTES</b><button class="btn" id="spyX"><i data-ic="cross" data-c="solo"></i></button></div>
+    <div class="small">Only you can see these.</div>
+    <div class="notes" id="spyList"></div>
+  </div>
   <div id="nightOne"><b>NIGHT 1</b></div>
   <div id="joy"><i></i></div>
   <button class="btn" id="floatX" title="Close"><i data-ic="cross" data-c="solo"></i></button>
@@ -807,7 +823,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </nav>
 </div>
 
-<script src="icons.js?v=11131312"></script>
+<script src="icons.js?v=11162200"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -1078,7 +1094,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11151736'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11162133'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1512,7 +1528,8 @@ const ROLES={
 const VIEW_ROLES=Object.keys(ROLES);
 let viewRole='civilian';
 // What THIS phone shows: your own role outfit, plus fellow Mafia if you are Mafia. Everyone else: lobby clothes.
-function looksLike(i){const p=PEOPLE[i];if(i===0)return ROLE_SPR[viewRole]||p.skin;if((viewRole==='mafia'||(GAME.on&&viewRole==='framer'))&&p.role==='mafia')return'mafia';return p.skin;}   // the Framer is on the Mafia's side and knows who they are
+let hideRole=false;try{hideRole=localStorage.getItem('m2_hide')==='1';}catch(e){}   /* the eye button: wear your own outfit instead of your role's (16 Nov) */
+function looksLike(i){const p=PEOPLE[i];if(i===0)return(!hideRole&&ROLE_SPR[viewRole])||p.skin;if((viewRole==='mafia'||(GAME.on&&viewRole==='framer'))&&p.role==='mafia')return'mafia';return p.skin;}   // the Framer is on the Mafia's side and knows who they are
 // who goes out at night (the Detective sees them leave)
 function leavesHouse(i){if(GAME.on){const l=(GAME.g&&GAME.g.night&&GAME.g.night.left)||[];return l.includes(GAME.ids[i]);}   // online: what they really did tonight
   const r=i===0?viewRole:PEOPLE[i].role;return !!(ROLES[r]&&ROLES[r].leaves);}
@@ -1723,12 +1740,16 @@ function ringPos(i,n){const a=Math.PI/2+i/n*Math.PI*2;return{x:Math.round(TOWN.s
 function voteReset(){
   const n=PEOPLE.length;V.ring=PEOPLE.map((p,i)=>{const r=ringPos(i,n);return{...r,cx:r.x,cy:r.y,i,ghost:0,walk:false,dir:'front'};});
   V.alive=PEOPLE.map((_,i)=>i).filter(i=>!V.dead.has(i));
-  V.order=[...V.alive].sort(()=>Math.random()-.5);if(GAME.on&&GAME.g.vote)V.order=(GAME.g.vote.order||[]).map(u=>GAME.idx[u]).filter(i=>V.alive.includes(i));V.turn=0;V.phase='gather';V.pt=0;V.votes={};V.cast={};V.out=null;
+  V.order=[...V.alive].sort(()=>Math.random()-.5);if(GAME.on&&GAME.g.vote)V.order=(GAME.g.vote.order||[]).map(u=>GAME.idx[u]).filter(i=>V.alive.includes(i));V.turn=0;V.phase='gather';V.pt=0;V.votes={};V.cast={};V.out=null;V.scoreSig=null;
   V.suspect=V.alive.filter(i=>i!==0)[Math.floor(Math.random()*(V.alive.length-1))];
   $('#verdict').classList.remove('on');$('#votePick').classList.remove('on');$('#voteInfo').style.display='';
   setVote('Everyone to the square','One at a time, step up and vote');
 }
 function setVote(a,b){$('#voteMsg').innerHTML=a;$('#voteSub').textContent=b;}
+// THE SCOREBOARD (16 Nov, his ask): under the vote's own line, who has how many votes so far, most first, and how many skipped
+function voteScore(){const rows=Object.keys(V.votes).map(k=>[+k,V.votes[k]]).filter(([i,n])=>n>0&&PEOPLE[i]).sort((a,b)=>b[1]-a[1]||a[0]-b[0]),skip=Object.values(V.cast).filter(c=>c<0).length;
+  const sig=JSON.stringify([rows,skip,V.phase==='choose']);if(sig===V.scoreSig)return;V.scoreSig=sig;const top=rows.length?rows[0][1]:0;
+  $('#voteScore').innerHTML=rows.map(([i,n])=>`<span class="vs${n===top?' top':''}">${fimg(i)}<span>${esc(PEOPLE[i].n)}</span><b>${n}</b></span>`).join('')+(skip?`<span class="vs none"><span>No vote</span><b>${skip}</b></span>`:'');}
 function openVotePick(){
   const others=V.alive.filter(i=>i!==0);
   $('#voteCards').innerHTML=cardsHTML(others,`<div class="card none" data-i="-1"><img src="${face(looksLike(0))}" alt=""><span>No vote</span><span class="stamp"></span></div>`);
@@ -1789,7 +1810,7 @@ scenes.vote={
     fireflies(t,[180,290,200,180]);
     for(const p of people){const h=hits.get(p),nv=V.votes[p.r.i]||0;if(!h)continue;const py=h.top-tagLo()-6;
       for(let k=0;k<nv;k++){const px=h.cx-Math.floor(nv*2.5)+k*5;lx.fillStyle='#1a1430';lx.fillRect(px,py,5,5);lx.fillStyle='#e4544f';lx.fillRect(px+1,py+1,3,3);}}
-    rain(dt);present();
+    rain(dt);present();voteScore();
     for(const p of people)nameTag(hits.get(p),PEOPLE[p.r.i].n,p.r.i===0?'#ffd25e':'#fff');
     if(V.phase==='vote'&&spot){const txt=V.target<0?'No vote':PEOPLE[V.target].n+'!';const h=hits.get(people.find(p=>p.r===voter));if(h){const bx=h.cx*S;
       const nv=V.votes[vi]||0;const by=(h.top-(nv?tagLo()+8:0))*S-TAG*DPR-14*DPR;
@@ -2057,9 +2078,8 @@ function resetNight(){clearTimeout(NIGHT.mateTimer);Object.assign(NIGHT,{picks:[
   if(viewRole==='mafia'&&!GAME.on){NIGHT.mateTimer=setTimeout(()=>{leoSays();NIGHT.mate=2;paintNight();},2500);}paintNight();}
 function leoSays(){NIGHT.chat.push({who:'Leo',text:LEO_LINES[leoI++%LEO_LINES.length]});if(!NIGHT.chatOpen)NIGHT.unread++;paintNight();}
 $('#lockBtn').onclick=()=>{if(NIGHT.notes){$('#notesModal').classList.add('on');return;}if(!NIGHT.picks.length)return;NIGHT.locked=true;paintNight();gameAct();sfx('lock');
-  if(R().watch&&!GAME.on){go('watch');return;}
-  toast(ic('lock')+`${R().lock}: ${NIGHT.picks.map(i=>PEOPLE[i].n).join(' & ')}`);setTimeout(()=>{$('#sheet').classList.add('collapsed');setFold(1);},600);
-  if(viewRole==='mafia'&&CAB.clock>=3&&NIGHT.picks.length)setTimeout(()=>{if(scene===scenes.cabin)go('stalk');},1100);};
+  if(R().watch&&!GAME.on){if(NIGHT.picks.length<2){go('watch');return;}WATCH.results=NIGHT.picks.map(i=>({i,left:leavesHouse(i)}));showNotes();return;}   /* two people: no film, it would show who */
+  toast(ic('lock')+`${R().lock}: ${NIGHT.picks.map(i=>PEOPLE[i].n).join(' & ')}`);setTimeout(()=>{$('#sheet').classList.add('collapsed');setFold(1);},600);};   /* (16 Nov, his call) the Mafia no longer get the walk-out cutscene when they lock a kill: they stay in the cabin like everyone else */
 $('#fold').onclick=()=>{$('#sheet').classList.toggle('collapsed');setFold($('#sheet').classList.contains('collapsed'));};
 $('#tabPick').onclick=()=>{NIGHT.chatOpen=false;paintNight();};
 $('#tabChat').onclick=()=>{NIGHT.chatOpen=true;NIGHT.unread=0;paintNight();};
@@ -2131,7 +2151,7 @@ scenes.watch={
 };
 $('#watchSkip').onclick=()=>{if(!WATCH.done){const pi=WATCH.list[WATCH.i];WATCH.results.push({i:pi,left:leavesHouse(pi)});scenes.watch.next();}};
 function showNotes(){NIGHT.notes=WATCH.results;
-  $('#notesList').innerHTML=WATCH.results.map(r=>`<div class="note${r.left?'':' ok'}"><img src="${face(looksLike(r.i))}" alt=""><div>${PEOPLE[r.i].n} <b>${r.left?'LEFT THE HOUSE':'stayed in'}</b></div></div>`).join('');
+  $('#notesList').innerHTML=spyHTML({names:WATCH.results.map(r=>PEOPLE[r.i].n),faces:WATCH.results.map(r=>looksLike(r.i)),n:WATCH.results.filter(r=>r.left).length});
   $('#notesModal').classList.add('on');$('#sheet').classList.add('collapsed');setFold(1);paintNight();}
 
 /* ---- NIGHT: the Mafia cutaway, told in shots. A different story every night ---- */
@@ -2955,7 +2975,8 @@ function ckDiff(score){const k=Math.min(score,70),s=CKS,h=CKH;return{speed:145*s
 function ckReset(){Object.assign(CK,{y:CKH*.45,v:0,sq:0,pipes:[],orbs:[],fx:[],floaters:[],banner:null,score:0,level:1,combo:0,boost:0,invuln:0,coins:0,state:'ready',t:0,scroll:0,spawn:0,pulse:0,flash:0,flashCol:'#fff',shake:0,slow:0,newBest:false});
   $('#clkScore').textContent=0;$('#clkMsg').textContent='TAP TO START\nkeep Chrispy in the air';$('#clkSub').textContent='Tap to flap · dodge the gaps';}
 function ckOpen(){ckReset();try{CK.best=+(localStorage.getItem('cg_clicker_best')||0);CK.theme=localStorage.getItem('m2_ck_theme')||'classic';}catch(e){}if(!CK_THEMES[CK.theme]||!ckOwned(CK.theme))CK.theme='classic';ckThemeUI();$('#clkBest').textContent=CK.best;$('#clk').classList.add('on');CK.last=performance.now();cancelAnimationFrame(CK.raf);CK.raf=requestAnimationFrame(ckLoop);}
-function ckClose(){$('#clk').classList.remove('on');cancelAnimationFrame(CK.raf);}
+function ckClose(){$('#clk').classList.remove('on');cancelAnimationFrame(CK.raf);
+  if(CK.state==='play'&&CK.score+CK.coins>0){coins+=CK.score+CK.coins;CK.score=0;CK.coins=0;CK.state='ready';saveInv();paintCoins();}}   /* shut in the middle of a run (the night ended): the points so far are still paid */
 function ckBurst(x0,y0,col,n,spd){for(let i=0;i<n;i++){const a=Math.random()*6.283,sp=(spd*.4+Math.random()*spd)*CKS;CK.fx.push({x:x0,y:y0,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:.5+Math.random()*.4,m:.9,col,g:200*CKS,sz:Math.random()<.4?2:1});}}
 const ckRing=(x0,y0,col,grow)=>CK.fx.push({ring:1,x:x0,y:y0,r:3,grow:grow*CKS*6,l:.5,m:.5,col});
 const ckFloat=(txt,x0,y0,col)=>CK.floaters.push({txt,x:x0,y:y0,l:.9,col});
@@ -2976,10 +2997,9 @@ function ckOrb(o,d){sfx('coin');
   for(let i=0;i<3;i++)ckRing(CK_BX,CK.y,i%2?'#22d3ee':'#c084fc',6+i*3);ckBurst(CK_BX,CK.y,'#c084fc',24,240);ckBanner('WARP +'+n,'SKIPPED '+n+' TOWERS','#c084fc');ckAfterScore('#c084fc');}
 function ckDie(){if(CK.state==='dead')return;sfx('crash');CK.state='dead';CK.deadAt=performance.now();CK.shake=1;CK.flash=.7;CK.flashCol='#ffffff';CK.slow=.6;ckBurst(CK_BX,CK.y,ckTheme().ball,26,260);ckRing(CK_BX,CK.y,ckTheme().ball,7);
   const prev=CK.best,m=CK_MEDALS.find(([s])=>CK.score>=s),nb=CK.score>prev&&CK.score>0;if(CK.score>CK.best){CK.best=CK.score;try{localStorage.setItem('cg_clicker_best',CK.best);}catch(e){}$('#clkBest').textContent=CK.best;}
-  // coins go into a little pot that the main Chrispy Games app empties into your real coins when it next opens
-  // (it applies the same 50-a-day cap there, and it is the only thing that ever writes your profile)
-  if(CK.coins){coins+=CK.coins;saveInv();paintCoins();}
-  $('#clkMsg').textContent=(nb?'NEW BEST!':m?m[1]:'BUSTED')+'\nScore '+CK.score+' · Best '+CK.best+' · Level '+CK.level+(CK.coins?'\n+'+CK.coins+' coins for your wallet':'')+'\ntap to try again';CK.coins=0;}
+  // 1 POINT = 1 COIN (16 Nov, his call), straight into the wallet when the run ends; a coin picked up on the way is one more
+  const pay=CK.score+CK.coins;if(pay){coins+=pay;saveInv();paintCoins();}
+  $('#clkMsg').textContent=(nb?'NEW BEST!':m?m[1]:'BUSTED')+'\nScore '+CK.score+' · Best '+CK.best+' · Level '+CK.level+(pay?'\n+'+pay+' coin'+(pay>1?'s':'')+' for your wallet':'')+'\ntap to try again';CK.coins=0;}
 function ckTap(){if(CK.state==='dead'){if(performance.now()-CK.deadAt>450)ckReset();return;}
   if(CK.state==='ready'){CK.state='play';$('#clkMsg').textContent='';}
   sfx('flap');CK.v=-380*CKS;CK.sq=1;for(let i=0;i<4;i++){const a=Math.PI*.5+(Math.random()-.5)*1.4;CK.fx.push({x:CK_BX-2,y:CK.y+5,vx:Math.cos(a)*21-16,vy:Math.sin(a)*26,l:.35,m:.35,col:'#f0eff5',g:0,sz:1});}}
@@ -3294,12 +3314,13 @@ scenes.talk={hud:'#talkHud',
     T.st-=dt;if(T.st<=0){T.st=9+Math.random()*6;$('#talkLine').textContent=TALK_LINES[Math.floor(Math.random()*TALK_LINES.length)];}
     const alive=V.ring.filter(r=>!V.dead.has(r.i));
     if(GAME.on&&GAME.g)T.clock=Math.max(0,(GAME.g.ends-serverNow())/1000);else{T.clock-=dt;if(T.clock<=0){T.clock=300;go('vote');}}const s=Math.ceil(T.clock);$('#talkClock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
-    const sp=null,people=alive.map(r=>({r,name:looksLike(r.i),dir:dirFrom(280-r.x,372-r.y),x:r.x,y:r.y,t,phase:r.i*377}));
+    const spec=GAME.on&&GAME.meDead;   /* the dead and late joiners: everyone in their role's outfit, the role written over their name (16 Nov) */
+    const sp=null,people=alive.map(r=>({r,name:spec?(ROLE_SPR[PEOPLE[r.i].role]||PEOPLE[r.i].skin):looksLike(r.i),dir:dirFrom(280-r.x,372-r.y),x:r.x,y:r.y,t,phase:r.i*377}));
     if(T.sel>=0){const r=V.ring[T.sel],q=Math.floor(t/200)%2;lx.strokeStyle=q?'#ffd25e':'#fff2a8';lx.lineWidth=1;lx.beginPath();lx.ellipse(X(r.x)+.5,Y(r.y)+.5,9+q,3+q*.5,0,0,7);lx.stroke();}
     const hits=drawScene(people,TOWN.occ,dayImg('town'));
     // little pixel marks over a head: muted, and whether you have notes on them
     for(const p of people){const h=hits.get(p),i=p.r.i;if(!h)continue;const marks=[];if(T.muted.has(i))marks.push('mute');if(T.notes[i])marks.push('notes');
-      marks.forEach((m,k)=>{const im=icImg(m);if(im.complete&&im.width)lx.drawImage(im,h.cx-marks.length*5+k*10,h.top-tagLo()-9,10,10);});}
+      marks.forEach((m,k)=>{const im=icImg(m);if(im.complete&&im.width)lx.drawImage(im,h.cx-marks.length*5+k*10,h.top-tagLo()*(spec?2:1)-9,10,10);});}
     // butterflies by the grass, and birds crossing now and then (alone or a little flock)
     for(let i=0;i<4;i++){const bx=[176,388,210,352][i]+Math.sin(t*.0011+i*3)*16,by=[300,300,470,470][i]+Math.cos(t*.0017+i)*9;lx.fillStyle=['#ffd25e','#ff9bd0','#fff','#9fd8ff'][i];lx.fillRect(X(bx)+(Math.floor(t/120+i)%2?-1:0),Y(by),Math.floor(t/120+i)%2?3:1,1);}
     T.next-=dt;if(T.next<=0){const n=Math.random()<.35?3:1,dir=Math.random()<.5?1:-1,y0=290+Math.random()*150;
@@ -3310,7 +3331,8 @@ scenes.talk={hud:'#talkHud',
     present();dayMode=false;
     T.pos={};for(const p of people){const h=hits.get(p);if(h)T.pos[p.r.i]={x:(h.cx-(cam.fx||0))*S/DPR,y:(h.top-(cam.fy||0))*S/DPR};}
     if(T.sel>=0&&T.pos[T.sel]){const m=$('#talkMenu');m.style.left=clamp(T.pos[T.sel].x,68,cv.clientWidth-68)+'px';m.style.top=(T.pos[T.sel].y-TAG-10)+'px';}
-    for(const p of people)nameTag(hits.get(p),PEOPLE[p.r.i].n,p.r.i===0?'#ffd25e':'#fff');
+    for(const p of people){const h=hits.get(p);nameTag(h,PEOPLE[p.r.i].n,p.r.i===0?'#ffd25e':'#fff');
+      if(spec&&h){const Ro=ROLES[PEOPLE[p.r.i].role||'civilian'];label(Ro.name,(h.cx-(cam.fx||0))*S,(h.top-(cam.fy||0))*S-(TAG+6)*DPR,11*DPR,Ro.light||Ro.accent);}}
   }};
 // tap a player in the discussion: three little buttons pop up over their head
 function talkMenu(){const m=$('#talkMenu');m.classList.toggle('on',T.sel>=0);if(T.sel>=0)m.querySelector('[data-a=mute]').classList.toggle('sel',T.muted.has(T.sel));}
@@ -3655,25 +3677,31 @@ const CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 async function netCreate(){await netLoad();
   for(let k=0;k<8;k++){const code=Array.from({length:4},()=>CODE_CH[Math.floor(Math.random()*CODE_CH.length)]).join(''),r=NET.db.ref('lobbies/'+code);
     if((await r.child('players').get()).exists())continue;                                  // somebody is in that one
-    await r.child('meta').set({createdAt:TS(),by:NET.uid});return netEnter(code,{});}
+    await r.child('meta').set({createdAt:TS(),by:NET.uid});return netEnter(code,{},true);}
   throw new Error('Could not make a lobby. Try again.');}
 async function netJoin(code){await netLoad();const r=NET.db.ref('lobbies/'+code),[m,p]=await Promise.all([r.child('meta').get(),r.child('players').get()]);
   if(!m.exists())throw new Error('No lobby with that code.');const pl=p.val()||{};
   if(!pl[NET.uid]&&Object.keys(pl).length>=10)throw new Error('That lobby is full.');return netEnter(code,pl);}
+// BACK INTO YOUR GAME (16 Nov, his call: closing the tab is not leaving). The phone remembers the lobby its game is in
+// ('m2_game'); when the page opens again and that game is still going with you in it, you walk straight back in.
+async function netBack(code){await netLoad();const r=NET.db.ref('lobbies/'+code),[gs,ps]=await Promise.all([r.child('game').get(),r.child('players').get()]),g=gs.val();
+  if(!g||!g.roles||!g.pl||!g.pl[NET.uid]||(g.left&&g.left[NET.uid])||Date.now()+NET.off-(g.t0||0)>3600000){try{localStorage.removeItem('m2_game');}catch(e){}return false;}   /* over an hour since anything happened: that game is dead */
+  await netEnter(code,ps.val()||{});return true;}
 const freeSlot=pl=>{const used=new Set(Object.entries(pl).filter(([u])=>u!==NET.uid).map(([,p])=>p.slot));let s=0;while(used.has(s))s++;return s;};
-async function netEnter(code,pl){NET.code=code;NET.ref=NET.db.ref('lobbies/'+code);NET.slot=freeSlot(pl);NET.me=NET.ref.child('players/'+NET.uid);
+async function netEnter(code,pl,fresh){NET.code=code;NET.ref=NET.db.ref('lobbies/'+code);NET.slot=freeSlot(pl);NET.me=NET.ref.child('players/'+NET.uid);
   const c=TOWN.cabins[NET.slot];
   await NET.me.onDisconnect().remove();
   await NET.me.set({n:myName,skin:PEOPLE[0].skin,room:myRoom,slot:NET.slot,v:BUILD,at:TS(),m:{x:c.cx,y:c.top+40,tx:c.cx,ty:c.top+40,loc:-1,dir:'front',s:0}});
+  if(fresh)await NET.ref.child('game').remove().catch(()=>{});   /* a brand new lobby on a code somebody used before: their old game goes */
   introLoad();NET.on=true;NET.t0=Date.now()+NET.off-1500;NET.players=null;NET.sig=null;NET.ents.clear();
   NET.ref.child('players').on('value',s=>{NET.players=s.val()||{};netApply();});
   NET.ref.child('ev').limitToLast(1).on('child_added',netEvent);
-  NET.ref.child('act').on('value',s=>{GAME.racts=s.val()||{};GAME.acts={...GAME.racts,...((GAME.g&&GAME.g.bact)||{})};gameActs();});
+  NET.ref.child('act').on('value',s=>{GAME.racts=s.val()||{};GAME.acts={...GAME.racts,...((GAME.g&&GAME.g.bact)||{})};gameActs();nightRestore();});
   NET.ref.child('mchat').limitToLast(30).on('child_added',gameChat);
   NET.ref.child('game').on('value',s=>gameSync(s.val()));
   try{history.replaceState(null,'','#'+code);}catch(e){}
   if(!GAME.on)go('town');}
-function netLeave(){$('#phone').classList.remove('ingame');if(NET.on){NET.on=false;try{NET.ref.child('players').off();NET.ref.child('ev').off();NET.ref.child('act').off();NET.ref.child('mchat').off();NET.ref.child('game').off();NET.me.onDisconnect().cancel();NET.me.remove();}catch(e){}}
+function netLeave(){$('#phone').classList.remove('ingame');try{localStorage.removeItem('m2_game');}catch(e){}if(NET.on){NET.on=false;try{NET.ref.child('players').off();NET.ref.child('ev').off();NET.ref.child('act').off();NET.ref.child('mchat').off();NET.ref.child('game').off();NET.me.onDisconnect().cancel();NET.me.remove();}catch(e){}}
   Object.assign(GAME,{on:false,id:null,g:null,key:''});V.dead=new Set();V.ring=[];viewRole='civilian';$('#townStart').style.display='none';
   NET.code=null;NET.ents.clear();NET.players=null;NET.sig=null;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
   PEOPLE.length=0;LAB_PEOPLE.forEach((p,i)=>PEOPLE.push(i?{...p}:{...p,skin:SKINS[skinIdx]&&OWNED.has(SKINS[skinIdx].id)?SKINS[skinIdx].id:p.skin}));CABIN_OF.length=0;CABIN_OF.push(...LAB_CABINS);buildTown();go('home');}
@@ -3772,13 +3800,14 @@ function gameLobbyUI(){const host=NET.on&&NET.host===NET.uid,busy=!!(GAME.g&&GAM
 // ---- every phone: the database says where the game is; show it ----
 function gameSync(g){const mine=!!(g&&g.roles&&g.roles[NET.uid]),watch=!!(NET.on&&g&&g.roles&&g.pl&&!mine&&!g.pl[NET.uid]);   /* watch: you joined after it started (12 Nov) */
   $('#phone').classList.toggle('ingame',NET.on&&(mine||watch));
-  if(!g||!g.roles||(!mine&&!watch)){GAME.g=g||null;GAME.watcher=false;
+  if(!g||!g.roles||(!mine&&!watch)){GAME.g=g||null;GAME.watcher=false;if(!g||!g.roles)try{localStorage.removeItem('m2_game');}catch(e){}
     if(GAME.on){GAME.on=false;GAME.id=null;GAME.key='';V.dead=new Set();V.ring=[];viewRole='civilian';clearTimeout(GAME.dawnT);$('#phone').style.background='';if(NET.on)go('town');}
     gameLobbyUI();return;}
   GAME.g=g;GAME.acts={...(GAME.racts||{}),...(g.bact||{})};   // the bots' choices sit in the game itself
-  if(!GAME.on||GAME.id!==g.id){GAME.on=true;GAME.id=g.id;GAME.key='';GAME.gone={};GAME.busy='';GAME.filmDone=true;GAME.watcher=watch;gameCast(g);
+  if(!GAME.on||GAME.id!==g.id){GAME.on=true;GAME.id=g.id;GAME.key='';GAME.gone={};GAME.busy='';GAME.filmDone=true;GAME.watcher=watch;GAME.empty=0;gameCast(g);spyLoad();
+    if(mine)try{localStorage.setItem('m2_game',NET.code);}catch(e){}   /* so this phone finds its way back if the tab is shut (netBack) */
     if(watch)toast(ic('eye')+'A game is on. You can watch it. You are in the next one.');}
-  GAME.meDead=watch||!!(g.dead&&g.dead[NET.uid]);
+  GAME.meDead=watch||!!(g.dead&&g.dead[NET.uid]);spyBtn();hideBtn();
   V.dead=new Set(Object.keys(g.dead||{}).map(u=>GAME.idx[u]).filter(i=>i!=null));if(watch)V.dead.add(0);
   const key=g.id+'|'+g.round+'|'+g.phase;if(key===GAME.key)return;GAME.key=key;
   if(g.phase!=='film'&&!GAME.filmDone&&[scenes.night,scenes.mydeath,scenes.dawn].includes(scene))return;   // still watching the night: carry on when it ends
@@ -3790,7 +3819,9 @@ function gameCast(g){const others=Object.entries(g.pl).filter(([u])=>u!==NET.uid
   PEOPLE.length=0;PEOPLE.push({n:'You',skin:my.skin,role:g.roles[NET.uid]||null});CABIN_OF.length=0;CABIN_OF.push(me.slot);
   others.forEach(([u,p])=>{PEOPLE.push({n:p.n,skin:SP[p.skin]?p.skin:'beanie',room:p.room,role:g.roles[u],uid:u});CABIN_OF.push(p.slot);});
   viewRole=g.roles[NET.uid]||'civilian';NOTE.mine='';NOTE.of={};T.notes={};T.muted.clear();V.ring=[];NIGHT.mateN=null;buildTown();}
-function gNight(g){sfx('night');GAME.filmDone=true;$('#dawnGo').disabled=false;CAB.sentSt=null;CAB.spTxt=null;resetNight();NOTE.mine='';Object.assign(CAB,{state:'stand',x:98,y:188,tgt:null,path:null,dir:'back',walk:false,anim:null});
+function nightRestore(){const g=GAME.g,a=GAME.racts&&GAME.racts[NET.uid];if(!GAME.on||!g||g.phase!=='night'||GAME.meDead||NIGHT.locked||NIGHT.picks.length||!a||a.g!==g.id||a.r!==g.round||!a.pick)return;
+  const pk=a.pick.map(u=>GAME.idx[u]).filter(i=>i!=null&&!V.dead.has(i));if(!pk.length)return;NIGHT.picks=pk;NIGHT.locked=true;if(a.note)NOTE.mine=String(a.note);paintNight();}
+function gNight(g){sfx('night');GAME.filmDone=true;$('#dawnGo').disabled=false;CAB.sentSt=null;CAB.spTxt=null;resetNight();NOTE.mine='';nightRestore();Object.assign(CAB,{state:'stand',x:98,y:188,tgt:null,path:null,dir:'back',walk:false,anim:null});
   if(GAME.meDead){go('ghost');return;}
   const fresh=g.round===1&&serverNow()<g.t0+6000,role=()=>{if(GAME.on)toast(ic(viewRole)+'You are '+roleA(viewRole));};   /* fresh: the game has only just begun (not a reload half way through the night) */
   if(fresh&&g.intro&&INTRO.ok){INTRO.mode=g.intro==='short'?'short':'full';go('intro');return;}
@@ -3805,24 +3836,47 @@ function quietDawn(){dawnCard('quiet','A QUIET NIGHT','');const h=$('#dawnTitle'
   $('#dawnStory').textContent={argue:'Raised voices in the square last night. Nobody came to any harm.',bin:'A bin went over in the night and woke the whole street. Nobody came to any harm.'}[N.quiet?N.qv:'']||'A quiet night. Nobody came to any harm.';$('#dawnNote').style.display='none';$('#dawnGo').textContent='To the square';N.meDead=false;go('dawn',gameDawn);}
 // my film is over (the host waits for everyone's, so the town wakes up together)
 // the Detective's stakeout: at dawn they can watch it back through the binoculars, then the notes stay on the dawn card
-const spyOn=()=>GAME.on&&viewRole==='detective'&&!GAME.meDead&&NIGHT.locked&&NIGHT.picks.length&&GAME.spyRound!==GAME.g.round;
-function spyShow(){if(!GAME.on||GAME.spyRound===GAME.g.round)return;GAME.spyRound=GAME.g.round;
-  const h=NIGHT.picks.map(i=>{const l=leavesHouse(i);return`<div class="note${l?'':' ok'}"><img src="${face(looksLike(i))}" alt=""><div>${esc(PEOPLE[i].n)} <b>${l?'LEFT THE HOUSE':'stayed in'}</b></div></div>`;}).join('');
-  $('#dawnSpy').innerHTML=h;if(scene===scenes.talk)talkSay(NIGHT.picks.map(i=>PEOPLE[i].n+(leavesHouse(i)?' LEFT THE HOUSE':' stayed in')).join(' · '),'Only you know this.');}
+/* THE DETECTIVE'S NOTES (16 Nov, his call). Watching two people no longer says WHO went out, only HOW MANY of them:
+   "1 person left the house", "Both left the house", "Nobody left the house". Watching one person is still just them
+   (and still has the binoculars film). Every night's finding is kept in GAME.spy (and on the phone, so a reload keeps
+   it) and the Notes button under the menu shows them all at any time: dawn, the discussion, the vote, the next night. */
+const spyLine=(k,n)=>k<2?(n?'LEFT THE HOUSE':'stayed in'):n>1?'BOTH LEFT THE HOUSE':n?'1 PERSON LEFT THE HOUSE':'Nobody left the house';
+const spyHTML=e=>`<div class="note${e.n?'':' ok'}">${e.faces.map(f=>`<img src="${face(SP[f]?f:'beanie')}" alt="">`).join('')}<div>${esc(e.names.join(' & '))} <b>${spyLine(e.names.length,e.n)}</b></div></div>`;
+function spyBtn(){$('#spyBtn').classList.toggle('on',!!(GAME.on&&viewRole==='detective'&&!GAME.meDead&&GAME.spy&&GAME.spy.length));}
+function spyLoad(){GAME.spy=[];try{const s=JSON.parse(localStorage.getItem('m2_spy')||'null');if(s&&s.g===GAME.id&&Array.isArray(s.l))GAME.spy=s.l;}catch(e){}spyBtn();}
+// tonight's finding, worked out from what I locked in (on the server, so it survives a reload) and who really went out
+function spyNote(){const g=GAME.g,a=GAME.racts&&GAME.racts[NET.uid];if(!GAME.on||!g||!GAME.spy||viewRole!=='detective'||GAME.meDead||!g.night||!a||a.g!==g.id||a.r!==g.round||!a.pick||!a.pick.length)return null;
+  let e=GAME.spy.find(x=>x.r===g.round);
+  if(!e){const left=g.night.left||[],pk=a.pick.filter(u=>g.pl[u]);if(!pk.length)return null;e={r:g.round,names:pk.map(u=>g.pl[u].n),faces:pk.map(u=>g.pl[u].skin),n:pk.filter(u=>left.includes(u)).length};GAME.spy.push(e);
+    try{localStorage.setItem('m2_spy',JSON.stringify({g:GAME.id,l:GAME.spy}));}catch(x){}}
+  spyBtn();return e;}
+// one person watched: the binoculars film first (the button on the dawn card), then the note
+const spyOn=()=>GAME.on&&viewRole==='detective'&&!GAME.meDead&&NIGHT.locked&&NIGHT.picks.length===1&&!(GAME.spy||[]).some(x=>x.r===GAME.g.round);
+function spyShow(){const had=(GAME.spy||[]).some(x=>GAME.g&&x.r===GAME.g.round),e=spyNote();if(!e)return;$('#dawnSpy').innerHTML=spyHTML(e);
+  if(!had&&scene===scenes.talk)talkSay(e.names.join(' & ')+': '+spyLine(e.names.length,e.n),'Only you know this. It is in your Notes.');}
+function spyOpen(){$('#spyList').innerHTML=(GAME.spy||[]).slice().reverse().map(e=>`<small>NIGHT ${e.r}</small>`+spyHTML(e)).join('');document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));$('#spyModal').classList.add('on');}
 function gameDawn(){if(!GAME.on)return;sfx(GAME.g.night&&GAME.g.night.died?'mourn':'dawn');GAME.filmDone=true;
-  $('#dawnSpy').innerHTML=spyOn()?`<button class="btn go" id="spyGo">${ic('binoculars')}See who left the house</button>`:'';
-  if(spyOn())$('#spyGo').onclick=()=>{if(spyOn())go('watch');};
+  $('#dawnSpy').innerHTML=spyOn()?`<button class="btn go" id="spyGo">${ic('binoculars')}See if ${esc(PEOPLE[NIGHT.picks[0]].n)} left the house</button>`:'';
+  if(spyOn())$('#spyGo').onclick=()=>{if(spyOn())go('watch');};else spyShow();   /* two people watched: the count goes straight on the card */
+  clearTimeout(GAME.dawnT);GAME.dawnAt=performance.now();
+  if(GAME.g.phase!=='film')GAME.dawnT=setTimeout(()=>{if(GAME.on&&scene===scenes.dawn&&GAME.g.phase!=='film')gRoute(GAME.g);},3500);   /* the town has already moved on without this phone: read the card, then catch up */
 $('#dawnSun').innerHTML=ic('sun')+'DAWN · DAY '+GAME.g.round;
   NET.ref.child('act/'+NET.uid).update({g:GAME.id,fd:GAME.g.round}).catch(()=>{});dawnUI();}
 // has every phone finished the night film?
-function filmAllDone(g){return Object.keys(g.pl).filter(u=>NET.players&&NET.players[u]).every(u=>{const a=GAME.acts[u];return a&&a.g===g.id&&a.fd===g.round;});}
-function dawnUI(){const g=GAME.g,b=$('#dawnGo');if(!GAME.on||!g)return;const host=NET.host===NET.uid,ok=host&&g.phase==='film'&&filmAllDone(g);
-  const txt=!host?'Waiting for the host…':ok?'To the square':'Waiting for everyone…';if(b.textContent!==txt)b.textContent=txt;if(b.disabled!==!ok)b.disabled=!ok;}
-function hostToSquare(){const g=GAME.g;if(!g||NET.host!==NET.uid||g.phase!=='film'||!filmAllDone(g))return;
+// (16 Nov) The button used to say "Waiting for the host" on every other phone even while the host was the one waiting,
+// for somebody still watching the film. Now it names who the town is waiting for, and only says the host when it IS the
+// host. A phone that never finishes (the game left open in a tab behind another) cannot hold the town up: 30 seconds
+// after the host's own film ends the host can go anyway, and that phone catches up when it gets to its dawn card.
+function filmWait(g){return Object.keys(g.pl).filter(u=>NET.players&&NET.players[u]).filter(u=>{const a=GAME.acts[u];return!(a&&a.g===g.id&&a.fd===g.round);});}
+function filmAllDone(g){return!filmWait(g).length;}
+const filmGo=g=>filmAllDone(g)||(!!GAME.dawnAt&&performance.now()-GAME.dawnAt>30000);
+function dawnUI(){const g=GAME.g,b=$('#dawnGo');if(!GAME.on||!g)return;const host=NET.host===NET.uid,w=g.phase==='film'?filmWait(g).filter(u=>u!==NET.uid).map(u=>g.pl[u].n):[],ok=host&&g.phase==='film'&&filmGo(g);
+  const txt=ok||g.phase!=='film'?'To the square':w.length?'Waiting for '+(w.length>2?w.length+' players':w.join(' and '))+'…':'Waiting for the host…';if(b.textContent!==txt)b.textContent=txt;if(b.disabled!==!ok)b.disabled=!ok;}
+function hostToSquare(){const g=GAME.g;if(!g||NET.host!==NET.uid||g.phase!=='film'||!filmGo(g))return;
   hostDo(GAME.key+':day',()=>{const now=serverNow(),w=hostWin(g,g.dead||{});gRef().update(w?{phase:'over',win:w,t0:now}:{phase:'day',t0:now,ends:now+DAY_MS});});}
-function gDay(g){$('#talkDay').textContent='DAY '+g.round;go('talk',()=>{if(spyOn())setTimeout(spyShow,400);   // never opened the binoculars: the notes still reach them
-  $('#talkSub').textContent=GAME.watcher?'You joined late. Watch this one, you are in the next.':GAME.meDead?'You are dead. You can only watch.':'Talk it out. Then the vote.';$('#talkSkip').style.display=NET.host===NET.uid?'':'none';});}
-function gVote(g){sfx('gavel');$('#dayTag').textContent='DAY '+g.round;go('vote');}
+function gDay(g){$('#talkDay').textContent='DAY '+g.round;go('talk',()=>{setTimeout(spyShow,400);   // never opened the binoculars: the note still reaches them
+  $('#talkSub').textContent=GAME.watcher?'You joined late. Watch this one, you are in the next.':GAME.meDead?'You are dead. You can see who everyone is.':'Talk it out. Then the vote.';$('#talkSkip').style.display=NET.host===NET.uid?'':'none';});}
+function gVote(g){spyNote();sfx('gavel');$('#dayTag').textContent='DAY '+g.round;go('vote');}
 function gOver(g){sfx(GAME.watcher?'dawn':gWon(g,g.roles[NET.uid])?'win':'lose');overPaint(g);go('over');}
 // the vote, as the database has it
 const gCast=i=>{const v=GAME.g&&GAME.g.vote,c=v&&v.cast&&v.cast[GAME.ids[i]];return c==null?undefined:c==='none'?-1:(GAME.idx[c]??-1);};
@@ -3841,12 +3895,16 @@ function gameChat(s){const v=s.val();if(!GAME.on||!v||v.g!==GAME.id||viewRole!==
 
 // ---- the host's phone: move the game on ----
 function hostDo(tag,fn){if(GAME.busy===tag)return;GAME.busy=tag;fn();}
-// the town wins when the killers are gone (a Framer left alone has lost); the Mafia win when their side (Framer counted) matches the rest
-function hostWin(g,dead){const alive=Object.keys(g.pl).filter(u=>!dead[u]),maf=alive.filter(u=>g.roles[u]==='mafia').length,side=maf+alive.filter(u=>g.roles[u]==='framer').length;return!maf?'town':side>=alive.length-side?'mafia':null;}
+// the town wins when the killers are gone (a Framer left alone has lost); the Mafia win when the Mafia alone match everyone else
+function hostWin(g,dead){const alive=Object.keys(g.pl).filter(u=>!dead[u]),maf=alive.filter(u=>g.roles[u]==='mafia').length;return!maf?'town':maf>=alive.length-maf?'mafia':null;}   /* only the Mafia are counted (his call, 16 Nov): the Framer no longer brings the win forward */
 function hostTick(){const g=GAME.g;if(!NET.on||!NET.players||!g||!g.roles||NET.host!==NET.uid||g.phase==='over')return;const now=serverNow(),dead={...(g.dead||{})},alive=Object.keys(g.pl).filter(u=>!dead[u]);
-  // somebody shut the game or lost their signal for 20 seconds: they are out, like a death
-  for(const u of alive){const left=!!(g.left&&g.left[u]);if(!left&&(isBot(u)||(NET.players&&NET.players[u]))){delete GAME.gone[u];continue;}GAME.gone[u]=GAME.gone[u]||now;   // left = they pressed Leave: out at once
-    if((left||now-GAME.gone[u]>20000)&&g.phase!=='film'){hostDo(GAME.key+':gone:'+u,()=>{dead[u]=true;const w=hostWin(g,dead);gRef().update(w?{['dead/'+u]:true,phase:'over',win:w,t0:now}:{['dead/'+u]:true});});return;}}
+  // CLOSING THE TAB IS NOT LEAVING (his call, 16 Nov): a player whose phone has gone quiet stays in the game and walks
+  // back in when they open it again (netBack). Only pressing Leave (left) takes you out, like a death. GAME.gone = since
+  // when each one has been away, so the vote does not wait long for them.
+  for(const u of alive){const left=!!(g.left&&g.left[u]);if(isBot(u)||(NET.players&&NET.players[u]))delete GAME.gone[u];else GAME.gone[u]=GAME.gone[u]||now;
+    if(left&&g.phase!=='film'){hostDo(GAME.key+':gone:'+u,()=>{dead[u]=true;const w=hostWin(g,dead);gRef().update(w?{['dead/'+u]:true,phase:'over',win:w,t0:now}:{['dead/'+u]:true});});return;}}
+  // everybody who was playing has gone and only late joiners are left watching: throw the game away, back to the lobby
+  {const real=Object.keys(g.pl).filter(u=>!isBot(u));if(real.length&&!real.some(u=>NET.players[u])){GAME.empty=GAME.empty||now;if(now-GAME.empty>30000){hostDo(GAME.key+':empty',()=>gRef().remove().catch(()=>{}));return;}}else GAME.empty=0;}
   const acted=u=>{const a=GAME.acts[u];return!!(a&&a.g===g.id&&a.r===g.round&&a.pick);};
   // the bots: each makes its night pick a few seconds in (a different moment each), and votes a few seconds into its turn
   if(g.phase==='night')for(const u of alive.filter(isBot)){const role=g.roles[u],k=+u.slice(3);if(!ROLES[role].pick||acted(u)||now<g.t0+5000+k*3500)continue;
@@ -3859,7 +3917,7 @@ function hostTick(){const g=GAME.g;if(!NET.on||!NET.players||!g||!g.roles||NET.h
   else if(g.phase==='day'){if(now>g.ends)hostVote();}
   else if(g.phase==='vote'){const v=g.vote||{},cast=v.cast||{},order=(v.order||[]).filter(u=>!dead[u]),cur=order.find(u=>cast[u]==null);
     if(cur&&isBot(cur)){if(now>(v.t||g.t0)+6000)hostDo(GAME.key+':botv:'+cur,()=>{const o=order.filter(x=>x!==cur);gRef().child('vote').update({['cast/'+cur]:Math.random()<.2?'none':o[Math.floor(Math.random()*o.length)],t:now});});}
-    else if(cur){if(now>(v.t||g.t0)+VOTE_TURN_MS)hostDo(GAME.key+':skip:'+cur,()=>gRef().child('vote').update({['cast/'+cur]:'none',t:now}));}
+    else if(cur){if(now>(v.t||g.t0)+(GAME.gone[cur]&&now-GAME.gone[cur]>8000?10000:VOTE_TURN_MS))hostDo(GAME.key+':skip:'+cur,()=>gRef().child('vote').update({['cast/'+cur]:'none',t:now}));}
     else if(!g.out)hostDo(GAME.key+':out',()=>{const n={};let none=0;for(const u of order){const c=cast[u];if(c==='none'||dead[c])none++;else n[c]=(n[c]||0)+1;}
       const top=Math.max(0,...Object.values(n)),who=Object.keys(n).filter(u=>n[u]===top);gRef().update({out:top>0&&who.length===1&&top>none?who[0]:'none',outAt:now});});   // most votes goes; a tie, or as many "no vote", and nobody does
     else if(now>(g.outAt||now)+(g.out==='none'?4500:8500))hostDo(GAME.key+':next',()=>{const up={};if(g.out!=='none'){dead[g.out]=true;up['dead/'+g.out]=true;}
@@ -4188,6 +4246,12 @@ function menuPaint(){$('#menuMus').innerHTML='Music<b>'+(SND.on&&SND.mus?'ON':'O
   const lv=$('#menuLeave');lv.classList.remove('sure');lv.style.display=scene===scenes.home?'none':'';lv.textContent=GAME.on?'Leave game':NET.on?'Leave lobby':'Back to menu';$('#menuVer').textContent='v'+BUILD;}
 $('#menuBtn').onclick=()=>{const m=$('#menuModal');if(m.classList.contains('on')){m.classList.remove('on');return;}document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));menuPaint();m.classList.add('on');};
 $('#menuX').onclick=()=>$('#menuModal').classList.remove('on');
+/* THE EYE (16 Nov, his ask): a Mafia, Doctor, Jester or Detective can hide their role's outfit and see themselves in the
+   outfit they picked. It only changes this phone's picture of you (nobody else ever saw the role outfit). */
+function hideBtn(){const b=$('#hideBtn'),on=!!(GAME.on&&!GAME.watcher&&ROLE_SPR[viewRole]);b.classList.toggle('on',on);const k=hideRole?'eyeoff':'eye';if(b.dataset.k!==k){b.dataset.k=k;b.innerHTML=ic(k,2,'solo');}}
+$('#hideBtn').onclick=()=>{hideRole=!hideRole;try{localStorage.setItem('m2_hide',hideRole?'1':'0');}catch(e){}hideBtn();sfx('copy');const m=hideRole?'Role outfit hidden.':'Role outfit showing.',s=hideRole?'You see yourself in your own outfit.':'Only you see it.';
+  if(scene===scenes.cabin){paintNight();toast(ic(hideRole?'eyeoff':'eye')+m);}else if(scene===scenes.talk)talkSay(m,s);else if(scene===scenes.vote&&$('#voteInfo').style.display!=='none')$('#voteSub').textContent=m;};
+$('#spyBtn').onclick=()=>{if($('#spyModal').classList.contains('on'))$('#spyModal').classList.remove('on');else spyOpen();};$('#spyX').onclick=()=>$('#spyModal').classList.remove('on');
 $('#menuMus').onclick=()=>sndSet(null,!SND.mus);
 $('#menuSnd').onclick=()=>{sndSet(!SND.on);if(SND.on)sfx('coin');};
 $('#menuHow').onclick=()=>{$('#menuModal').classList.remove('on');$('#homeHow').onclick();};
@@ -4285,8 +4349,11 @@ let OBJ_META={};
   go(scenes[start]&&start!=='watch'&&start!=='dawn'?start:'home',()=>{loading(false);
     let rj='';try{rj=sessionStorage.getItem('m2_rejoin')||'';sessionStorage.removeItem('m2_rejoin');}catch(e){}
     if(!LAB&&/^[A-Z]{4}$/.test(rj)){homeDo(()=>netJoin(rj),null,$('#homeJoin'),'Joining…');return;}
-    freshCheck();netLoad().then(()=>acctSync()).then(acctUI).catch(()=>{});   // connect early: the Google window has to open the instant it is tapped
-    const h=location.hash.replace('#','').toUpperCase();if(!LAB&&/^[A-Z]{4}$/.test(h)){$('#joinIn').value=h;$('#joinErr').textContent='';$('#joinModal').classList.add('on');}});   // an invite link: the code is already typed in
+    const usual=()=>{freshCheck();netLoad().then(()=>acctSync()).then(acctUI).catch(()=>{});   // connect early: the Google window has to open the instant it is tapped
+      const h=location.hash.replace('#','').toUpperCase();if(!LAB&&/^[A-Z]{4}$/.test(h)){$('#joinIn').value=h;$('#joinErr').textContent='';$('#joinModal').classList.add('on');}};
+    let back='';try{back=localStorage.getItem('m2_game')||'';}catch(e){}
+    if(!LAB&&/^[A-Z]{4}$/.test(back)){homeDo(()=>netBack(back),null,$('#homeJoin'),'Back to your game…').then(()=>{if(!NET.on)usual();else acctUI();});return;}   /* the tab was shut in the middle of a game */
+    usual();});   // an invite link: the code is already typed in
   requestAnimationFrame(loop);
 })();
 </script>

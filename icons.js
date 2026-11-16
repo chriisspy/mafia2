@@ -17,6 +17,7 @@ bodyguard:[E,'.KKKKKKKK.','.KYGGGggK.','.KGWGGggK.','.KGGGGggK.','.KGGGgggK.','.
 dice:['.KKKKKKKK.','KWWWWWWWSK','KWKWWWWKSK','KWWWWWWWSK','KWWWKKWWSK','KWWWKKWWSK','KWWWWWWWSK','KWKWWWWKSK','KSSSSSSSsK','.KKKKKKKK.'],
 framer:[E,'.KKKKKKKK.','KNMMMMMMMK','KMKKMMKKMK','KMKKMMKKMK','KMMMMMMMmK','KMKMMMMKmK','.KMKKKKmK.','..KmmmmK..','...KKKK...'],
 eye:[E,E,'..KKKKKK..','.KWWWWWWK.','KWWBLKBWSK','KWWBKKBWSK','.KSWWWSSK.','..KKKKKK..',E,E],
+eyeoff:[E,'.......KR.','..KKKKKR..','.KWWWKRWK.','KWWBKRBWSK','KWWKRKBWSK','.KKRWWSSK.','.KRKKKKK..','KR........',E],
 rain:[E,'...KKK....','.KKWWWKK..','KWWWWWWWK.','KSSSSSSsK.','.KKKKKKK..',E,'.L..L..L..','B..B..B...',E],
 moon:['...KKKK...','..KYGGK...','.KYGGK....','.KGGK...Y.','.KGGK..YGY','.KGGK...Y.','.KGGgK....','..KGggK...','...KKKK...',E],
 sun:['....GG....','.G......G.','...KKKK...','..KYYGGK..','G.KYGGGK.G','G.KGGGgK.G','..KGGggK..','...KKKK...','.G......G.','....GG....'],
