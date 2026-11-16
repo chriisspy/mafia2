@@ -474,6 +474,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #voteScore{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-top:8px}#voteScore:empty{display:none}
 .vs{display:inline-flex;align-items:center;gap:5px;background:#fff6df;border:2px solid var(--wood);border-radius:5px;padding:2px 7px 3px 4px;font-size:14px;line-height:1}.vs img.face{width:20px;height:20px;vertical-align:0}
 .vs b{font-size:16px;color:var(--ink)}.vs.top b{color:var(--red)}.vs.none{padding-left:7px;opacity:.75}
+#talkPanel{display:none}#talkPanel.on{display:block}   /* the discussion has no standing text panel (his call, 16 Nov): it only comes up for a few seconds when there is something to say */
 #gameLeave{position:absolute;left:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:22;display:none}
 #phone.ingame #gameLeave{display:block}#gameLeave.sure{background:#e4544f;color:#fff;border-color:#6b1416}
 #howModal{bottom:calc(14px + env(safe-area-inset-bottom))}
@@ -637,7 +638,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div id="talkMenu"><button class="btn" data-a="msg" title="Message"><i data-ic="chat" data-c="solo"></i></button><button class="btn" data-a="notes" title="Notes"><i data-ic="notes" data-c="solo"></i></button><button class="btn" data-a="mute" title="Mute"><i data-ic="mute" data-c="solo"></i></button></div>
     <div class="modal panel" id="dmModal"><h3 id="dmTitle">Message</h3><div class="small">Only they can read it.</div><input id="dmIn" maxlength="80" placeholder="Type a message…"><div class="row"><button class="btn go" id="dmSend">Send</button><button class="btn" id="dmCancel">Cancel</button></div></div>
     <div class="modal panel" id="pnModal"><h3 id="pnTitle">Notes</h3><div class="small">Only you can see your notes.</div><textarea id="pnIn" maxlength="160" rows="3" placeholder="What do you think about them?"></textarea><div class="row"><button class="btn go" id="pnSave">Save</button><button class="btn" id="pnCancel">Cancel</button></div></div>
-    <div class="bottom"><div class="panel" style="padding:10px 12px;text-align:center"><b id="talkLine">Who do you think it was?</b><div class="small" id="talkSub">5 minutes to talk. Then the vote.</div></div></div>
+    <div class="bottom"><div class="panel" id="talkPanel" style="padding:10px 12px;text-align:center"><b id="talkLine">Who do you think it was?</b><div class="small" id="talkSub">5 minutes to talk. Then the vote.</div></div></div>
   </div>
   <div class="hud" id="voteHud">
     <div class="title banner"><small id="dayTag">DAY 2</small>THE VOTE</div>
@@ -1094,7 +1095,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11162133'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11162148'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1529,7 +1530,7 @@ const VIEW_ROLES=Object.keys(ROLES);
 let viewRole='civilian';
 // What THIS phone shows: your own role outfit, plus fellow Mafia if you are Mafia. Everyone else: lobby clothes.
 let hideRole=false;try{hideRole=localStorage.getItem('m2_hide')==='1';}catch(e){}   /* the eye button: wear your own outfit instead of your role's (16 Nov) */
-function looksLike(i){const p=PEOPLE[i];if(i===0)return(!hideRole&&ROLE_SPR[viewRole])||p.skin;if((viewRole==='mafia'||(GAME.on&&viewRole==='framer'))&&p.role==='mafia')return'mafia';return p.skin;}   // the Framer is on the Mafia's side and knows who they are
+function looksLike(i){const p=PEOPLE[i];if(i===0)return(!hideRole&&ROLE_SPR[viewRole])||p.skin;if(!hideRole&&(viewRole==='mafia'||(GAME.on&&viewRole==='framer'))&&p.role==='mafia')return'mafia';return p.skin;}   /* the eye hides the other Mafia's outfits too (his call, 16 Nov) */   // the Framer is on the Mafia's side and knows who they are
 // who goes out at night (the Detective sees them leave)
 function leavesHouse(i){if(GAME.on){const l=(GAME.g&&GAME.g.night&&GAME.g.night.left)||[];return l.includes(GAME.ids[i]);}   // online: what they really did tonight
   const r=i===0?viewRole:PEOPLE[i].role;return !!(ROLES[r]&&ROLES[r].leaves);}
@@ -2052,7 +2053,10 @@ function paintNight(){
   const Ro=R();document.documentElement.style.setProperty('--accent',Ro.accent);
   $('#portrait').src=face(looksLike(0));$('#rname').innerHTML=ic(viewRole)+Ro.name;
   const names=NIGHT.picks.map(i=>PEOPLE[i].n).join(' & ');
-  $('#rline').textContent=NIGHT.locked?(Ro.watch?(GAME.on?`Watching ${names}. You find out at dawn.`:`Watched ${names}. Check your notes.`):`Locked in: ${names}. Sit tight.`):GAME.on&&viewRole==='mafia'?'Pick tonight\'s target.':Ro.line;
+  const mm=GAME.on&&viewRole==='mafia'?mafMates():[],mDiff=mm.filter(m=>m.p>=0&&m.p!==NIGHT.picks[0]),mWait=mm.filter(m=>m.p<0),mSet=mm.find(m=>m.p>=0);
+  if(mm.length)$('#rline').textContent=!NIGHT.locked?(mSet?`${mSet.n} picked ${PEOPLE[mSet.p].n}. Pick the same or nobody dies.`:'Pick a target. All the Mafia must pick the same person.')
+    :mDiff.length?`${mDiff[0].n} picked ${PEOPLE[mDiff[0].p].n}, you picked ${names}. Nobody dies.`:mWait.length?`Locked in: ${names}. ${mWait.map(m=>m.n).join(' and ')} must pick the same.`:`Locked in: ${names}. You all agree.`;
+  else $('#rline').textContent=NIGHT.locked?(Ro.watch?(GAME.on?`Watching ${names}. You find out at dawn.`:`Watched ${names}. Check your notes.`):`Locked in: ${names}. Sit tight.`):GAME.on&&viewRole==='mafia'?'Pick tonight\'s target.':Ro.line;
   $('#subtabs').style.display=Ro.chat?'flex':'none';
   $('#restPane').style.display=Ro.pick?'none':'block';
   $('#pickPane').style.display=Ro.pick&&!NIGHT.chatOpen?'block':'none';
@@ -2070,7 +2074,7 @@ function paintNight(){
     const lb=$('#lockBtn');lb.disabled=(!NIGHT.picks.length||NIGHT.locked)&&!NIGHT.notes;
     lb.innerHTML=NIGHT.notes?ic('notes')+'See my notes':NIGHT.locked?ic('lock')+`${Ro.lock}: ${names}`:!NIGHT.picks.length?(Ro.max>1?'Pick up to 2 people':'Pick someone'):`${Ro.watch?ic('binoculars'):''}Lock in: ${Ro.lock} ${names}`;
   }
-  $('#msgs').innerHTML=NIGHT.chat.map(m=>`<div class="msg${m.me?' me':''}"><img src="${face(m.me?looksLike(0):'mafia')}" alt=""><div class="bub"><div class="who">${m.me?'You':m.who}</div>${esc(m.text)}</div></div>`).join('');
+  $('#msgs').innerHTML=NIGHT.chat.map(m=>`<div class="msg${m.me?' me':''}"><img src="${face(m.me?looksLike(0):hideRole?((PEOPLE.find(q=>q.n===m.who)||{}).skin||'beanie'):'mafia')}" alt=""><div class="bub"><div class="who">${m.me?'You':m.who}</div>${esc(m.text)}</div></div>`).join('');
   $('#msgs').scrollTop=1e5;
 }
 function resetNight(){clearTimeout(NIGHT.mateTimer);Object.assign(NIGHT,{picks:[],locked:false,mate:null,chat:[],unread:0,chatOpen:false,notes:null});leoI=0;
@@ -3302,7 +3306,7 @@ function bubble(h,kind,t){const x=h.cx-6,y=h.top-tagLo()-13;lx.fillStyle='#1a143
   else{lx.fillStyle=kind==='!'?'#d6383c':'#3b6fd6';if(kind==='!'){lx.fillRect(x+6,y+2,1,3);lx.fillRect(x+6,y+6,1,1);}else{lx.fillRect(x+5,y+2,3,1);lx.fillRect(x+7,y+3,1,1);lx.fillRect(x+6,y+4,1,1);lx.fillRect(x+6,y+6,1,1);}}}
 scenes.talk={hud:'#talkHud',
   enter(){document.documentElement.style.setProperty('--accent','#e9b25a');if(!V.ring.length||GAME.on)voteReset();V.ring.forEach(r=>{r.cx=r.x;r.cy=r.y;r.walk=false;r.lift=0;});
-    T.clock=300;T.birds=[];T.next=1.5;T.speak=null;T.st=0;T.sel=-1;talkMenu();$('#talkLine').textContent=TALK_LINES[0];$('#talkSub').textContent='Tap a player to message, note or mute them.';},
+    T.clock=300;T.birds=[];T.next=1.5;T.speak=null;T.st=0;T.sel=-1;talkMenu();$('#talkPanel').classList.remove('on');},
   leave(){T.sel=-1;talkMenu();},
   frame(dt,t){dayMode=true;view(dayImg('town'),280,354,195,{fit:true});
     // cloud shadows drifting over the square
@@ -3311,7 +3315,7 @@ scenes.talk={hud:'#talkHud',
     if(raining)for(let i=0;i<8;i++){const gx=[230,250,300,330,220,340,235,325][i]+Math.round(Math.sin(t*.0007+i*2)*5),gy=[250,258,246,255,262,264,528,535][i];if(Math.sin(t*.004+i*1.7)>.82){lx.fillStyle='rgba(255,255,255,.8)';lx.fillRect(X(gx),Y(gy),2,1);}}
     // same rules as the original Mafia: everyone talks freely for 5 minutes, then the vote.
     // (speech bubbles are kept for later: they will show who is on the mic or typing when it is online)
-    T.st-=dt;if(T.st<=0){T.st=9+Math.random()*6;$('#talkLine').textContent=TALK_LINES[Math.floor(Math.random()*TALK_LINES.length)];}
+    if(T.st>0){T.st-=dt;if(T.st<=0)$('#talkPanel').classList.remove('on');}   /* no idle chatter any more: the panel goes away again */
     const alive=V.ring.filter(r=>!V.dead.has(r.i));
     if(GAME.on&&GAME.g)T.clock=Math.max(0,(GAME.g.ends-serverNow())/1000);else{T.clock-=dt;if(T.clock<=0){T.clock=300;go('vote');}}const s=Math.ceil(T.clock);$('#talkClock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
     const spec=GAME.on&&GAME.meDead;   /* the dead and late joiners: everyone in their role's outfit, the role written over their name (16 Nov) */
@@ -3336,7 +3340,7 @@ scenes.talk={hud:'#talkHud',
   }};
 // tap a player in the discussion: three little buttons pop up over their head
 function talkMenu(){const m=$('#talkMenu');m.classList.toggle('on',T.sel>=0);if(T.sel>=0)m.querySelector('[data-a=mute]').classList.toggle('sel',T.muted.has(T.sel));}
-function talkSay(a,b){$('#talkLine').textContent=a;if(b)$('#talkSub').textContent=b;T.st=5;}
+function talkSay(a,b){$('#talkLine').textContent=a;$('#talkSub').textContent=b||'';T.st=5;$('#talkPanel').classList.add('on');}
 cv.addEventListener('pointerdown',e=>{if(scene!==scenes.talk)return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let best=-1,bd=34;
   for(const i in T.pos){const q=T.pos[i],dd=Math.hypot(q.x-x,q.y+16-y);if(dd<bd&&+i!==0){bd=dd;best=+i;}}T.sel=best===T.sel?-1:best;talkMenu();});
 document.querySelectorAll('#talkMenu .btn').forEach(b=>b.onclick=()=>{const i=T.sel;if(i<0)return;const n=PEOPLE[i].n;
@@ -3807,7 +3811,7 @@ function gameSync(g){const mine=!!(g&&g.roles&&g.roles[NET.uid]),watch=!!(NET.on
   if(!GAME.on||GAME.id!==g.id){GAME.on=true;GAME.id=g.id;GAME.key='';GAME.gone={};GAME.busy='';GAME.filmDone=true;GAME.watcher=watch;GAME.empty=0;gameCast(g);spyLoad();
     if(mine)try{localStorage.setItem('m2_game',NET.code);}catch(e){}   /* so this phone finds its way back if the tab is shut (netBack) */
     if(watch)toast(ic('eye')+'A game is on. You can watch it. You are in the next one.');}
-  GAME.meDead=watch||!!(g.dead&&g.dead[NET.uid]);spyBtn();hideBtn();
+  GAME.meDead=watch||!!(g.dead&&g.dead[NET.uid]);spyBtn();hideBtn();gameActs();
   V.dead=new Set(Object.keys(g.dead||{}).map(u=>GAME.idx[u]).filter(i=>i!=null));if(watch)V.dead.add(0);
   const key=g.id+'|'+g.round+'|'+g.phase;if(key===GAME.key)return;GAME.key=key;
   if(g.phase!=='film'&&!GAME.filmDone&&[scenes.night,scenes.mydeath,scenes.dawn].includes(scene))return;   // still watching the night: carry on when it ends
@@ -3875,7 +3879,7 @@ function dawnUI(){const g=GAME.g,b=$('#dawnGo');if(!GAME.on||!g)return;const hos
 function hostToSquare(){const g=GAME.g;if(!g||NET.host!==NET.uid||g.phase!=='film'||!filmGo(g))return;
   hostDo(GAME.key+':day',()=>{const now=serverNow(),w=hostWin(g,g.dead||{});gRef().update(w?{phase:'over',win:w,t0:now}:{phase:'day',t0:now,ends:now+DAY_MS});});}
 function gDay(g){$('#talkDay').textContent='DAY '+g.round;go('talk',()=>{setTimeout(spyShow,400);   // never opened the binoculars: the note still reaches them
-  $('#talkSub').textContent=GAME.watcher?'You joined late. Watch this one, you are in the next.':GAME.meDead?'You are dead. You can see who everyone is.':'Talk it out. Then the vote.';$('#talkSkip').style.display=NET.host===NET.uid?'':'none';});}
+  if(GAME.watcher)talkSay('You joined late.','Watch this one, you are in the next.');else if(GAME.meDead)talkSay('You are dead.','You can see who everyone is.');$('#talkSkip').style.display=NET.host===NET.uid?'':'none';});}
 function gVote(g){spyNote();sfx('gavel');$('#dayTag').textContent='DAY '+g.round;go('vote');}
 function gOver(g){sfx(GAME.watcher?'dawn':gWon(g,g.roles[NET.uid])?'win':'lose');overPaint(g);go('over');}
 // the vote, as the database has it
@@ -3887,7 +3891,10 @@ function voteVerdict(bi){sfx('verdict');const v=$('#verdict');
   v.classList.add('on');setVote('The town has spoken',GAME.g&&GAME.g.phase==='over'?'':'Night falls soon…');}
 // tonight's choice goes up when you lock it in; a note goes up when you save it
 function gameAct(){if(!GAME.on)return;NET.ref.child('act/'+NET.uid).update({g:GAME.id,r:GAME.g.round,pick:NIGHT.picks.map(i=>GAME.ids[i]),lt:serverNow(),note:NOTE.mine||null}).catch(()=>{});}
+// every other living Mafia and who they have locked tonight (p = that person on this phone, -1 = not chosen yet)
+function mafMates(){const g=GAME.g;if(!GAME.on||!g||!g.roles)return[];return Object.keys(g.roles).filter(u=>u!==NET.uid&&g.roles[u]==='mafia'&&!(g.dead&&g.dead[u])).map(u=>{const a=GAME.acts[u],q=a&&a.g===g.id&&a.r===g.round&&a.pick?GAME.idx[a.pick[0]]:null;return{n:g.pl[u].n,p:q==null?-1:q};});}
 function gameActs(){if(!GAME.on||viewRole!=='mafia')return;const g=GAME.g;   // what your fellow Mafia locked in
+  {const sig=JSON.stringify(mafMates());if(sig!==NIGHT.matesSig){NIGHT.matesSig=sig;if(scene===scenes.cabin)paintNight();}}
   const mate=Object.keys(g.roles).find(u=>u!==NET.uid&&g.roles[u]==='mafia'&&!(g.dead&&g.dead[u])&&GAME.acts[u]&&GAME.acts[u].g===g.id&&GAME.acts[u].r===g.round&&GAME.acts[u].pick);
   const mi=mate?GAME.idx[GAME.acts[mate].pick[0]]:null;if(mi!==NIGHT.mate||!mate){NIGHT.mate=mate?mi:null;NIGHT.mateN=mate?g.pl[mate].n:null;if(scene===scenes.cabin)paintNight();}}
 function gameChat(s){const v=s.val();if(!GAME.on||!v||v.g!==GAME.id||viewRole!=='mafia'||v.by===NET.uid||GAME.seen.has(s.key))return;GAME.seen.add(s.key);
@@ -3909,7 +3916,8 @@ function hostTick(){const g=GAME.g;if(!NET.on||!NET.players||!g||!g.roles||NET.h
   // the bots: each makes its night pick a few seconds in (a different moment each), and votes a few seconds into its turn
   if(g.phase==='night')for(const u of alive.filter(isBot)){const role=g.roles[u],k=+u.slice(3);if(!ROLES[role].pick||acted(u)||now<g.t0+5000+k*3500)continue;
     const rnd=l=>l[Math.floor(Math.random()*l.length)],others=alive.filter(x=>x!==u),pool=role==='mafia'?others.filter(x=>g.roles[x]!=='mafia'):role==='doctor'?alive:others;if(!pool.length)continue;
-    const pick=[rnd(pool)];if(role==='detective'&&pool.length>1){const b=rnd(pool.filter(x=>x!==pick[0]));pick.push(b);}
+    const mateP=role==='mafia'?alive.filter(x=>x!==u&&g.roles[x]==='mafia'&&acted(x)).map(x=>GAME.acts[x].pick[0]).find(q=>pool.includes(q)):null;   /* a bot Mafia goes along with a fellow Mafia who has already locked */
+    const pick=[mateP||rnd(pool)];if(role==='detective'&&pool.length>1){const b=rnd(pool.filter(x=>x!==pick[0]));pick.push(b);}
     hostDo(GAME.key+':bot:'+u,()=>gRef().child('bact/'+u).set({g:g.id,r:g.round,pick,lt:now}));return;}
   if(g.phase==='night'){const need=alive.filter(u=>['mafia','doctor','bodyguard','detective'].includes(g.roles[u]));
     if(now>g.ends+1200)hostDo(GAME.key+':night',()=>hostNight(g,alive,acted));}
@@ -3927,7 +3935,11 @@ function hostVote(){const g=GAME.g;if(!g||g.phase!=='day'||NET.host!==NET.uid)re
   for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}const now=serverNow();gRef().update({phase:'vote',t0:now,vote:{order,t:now},out:null,outAt:null});});}
 function hostNight(g,alive,acted){const pickOf=role=>{const n={};alive.filter(u=>g.roles[u]===role&&acted(u)).forEach(u=>{const p=GAME.acts[u].pick[0];n[p]=(n[p]||0)+1;});
     const top=Math.max(0,...Object.values(n));return Object.keys(n).find(u=>n[u]===top)||null;};
-  let victim=pickOf('mafia');if(victim&&(!alive.includes(victim)||g.roles[victim]==='mafia'))victim=null;
+  // THE KILL NEEDS ALL THE MAFIA (his call, 16 Nov): it used to go to whoever most of them picked, so one Mafia locking a
+  // target on their own was enough. Now every Mafia has to lock the SAME person or nobody dies. A Mafia whose phone is out of
+  // the game and who has not chosen does not hold the others up (closing the tab is not leaving, so they could be gone all game).
+  const mafs=alive.filter(u=>g.roles[u]==='mafia'&&(acted(u)||isBot(u)||(NET.players&&NET.players[u]))),mp=mafs.map(u=>acted(u)?GAME.acts[u].pick[0]:null);
+  let victim=mp.length&&mp.every(q=>q&&q===mp[0])?mp[0]:null;if(victim&&(!alive.includes(victim)||g.roles[victim]==='mafia'))victim=null;
   const doc=pickOf('doctor'),bgU=alive.find(u=>g.roles[u]==='bodyguard'&&acted(u)),bgP=bgU?GAME.acts[bgU].pick[0]:null;
   const heal=!!victim&&doc===victim,guard=!heal&&victim&&bgU&&bgP===victim&&bgU!==victim?bgU:null,died=!victim||heal?null:guard||victim;
   const kind=PLAN[g.nkind]&&!(guard&&g.nkind==='home')?g.nkind:newKind('home'),now=serverNow(),up={phase:'film',t0:now,ends:now+FILM_MAX,
@@ -4247,9 +4259,10 @@ function menuPaint(){$('#menuMus').innerHTML='Music<b>'+(SND.on&&SND.mus?'ON':'O
 $('#menuBtn').onclick=()=>{const m=$('#menuModal');if(m.classList.contains('on')){m.classList.remove('on');return;}document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));menuPaint();m.classList.add('on');};
 $('#menuX').onclick=()=>$('#menuModal').classList.remove('on');
 /* THE EYE (16 Nov, his ask): a Mafia, Doctor, Jester or Detective can hide their role's outfit and see themselves in the
-   outfit they picked. It only changes this phone's picture of you (nobody else ever saw the role outfit). */
-function hideBtn(){const b=$('#hideBtn'),on=!!(GAME.on&&!GAME.watcher&&ROLE_SPR[viewRole]);b.classList.toggle('on',on);const k=hideRole?'eyeoff':'eye';if(b.dataset.k!==k){b.dataset.k=k;b.innerHTML=ic(k,2,'solo');}}
-$('#hideBtn').onclick=()=>{hideRole=!hideRole;try{localStorage.setItem('m2_hide',hideRole?'1':'0');}catch(e){}hideBtn();sfx('copy');const m=hideRole?'Role outfit hidden.':'Role outfit showing.',s=hideRole?'You see yourself in your own outfit.':'Only you see it.';
+   outfit they picked, and it hides the other Mafia's outfits as well (for a Mafia or the Framer). It only changes this
+   phone's own picture (nobody else ever saw the role outfits). */
+function hideBtn(){const b=$('#hideBtn'),on=!!(GAME.on&&!GAME.watcher&&(ROLE_SPR[viewRole]||viewRole==='framer'));b.classList.toggle('on',on);   /* the Framer has no outfit of their own but sees the Mafia's */const k=hideRole?'eyeoff':'eye';if(b.dataset.k!==k){b.dataset.k=k;b.innerHTML=ic(k,2,'solo');}}
+$('#hideBtn').onclick=()=>{hideRole=!hideRole;try{localStorage.setItem('m2_hide',hideRole?'1':'0');}catch(e){}hideBtn();sfx('copy');const m=hideRole?'Role outfits hidden.':'Role outfits showing.',s=hideRole?'Everyone is in the outfit they picked.':'Only you see them.';
   if(scene===scenes.cabin){paintNight();toast(ic(hideRole?'eyeoff':'eye')+m);}else if(scene===scenes.talk)talkSay(m,s);else if(scene===scenes.vote&&$('#voteInfo').style.display!=='none')$('#voteSub').textContent=m;};
 $('#spyBtn').onclick=()=>{if($('#spyModal').classList.contains('on'))$('#spyModal').classList.remove('on');else spyOpen();};$('#spyX').onclick=()=>$('#spyModal').classList.remove('on');
 $('#menuMus').onclick=()=>sndSet(null,!SND.mus);
