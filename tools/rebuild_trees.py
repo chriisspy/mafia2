@@ -20,6 +20,8 @@ from scipy import ndimage as nd
 Image.MAX_IMAGE_PIXELS = None
 ART = '../mafia2-art/'; BIG = ART + 'bigmap/'; X = 'assets/xmas/'
 PREVIEW = len(sys.argv) > 1 and sys.argv[1] == 'preview'
+CDIR = sys.argv[2].rstrip('/') + '/' if len(sys.argv) > 2 else 'assets/xmas/'      # preview <dir>: try corner forests from another folder
+POUT = sys.argv[3] if len(sys.argv) > 3 else None
 H, W, OX, W0, H0 = 1000, 800, 120, 560, 750
 YY, XX = np.mgrid[0:H, 0:W]
 centre = np.zeros((H, W), bool); centre[:H0, OX:OX + W0] = True
@@ -135,7 +137,7 @@ def nightify_rgb(a, alpha):
     dark = np.stack([r_ * .22 + 4, g_ * .30 + 10, b_ * .46 + 30], -1); o = np.where(bulb[..., None], o * .9, dark)
     return o.clip(0, 255).astype(np.uint8)
 for nm, (x0, y0, x1, y1) in CBOX.items():
-    try: cimg = np.asarray(Image.open(X + f'corner-{nm}.png').convert('RGBA'))
+    try: cimg = np.asarray(Image.open(CDIR + f'corner-{nm}.png').convert('RGBA'))
     except FileNotFoundError: continue
     a = cimg[..., 3] > 0; ch, cw = a.shape
     day_g[y0:y0 + ch, x0:x0 + cw][a] = cimg[..., :3][a]
@@ -249,7 +251,7 @@ def compose(ground, sh):
         c.alpha_composite(s.crop((sx_, sy_, sx_ + w, sy_ + h)), (max(0, x), max(0, y)), (max(0, -x), max(0, -y), w, h))
     return c.convert('RGB')
 dp = compose(day_g, sheet); npv = compose(night_g, nightify(sheet))
-o = Image.new('RGB', (W * 2 + 10, H)); o.paste(dp, (0, 0)); o.paste(npv, (W + 10, 0)); o.save(BIG + 'rebuild-preview.png')
+o = Image.new('RGB', (W * 2 + 10, H)); o.paste(dp, (0, 0)); o.paste(npv, (W + 10, 0)); o.save(POUT or BIG + 'rebuild-preview.png')
 if PREVIEW: sys.exit()
 # THE WALK MASK (18 Nov, his note: "a lot that stops walking annoyingly ... make sure its clean"). Only real things block:
 # the lake and the pond, the dark corner forest, his picket fences and the presents by the stage (from his own mask),
