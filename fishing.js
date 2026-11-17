@@ -225,7 +225,7 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;fishTick(dt,t,m);
       const bx=Math.round(px)-21,by=Math.round(py)-52,w=42;lx.fillStyle='#14203c';lx.fillRect(bx-1,by-1,w+2,7);lx.fillStyle='#2a3a66';lx.fillRect(bx,by,w,5);
       lx.fillStyle='#5fc46f';lx.fillRect(bx,by,Math.round(w*.55),5);lx.fillStyle='#ffd25e';lx.fillRect(bx+Math.round(w*.55),by,Math.round(w*.25),5);lx.fillStyle='#e4544f';lx.fillRect(bx+Math.round(w*.8),by,w-Math.round(w*.8),5);
       const nx=bx+Math.round(clamp(F.ten,0,1)*(w-1));lx.fillStyle='#14203c';lx.fillRect(nx-1,by-3,3,11);lx.fillStyle='#fff';lx.fillRect(nx,by-2,1,9);}
-    if(F.ph==='bite'&&Math.floor(t/90)%2){const bx=Math.round(px)-3,by=Math.round(py)-50;lx.fillStyle='#14203c';lx.fillRect(bx-1,by-1,8,11);lx.fillStyle='#ffd25e';lx.fillRect(bx,by,6,9);lx.fillStyle='#14203c';lx.fillRect(bx+2,by+1,2,4);lx.fillRect(bx+2,by+6,2,2);}
+    if(F.ph==='bite'&&Math.floor(t/90)%2){const bx=X(B?B.x:m.x)-3,by=Y(B?B.y:m.y-30)-20;   /* the "!" pops up over the fish on the hook, not over you (his call, 17 Nov) */lx.fillStyle='#14203c';lx.fillRect(bx-1,by-1,8,11);lx.fillStyle='#ffd25e';lx.fillRect(bx,by,6,9);lx.fillStyle='#14203c';lx.fillRect(bx+2,by+1,2,4);lx.fillRect(bx+2,by+6,2,2);}
     if(F.land){const L=F.land,k=Math.min(1,L.t/.6),fx=lerp(X(L.x0),px,k),fy=lerp(Y(L.y0),py-44,k)-Math.sin(k*Math.PI)*26;lx.drawImage(IMG['fish/sheet'],L.kind*48,0,48,32,Math.round(fx)-24,Math.round(fy)-16,48,32);}
   }else if(me)rest.push(me);
   for(const[p,h]of drawScene(rest,null,img,null))hits.set(p,h);
