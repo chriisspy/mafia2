@@ -1171,7 +1171,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11162307'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11171138'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3727,7 +3727,11 @@ function flipCoin(x,cx,cy,a){const R=17,c=Math.cos(a),ry=Math.round(R*Math.abs(c
    (the challenger's phone tosses the coin and tells everyone the result), and flipcancel if it is taken back. The coins
    change hands in each wallet the moment the toss is made, so shutting the game in mid air does not get you out of it. */
 const FLIP_MAX=5,DUEL={stake:500,out:null,ask:null,msg:'',t:null,askT:null};
-function flipsLeft(){return Math.max(0,FLIP_MAX-(DAILY.fd===dayKey()?(DAILY.fn|0):0));}
+/* the solo flips come back every 20 minutes, not once a day (his call, 17 Nov) */
+const FLIP_EVERY=20*60*1000;
+function flipKey(){return 'f'+Math.floor(Date.now()/FLIP_EVERY);}
+function flipWait(){const m=Math.max(1,Math.ceil((FLIP_EVERY-Date.now()%FLIP_EVERY)/60000));return m+'m';}
+function flipsLeft(){return Math.max(0,FLIP_MAX-(DAILY.fd===flipKey()?(DAILY.fn|0):0));}
 function flipAmt(){const v=Math.floor(+$('#flipAmt').value);return v>0?Math.min(v,1000000):FLIP.stake;}
 function flipUI(){const F=FLIP,duel=F.mode==='duel',left=flipsLeft();if(!(duel&&F.busy))paintCoins();
   {const own=Math.floor(+$('#flipAmt').value)>0;if(!duel&&!F.busy){F.price=flipAmt();F.pays=F.price*2;}$('#flipStakes').style.display=duel?'none':'';$('#flipAmt').classList.toggle('sel',own);$('#flipAmt').disabled=F.busy;
@@ -3736,14 +3740,14 @@ function flipUI(){const F=FLIP,duel=F.mode==='duel',left=flipsLeft();if(!(duel&&
   document.querySelectorAll('#flipSides .fside').forEach(b=>{b.classList.toggle('sel',b.dataset.s===F.side);b.disabled=F.busy;});const g=$('#flipGo');
   if(duel){g.style.display=F.busy?'none':'';g.className='btn wide';g.textContent='Close';g.disabled=false;$('#flipSub').textContent=F.busy?F.amt+' coins each. Winner takes both.':'';return;}
   g.style.display='';g.className='btn red wide';g.innerHTML=F.busy?'Flipping…':ic('coin',2)+' Flip · '+F.price;g.disabled=F.busy||coins<F.price||!left;
-  $('#flipSub').textContent=F.busy?'':!left?'No flips left today. Back in '+dayLeft()+'.':coins<F.price?'You need '+F.price+' coins to flip.':left+' of '+FLIP_MAX+' flips left today. Win '+F.pays+'.';}
+  $('#flipSub').textContent=F.busy?'':!left?'No flips left. More in '+flipWait()+'.':coins<F.price?'You need '+F.price+' coins to flip.':left+' of '+FLIP_MAX+' flips left. Win '+F.pays+'.';}
 function flipShow(){const F=FLIP;if(!F.face){F.face={h:flipFace('mafia'),t:flipFace('knife')};document.querySelectorAll('#flipSides .fside canvas').forEach(c=>c.getContext('2d').drawImage(F.face[c.parentNode.dataset.s],0,0));
     $('#fvH canvas').getContext('2d').drawImage(F.face.h,0,0);$('#fvT canvas').getContext('2d').drawImage(F.face.t,0,0);}
   document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));F.parts=[];F.flash=0;$('#flipWord').innerHTML='';flipUI();$('#flipModal').classList.add('on');
   clearInterval(F.tick);let last=performance.now();F.tick=setInterval(()=>{const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;if(!$('#flipModal').classList.contains('on')&&!F.busy){clearInterval(F.tick);F.tick=null;return;}flipDraw(dt);},16);}
 function flipOpen(){const F=FLIP;if(F.busy)return;F.mode='solo';F.won=null;F.t=0;F.a1=F.side==='h'?0:Math.PI;flipShow();}
 function flipGo(){const F=FLIP;if(F.mode==='duel'){if(!F.busy)$('#flipModal').classList.remove('on');return;}
-  F.price=flipAmt();F.pays=F.price*2;if(F.busy||coins<F.price||!flipsLeft())return;coins-=F.price;saveInv();DAILY.fn=(DAILY.fd===dayKey()?(DAILY.fn|0):0)+1;DAILY.fd=dayKey();daySave();
+  F.price=flipAmt();F.pays=F.price*2;if(F.busy||coins<F.price||!flipsLeft())return;coins-=F.price;saveInv();DAILY.fn=(DAILY.fd===flipKey()?(DAILY.fn|0):0)+1;DAILY.fd=flipKey();daySave();
   F.res=Math.random()<.5?'h':'t';F.busy=true;F.won=null;F.parts=[];F.t=0;F.hf=0;$('#flipWord').innerHTML='';F.a0=F.side==='h'?0:Math.PI;F.a1=(F.res==='h'?0:Math.PI)+Math.PI*10;sfx('swish');flipUI();}
 // one on one: o = {amt, res, mine: my side, opp: their name, h / t: who is heads and who is tails}
 function duelStart(o){const F=FLIP;Object.assign(F,{mode:'duel',amt:o.amt,opp:o.opp,side:o.mine,res:o.res,busy:true,won:null,t:-.8,hf:0});
@@ -3765,7 +3769,7 @@ function duelPaint(){const amt=duelAmt(),own=Math.floor(+$('#duelAmt').value)>0,
   $('#duelList').innerHTML=others.length?others.map(e=>{const w=DUEL.out&&DUEL.out.to===e.uid;return`<div class="drow"><img src="${face(PEOPLE[e.i]?PEOPLE[e.i].skin:'beanie')}" alt=""><b>${esc(wlName(e))}</b><button class="btn go" data-u="${e.uid}"${DUEL.out||coins<amt?' disabled':''}>${w?'Waiting…':'Flip for '+amt}</button></div>`;}).join(''):`<div class="small dnone">${NET.on?'Nobody else is in the lobby yet.':'Make or join a lobby to flip against a player.'}</div>`;
   document.querySelectorAll('#duelList button').forEach(b=>b.onclick=()=>duelSend(b.dataset.u));
   $('#duelMsg').textContent=DUEL.msg||(others.length&&coins<amt?'You only have '+coins+' coins.':'');
-  $('#duelSolo').innerHTML=ic('coin',2)+`<span>Flip on your own<small>${left} of ${FLIP_MAX} left today</small></span>`;$('#duelSolo').disabled=!left;}
+  $('#duelSolo').innerHTML=ic('coin',2)+`<span>Flip on your own<small>${left} of ${FLIP_MAX} left</small></span>`;$('#duelSolo').disabled=!left;}
 function duelOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));if(!DUEL.out)DUEL.msg='';duelPaint();$('#duelModal').classList.add('on');}
 function duelSend(uid){const e=NET.ents.get(uid),amt=duelAmt();if(!NET.on||!e||DUEL.out||coins<amt)return;const id=Math.random().toString(36).slice(2,10),name=wlName(e);
   DUEL.out={id,to:uid,amt,name};DUEL.msg='Waiting for '+name+'…';duelEv('flipask',uid,{id,amt});sfx('copy');clearTimeout(DUEL.t);
