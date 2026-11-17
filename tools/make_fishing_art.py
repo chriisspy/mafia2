@@ -134,8 +134,8 @@ for old in ('beanie.png', 'beanie.json'):
 Image.fromarray(hard(Image.open(SRC + 'stall.png'))).save(OUT + 'stall.png', optimize=True)
 # ---- a picture of each rod for Joe's shop (PixelLab map objects, 64 x 64: his ask, "images for the rods like we did for the case")
 for k in ('twig', 'oak', 'steel', 'gold'): Image.fromarray(hard(Image.open(f'{SRC}rod-{k}.png'))).save(f'{OUT}rod-{k}.png', optimize=True)
-# ---- the bait icon (PixelLab create_image_pixen, 16 x 16: a worm on a hook; his ask: an icon for buying bait and for the bait counter, at the small pixel scale)
-Image.fromarray(hard(Image.open(SRC + 'bait-b.png'))).save(OUT + 'bait.png', optimize=True)
+# ---- the bait icon (PixelLab create_image_pixen, 16 x 16: a fat pink worm (his pick: the first of three); his ask: an icon for buying bait and for the bait counter, at the small pixel scale)
+Image.fromarray(hard(Image.open(SRC + 'bait-a.png'))).save(OUT + 'bait.png', optimize=True)
 
 # ---- the splash
 sp = sorted(f for f in os.listdir(SRC) if f.startswith('splash_'))
