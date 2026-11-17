@@ -29,18 +29,28 @@ h4{margin:14px 0 6px;font-size:12px;font-weight:600;color:var(--dim);text-transf
 #pal{display:flex;flex-wrap:wrap;border:2px solid var(--line);width:fit-content;max-width:100%}
 #fgbg{position:relative;width:50px;height:50px;flex:none}#fgbg div{position:absolute;width:32px;height:32px;border:2px solid var(--tx);outline:2px solid var(--line)}#cfg{left:0;top:0;z-index:2}#cbg{right:0;bottom:0}
 #pick{width:40px;height:34px;padding:2px}
-.lay{display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border:2px solid transparent}.lay:hover{background:var(--pan2)}.lay.on{background:var(--pan2);border-color:var(--acc)}.lay span{flex:1}.tw{cursor:pointer;padding:0 4px;color:var(--dim)}.tw:hover{color:var(--tx)}
+.lay{display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border:2px solid transparent}.lay:hover{background:var(--pan2)}.lay.on{background:var(--pan2);border-color:var(--acc)}.lay span{flex:1}.lay small.fx{color:var(--acc)}.lay.sel{background:var(--pan2);border-color:var(--dim)}.lay.ing{margin-left:16px}.lay.grp span{font-weight:600}.tw{cursor:pointer;padding:0 4px;color:var(--dim)}.tw:hover{color:var(--tx)}
 .kids{max-height:230px;overflow-y:auto;margin:0 0 4px 14px;border-left:2px solid var(--line)}.kids::-webkit-scrollbar{width:8px}.kids::-webkit-scrollbar-thumb{background:var(--hi)}
 .kid{display:flex;align-items:center;gap:7px;padding:3px 6px;cursor:pointer;font-size:13px}.kid:hover{background:var(--pan2)}.kid.on{background:var(--acc);color:#2a1d05}.kid span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kid i{width:22px;height:22px;flex:none;background:#48607a center/contain no-repeat;image-rendering:pixelated;border:1px solid var(--line)}
 #lib{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-height:236px;overflow-y:auto}
 #lib .it{aspect-ratio:1;border:2px solid var(--line);background:#48607a center/70% no-repeat;image-rendering:pixelated;cursor:pointer}#lib .it:hover{border-color:var(--dim)}#lib .it.on{border-color:var(--acc)}
-#insp{background:var(--bg);border:2px solid var(--line);padding:8px;margin-top:8px}
+#insp{background:var(--bg);border:2px solid var(--line);padding:8px;margin-top:8px}#insp:empty{display:none}
+#tiles{display:flex;flex-wrap:wrap;gap:4px}#tiles .tl{width:38px;height:38px;border:2px solid var(--line);background:#48607a center/100% repeat;image-rendering:pixelated;cursor:pointer;position:relative}#tiles .tl.on{border-color:var(--acc)}#tiles .tl b{position:absolute;right:1px;bottom:0;font-size:10px;color:#fff;text-shadow:0 0 2px #000}#tiles:empty::after{content:'none yet';color:var(--dim);font-size:12px}
+input[type=range]{width:120px;padding:0;accent-color:var(--acc);vertical-align:middle;border:0;background:none}
 #bar{position:absolute;bottom:0;left:0;right:0;height:26px;background:var(--pan);border-top:2px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 10px;color:var(--dim);font-size:13px}#dirty{color:var(--acc)}
 #toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--pan);border:2px solid var(--acc);box-shadow:4px 4px 0 #0008;padding:8px 14px;display:none;z-index:9;max-width:70%}
 dialog{background:var(--pan);color:var(--tx);border:2px solid var(--line);box-shadow:6px 6px 0 #0008;padding:16px;min-width:320px}dialog::backdrop{background:#000a}dialog h3{margin:0 0 10px;color:var(--acc)}
 small{color:var(--dim);font-size:12px}textarea{width:100%;height:56px;resize:vertical}select{padding:5px}
+.lb{width:62px;color:var(--dim)}#plOther select{flex:1;min-width:0}#plOther .row{flex-wrap:nowrap}#plMafia{margin-top:6px}.fl{font-size:12px;color:var(--acc);margin:10px 0 4px}.seg{display:flex}.seg button{flex:1;justify-content:center;padding:5px 2px;margin-right:-2px}.seg button.on{position:relative;z-index:1}
+#plSizes{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}#plSizes button{flex-direction:column;gap:0;padding:5px 2px;line-height:1.15}#plSizes button small{color:inherit;opacity:.75;font-size:11px}
+#plScale{width:100%;image-rendering:pixelated;background:#48607a;border:2px solid var(--line);display:block;margin-top:6px}
 .w100{width:100%;justify-content:center;margin-bottom:6px}
+#castGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}#castGrid .ch{aspect-ratio:1;border:2px solid var(--line);background:#48607a center/62% no-repeat;image-rendering:pixelated;cursor:pointer}#castGrid .ch:hover{border-color:var(--dim)}#castGrid .ch.on{border-color:var(--acc)}
+#castCv{width:100%;aspect-ratio:1;image-rendering:pixelated;background:#48607a;border:2px solid var(--line);display:block}
+#caLog{white-space:pre-wrap;font:11px/1.35 ui-monospace,monospace;color:var(--dim);background:var(--bg);border:2px solid var(--line);padding:6px;max-height:150px;overflow-y:auto;margin:6px 0 0}#caLog:empty{display:none}
+.cut{display:flex;gap:8px;margin:10px 0}.cut div{text-align:center}.cut canvas{width:84px;height:104px;object-fit:contain;image-rendering:pixelated;background:#48607a;border:2px solid var(--line);display:block;margin-bottom:4px}
+#pxPrev{width:320px;height:240px;object-fit:contain;image-rendering:pixelated;background:#48607a;border:2px solid var(--line);display:block;margin:8px 0}
 </style></head><body>
 <div id="top">
   <b>MAP BUILDER</b>
@@ -62,14 +72,26 @@ small{color:var(--dim);font-size:12px}textarea{width:100%;height:56px;resize:ver
   <div id="tools"></div>
   <div id="stage"><canvas id="view"></canvas><div id="toast"></div></div>
   <div id="side">
-    <div id="tabs"><button class="on" data-tab="paint">Paint</button><button data-tab="props">Props</button><button data-tab="map">Map</button></div>
+    <div id="tabs"><button class="on" data-tab="paint">Paint</button><button data-tab="props">Props</button><button data-tab="map">Map</button><button data-tab="cast">Cast</button></div>
     <div class="pane on" data-pane="paint">
       <h4>Colour</h4>
       <div class="row"><div id="fgbg" title="X swaps them. Right-click paints with the 2nd."><div id="cfg"></div><div id="cbg"></div></div><input type="color" id="pick" title="Any colour">
         <span>Size</span><input type="number" id="brush" min="1" max="64" value="1" title="Brush size ( [ and ] )"></div>
+      <div class="row"><select id="bShape" title="Brush shape"><option value="square">Square</option><option value="round">Round</option><option value="diamond">Diamond</option></select>
+        <label title="Soft edge: the further from the middle, the more the brush breaks up into scattered pixels">Soft <input type="range" id="bSoft" min="0" max="100" value="0"></label></div>
+      <div class="row"><label title="How full the brush is: lower sprays loose pixels">Fill <input type="range" id="bDens" min="5" max="100" value="100"></label></div>
+      <div class="row"><select id="bBlend" title="Brush blend: mixes each stroke with what is already there and bakes it in. For a whole layer, use the blend box above the layers list."><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Lighten</option><option value="add">Add</option><option value="color">Colour</option></select>
+        <label title="How strong the brush is">Opacity <input type="range" id="bOpac" min="5" max="100" value="100" style="width:86px"></label></div>
       <div id="pal"></div>
       <div class="row"><label><input type="checkbox" id="cFill"> filled shapes</label><button id="bRepl" title="Every pixel of the 2nd colour becomes the 1st colour (in the selection, or the whole layer)">Swap colour</button></div>
-      <h4>Layers</h4><div id="layers"></div>
+      <h4>Tile brush</h4>
+      <div id="tiles"></div>
+      <div class="row"><button id="bTileSel" title="Make a tile brush from what you selected on the ground">From selection</button><button id="bTileVar" title="Add what you selected as another look of the picked tile: they get mixed as you paint">+ Variant</button><button id="bTilePng" title="Add a tile PNG">+ PNG</button><button id="bTileDel" data-i="bin" class="ib" title="Delete the picked tile brush"></button></div>
+      <h4>Layers</h4>
+      <div class="row" id="layTop"><select id="layBlend" title="How this whole layer mixes with what is behind it"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="hard-light">Hard light</option><option value="darken">Darken</option><option value="lighten">Lighten</option><option value="add">Add</option><option value="color">Colour</option></select><label title="This layer's opacity">Opacity <input type="range" id="layOp" min="5" max="100" value="100" style="width:86px"></label></div>
+      <div id="layers"></div>
+      <div class="row" id="layBtns"><button id="bLayAdd" title="A new see-through layer to paint on, above the ground">+ Layer</button><button id="bLayUp" class="ib" title="Move the layer up">▲</button><button id="bLayDn" class="ib" title="Move the layer down">▼</button><button id="bLayMerge" title="Paint this layer into the ground for good, with its effects">Merge</button><button id="bLayDel" data-i="bin" class="ib" title="Delete the layer"></button></div>
+      <div id="insp"></div>
       <div id="selBox"><h4>Selection</h4>
         <div class="row"><button data-s="fh" data-i="fliph" class="ib" title="Flip left-right"></button><button data-s="fv" data-i="flipv" class="ib" title="Flip up-down"></button><button data-s="rot" data-i="rot" class="ib" title="Rotate"></button><button data-s="del" data-i="bin" class="ib" title="Delete (Del)"></button></div>
         <div class="row"><button data-s="toprop" title="Lift the selected ground pixels off the ground and make them a prop you can move and walk behind">Make prop</button><button data-s="d2n" title="Copy the selected day ground to the night ground in night colours">Day → night</button><button id="bImport" title="Bring a picture file in to place on the map. Ctrl+V pastes pictures too.">Import</button></div>
@@ -79,14 +101,45 @@ small{color:var(--dim);font-size:12px}textarea{width:100%;height:56px;resize:ver
       <div id="propBox"><h4>Library</h4>
         <div id="lib"></div>
         <div class="row"><button id="bLibAdd" title="Add your own PNG">+ PNG</button><button id="bLibEdit" title="Edit the pixels of the picked prop">Edit</button><button id="bLibDel" data-i="bin" class="ib" title="Remove from the library"></button></div>
-        <div id="insp"></div>
       </div>
       <div id="plBox"><h4>Generate with PixelLab</h4>
+        <div class="fl">1 · What to make</div>
+        <div class="seg" id="plKindSeg"><button data-k="prop" class="on">Prop</button><button data-k="tile">Tile brush</button><button data-k="variant" title="Another look for the tile brush you have picked">Tile variant</button></div>
+        <select id="plKind" hidden><option value="prop">prop</option><option value="tile">tile</option><option value="variant">variant</option></select>
+        <div class="fl">2 · Describe it</div>
         <textarea id="plPrompt" placeholder="snowy pine tree with christmas lights"></textarea>
-        <div class="row"><input type="number" id="plW" value="48" min="16" max="400" title="Width"> × <input type="number" id="plH" value="64" min="16" max="400" title="Height">
-          <select id="plView"><option value="high top-down">top-down</option><option value="low top-down">low top-down</option><option value="side">side</option></select></div>
-        <input type="password" id="plKey" placeholder="PixelLab key (kept in this browser only)" style="width:100%">
+        <div class="fl">3 · How big</div>
+        <div id="plSizes"></div>
+        <div class="row" id="plCustom" style="display:none"><input type="number" id="plW" value="48" min="16" max="400" title="Width in game pixels"> × <input type="number" id="plH" value="64" min="16" max="400" title="Height in game pixels"> <small>game pixels</small></div>
+        <canvas id="plScale" width="260" height="110" title="How big it will be next to a person and a cabin"></canvas>
+        <div class="fl">4 · Style</div>
+        <div class="seg" id="plStyleSeg"><button data-s="mafia" class="on" title="Our look: seen from above, dark navy outline, medium shading">Mafia style</button><button data-s="other" title="Pick the outline, shading, detail and angle yourself">Other</button></div>
+        <div id="plMafia"><small>Seen from above · dark navy outline · medium shading</small></div>
+        <div id="plOther" style="display:none">
+          <div class="row"><span class="lb">Angle</span><select id="plView"><option value="high top-down">From above</option><option value="low top-down">Front-ish (like the cast)</option><option value="side">From the side</option></select></div>
+          <div class="row"><span class="lb">Outline</span><select id="plOut"><option value="single color black outline">Black</option><option value="single color outline">One colour</option><option value="selective outline">Selective</option><option value="lineless">None</option></select></div>
+          <div class="row"><span class="lb">Shading</span><select id="plShade"><option value="flat shading">Flat</option><option value="basic shading">Basic</option><option value="medium shading" selected>Medium</option><option value="detailed shading">Detailed</option><option value="highly detailed shading">Very detailed</option></select></div>
+          <div class="row"><span class="lb">Detail</span><select id="plDet"><option value="low detail">Low</option><option value="medium detail" selected>Medium</option><option value="highly detailed">High</option></select></div>
+          <div class="row"><label title="Force the picture to use only the colours already on our map"><input type="checkbox" id="plPal"> only our colours</label></div>
+          <input id="plWords" placeholder="extra style words, e.g. spooky, neon" style="width:100%">
+        </div>
+        <input type="password" id="plKey" placeholder="PixelLab key (kept in this browser only)" style="width:100%;margin-top:10px">
         <div class="row"><button id="bGen" class="go">Generate</button><small id="plSt"></small></div>
+      </div>
+    </div>
+    <div class="pane" data-pane="cast">
+      <h4>Characters</h4>
+      <div id="castGrid"></div>
+      <div class="row"><button id="bCastNew" title="Upload a sprite sheet: it is cut into front, right, back, left and trimmed for you">+ New from sheet</button></div>
+      <div id="castSel" style="display:none">
+        <h4 id="castName"></h4>
+        <canvas id="castCv" width="64" height="64"></canvas>
+        <div class="row"><select id="castAnim" style="flex:1" title="What to preview"></select><button id="bCastEdit" title="Edit the picture you are looking at">Edit</button></div>
+        <h4>Animate with PixelLab</h4>
+        <textarea id="caDesc" placeholder="Who is this? e.g. man with a blue beanie and grey hoodie"></textarea>
+        <input id="caPl" placeholder="PixelLab character id" style="width:100%" title="Filled in for you after step 1">
+        <div class="row"><button id="ca1" title="Step 1: make this character in PixelLab from its four pictures">1 Send</button><button id="ca2" title="Step 2: PixelLab draws walk, sit, pick up, water and scared">2 Animate</button><button id="ca3" class="go" title="Step 3: download the frames, turn them into game poses, pack them">3 Build</button></div>
+        <pre id="caLog"></pre>
       </div>
     </div>
     <div class="pane" data-pane="map">
@@ -97,11 +150,11 @@ small{color:var(--dim);font-size:12px}textarea{width:100%;height:56px;resize:ver
         <div class="row"><span style="width:52px">Left</span><input type="number" id="exL" value="0" min="0" step="8"><span style="width:52px;text-align:right">Right</span><input type="number" id="exR" value="0" min="0" step="8"></div>
         <div class="row"><span style="width:52px">Bottom</span><input type="number" id="exB" value="0" min="0" step="8"><button id="bExtend">Extend</button></div>
         <small>New ground gets your 1st colour.</small></div>
-      <h4>Keys</h4><small>B pen · E eraser · G fill · I picker (Alt) · L line · U box · O circle<br>M select · Q lasso · W wand · V move · Space pan · wheel zoom<br>Ctrl+C X V · Del · arrows nudge · Ctrl+A D · Tab day/night</small>
+      <h4>Keys</h4><small>P place prop (Esc or any other tool stops) · Shift-click layers = pick several · Ctrl+G group · Ctrl+Shift+G ungroup<br>B pen · E eraser · G fill · I picker (Alt) · L line · U box · O circle<br>M select · Q lasso · W wand · V move · Space pan · wheel zoom<br>Ctrl+C X V · Del · arrows nudge · Ctrl+A D · Tab day/night</small>
     </div>
   </div>
 </div>
-<div id="bar"><span id="pos">–</span><span id="info"></span><span id="dirty"></span></div>
+<div id="castPaneHolder" hidden></div><div id="bar"><span id="pos">–</span><span id="info"></span><span id="dirty"></span></div>
 <dialog id="dlg"></dialog>
 <input type="file" id="file" accept="image/*" multiple hidden>
 <script>
@@ -133,6 +186,7 @@ marquee:['............','##.##.##.##.','#.........#.','............','#.........
 lasso:['...#####....','.##.....##..','#.........#.','#.........#.','.##.....##..','...#####....','...#........','..#.#.......','..#.#.......','...#........','...#........','..#.........'],
 wand:['..#......#..','.....#......','#...###...#.','.....#......','..#...##....','.......##...','........##..','.........##.','..........##','...........#','............','............'],
 move:['.....##.....','....####....','.....##.....','.#...##...#.','##...##...##','############','############','##...##...##','.#...##...#.','.....##.....','....####....','.....##.....'],
+place:['.....#......','....###.....','...#####....','..#######...','.#########..','....###.....','....###..#..','.........#..','.......#####','.........#..','.........#..','............'],
 hand:['....##......','..#.##.##...','..#.##.##.#.','..#.##.##.##','..########.#','#.##########','##.#########','.###########','..##########','..#########.','...########.','...#######..'],
 undo:['............','...#........','..##........','.#########..','..##......#.','...#.......#','...........#','...........#','..........#.','....######..','............','............'],
 redo:['............','........#...','........##..','..#########.','.#......##..','#.......#...','#...........','#...........','.#..........','..######....','............','............'],
@@ -151,11 +205,11 @@ $('#tabs').onclick=e=>{const k=e.target.dataset.tab;if(!k)return;$$('#tabs butto
 const tab=k=>$(`#tabs [data-tab=${k}]`).click();
 
 /* ---------- state ---------- */
-const S={doc:null,tool:'pencil',zoom:1,px:0,py:0,fg:'#ffffff',bg:'#000000',brush:1,layer:'ground',view:'day',both:true,
-  vis:{ground:true,block:false,props:true,ref:true},open:{props:false,ref:true},sel:null,float:null,selProp:null,placing:null,play:null,undo:[],redo:[],clip:null};
+const S={doc:null,tool:'pencil',zoom:1,px:0,py:0,fg:'#ffffff',bg:'#000000',brush:1,shape:'square',soft:0,dens:100,blend:'normal',opac:100,tile:null,layer:'ground',view:'day',both:true,
+  vis:{ground:true,block:false,props:true,ref:true,glow:true},open:{props:false,ref:false},sel:null,float:null,selProp:null,placing:null,play:null,undo:[],redo:[],clip:null};
 const DOCS={};let GAME={ox:120,doors:[],blds:[],halls:{}};
 const LIB={};   // id -> {id,c,fxo,baseo,fw,file?,dirty,fixed}
-const TOOLS=[['pencil','B','','Pen'],['eraser','E','','Eraser'],['fill','G','','Fill'],['picker','I','','Colour picker'],['line','L','','Line'],['rect','U','','Box'],['ellipse','O','','Circle'],['marquee','M','','Select'],['lasso','Q','','Lasso select'],['wand','W','','Magic wand'],['move','V','','Move'],['hand','H','','Pan']];
+const TOOLS=[['pencil','B','','Pen'],['eraser','E','','Eraser'],['fill','G','','Fill'],['picker','I','','Colour picker'],['line','L','','Line'],['rect','U','','Box'],['ellipse','O','','Circle'],['marquee','M','','Select'],['lasso','Q','','Lasso select'],['wand','W','','Magic wand'],['move','V','','Move'],['place','P','','Place prop'],['hand','H','','Pan']];
 
 /* ---------- library / props ---------- */
 function libMeta(c){const x=X2(c),d=x.getImageData(0,0,c.width,c.height).data,w=c.width,h=c.height;let base=0,sh=false;
@@ -189,6 +243,28 @@ function maskFrom(im,whiteIsBlocked){const c=toC(im),x=X2(c),d=x.getImageData(0,
   for(let i=0;i<p.length;i+=4){const b=(p[i]>127)===whiteIsBlocked;p[i]=255;p[i+1]=42;p[i+2]=42;p[i+3]=b?255:0;}x.putImageData(d,0,0);return c;}
 function maskOut(c,whiteIsBlocked){const o=clone(c),x=X2(o),d=x.getImageData(0,0,o.width,o.height),p=d.data;
   for(let i=0;i<p.length;i+=4){const v=((p[i+3]>127)===whiteIsBlocked)?255:0;p[i]=p[i+1]=p[i+2]=v;p[i+3]=255;}x.putImageData(d,0,0);return o;}
+/* a building's own walk block (red = solid), the size of its picture. Until he paints one it is the game's old box. */
+const defBlk=(w,h)=>{const c=mk(w,h),x=X2(c);x.fillStyle='rgb(255,42,42)';x.fillRect(4,27,w-7,h-25);return c;};
+async function bldBlk(b){try{return maskFrom(await loadImg('/assets/buildings/'+b.k+'-block.png'),true);}catch(e){return defBlk(b.w,b.h);}}
+function openBMask(k){const b=DOCS.town&&DOCS.town.blds.find(b=>b.k===k);if(!b)throw new Error('open the town map first');
+  return{kind:'bmask',k,b,name:'Walk block: '+b.name,w:b.w,h:b.h,ox:0,day:clone(b.img),night:null,block:b.blk,props:[],opaque:false};}
+/* GLOWS (his ask): the soft lights the game adds at night. He can add his own (any colour, size, strength), and move, add or delete the town's
+   lamp and bulb glows. Kinds: 'glow' = his, saved to assets/builder/glows.json; 'lamp' / 'bulb' = the town's own lists in the game. x is in picture px here. */
+const hex2rgb=h=>rgb(h).join(','),rgb2hex=s=>hex(...s.split(',').map(Number));
+let GLOWJ={};
+async function loadGlows(d,key){d.glows=[];try{GLOWJ=await (await fetch('/assets/builder/glows.json?t='+Date.now())).json();}catch(e){}
+  for(const g of GLOWJ[key]||[])d.glows.push({t:'glow',x:g.x+d.ox,y:g.y,r:g.r,col:rgb2hex(g.col),a:g.a,tint:!!g.tint});
+  if(key==='town'){const t=await (await fetch('/index.html?t='+Date.now())).text();for(const[k,r,col,a]of[['lamp',30,'#ff822d',.3],['bulb',7,'#ff963c',.3]]){const m=t.match(new RegExp('\\n  '+k+'s:(\\[\\[[^\\n]*?\\]\\]),'));
+      if(m)for(const[x,y]of JSON.parse(m[1]))d.glows.push({t:k,x:x+d.ox,y,r,col,a});}}}
+function drawGlows(d,night){if(!d.glows||!S.vis.glow)return;const act=S.layer==='glow';vx.save();if(night||!d.night)vx.globalCompositeOperation='lighter';
+  for(const g of d.glows){const c=rgb(g.col).join(','),gr=vx.createRadialGradient(g.x,g.y,0,g.x,g.y,g.r);gr.addColorStop(0,`rgba(${c},${Math.min(1,g.a*(night||!d.night?1:.8))})`);gr.addColorStop(1,`rgba(${c},0)`);vx.fillStyle=gr;vx.fillRect(g.x-g.r,g.y-g.r,2*g.r,2*g.r);}
+  vx.restore();if(!act)return;const lw=1/S.zoom;vx.lineWidth=lw;for(const g of d.glows){const s=g===S.selGlow;vx.strokeStyle=s?'#fff':'rgba(255,255,255,.35)';vx.beginPath();vx.arc(g.x,g.y,g.r,0,7);vx.stroke();vx.fillStyle=s?'#fff':g.col;vx.fillRect(g.x-1.5,g.y-1.5,3,3);vx.strokeStyle='#000';vx.strokeRect(g.x-1.5,g.y-1.5,3,3);}}
+function glowAdd(t){const d=S.doc,r=$('#stage').getBoundingClientRect(),x=Math.round(clamp((r.width/2-S.px)/S.zoom,4,d.w-4)),y=Math.round(clamp((r.height/2-S.py)/S.zoom,4,d.h-4));opBegin();
+  const g=t==='lamp'?{t,x,y,r:30,col:'#ff822d',a:.3}:t==='bulb'?{t,x,y,r:7,col:'#ff963c',a:.3}:{t:'glow',x,y,r:28,col:'#ffaa50',a:.35,tint:false};d.glows.push(g);S.selGlow=g;opEnd();ui();}
+function glowInsp(d){const g=S.selGlow,add=`<div class="row"><button data-a="gadd" title="A new glow in the middle of the view">+ Glow</button>${d.kind==='town'?'<button data-a="gaddlamp" title="A glow like the square\'s lamps">+ Lamp</button><button data-a="gaddbulb" title="A small glow like the string bulbs">+ Bulb</button>':''}</div>`;
+  if(!g||!d.glows.includes(g))return`<b>Glows</b> <small>${d.glows.length}</small>${add}<small>Click a glow to pick it. Drag its middle to move it, its ring to resize it.</small>`;
+  return`<b>${g.t==='glow'?'Glow':g.t==='lamp'?'Lamp glow':'Bulb glow'}</b> <small>${g.x-d.ox}, ${g.y}</small>`+(g.t==='glow'?`<div class="row"><input type="color" data-g="col" value="${g.col}" style="width:40px;height:30px;padding:2px" title="Colour"><label>Size <input type="range" data-g="r" min="3" max="220" value="${g.r}"></label></div>
+    <div class="row"><label>Strength <input type="range" data-g="a" min="3" max="100" value="${Math.round(g.a*100)}"></label></div><div class="row"><label title="Also warms the ground under it, like the square's lamps"><input type="checkbox" data-g="tint" ${g.tint?'checked':''}> warms the ground</label></div>`:'<div class="row"><small>Looks the same as the others of its kind. Move it or delete it.</small></div>')+`<div class="row"><button data-a="gdup">Duplicate</button><button data-a="gdel">Delete</button></div>${add}`;}
 async function openTown(){await readGame();
   const [day,night,blk,sheet,tj]=await Promise.all([loadImg('/assets/xmas/day-big.webp'),loadImg('/assets/xmas/night-big.webp'),loadImg('/assets/xmas/block-big.png'),loadImg('/assets/xmas/trees.png'),fetch('/assets/xmas/trees.json?t='+Date.now()).then(r=>r.json())]);
   let lj=[];try{lj=await (await fetch('/assets/builder/library.json?t='+Date.now())).json();}catch(e){}
@@ -199,11 +275,12 @@ async function openTown(){await readGame();
     if(!LIB[id]){const c=mk(w,h);X2(c).drawImage(sc,sx,sy,w,h,0,0,w,h);addLib(id,c,{fxo:fx-x,baseo:base-y,fw});}
     const L=LIB[id],p={lib:id,x,y,fxo:L.fxo,baseo:L.baseo,fw,fade:fade!==0,solid:solid!==0,shadow:shadow==null?L.hasShadow:!!shadow,flip:!!flip};
     const v=variant(p);p.x=x-v.dx;p.y=y-v.dy;p.baseo=base-p.y;p.fxo=p.flip?L.c.width-1-(fx-p.x):fx-p.x;d.props.push(p);}
-  for(const b of GAME.blds){try{d.blds.push({...b,img:toC(await loadImg('/assets/buildings/'+b.k+'.png'))});}catch(e){}}
+  await loadGlows(d,'town');
+  for(const b of GAME.blds){try{d.blds.push({...b,img:toC(await loadImg('/assets/buildings/'+b.k+'.png')),blk:await bldBlk(b)});}catch(e){}}
   for(let i=0;i<GAME.doors.length;i++){try{d.cab.push({img:await loadImg('/assets/xmas/cabins/cabin'+i+'.png'),cx:GAME.doors[i][0],top:GAME.doors[i][1]});}catch(e){}}
   return d;}
 async function openHall(k){const[pic,walk]=await Promise.all([loadImg('/assets/interiors/'+k+'.png'),loadImg('/assets/interiors/'+k+'-walk.png')]);
-  return{kind:'hall',k,name:'Inside: '+(GAME.halls[k]?.name||k),w:pic.width,h:pic.height,ox:0,day:toC(pic),night:null,block:maskFrom(walk,false),props:[],opaque:true,door:GAME.halls[k]?.door};}
+  const d={kind:'hall',k,name:'Inside: '+(GAME.halls[k]?.name||k),w:pic.width,h:pic.height,ox:0,day:toC(pic),night:null,block:maskFrom(walk,false),props:[],opaque:true,door:GAME.halls[k]?.door};await loadGlows(d,k);return d;}
 const ROOM0={block:[[15,60,53,97],[52,60,71,97],[71,60,126,129],[126,60,145,97],[145,55,181,97],[126,136,181,196]],bed:{hit:[71,60,126,129],stand:[98,134],in:[98,106],head:[98,86],quilt:[72,88,125,128]},chair:{hit:[145,160,170,196],stand:[121,186],sit:[157,180],back:[146,168,171,194]},pc:{hit:[145,122,172,162]},arm:{hit:[15,155,53,194],stand:[60,182],sit:[36,184],front:[15,183,54,194]},fire:[23,75,22,16]},BEDZ0=[70,88,127,130];
 const ORIG={rug:[71,129],armchair:[15,156],fireplace:[15,18],nightL:[53,56],nightR:[126,56],bed:[71,56],floorlamp:[144,45],plantR:[162,60],desk:[125,125],chair:[147,163]};
 async function openRoom(){const obj=await (await fetch('/assets/room-objects/objects.json?t='+Date.now())).json(),bg=await loadImg('/assets/room-objects/room-empty.png');
@@ -215,10 +292,11 @@ async function openSprite(path){const im=await loadImg('/'+path);return{kind:'sp
 function libDoc(id){const L=LIB[id];return{kind:'sprite',name:'Prop: '+id,libId:id,w:L.c.width,h:L.c.height,ox:0,day:L.c,night:null,block:null,props:[],opaque:false};}
 
 async function show(key){commitFloat();let d=DOCS[key];
-  try{if(!d){if(key==='town')d=await openTown();else if(key==='room')d=await openRoom();else if(key.startsWith('hall:'))d=await openHall(key.slice(5));else if(key.startsWith('lib:'))d=libDoc(key.slice(4));else d=await openSprite(key);DOCS[key]=d;d.key=key;}}
+  try{if(!d){if(key==='town')d=await openTown();else if(key==='room')d=await openRoom();else if(key.startsWith('hall:'))d=await openHall(key.slice(5));else if(key.startsWith('lib:'))d=libDoc(key.slice(4));else if(key.startsWith('bmask:'))d=openBMask(key.slice(6));else d=await openSprite(key);DOCS[key]=d;d.key=key;await loadLayers(d);}}
   catch(e){toast('Could not open: '+e.message,true);return;}
-  S.doc=d;S.sel=null;S.selProp=null;S.selCab=null;S.selBld=null;S.placing=null;S.undo=[];S.redo=[];S.play=null;$('#bPlay').classList.remove('on');
-  if(!d.night){S.view='day';}if(S.layer==='block'&&!d.block)S.layer='ground';if(S.layer==='props'&&d.kind!=='town'&&d.kind!=='room')S.layer='ground';if(S.layer==='ref'&&d.kind!=='town')S.layer='ground';
+  MS.clear();S.doc=d;S.sel=null;S.selProp=null;S.selCab=null;S.selBld=null;S.placing=null;S.undo=[];S.redo=[];S.play=null;$('#bPlay').classList.remove('on');
+  if(!d.night){S.view='day';}if(S.layer==='block'&&!d.block)S.layer='ground';if(S.layer==='props'&&d.kind!=='town'&&d.kind!=='room')S.layer='ground';if(S.layer==='ref'&&d.kind!=='town')S.layer='ground';if(S.layer==='glow'&&!d.glows)S.layer='ground';S.selGlow=null;if(S.layer.startsWith('L:')&&!curL())S.layer='ground';
+  if(d.kind==='bmask'){S.layer='block';S.vis.block=true;if(!['pencil','eraser','fill','rect','line'].includes(S.tool))setTool('pencil');}
   fillDocSel();fit();buildPal();ui();draw();}
 function fillDocSel(){const s=$('#docSel');const opts=[['town','Town map'],...GAME.blds.map(b=>['hall:'+b.k,'Inside: '+b.name]),['room','Cabin room (furniture)']];
   for(const k of Object.keys(DOCS))if(!opts.some(o=>o[0]===k))opts.push([k,DOCS[k].name]);
@@ -238,20 +316,26 @@ function render(){raf=0;const d=S.doc;if(!d)return;const r=$('#stage').getBoundi
   const night=S.view==='night'&&d.night;
   if(!d.opaque){vx.fillStyle='#4a5066';vx.fillRect(0,0,d.w,d.h);vx.fillStyle='#5b6280';const q=4;for(let y=0;y<d.h;y+=q)for(let x=(y/q%2)*q;x<d.w;x+=q*2)vx.fillRect(x,y,Math.min(q,d.w-x),Math.min(q,d.h-y));}
   if(S.vis.ground)vx.drawImage(night?d.night:d.day,0,0);
-  const F=S.float;if(F&&F.tg[0].kind!=='block'){const i=F.tg.findIndex(t=>t.c===(night?d.night:d.day));vx.drawImage(F.cs[i<0?0:i],F.x,F.y);}
+  const F=S.float;if(F&&F.tg[0].kind!=='block'&&!F.tg[0].L){const i=F.tg.findIndex(t=>t.c===(night?d.night:d.day));vx.drawImage(F.cs[i<0?0:i],F.x,F.y);}
+  for(const l of d.layers||[])if(lvis(d,l)){drawLay(vx,l,night,l.mx,l.my);if(F&&F.tg[0].L===l){vx.globalAlpha=l.op/100;vx.globalCompositeOperation=GCO[l.bm]||'source-over';vx.drawImage(night&&!blended(l)?(F.nc||(F.nc=nightC(F.cs[0]))):F.cs[0],F.x,F.y);vx.globalAlpha=1;vx.globalCompositeOperation='source-over';}}
   const me=S.play;let list=drawables(night);if(me)list=[...list,{me:true,base:me.y}].sort((a,b)=>a.base-b.base);
   for(const o of list){if(o.me){vx.fillStyle='#000';vx.fillRect(me.x-4,me.y-13,8,13);vx.fillStyle='#ffcf5e';vx.fillRect(me.x-3,me.y-12,6,11);vx.fillStyle='#000';vx.fillRect(me.x-2,me.y-9,1,2);vx.fillRect(me.x+1,me.y-9,1,2);continue;}
-    let a=1;if(me&&o.p&&o.p.fade&&me.y<o.base&&me.y>o.p.y+6&&me.x>o.p.x+3&&me.x<o.p.x+LIB[o.p.lib].c.width-3)a=.45;vx.globalAlpha=a;vx.drawImage(o.c,o.x,o.y);vx.globalAlpha=1;}
+    let a=1;if(me&&o.p&&o.p.fade&&me.y<o.base&&me.y>o.p.y+6&&me.x>o.p.x+3&&me.x<o.p.x+LIB[o.p.lib].c.width-3)a=.45;if(me&&o.b&&o.b.fade!==0&&me.y<o.base&&me.y>o.b.y+6&&me.x-d.ox>o.b.x+3&&me.x-d.ox<o.b.x+o.b.w-3)a=.45;vx.globalAlpha=a;vx.drawImage(o.c,o.x,o.y);vx.globalAlpha=1;}
+  drawGlows(d,night);
   if(d.block&&S.vis.block){vx.globalAlpha=.42;vx.drawImage(d.block,0,0);if(F&&F.tg[0].kind==='block')vx.drawImage(F.cs[0],F.x,F.y);vx.globalAlpha=1;
     if(d.kind==='town'){vx.fillStyle='rgba(255,42,42,.42)';for(const p of d.props)if(p.solid)vx.fillRect(pFx(p)-p.fw-2,pBase(p)-9,p.fw*2+5,11);
-      for(const b of d.blds)vx.fillRect(b.x+3+d.ox,b.y+26,b.w-6,b.h-25);for(const c of d.cab)vx.fillRect(c.cx-50+d.ox,c.top-10,100,41);}}
+      vx.globalAlpha=.42;for(const b of d.blds)vx.drawImage(b.blk,b.x+d.ox,b.y);vx.globalAlpha=1;for(const c of d.cab)vx.fillRect(c.cx-50+d.ox,c.top-10,100,41);}}
   if(d.door){vx.fillStyle='#6fdc8c';vx.fillRect(d.door[0]-8,d.door[1]-1,17,2);vx.font='6px system-ui';vx.fillText('door',d.door[0]-7,d.door[1]-3);}
+  /* Alt = colour picker: the colour under the pointer, read off what is on screen (before any guides are drawn) */
+  S.altCol=null;if(altDown&&S.mouse&&isPaint()&&!S.play){const q=vx.getImageData(Math.round(S.mouse[0]),Math.round(S.mouse[1]),1,1).data;S.altCol=hex(q[0],q[1],q[2]);}
   if(S.prev){vx.fillStyle=S.prev.col;for(const[x,y]of S.prev.pts)vx.fillRect(x,y,S.prev.n||1,S.prev.n||1);}
   if(S.placing&&S.hover&&LIB[S.placing]){const p=newProp(S.placing,S.hover[0],S.hover[1]),v=variant(p,night);vx.globalAlpha=.7;vx.drawImage(v.c,p.x+v.dx,p.y+v.dy);vx.globalAlpha=1;}
   const lw=1/S.zoom;vx.lineWidth=lw;
-  if(S.hover&&!S.play&&!S.placing&&['pencil','eraser','line'].includes(S.tool)&&(S.layer==='ground'||S.layer==='block')){const n=S.brush,o=n>>1,hx=S.hover[0]-o,hy=S.hover[1]-o;   /* the brush: its real size, where it will paint */
-    if(S.tool!=='eraser'){vx.globalAlpha=.55;vx.fillStyle=S.layer==='block'?'#ff2a2a':S.fg;vx.fillRect(hx,hy,n,n);vx.globalAlpha=1;}
-    vx.strokeStyle='#000';vx.strokeRect(hx-lw,hy-lw,n+2*lw,n+2*lw);vx.strokeStyle='#fff';vx.strokeRect(hx,hy,n,n);}
+  if(S.hover&&!S.play&&!S.placing&&['pencil','eraser','line'].includes(S.tool)&&isPaint()&&!S.altCol){const n=S.brush,o=n>>1,hx=S.hover[0]-o,hy=S.hover[1]-o,soft=S.soft/100,den=S.dens/100,er=S.tool==='eraser',blk=S.layer==='block',tl=S.tile&&!er&&!blk;   /* the brush: its real shape, size and scatter, where it will paint */
+    vx.globalAlpha=er?.35:.6;vx.fillStyle=er?'#fff':blk?'#ff2a2a':S.fg;
+    for(const[dx,dy,f]of brushPts(n,S.shape)){const xx=S.hover[0]+dx,yy=S.hover[1]+dy;if((soft||den<1)&&dice(xx,yy)>=den*(1-soft*Math.pow(f,1.4)))continue;
+      if(tl){if(xx<0||yy<0)continue;const c=tileAt(xx,yy);if(!c)continue;vx.fillStyle=hex(...c);}vx.fillRect(xx,yy,1,1);}vx.globalAlpha=1;
+    if(S.shape==='square'){vx.strokeStyle='#000';vx.strokeRect(hx-lw,hy-lw,n+2*lw,n+2*lw);vx.strokeStyle='#fff';vx.strokeRect(hx,hy,n,n);}}
   if($('#cGrid').checked){vx.strokeStyle='rgba(255,255,255,.18)';vx.beginPath();const g=S.zoom>=8?1:16;for(let x=0;x<=d.w;x+=g){vx.moveTo(x,0);vx.lineTo(x,d.h);}for(let y=0;y<=d.h;y+=g){vx.moveTo(0,y);vx.lineTo(d.w,y);}vx.stroke();
     if(g===1){vx.strokeStyle='rgba(255,255,255,.4)';vx.beginPath();for(let x=0;x<=d.w;x+=16){vx.moveTo(x,0);vx.lineTo(x,d.h);}for(let y=0;y<=d.h;y+=16){vx.moveTo(0,y);vx.lineTo(d.w,y);}vx.stroke();}}
   const sb=F?{x0:F.x,y0:F.y,x1:F.x+F.w,y1:F.y+F.h}:S.sel;
@@ -261,27 +345,89 @@ function render(){raf=0;const d=S.doc;if(!d)return;const r=$('#stage').getBoundi
   if(S.selBld){const b=S.selBld;vx.strokeStyle='#6cb6ff';vx.strokeRect(b.x+d.ox,b.y,b.w,b.h);}
   if(S.selCab&&d.cab){const c=S.selCab;vx.strokeStyle='#6cb6ff';vx.strokeRect(c.cx-68+d.ox,c.top-90,c.img.width,c.img.height);}
   vx.strokeStyle='#000';vx.strokeRect(0,0,d.w,d.h);
+  if(S.altCol){vx.setTransform(1,0,0,1,0,0);const mx=Math.round(S.mouse[0]),my=Math.round(S.mouse[1]);   /* the picker icon with its tip on the pointer, and the colour it would take */
+    for(const[col,g]of[['#000',1],['#fff',0]])ICON.picker.forEach((row,y)=>{for(let x=0;x<12;x++)if(row[x]==='#'){vx.fillStyle=col;vx.fillRect(mx+x*2-g,my-24+y*2-g,2+g*2,2+g*2);}});
+    vx.fillStyle='#000';vx.fillRect(mx+26,my-34,34,34);vx.fillStyle='#fff';vx.fillRect(mx+28,my-32,30,30);vx.fillStyle=S.altCol;vx.fillRect(mx+30,my-30,26,26);}
   $('#zoomTx').textContent=Math.round(S.zoom*100)+'%';}
 
 /* ---------- painting ---------- */
-function targets(){const d=S.doc;if(S.layer==='block'&&d.block)return[{c:d.block,kind:'block'}];
+/* PAINT LAYERS (his ask, like Photoshop): see-through layers above the ground that he paints on, moves and edits on their own, each with effects
+   (drop shadow, stroke, opacity). The game only has one ground picture, so Save paints the layers into it; the layers themselves, and the
+   ground WITHOUT them, are kept in assets/builder/layers so they stay editable next time. */
+const curL=()=>S.layer.startsWith('L:')?S.doc.layers.find(l=>'L:'+l.id===S.layer):null;
+const isPaint=()=>S.layer==='ground'||S.layer==='block'||!!curL();
+/* SEVERAL LAYERS AT ONCE + GROUPS (his ask): Shift-click picks a run of paint layers, Ctrl-click adds or drops one; Ctrl+G puts the picked ones in a
+   group (Ctrl+Shift+G takes them out); a group folds, hides and moves as one, and a double-click on its name renames it */
+const MS=new Set();   // ids of the picked paint layers (the one you paint on is S.layer)
+const picked=()=>{const d=S.doc,c=curL();return d.layers.filter(l=>MS.has(l.id)||l===c);};
+const grpOf=(d,l)=>l.g&&(d.groups||[]).find(g=>g.id===l.g);
+const lvis=(d,l)=>l.vis&&!(grpOf(d,l)?.vis===false);
+function groupPicked(){const d=S.doc,ls=picked();if(!ls.length)return toast('Pick the paint layers first (Shift-click for several)');d.groups=d.groups||[];let n=1;while(d.groups.some(g=>g.name==='Group '+n))n++;
+  const g={id:'g'+Date.now().toString(36),name:'Group '+n,open:true,vis:true};d.groups.push(g);const top=Math.max(...ls.map(l=>d.layers.indexOf(l))),at=d.layers.slice(0,top).filter(l=>!ls.includes(l)).length;   /* the group sits where its top layer was */
+  d.layers=d.layers.filter(l=>!ls.includes(l));ls.forEach(l=>l.g=g.id);d.layers.splice(Math.min(at,d.layers.length),0,...ls);tidyGroups(d);d.dirty=true;ui();}
+function ungroupPicked(){const d=S.doc;picked().forEach(l=>delete l.g);tidyGroups(d);d.dirty=true;ui();}
+function tidyGroups(d){d.groups=(d.groups||[]).filter(g=>d.layers.some(l=>l.g===g.id));   /* a group's layers sit together, in their own order */
+  const out=[],seen=new Set();for(const l of d.layers){if(seen.has(l))continue;if(l.g){for(const q of d.layers)if(q.g===l.g){out.push(q);seen.add(q);}}else{out.push(l);seen.add(l);}}d.layers=out;}
+/* A LAYER'S BLEND MODE (his ask): the whole layer mixes with what is behind it (a white layer on Overlay brightens the ground under it).
+   A blended layer keeps its day colours at night too: it is a light or a shade laid over the night ground, not a thing to turn blue. */
+const GCO={normal:'source-over',multiply:'multiply',screen:'screen',overlay:'overlay',darken:'darken',lighten:'lighten',add:'lighter',color:'color','soft-light':'soft-light','hard-light':'hard-light'};
+const blended=l=>l.bm&&l.bm!=='normal';
+function drawLay(x,l,night,ox,oy){x.globalAlpha=l.op/100;x.globalCompositeOperation=GCO[l.bm]||'source-over';x.drawImage(layOut(l,night&&!blended(l)),ox||0,oy||0);x.globalAlpha=1;x.globalCompositeOperation='source-over';}
+const newFx=()=>({sh:{on:false,dx:2,dy:2,col:'#0b1030',a:40},st:{on:false,n:1,col:'#01032e'}});
+const hasFx=l=>l.fx.sh.on||l.fx.st.on||l.op<100||blended(l);
+function layOut(l,night){const k=night?'nc':'dc';if(l[k])return l[k];const w=l.c.width,h=l.c.height,f=l.fx;let o=l.c;
+  if(f.sh.on||f.st.on){o=mk(w,h);const x=X2(o),tint=col=>{const q=mk(w,h),qx=X2(q);qx.drawImage(l.c,0,0);qx.globalCompositeOperation='source-in';qx.fillStyle=col;qx.fillRect(0,0,w,h);return q;};
+    if(f.sh.on){x.globalAlpha=f.sh.a/100;x.drawImage(tint(f.sh.col),f.sh.dx,f.sh.dy);x.globalAlpha=1;}
+    if(f.st.on){const q=tint(f.st.col),n=f.st.n;for(let dy=-n;dy<=n;dy++)for(let dx=-n;dx<=n;dx++)if((dx||dy)&&Math.abs(dx)+Math.abs(dy)<=n)x.drawImage(q,dx,dy);}
+    x.drawImage(l.c,0,0);}
+  return l[k]=night?nightC(o):o;}
+function flat(d,night){const base=night?d.night:d.day;if(!d.layers||!d.layers.some(l=>lvis(d,l)))return base;const o=clone(base),x=X2(o);for(const l of d.layers)if(lvis(d,l))drawLay(x,l,night);return o;}
+const slug=d=>d.key.replace(/[^a-z0-9]+/gi,'_');
+async function loadLayers(d){d.layers=[];if(d.libId)return;let j;try{j=await (await fetch(`/assets/builder/layers/${slug(d)}.json?t=${Date.now()}`)).json();}catch(e){return;}if(!j.layers||!j.layers.length)return;
+  try{const P='/assets/builder/layers/'+slug(d),day=toC(await loadImg(P+'-base-day.png')),night=d.night?toC(await loadImg(P+'-base-night.png')):null,ls=[];
+    for(const m of j.layers)ls.push({...m,fx:m.fx||newFx(),c:toC(await loadImg(`${P}-${m.id}.png`))});if(day.width!==d.w||day.height!==d.h)return;d.day=day;if(night)d.night=night;d.layers=ls;d.groups=j.groups||[];d.hadLayers=true;}catch(e){}}
+function shiftLayer(l,dx,dy){if(!dx&&!dy)return;const c=clone(l.c),x=X2(l.c);x.clearRect(0,0,c.width,c.height);x.drawImage(c,dx,dy);l.dc=l.nc=null;dirty(0,0,c.width,c.height);}
+/* brush blending: always against what was there when the stroke began, so going over a pixel twice does not double up */
+function blendPx(o,c){const m=S.blend,a=S.opac/100;let r=c;
+  if(m==='color'){const lo=o[0]*.3+o[1]*.59+o[2]*.11,lc=c[0]*.3+c[1]*.59+c[2]*.11;r=c.map(v=>clamp(v+lo-lc,0,255));}
+  else if(m!=='normal')r=c.map((s,i)=>{const b=o[i];return m==='multiply'?b*s/255:m==='screen'?255-(255-b)*(255-s)/255:m==='overlay'?(b<128?2*b*s/255:255-2*(255-b)*(255-s)/255):m==='darken'?Math.min(b,s):m==='lighten'?Math.max(b,s):Math.min(255,b+s);});
+  return r.map((v,i)=>Math.round(o[i]+(v-o[i])*a));}
+function targets(){const d=S.doc;if(S.layer==='block'&&d.block)return[{c:d.block,kind:'block'}];{const l=curL();if(l)return[{c:l.c,kind:'layer',L:l}];}
   if(S.layer==='ground'){if(d.night){if(S.both)return S.view==='night'?[{c:d.night,night:true,asis:true},{c:d.day,skip:true}].filter(t=>!t.skip):[{c:d.day},{c:d.night,night:true}];return[{c:S.view==='night'?d.night:d.day}];}return[{c:d.day}];}return[];}
 /* the colour a target gets for a mode ('fg','bg','erase'); null = clear to see-through */
-function colFor(t,mode){if(t.kind==='block')return mode==='fg'?[255,42,42]:null;if(mode==='erase'){if(!S.doc.opaque)return null;mode='bg';}
+function colFor(t,mode){if(t.kind==='block')return mode==='fg'?[255,42,42]:null;if(mode==='erase'){if(!S.doc.opaque||t.kind==='layer')return null;mode='bg';}
   const c=rgb(mode==='fg'?S.fg:S.bg);return t.night&&!t.asis?nightRGB(...c):c;}
 let OP=null;
 function opBegin(){if(OP)return;const tg=targets();OP={tg,cl:tg.map(t=>clone(t.c)),props:JSON.stringify(snap()),bb:null};}
-function snap(){const d=S.doc;return{props:d.props.map(({hid,...q})=>q),blds:(d.blds||[]).map(b=>({k:b.k,x:b.x,y:b.y})),cab:(d.cab||[]).map(c=>[c.cx,c.top])};}
-function dirty(x0,y0,x1,y1){if(!OP)return;const d=S.doc;x0=clamp(Math.floor(x0),0,d.w);y0=clamp(Math.floor(y0),0,d.h);x1=clamp(Math.ceil(x1),0,d.w);y1=clamp(Math.ceil(y1),0,d.h);if(x1<=x0||y1<=y0)return;const b=OP.bb;OP.bb=b?[Math.min(b[0],x0),Math.min(b[1],y0),Math.max(b[2],x1),Math.max(b[3],y1)]:[x0,y0,x1,y1];}
+function snap(){const d=S.doc;return{glows:d.glows,props:d.props.map(({hid,...q})=>q),blds:(d.blds||[]).map(b=>({k:b.k,x:b.x,y:b.y})),cab:(d.cab||[]).map(c=>[c.cx,c.top])};}
+function dirty(x0,y0,x1,y1){if(!OP)return;const d=S.doc;for(const q of OP.tg)if(q.L)q.L.dc=q.L.nc=null;x0=clamp(Math.floor(x0),0,d.w);y0=clamp(Math.floor(y0),0,d.h);x1=clamp(Math.ceil(x1),0,d.w);y1=clamp(Math.ceil(y1),0,d.h);if(x1<=x0||y1<=y0)return;const b=OP.bb;OP.bb=b?[Math.min(b[0],x0),Math.min(b[1],y0),Math.max(b[2],x1),Math.max(b[3],y1)]:[x0,y0,x1,y1];}
 function opEnd(){if(!OP)return;const o=OP;OP=null;const after=JSON.stringify(snap()),e={imgs:[],pb:o.props,pa:after};
   if(o.bb){const[x0,y0,x1,y1]=o.bb;o.tg.forEach((t,i)=>e.imgs.push({c:t.c,x:x0,y:y0,b:X2(o.cl[i]).getImageData(x0,y0,x1-x0,y1-y0),a:X2(t.c).getImageData(x0,y0,x1-x0,y1-y0)}));}
   if(!e.imgs.length&&e.pb===e.pa)return;S.undo.push(e);if(S.undo.length>80)S.undo.shift();S.redo=[];touch();}
-function touch(){const d=S.doc;d.dirty=true;if(d.libId){const L=LIB[d.libId];L.var={};L.dirty=true;Object.assign(L,(({hasShadow})=>({hasShadow}))(libMeta(L.c)));for(const k in DOCS)if(DOCS[k].props.some(p=>p.lib===d.libId))DOCS[k].dirty=true;}$('#dirty').textContent='unsaved changes';draw();}
-function restore(j){const d=S.doc,o=JSON.parse(j);d.props=o.props;for(const b of o.blds){const q=d.blds.find(q=>q.k===b.k);if(q){q.x=b.x;q.y=b.y;}}(o.cab||[]).forEach((c,i)=>{if(d.cab[i]){d.cab[i].cx=c[0];d.cab[i].top=c[1];}});S.selProp=null;S.selBld=null;S.selCab=null;}
+function touch(){const d=S.doc;d.dirty=true;for(const l of d.layers||[])l.dc=l.nc=null;if(d.libId){const L=LIB[d.libId];L.var={};L.dirty=true;Object.assign(L,(({hasShadow})=>({hasShadow}))(libMeta(L.c)));for(const k in DOCS)if(DOCS[k].props.some(p=>p.lib===d.libId))DOCS[k].dirty=true;}$('#dirty').textContent='unsaved changes';draw();}
+function restore(j){const d=S.doc,o=JSON.parse(j);if(o.glows){d.glows=o.glows;S.selGlow=null;}d.props=o.props;for(const b of o.blds){const q=d.blds.find(q=>q.k===b.k);if(q){q.x=b.x;q.y=b.y;}}(o.cab||[]).forEach((c,i)=>{if(d.cab[i]){d.cab[i].cx=c[0];d.cab[i].top=c[1];}});S.selProp=null;S.selBld=null;S.selCab=null;}
 function undo(redo){commitFloat();const e=(redo?S.redo:S.undo).pop();if(!e)return;for(const i of e.imgs)X2(i.c).putImageData(redo?i.a:i.b,i.x,i.y);restore(redo?e.pa:e.pb);(redo?S.undo:S.redo).push(e);touch();ui();}
 const inSel=(x,y)=>{const s=S.sel;return!s||(x>=s.x0&&x<s.x1&&y>=s.y0&&y<s.y1&&s.m[y*S.doc.w+x]);};
-function plot(x,y,mode,n){const d=S.doc;n=n||1;const o=n>>1;for(let yy=y-o;yy<y-o+n;yy++)for(let xx=x-o;xx<x-o+n;xx++){if(xx<0||yy<0||xx>=d.w||yy>=d.h||!inSel(xx,yy))continue;
-    for(const t of OP.tg){const c=colFor(t,mode),x2=X2(t.c);if(c){x2.fillStyle=hex(...c);x2.fillRect(xx,yy,1,1);}else x2.clearRect(xx,yy,1,1);}}dirty(x-o,y-o,x-o+n,y-o+n);}
+/* the same pixel always gets the same dice roll, so going over a soft edge twice does not fill it in */
+const dice=(x,y)=>{let h=(Math.imul(x,73856093)^Math.imul(y,19349663))>>>0;h=Math.imul(h^(h>>>13),1274126177)>>>0;return((h^(h>>>16))>>>0)/4294967296;};
+/* the brush's pixels: [dx, dy, how far from the middle 0..1] */
+const BR={};function brushPts(n,shape){const k=n+shape;if(BR[k])return BR[k];const o=n>>1,c=(n-1)/2,r=n/2,pts=[];
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){const ax=Math.abs(i-c),ay=Math.abs(j-c),f=shape==='round'?Math.hypot(ax,ay)/r:shape==='diamond'?(ax+ay)/r:Math.max(ax,ay)/r;if(f<=1||shape==='square'||n<3)pts.push([i-o,j-o,Math.min(1,f)]);}return BR[k]=pts;}
+/* TILE BRUSHES: a tile is painted locked to the map's grid (cell 0,0 starts at the top left corner of the map), so strokes always line up;
+   a tile with several looks mixes them, one look per cell, the same cell always the same look */
+const TILES=[];function tileAt(x,y){const T=S.tile,w=T.w,h=T.h,v=T.vs[T.vs.length>1?Math.floor(dice(Math.floor(x/w)+911,Math.floor(y/h)+577)*T.vs.length):0],i=((y%h)*w+(x%w))*4;return v.d[i+3]<128?undefined:[v.d[i],v.d[i+1],v.d[i+2]];}
+const useTile=(t,mode)=>S.tile&&mode==='fg'&&t.kind!=='block';
+const pix=(t,mode,x,y)=>{if(!useTile(t,mode))return colFor(t,mode);const c=tileAt(x,y);return c&&t.night&&!t.asis?nightRGB(...c):c;};
+/* what the brush blends with: the picture as it LOOKED when the stroke began. On a paint layer that is the ground plus every layer up to this one
+   (an empty layer has nothing of its own to mix with: that is why blending did nothing there), and the mixed colour is painted onto the layer. */
+function opSrc(ti){OP.sd=OP.sd||[];if(OP.sd[ti])return OP.sd[ti];const t=OP.tg[ti],d=S.doc;let c=OP.cl[ti];
+  if(t.L){c=clone(d.day);const x=X2(c);for(const l of d.layers){if(lvis(d,l)){x.globalAlpha=l.op/100;x.drawImage(l===t.L?OP.cl[ti]:layOut(l,false),0,0);}if(l===t.L)break;}x.globalAlpha=1;}
+  return OP.sd[ti]=X2(c).getImageData(0,0,d.w,d.h).data;}
+function plot(x,y,mode,n){const d=S.doc;n=n||1;const pts=brushPts(n,S.shape),soft=S.soft/100,den=S.dens/100;
+  for(const[dx,dy,f]of pts){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=d.w||yy>=d.h||!inSel(xx,yy))continue;if((soft||den<1)&&dice(xx,yy)>=den*(1-soft*Math.pow(f,1.4)))continue;
+    for(let ti=0;ti<OP.tg.length;ti++){const t=OP.tg[ti];let c=pix(t,mode,xx,yy);if(c===undefined)continue;const x2=X2(t.c);
+      if(c&&t.kind!=='block'&&(S.blend!=='normal'||S.opac<100)){const sd=opSrc(ti),i=(yy*d.w+xx)*4;if(sd[i+3]>127)c=blendPx([sd[i],sd[i+1],sd[i+2]],c);}
+      if(c){x2.fillStyle=hex(...c);x2.fillRect(xx,yy,1,1);}else x2.clearRect(xx,yy,1,1);}}const o=n>>1;dirty(x-o,y-o,x-o+n,y-o+n);}
 function linePts(x0,y0,x1,y1){const pts=[];let dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,e=dx+dy;for(;;){pts.push([x0,y0]);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx;}if(e2<=dx){e+=dx;y0+=sy;}}return pts;}
 function shapePts(kind,x0,y0,x1,y1,fill){const pts=[],a=Math.min(x0,x1),b=Math.min(y0,y1),c=Math.max(x0,x1),e=Math.max(y0,y1);
   if(kind==='line')return linePts(x0,y0,x1,y1);
@@ -293,8 +439,13 @@ function flood(c,x,y){const w=c.width,h=c.height,d=X2(c).getImageData(0,0,w,h).d
   const st=[x,y];let x0=x,x1=x,y0=y,y1=y;while(st.length){const yy=st.pop(),xx=st.pop();if(xx<0||yy<0||xx>=w||yy>=h||m[yy*w+xx])continue;const i=(yy*w+xx)*4;if(d[i]!==r||d[i+1]!==g||d[i+2]!==b||d[i+3]!==a)continue;
     m[yy*w+xx]=1;if(xx<x0)x0=xx;if(xx>x1)x1=xx;if(yy<y0)y0=yy;if(yy>y1)y1=yy;st.push(xx+1,yy,xx-1,yy,xx,yy+1,xx,yy-1);}return{m,x0,y0,x1:x1+1,y1:y1+1};}
 /* paint a whole mask at once (fill, delete, replace) */
-function applyMask(s,mode,tgs){const w=S.doc.w;for(const t of tgs||OP.tg){const c=colFor(t,mode),x2=X2(t.c),W=s.x1-s.x0,H=s.y1-s.y0,d=x2.getImageData(s.x0,s.y0,W,H),p=d.data;
-    for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(!s.m[(y+s.y0)*w+x+s.x0]||!inSel(x+s.x0,y+s.y0))continue;const i=(y*W+x)*4;if(c){p[i]=c[0];p[i+1]=c[1];p[i+2]=c[2];p[i+3]=255;}else p[i+3]=0;}x2.putImageData(d,s.x0,s.y0);}dirty(s.x0,s.y0,s.x1,s.y1);}
+function applyMask(s,mode,tgs){const w=S.doc.w;for(const t of tgs||OP.tg){const ti=OP?OP.tg.indexOf(t):-1,bl=ti>=0&&mode!=='erase'&&t.kind!=='block'&&(S.blend!=='normal'||S.opac<100),sd=bl?opSrc(ti):null,tl=useTile(t,mode),c0=colFor(t,mode),x2=X2(t.c),W=s.x1-s.x0,H=s.y1-s.y0,d=x2.getImageData(s.x0,s.y0,W,H),p=d.data;
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(!s.m[(y+s.y0)*w+x+s.x0]||!inSel(x+s.x0,y+s.y0))continue;const i=(y*W+x)*4;let c=tl?pix(t,mode,x+s.x0,y+s.y0):c0;if(c===undefined)continue;if(c&&sd){const j=((y+s.y0)*w+x+s.x0)*4;if(sd[j+3]>127)c=blendPx([sd[j],sd[j+1],sd[j+2]],c);}if(c){p[i]=c[0];p[i+1]=c[1];p[i+2]=c[2];p[i+3]=255;}else p[i+3]=0;}x2.putImageData(d,s.x0,s.y0);}dirty(s.x0,s.y0,s.x1,s.y1);}
+function tileVar(c,w,h){const o=mk(w,h);X2(o).drawImage(c,0,0);return{c:o,d:X2(o).getImageData(0,0,w,h).data,url:png(o)};}
+function addTile(c,asVariant){if(asVariant&&S.tile){S.tile.vs.push(tileVar(c,S.tile.w,S.tile.h));}else{const T={w:c.width,h:c.height,vs:[tileVar(c,c.width,c.height)]};TILES.push(T);S.tile=T;}saveTiles();setTool('pencil');if(S.layer!=='ground')S.layer='ground';}
+const saveTiles=()=>{try{localStorage.setItem('mbTiles',JSON.stringify(TILES.map(T=>({w:T.w,h:T.h,vs:T.vs.map(v=>v.url)}))));}catch(e){}};
+async function loadTiles(){try{for(const T of JSON.parse(localStorage.getItem('mbTiles')||'[]')){const vs=[];for(const u of T.vs)vs.push(tileVar(await loadImg(u),T.w,T.h));TILES.push({w:T.w,h:T.h,vs});}}catch(e){}ui();}
+function selCanvas(){const d=S.doc;if(S.float)return clone(S.float.cs[0]);const s=S.sel;if(!s)return null;const c=mk(s.x1-s.x0,s.y1-s.y0);X2(c).drawImage(S.view==='night'&&d.night?d.night:d.day,-s.x0,-s.y0);return c;}
 
 /* ---------- selection ---------- */
 function setSel(s,add){const d=S.doc;if(s&&add&&S.sel){const o=S.sel;for(let i=0;i<s.m.length;i++)if(o.m[i])s.m[i]=1;s.x0=Math.min(s.x0,o.x0);s.y0=Math.min(s.y0,o.y0);s.x1=Math.max(s.x1,o.x1);s.y1=Math.max(s.y1,o.y1);}
@@ -330,7 +481,7 @@ function copySel(cut){const d=S.doc;if(S.layer==='props'&&S.selProp){S.clip={pro
   const w=s.x1-s.x0,h=s.y1-s.y0,c=mk(w,h),im=X2(tg[0].c).getImageData(s.x0,s.y0,w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(!s.m[(y+s.y0)*d.w+x+s.x0])im.data[(y*w+x)*4+3]=0;X2(c).putImageData(im,0,0);S.clip={c,x:s.x0,y:s.y0};
   if(cut){opBegin();applyMask(s,'erase');opEnd();}toast(cut?'Cut':'Copied');}
 function paste(){const k=S.clip;if(!k)return;const d=S.doc;if(k.prop){if(d.kind!=='town')return;const p=JSON.parse(k.prop);p.x+=8;p.y+=8;opBegin();d.props.push(p);S.selProp=p;opEnd();S.layer='props';ui();return;}
-  if(S.layer!=='ground'&&S.layer!=='block')S.layer='ground';floatFrom(k.c,k.x,k.y);ui();}
+  if(!isPaint())S.layer='ground';floatFrom(k.c,k.x,k.y);ui();}
 
 /* ---------- pointer ---------- */
 let drag=null,spaceDown=false;
@@ -339,16 +490,20 @@ V.addEventListener('contextmenu',e=>e.preventDefault());V.addEventListener('poin
 V.addEventListener('pointerdown',e=>{V.setPointerCapture(e.pointerId);const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Math.floor(fy),d=S.doc,rb=e.button===2;
   if(e.button===1||spaceDown||S.tool==='hand'){drag={k:'pan',sx:e.clientX,sy:e.clientY,px:S.px,py:S.py};return;}
   if(S.play){S.play.x=fx;S.play.y=fy;draw();return;}
-  if(S.placing){if(d.kind!=='town')return;opBegin();const p=newProp(S.placing,x,y);d.props.push(p);S.selProp=p;opEnd();S.layer='props';ui();return;}
+  if(S.tool==='place'){if(d.kind!=='town')return toast('Props are placed on the town map');if(!S.placing||!LIB[S.placing]){tab('props');return toast('Pick a prop in the list first');}opBegin();const p=newProp(S.placing,x,y);d.props.push(p);S.selProp=p;opEnd();S.layer='props';ui();return;}
   let tool=S.tool;if(e.altKey&&['pencil','eraser','fill','line','rect','ellipse'].includes(tool))tool='picker';
+  if(tool==='picker'&&e.altKey&&S.altCol){if(rb)S.bg=S.altCol;else{S.fg=S.altCol;S.tile=null;}ui();return;}
   if(tool==='picker'){const c=S.layer==='ground'?(S.view==='night'&&d.night?d.night:d.day):null;let col=null;const p=S.vis.props&&propAt(fx,fy);
     if(p){const v=variant(p,S.view==='night'&&d.night),q=X2(v.c).getImageData(Math.floor(fx-p.x-v.dx),Math.floor(fy-p.y-v.dy),1,1).data;if(q[3]===255)col=hex(q[0],q[1],q[2]);}
     if(!col&&x>=0&&y>=0&&x<d.w&&y<d.h){const q=X2(c||d.day).getImageData(x,y,1,1).data;if(q[3])col=hex(q[0],q[1],q[2]);}if(col){if(rb)S.bg=col;else S.fg=col;ui();}return;}
+  if(S.layer==='glow'&&d.glows){const sg=S.selGlow,near=Math.max(3,5/S.zoom);if(sg&&d.glows.includes(sg)&&sg.t==='glow'&&Math.abs(Math.hypot(fx-sg.x,fy-sg.y)-sg.r)<near){opBegin();drag={k:'glowr',g:sg};return;}
+    const g=[...d.glows].reverse().map(q=>[q,Math.hypot(fx-q.x,fy-q.y)]).filter(q=>q[1]<Math.max(near*1.5,Math.min(q[0].r*.45,14))).sort((a,b)=>a[1]-b[1])[0];S.selGlow=g?g[0]:null;if(g){opBegin();drag={k:'glow',g:g[0],ox:fx-g[0].x,oy:fy-g[0].y};}ui();return;}
   if(S.layer==='props'||S.layer==='ref'){if(S.layer==='ref'){const b=[...d.blds].reverse().find(b=>fx>=b.x+d.ox&&fx<b.x+d.ox+b.w&&fy>=b.y&&fy<b.y+b.h);S.selBld=b||null;S.selCab=null;if(b){opBegin();drag={k:'bld',b,ox:fx-b.x,oy:fy-b.y};}
       else{const c=[...d.cab].sort((a,b)=>b.top-a.top).find(c=>{const lx=Math.floor(fx-(c.cx-68+d.ox)),ly=Math.floor(fy-(c.top-90));if(lx<0||ly<0||lx>=c.img.width||ly>=c.img.height)return false;c.cv=c.cv||toC(c.img);return X2(c.cv).getImageData(lx,ly,1,1).data[3]>40;});
         if(c){S.selCab=c;opBegin();drag={k:'cab',c,ox:fx-c.cx,oy:fy-c.top};}}draw();return;}
     const p=propAt(fx,fy);S.selProp=p;S.selBld=null;if(p){opBegin();let q=p;if(e.altKey&&!p.fixed){q={...p};d.props.push(q);S.selProp=q;}drag={k:'prop',p:q,ox:fx-q.x,oy:fy-q.y};}ui();draw();return;}
   const inside=(S.float&&fx>=S.float.x&&fy>=S.float.y&&fx<S.float.x+S.float.w&&fy<S.float.y+S.float.h)||(S.sel&&x>=0&&y>=0&&x<d.w&&y<d.h&&S.sel.m[y*d.w+x]&&x>=S.sel.x0&&x<S.sel.x1);
+  if(tool==='move'&&!S.sel&&!S.float&&curL()){opBegin();const ls=picked();OP.tg=ls.map(l=>({c:l.c,kind:'layer',L:l}));OP.cl=ls.map(l=>clone(l.c));drag={k:'lay',ls,sx:fx,sy:fy};return;}   /* nothing selected: the whole layer moves */
   if(tool==='move'||(inside&&['marquee','lasso','wand'].includes(tool)&&!e.shiftKey)){if(!S.float&&S.sel)lift(!e.altKey&&true);if(S.float&&inside){drag={k:'float',ox:fx-S.float.x,oy:fy-S.float.y};}else if(S.float)commitFloat();return;}
   commitFloat();
   if(tool==='marquee'){drag={k:'marq',x0:x,y0:y,add:e.shiftKey};if(!e.shiftKey)setSel(null);return;}
@@ -360,6 +515,7 @@ V.addEventListener('pointerdown',e=>{V.setPointerCapture(e.pointerId);const[fx,f
   if(tool==='pencil'||tool==='eraser'){opBegin();plot(x,y,mode,S.brush);drag={k:'draw',mode,lx:x,ly:y};draw();return;}
   if(['line','rect','ellipse'].includes(tool)){drag={k:'shape',kind:tool,mode,x0:x,y0:y};}});
 V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Math.floor(fy),d=S.doc;if(!d)return;S.hover=[x,y];
+  {const r=V.getBoundingClientRect();S.mouse=[e.clientX-r.left,e.clientY-r.top];}
   $('#pos').textContent=`x ${x}  y ${y}`+(d.kind==='town'?`   (game x ${x-d.ox})`:'');
   draw();if(!drag)return;
   if(drag.k==='pan'){S.px=drag.px+e.clientX-drag.sx;S.py=drag.py+e.clientY-drag.sy;draw();}
@@ -368,37 +524,47 @@ V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Ma
     drag.pts=shapePts(drag.kind,drag.x0,drag.y0,x1,y1,$('#cFill').checked);S.prev={pts:drag.pts,col:S.layer==='block'?'#ff2a2a':drag.mode==='bg'?S.bg:S.fg};draw();}
   else if(drag.k==='marq'){const a=Math.min(drag.x0,x),b=Math.min(drag.y0,y),c=Math.max(drag.x0,x)+1,f=Math.max(drag.y0,y)+1;drag.r=[a,b,c,f];S.prev={pts:[],col:'#fff'};S.lasso=[[a,b],[c,b],[c,f],[a,f],[a,b]];draw();}
   else if(drag.k==='lasso'){S.lasso.push([fx,fy]);draw();}
+  else if(drag.k==='lay'){for(const l of drag.ls){l.mx=Math.round(fx-drag.sx);l.my=Math.round(fy-drag.sy);}draw();}
   else if(drag.k==='float'){S.float.x=Math.round(fx-drag.ox);S.float.y=Math.round(fy-drag.oy);draw();}
   else if(drag.k==='prop'){drag.p.x=Math.round(fx-drag.ox);drag.p.y=Math.round(fy-drag.oy);drag.moved=true;draw();}
   else if(drag.k==='bld'){drag.b.x=Math.round(fx-drag.ox);drag.b.y=Math.round(fy-drag.oy);draw();}
-  else if(drag.k==='cab'){drag.c.cx=Math.round(fx-drag.ox);drag.c.top=Math.round(fy-drag.oy);draw();}});
+  else if(drag.k==='cab'){drag.c.cx=Math.round(fx-drag.ox);drag.c.top=Math.round(fy-drag.oy);draw();}
+  else if(drag.k==='glow'){drag.g.x=Math.round(fx-drag.ox);drag.g.y=Math.round(fy-drag.oy);draw();}
+  else if(drag.k==='glowr'){drag.g.r=clamp(Math.round(Math.hypot(fx-drag.g.x,fy-drag.g.y)),3,220);draw();}});
 V.addEventListener('pointerup',e=>{const g=drag;drag=null;if(!g)return;
+  if(g.k==='lay'){for(const l of g.ls){const dx=l.mx||0,dy=l.my||0;l.mx=l.my=0;shiftLayer(l,dx,dy);}opEnd();draw();return;}
   if(g.k==='draw')opEnd();
   else if(g.k==='shape'){S.prev=null;if(g.pts){opBegin();for(const[a,b]of g.pts)plot(a,b,g.mode,g.kind==='line'?S.brush:1);opEnd();}draw();}
   else if(g.k==='marq'){S.lasso=null;S.prev=null;if(g.r)setSel(rectSel(...g.r),g.add);draw();}
   else if(g.k==='lasso'){const p=S.lasso;S.lasso=null;if(p.length>2)setSel(polySel(p),g.add);draw();}
-  else if(g.k==='prop'||g.k==='bld'||g.k==='cab'){opEnd();ui();}});
+  else if(g.k==='prop'||g.k==='bld'||g.k==='cab'||g.k==='glow'||g.k==='glowr'){opEnd();ui();}});
 V.addEventListener('wheel',e=>{e.preventDefault();const r=V.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,z0=S.zoom;let z=e.deltaY<0?(z0<1?Math.min(1,z0*1.25):z0+Math.max(1,Math.round(z0*.25))):(z0<=1?z0/1.25:z0-Math.max(1,Math.round(z0*.2)));z=clamp(z,.25,96);S.px=mx-(mx-S.px)*z/z0;S.py=my-(my-S.py)*z/z0;S.zoom=z;draw();},{passive:false});
 
 /* ---------- keys ---------- */
-function setTool(t){S.tool=t;$$('#tools button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));V.style.cursor=t==='hand'?'grab':t==='move'?'move':'crosshair';}
+function setTool(t){if(t==='place'&&(!S.libPick||!LIB[S.libPick]||LIB[S.libPick].fixed)){S.libPick=null;tab('props');toast('Pick a prop in the list, then click the map');}
+  S.tool=t;S.placing=t==='place'&&S.doc&&S.doc.kind==='town'?S.libPick:null;if(t==='place'&&S.doc&&S.doc.kind==='town')S.layer='props';draw();$$('#tools button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));V.style.cursor=t==='hand'?'grab':t==='move'?'move':'crosshair';}
 addEventListener('keydown',e=>{if(e.target.matches('input,textarea,select'))return;const k=e.key.toLowerCase(),c=e.ctrlKey||e.metaKey;
+  if(e.key==='Alt'){e.preventDefault();if(!altDown){altDown=true;if(isPaint())V.style.cursor='none';draw();}return;}
   if(k===' '){spaceDown=true;e.preventDefault();return;}
   if(S.play&&['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(k)){S.play.k[k]=1;e.preventDefault();return;}
   if(c&&k==='z'){e.preventDefault();undo(e.shiftKey);return;}if(c&&k==='y'){e.preventDefault();undo(true);return;}
+  if(c&&k==='g'){e.preventDefault();if(e.shiftKey)ungroupPicked();else groupPicked();return;}
   if(c&&k==='s'){e.preventDefault();save();return;}if(c&&k==='c'){copySel(false);return;}if(c&&k==='x'){copySel(true);return;}if(c&&k==='v'){return;}
   if(c&&k==='a'){e.preventDefault();commitFloat();setSel(rectSel(0,0,S.doc.w,S.doc.h));return;}if(c&&k==='d'){e.preventDefault();commitFloat();setSel(null);return;}
   if(c)return;
-  if(k==='escape'){S.placing=null;commitFloat();setSel(null);S.selProp=null;ui();return;}
-  if(k==='delete'||k==='backspace'){if(S.layer==='props'&&S.selProp&&!S.selProp.fixed){opBegin();S.doc.props=S.doc.props.filter(p=>p!==S.selProp);S.selProp=null;opEnd();ui();}else selAct('del');return;}
+  if(k==='escape'){if(S.tool==='place')setTool('move');commitFloat();setSel(null);S.selProp=null;ui();return;}
+  if(k==='delete'||k==='backspace'){if(S.layer==='glow'&&S.selGlow){opBegin();S.doc.glows=S.doc.glows.filter(g=>g!==S.selGlow);S.selGlow=null;opEnd();ui();return;}if(S.layer==='props'&&S.selProp&&!S.selProp.fixed){opBegin();S.doc.props=S.doc.props.filter(p=>p!==S.selProp);S.selProp=null;opEnd();ui();}else selAct('del');return;}
   if(k.startsWith('arrow')){const dx=k==='arrowleft'?-1:k==='arrowright'?1:0,dy=k==='arrowup'?-1:k==='arrowdown'?1:0,n=e.shiftKey?8:1;e.preventDefault();
-    if(S.layer==='props'&&S.selProp){opBegin();S.selProp.x+=dx*n;S.selProp.y+=dy*n;opEnd();ui();}
-    else if(S.layer==='ref'&&(S.selCab||S.selBld)){opBegin();if(S.selCab){S.selCab.cx+=dx*n;S.selCab.top+=dy*n;}else{S.selBld.x+=dx*n;S.selBld.y+=dy*n;}opEnd();ui();}else{if(!S.float&&S.sel)lift(true);if(S.float){S.float.x+=dx*n;S.float.y+=dy*n;draw();}}return;}
+    if(S.layer==='glow'&&S.selGlow){opBegin();S.selGlow.x+=dx*n;S.selGlow.y+=dy*n;opEnd();ui();}
+    else if(S.layer==='props'&&S.selProp){opBegin();S.selProp.x+=dx*n;S.selProp.y+=dy*n;opEnd();ui();}
+    else if(S.layer==='ref'&&(S.selCab||S.selBld)){opBegin();if(S.selCab){S.selCab.cx+=dx*n;S.selCab.top+=dy*n;}else{S.selBld.x+=dx*n;S.selBld.y+=dy*n;}opEnd();ui();}else if(!S.float&&!S.sel&&curL()){opBegin();const ls=picked();OP.tg=ls.map(l=>({c:l.c,kind:'layer',L:l}));OP.cl=ls.map(l=>clone(l.c));for(const l of ls)shiftLayer(l,dx*n,dy*n);opEnd();}
+    else{if(!S.float&&S.sel)lift(true);if(S.float){S.float.x+=dx*n;S.float.y+=dy*n;draw();}}return;}
   if(k==='tab'){e.preventDefault();setView(S.view==='day'?'night':'day');return;}
   if(k==='x'){[S.fg,S.bg]=[S.bg,S.fg];ui();return;}if(k==='['){S.brush=Math.max(1,S.brush-1);ui();return;}if(k===']'){S.brush=Math.min(64,S.brush+1);ui();return;}
   const t=TOOLS.find(t=>t[1].toLowerCase()===k);if(t)setTool(t[0]);});
-addEventListener('keyup',e=>{if(e.key===' ')spaceDown=false;if(S.play)delete S.play.k[e.key.toLowerCase()];});
-addEventListener('paste',async e=>{const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));if(it){const im=await loadImg(URL.createObjectURL(it.getAsFile()));if(S.layer!=='ground'&&S.layer!=='block')S.layer='ground';floatFrom(toC(im),S.hover?S.hover[0]:0,S.hover?S.hover[1]:0);ui();}else paste();});
+let altDown=false;const altOff=()=>{if(altDown){altDown=false;setTool(S.tool);draw();}};addEventListener('blur',altOff);
+addEventListener('keyup',e=>{if(e.key==='Alt'){e.preventDefault();altOff();}if(e.key===' ')spaceDown=false;if(S.play)delete S.play.k[e.key.toLowerCase()];});
+addEventListener('paste',async e=>{const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));if(it){const im=await loadImg(URL.createObjectURL(it.getAsFile()));if(!isPaint())S.layer='ground';floatFrom(toC(im),S.hover?S.hover[0]:0,S.hover?S.hover[1]:0);ui();}else paste();});
 addEventListener('resize',draw);
 addEventListener('beforeunload',e=>{if(Object.values(DOCS).some(d=>d.dirty)){e.preventDefault();e.returnValue='';}});
 
@@ -406,7 +572,7 @@ addEventListener('beforeunload',e=>{if(Object.values(DOCS).some(d=>d.dirty)){e.p
 function blocked(x,y){const d=S.doc;x=Math.round(x);y=Math.round(y);if(x<2||y<2||x>=d.w-2||y>=d.h-2)return true;
   if(d.block&&X2(d.block).getImageData(x,y,1,1).data[3]>127)return true;
   if(d.kind==='town'){const gx=x-d.ox;if(d.props.some(p=>p.solid&&Math.abs(x-pFx(p))<=p.fw+2&&y>=pBase(p)-9&&y<=pBase(p)+1))return true;
-    if(d.blds.some(b=>gx>b.x+3&&gx<b.x+b.w-3&&y>b.y+26&&y<b.y+b.h+1))return true;if(d.cab.some(c=>Math.abs(gx-c.cx)<50&&y>c.top-10&&y<c.top+31))return true;}return false;}
+    if(d.blds.some(b=>{const lx=gx-b.x,ly=y-b.y;return lx>=0&&ly>=0&&lx<b.w&&ly<b.h&&X2(b.blk).getImageData(lx,ly,1,1).data[3]>127;}))return true;if(d.cab.some(c=>Math.abs(gx-c.cx)<50&&y>c.top-10&&y<c.top+31))return true;}return false;}
 let lastT=0;function tick(t){const dt=Math.min(.05,(t-lastT)/1000);lastT=t;const m=S.play;if(m){const k=m.k,dx=(k.arrowright||k.d?1:0)-(k.arrowleft||k.a?1:0),dy=(k.arrowdown||k.s?1:0)-(k.arrowup||k.w?1:0);
     if(dx||dy){const l=Math.hypot(dx,dy),sx=dx/l*76*dt,sy=dy/l*76*dt;if(!blocked(m.x+sx,m.y))m.x+=sx;if(!blocked(m.x,m.y+sy))m.y+=sy;draw();}}requestAnimationFrame(tick);}
 requestAnimationFrame(tick);
@@ -417,44 +583,88 @@ function buildPal(){const d=S.doc,c=d.day,p=X2(c).getImageData(0,0,c.width,c.hei
   for(let i=0;i<p.length;i+=step)if(p[i+3]===255){const k=(p[i]<<16)|(p[i+1]<<8)|p[i+2];cnt.set(k,(cnt.get(k)||0)+1);}
   const top=[...cnt.entries()].sort((a,b)=>b[1]-a[1]).slice(0,96).map(e=>e[0]).sort((a,b)=>{const l=k=>((k>>16)&255)*.3+((k>>8)&255)*.59+(k&255)*.11;return l(a)-l(b);});
   $('#pal').innerHTML=top.map(k=>{const h='#'+k.toString(16).padStart(6,'0');return`<span class="sw" style="background:${h}" data-c="${h}"></span>`;}).join('');}
-$('#pal').addEventListener('mousedown',e=>{const c=e.target.dataset.c;if(!c)return;if(e.button===2)S.bg=c;else S.fg=c;ui();});$('#pal').addEventListener('contextmenu',e=>e.preventDefault());
-function ui(){const d=S.doc;if(!d)return;$('#cfg').style.background=S.fg;$('#cbg').style.background=S.bg;$('#pick').value=S.fg;$('#brush').value=S.brush;
+$('#pal').addEventListener('mousedown',e=>{const c=e.target.dataset.c;if(!c)return;if(e.button===2)S.bg=c;else{S.fg=c;S.tile=null;}ui();});$('#pal').addEventListener('contextmenu',e=>e.preventDefault());
+function ui(){const d=S.doc;if(!d)return;$('#cfg').style.background=S.fg;$('#cbg').style.background=S.bg;$('#pick').value=S.fg;$('#brush').value=S.brush;$('#bShape').value=S.shape;$('#bSoft').value=S.soft;$('#bDens').value=S.dens;$('#bBlend').value=S.blend;$('#bOpac').value=S.opac;
+  $('#tiles').innerHTML=TILES.map((T,i)=>`<div class="tl ${S.tile===T?'on':''}" data-ti="${i}" title="${T.w}×${T.h}${T.vs.length>1?', '+T.vs.length+' looks':''}. Click to paint with it, click again to stop." style="background-image:url(${T.vs[0].url})">${T.vs.length>1?'<b>'+T.vs.length+'</b>':''}</div>`).join('');
   $('#bDay').classList.toggle('on',S.view==='day');$('#bNight').classList.toggle('on',S.view==='night');$('#bNight').disabled=!d.night;$('#cBoth').disabled=!d.night;$('#cBoth').checked=S.both;
-  const L=[['ground',d.night?'Ground':'Picture'],...(d.block?[['block','Blocked paths']]:[]),...(d.kind==='town'||d.kind==='room'?[['props',d.kind==='room'?'Furniture':'Props']]:[]),...(d.kind==='town'?[['ref','Cabins + buildings']]:[])];
+  const Ltop=[...(d.glows?[['glow','Glows']]:[]),...(d.block?[['block','Blocked paths']]:[]),...(d.kind==='town'?[['ref','Cabins + buildings']]:[]),...(d.kind==='town'||d.kind==='room'?[['props',d.kind==='room'?'Furniture':'Props']]:[])],Lbot=[['ground',d.night?'Ground':'Picture']];
   const kids=k=>k==='props'?d.props.map((p,i)=>({id:'p'+i,o:p,n:(p.name||p.lib),th:LIB[p.lib],on:S.selProp===p})):k==='ref'?[...d.cab.map((c,i)=>({id:'c'+i,o:c,n:'Cabin '+(i+1),img:c.img,on:S.selCab===c})),...d.blds.map((b,i)=>({id:'b'+i,o:b,n:b.name,img:b.img,on:S.selBld===b}))]:[];
   const thumb=q=>{if(q.th)return q.th.thumb||(q.th.thumb=png(q.th.c));const o=q.o;return o.thumb||(o.thumb=png(toC(q.img)));};
-  $('#layers').innerHTML=L.map(([k,n])=>{const ks=kids(k),op=S.open[k]&&ks.length;
+  const row=([k,n])=>{const ks=kids(k),op=S.open[k]&&ks.length;
     return `<div class="lay ${S.layer===k?'on':''}" data-l="${k}"><input type="checkbox" data-v="${k}" ${S.vis[k]?'checked':''} title="show / hide"><span>${n}</span>${ks.length?`<small>${ks.length}</small><b class="tw" data-x="${k}">${op?'▾':'▸'}</b>`:''}</div>`+
-      (op?`<div class="kids">${ks.map(q=>`<div class="kid ${q.on?'on':''}" data-item="${q.id}"><input type="checkbox" data-eye="${q.id}" ${q.o.hid?'':'checked'} title="show / hide"><i style="background-image:url(${thumb(q)})"></i><span>${q.n}</span></div>`).join('')}</div>`:'');}).join('');
+      (op?`<div class="kids">${ks.map(q=>`<div class="kid ${q.on?'on':''}" data-item="${q.id}"><input type="checkbox" data-eye="${q.id}" ${q.o.hid?'':'checked'} title="show / hide"><i style="background-image:url(${thumb(q)})"></i><span>${q.n}</span></div>`).join('')}</div>`:'');};
+  $('#layers').innerHTML=Ltop.map(row).join('')+(()=>{let h='',last=null;for(const l of[...(d.layers||[])].reverse()){const g=grpOf(d,l);if(g&&g!==last){const n=d.layers.filter(q=>q.g===g.id),all=n.every(q=>MS.has(q.id)||S.layer==='L:'+q.id);h+=`<div class="lay grp ${all?'sel':''}" data-g="${g.id}" title="Double-click to rename"><input type="checkbox" data-gv="${g.id}" ${g.vis!==false?'checked':''} title="show / hide"><b class="tw" data-gx="${g.id}">${g.open!==false?'▾':'▸'}</b><span>${g.name}</span><small>${n.length}</small></div>`;}last=g;if(g&&g.open===false)continue;
+      h+=`<div class="lay pl ${S.layer==='L:'+l.id?'on':MS.has(l.id)?'sel':''} ${g?'ing':''}" data-l="L:${l.id}" title="Double-click for its effects"><input type="checkbox" data-lv="${l.id}" ${l.vis?'checked':''} title="show / hide"><span>${l.name}</span>${hasFx(l)?'<small class="fx">fx</small>':''}</div>`;}return h;})()+Lbot.map(row).join('');
+  $('#layBtns').style.display=d.libId?'none':'';{const l=curL();$('#layTop').style.display=l?'':'none';if(l){$('#layBlend').value=l.bm||'normal';$('#layOp').value=l.op;}}
   $('#propBox').style.display=d.kind==='town'||d.kind==='room'?'':'none';$('#plBox').style.display=d.kind==='town'?'':'none';$('#mapBox').style.display=d.kind==='town'?'':'none';
   $('#lib').innerHTML=Object.values(LIB).filter(l=>d.kind==='room'?l.fixed:!l.fixed).map(l=>`<div class="it ${S.placing===l.id||S.libPick===l.id?'on':''}" data-id="${l.id}" title="${l.id.replace('room:','')}" style="background-image:url(${l.thumb||(l.thumb=png(l.c))})"></div>`).join('');
-  const p=S.selProp;$('#insp').innerHTML=p&&d.props.includes(p)?(d.kind==='room'?`<b>${p.name}</b> <small>${p.x}, ${p.y}</small>`:
+  const p=S.selProp;$('#insp').innerHTML=S.layer==='glow'&&d.glows?glowInsp(d):p&&d.props.includes(p)?(d.kind==='room'?`<b>${p.name}</b> <small>${p.x}, ${p.y}</small>`:
     `<b>${p.lib}</b> &nbsp;<small>foot ${pFx(p)-d.ox}, ${pBase(p)}</small>
      <div class="row"><label title="Goes see-through when you walk behind it"><input type="checkbox" data-p="fade" ${p.fade?'checked':''}> fade when behind</label></div>
      <div class="row"><label title="Its foot blocks walking"><input type="checkbox" data-p="solid" ${p.solid?'checked':''}> solid</label></div>
      <div class="row"><label><input type="checkbox" data-p="shadow" ${p.shadow?'checked':''}> shadow</label> <label><input type="checkbox" data-p="flip" ${p.flip?'checked':''}> flipped</label></div>
      <div class="row"><small>Foot</small><input type="number" data-n="fw" value="${p.fw}" min="1" max="60" title="Foot half-width"><input type="number" data-n="fxo" value="${p.fxo}" title="Foot x inside the picture"><input type="number" data-n="baseo" value="${p.baseo}" title="Foot y inside the picture"></div>
-     <div class="row"><button data-a="dup">Duplicate</button><button data-a="bake" title="Paint it into the ground for good (day and night)">Bake</button><button data-a="del">Delete</button></div>`):'<small>Click a prop on the map.</small>';
+     <div class="row"><button data-a="dup">Duplicate</button><button data-a="bake" title="Paint it into the ground for good (day and night)">Bake</button><button data-a="del">Delete</button></div>`):S.selBld&&d.blds?.includes(S.selBld)?`<b>${S.selBld.name}</b> <small>${S.selBld.x}, ${S.selBld.y}</small><div class="row"><label title="Goes see-through when you walk behind it"><input type="checkbox" data-b="fade" ${S.selBld.fade!==0?'checked':''}> fade when behind</label></div><div class="row"><button data-a="editb">Edit pixels</button><button data-a="blockb" title="Paint where this building blocks walking (red = solid). It moves with the building.">Edit walk block</button></div>`
+    :S.selCab&&d.cab?.includes(S.selCab)?`<b>Cabin ${d.cab.indexOf(S.selCab)+1}</b> <small>${S.selCab.cx}, ${S.selCab.top}</small><div class="row"><small>Drag it or nudge with the arrows.</small></div>`:'';
   $('#info').textContent=`${d.name}  ${d.w}×${d.h}`+(d.kind==='town'?`  ·  ${d.props.length} props`:'');$('#dirty').textContent=d.dirty?'unsaved changes':'';draw();}
 $('#tools').innerHTML=TOOLS.map(t=>`<button data-t="${t[0]}" title="${t[3]} (${t[1]})">${icon(t[0])}</button>`).join('');
 $('#tools').onclick=e=>{const t=e.target.closest('button')?.dataset.t;if(t)setTool(t);};
 const itemOf=id=>{const d=S.doc,i=+id.slice(1);return id[0]==='p'?d.props[i]:id[0]==='c'?d.cab[i]:d.blds[i];};
-$('#layers').onclick=e=>{const v=e.target.dataset.v;if(v){S.vis[v]=e.target.checked;draw();return;}
+let lastLay=['',0];
+$('#layers').onclick=e=>{{const row=!e.target.matches('input,.tw')&&e.target.closest('.pl,.grp'),key=row?(row.dataset.l||'G:'+row.dataset.g):'',now=performance.now();
+    if(key&&key===lastLay[0]&&now-lastLay[1]<400&&!e.shiftKey&&!e.ctrlKey){lastLay=['',0];layDbl(key);return;}lastLay=[key,now];}
+  const v=e.target.dataset.v;if(v){S.vis[v]=e.target.checked;draw();return;}
+  const lv=e.target.dataset.lv;if(lv){S.doc.layers.find(l=>l.id===lv).vis=e.target.checked;S.doc.dirty=true;ui();return;}
+  const gv=e.target.dataset.gv;if(gv){S.doc.groups.find(g=>g.id===gv).vis=e.target.checked;S.doc.dirty=true;ui();return;}
+  const gx=e.target.dataset.gx;if(gx){const g=S.doc.groups.find(g=>g.id===gx);g.open=g.open===false;ui();return;}
+  const gr=e.target.closest('.grp');if(gr){commitFloat();const ls=S.doc.layers.filter(l=>l.g===gr.dataset.g);if(!e.shiftKey&&!e.ctrlKey)MS.clear();ls.forEach(l=>MS.add(l.id));if(ls.length)S.layer='L:'+ls[ls.length-1].id;setTool('move');ui();return;}   /* the whole group: it moves as one */
+  {const pl_=e.target.closest('.pl');if(pl_){commitFloat();const d=S.doc,id=pl_.dataset.l.slice(2),cur=curL();
+    if(e.shiftKey&&cur){const a=d.layers.indexOf(cur),b=d.layers.findIndex(l=>l.id===id);for(let i=Math.min(a,b);i<=Math.max(a,b);i++)MS.add(d.layers[i].id);ui();return;}   /* a run, from the one you are on to this one */
+    if(e.ctrlKey||e.metaKey){if(MS.has(id))MS.delete(id);else{MS.add(id);if(cur)MS.add(cur.id);}ui();return;}
+    MS.clear();MS.add(id);}else if(e.target.closest('.lay'))MS.clear();}
   const x=e.target.dataset.x;if(x){S.open[x]=!S.open[x];ui();return;}
   const ey=e.target.dataset.eye;if(ey){itemOf(ey).hid=!e.target.checked;draw();return;}
   const it=e.target.closest('.kid');if(it){commitFloat();const id=it.dataset.item,o=itemOf(id);S.selProp=S.selCab=S.selBld=null;if(id[0]==='p'){S.selProp=o;S.layer='props';}else{S.layer='ref';if(id[0]==='c')S.selCab=o;else S.selBld=o;}setTool('move');
     const r=$('#stage').getBoundingClientRect(),cx=id[0]==='p'?o.x+LIB[o.lib].c.width/2:id[0]==='c'?o.cx+S.doc.ox:o.x+S.doc.ox+o.w/2,cy=id[0]==='p'?o.y+LIB[o.lib].c.height/2:id[0]==='c'?o.top-20:o.y+o.h/2;
     if(cx*S.zoom+S.px<0||cx*S.zoom+S.px>r.width||cy*S.zoom+S.py<0||cy*S.zoom+S.py>r.height){S.px=r.width/2-cx*S.zoom;S.py=r.height/2-cy*S.zoom;}ui();return;}
-const l=e.target.closest('.lay');if(l){commitFloat();S.layer=l.dataset.l;if(S.layer==='block')S.vis.block=true;if(S.layer==='props'||S.layer==='ref')setTool('move');S.selBld=null;ui();}};
-$('#lib').onclick=e=>{const it=e.target.closest('.it');if(!it)return;const id=it.dataset.id;S.libPick=id;if(S.doc.kind==='town'){S.placing=S.placing===id?null:id;S.layer='props';}else{S.selProp=S.doc.props.find(p=>p.lib===id);S.layer='props';}ui();};
-$('#insp').addEventListener('change',e=>{const p=S.selProp;if(!p)return;opBegin();if(e.target.dataset.p)p[e.target.dataset.p]=e.target.checked;if(e.target.dataset.n)p[e.target.dataset.n]=+e.target.value||0;opEnd();ui();});
-$('#insp').addEventListener('click',e=>{const a=e.target.dataset.a,p=S.selProp,d=S.doc;if(!a||!p)return;opBegin();
+const l=e.target.closest('.lay');if(l){commitFloat();S.layer=l.dataset.l;if(S.layer==='block')S.vis.block=true;if(S.layer==='props'||S.layer==='ref'||S.layer==='glow')setTool('move');if(S.layer==='glow')S.vis.glow=true;S.selBld=null;ui();}};
+$('#lib').onclick=e=>{const it=e.target.closest('.it');if(!it)return;const id=it.dataset.id;S.libPick=id;if(S.doc.kind==='town'){setTool('place');}else{S.selProp=S.doc.props.find(p=>p.lib===id);S.layer='props';}ui();};
+$('#insp').addEventListener('input',e=>{const k=e.target.dataset.g,g=S.selGlow;if(!k||!g)return;if(!OP)opBegin();g[k]=k==='col'?e.target.value:k==='tint'?e.target.checked:k==='a'?+e.target.value/100:+e.target.value;draw();});
+$('#insp').addEventListener('change',e=>{if(e.target.dataset.g){opEnd();S.doc.dirty=true;ui();return;}if(e.target.dataset.b&&S.selBld){S.selBld.fade=e.target.checked?1:0;S.doc.dirty=true;ui();return;}const p=S.selProp;if(!p)return;opBegin();if(e.target.dataset.p)p[e.target.dataset.p]=e.target.checked;if(e.target.dataset.n)p[e.target.dataset.n]=+e.target.value||0;opEnd();ui();});
+$('#insp').addEventListener('click',e=>{const a=e.target.dataset.a,p=S.selProp,d=S.doc;if(a==='editb'&&S.selBld){show('assets/buildings/'+S.selBld.k+'.png');return;}if(a==='blockb'&&S.selBld){show('bmask:'+S.selBld.k);return;}
+  if(a==='gadd'){glowAdd('glow');return;}if(a==='gaddlamp'){glowAdd('lamp');return;}if(a==='gaddbulb'){glowAdd('bulb');return;}
+  if((a==='gdel'||a==='gdup')&&S.selGlow){opBegin();if(a==='gdel'){d.glows=d.glows.filter(g=>g!==S.selGlow);S.selGlow=null;}else{const q={...S.selGlow,x:S.selGlow.x+12,y:S.selGlow.y+8};d.glows.push(q);S.selGlow=q;}opEnd();ui();return;}if(!a||!p)return;opBegin();
   if(a==='dup'){const q={...p,x:p.x+10,y:p.y+6};d.props.push(q);S.selProp=q;}
   if(a==='del'){d.props=d.props.filter(q=>q!==p);S.selProp=null;}
   if(a==='bake'){OP.tg=[{c:d.day},{c:d.night}];OP.cl=[clone(d.day),clone(d.night)];const v=variant(p,false),n=variant(p,true);X2(d.day).drawImage(v.c,p.x+v.dx,p.y+v.dy);X2(d.night).drawImage(n.c,p.x+n.dx,p.y+n.dy);dirty(p.x+v.dx,p.y+v.dy,p.x+v.dx+v.c.width,p.y+v.dy+v.c.height);d.props=d.props.filter(q=>q!==p);S.selProp=null;}
   opEnd();ui();});
 $('#selBox').addEventListener('click',e=>{const s=e.target.dataset.s;if(s)selAct(s);});
-$('#pick').oninput=e=>{S.fg=e.target.value;ui();};$('#brush').onchange=e=>{S.brush=clamp(+e.target.value||1,1,64);};
+$('#pick').oninput=e=>{S.fg=e.target.value;S.tile=null;ui();};
+$('#bBlend').onchange=e=>{S.blend=e.target.value;};
+$('#layBlend').onchange=e=>{for(const l of picked()){l.bm=e.target.value;}S.doc.dirty=true;ui();};$('#layOp').oninput=e=>{for(const l of picked())l.op=+e.target.value;S.doc.dirty=true;draw();};$('#layOp').onchange=()=>ui();$('#bOpac').oninput=e=>{S.opac=+e.target.value;};
+$('#bLayAdd').onclick=()=>{const d=S.doc;commitFloat();let n=1;while(d.layers.some(l=>l.name==='Layer '+n))n++;const l={id:'l'+Date.now().toString(36),name:'Layer '+n,vis:true,op:100,fx:newFx(),c:mk(d.w,d.h)};d.layers.push(l);S.layer='L:'+l.id;d.dirty=true;if(S.tool==='move'||S.tool==='hand')setTool('pencil');ui();};
+const layMove=s=>{const d=S.doc,l=curL();if(!l)return;const i=d.layers.indexOf(l),j=i+s;if(j<0||j>=d.layers.length)return;const o=d.layers[j];if(o.g!==l.g){if(l.g)delete l.g;else if(o.g)l.g=o.g;}else{d.layers.splice(i,1);d.layers.splice(j,0,l);}tidyGroups(d);d.dirty=true;ui();};   /* stepping over a group's edge takes the layer into it, or out of it */
+$('#bLayUp').onclick=()=>layMove(1);$('#bLayDn').onclick=()=>layMove(-1);
+$('#bLayDel').onclick=()=>{const d=S.doc,ls=picked();if(!ls.length)return toast('Pick a paint layer first');if(!confirm('Delete '+(ls.length>1?ls.length+' layers':'"'+ls[0].name+'"')+'? This cannot be undone.'))return;commitFloat();d.layers=d.layers.filter(l=>!ls.includes(l));MS.clear();tidyGroups(d);S.layer='ground';S.undo=[];S.redo=[];d.dirty=true;ui();};
+$('#bLayMerge').onclick=()=>{const d=S.doc,l=curL();if(!l)return toast('Pick a paint layer first');if(!confirm('Paint "'+l.name+'" into the ground for good?'))return;commitFloat();
+  for(const[base,night]of[[d.day,false],...(d.night?[[d.night,true]]:[])]){drawLay(X2(base),l,night);}d.layers.splice(d.layers.indexOf(l),1);S.layer='ground';S.undo=[];S.redo=[];d.dirty=true;ui();};
+/* double-click a paint layer: its name and effects, like Photoshop's layer styles */
+/* a second click within 0.4 s on the same row. (The browser's own double-click never arrives: the first click redraws the list, so the second lands on a new row.) */
+function layDbl(key){const ge=key[0]==='G'?document.querySelector(`#layers .grp[data-g="${key.slice(2)}"]`):null;if(ge){const g=S.doc.groups.find(g=>g.id===ge.dataset.g),sp=ge.querySelector('span'),inp=document.createElement('input');inp.value=g.name;inp.style.cssText='flex:1;min-width:0;padding:1px 4px';sp.replaceWith(inp);inp.focus();inp.select();
+    const done=ok=>{if(done.x)return;done.x=1;if(ok&&inp.value.trim()){g.name=inp.value.trim();S.doc.dirty=true;}ui();};inp.onkeydown=k=>{k.stopPropagation();if(k.key==='Enter')done(true);if(k.key==='Escape')done(false);};inp.onblur=()=>done(true);return;}
+  const l=S.doc.layers.find(l=>'L:'+l.id===key);if(!l)return;const f=l.fx,D=$('#dlg');
+  D.innerHTML=`<h3>Layer</h3><div class="row">Name <input id="lfN" value="${l.name.replace(/"/g,'&quot;')}" style="flex:1"></div><div class="row">Blend <select id="lfB"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="hard-light">Hard light</option><option value="darken">Darken</option><option value="lighten">Lighten</option><option value="add">Add</option><option value="color">Colour</option></select> Opacity <input type="range" id="lfO" min="5" max="100" value="${l.op}"></div>
+    <h4>Drop shadow</h4><div class="row"><label><input type="checkbox" id="lfS" ${f.sh.on?'checked':''}> on</label> x <input type="number" id="lfSx" value="${f.sh.dx}" min="-20" max="20"> y <input type="number" id="lfSy" value="${f.sh.dy}" min="-20" max="20"> <input type="color" id="lfSc" value="${f.sh.col}" style="width:40px;height:30px;padding:2px"></div><div class="row">Strength <input type="range" id="lfSa" min="5" max="100" value="${f.sh.a}"></div>
+    <h4>Stroke</h4><div class="row"><label><input type="checkbox" id="lfT" ${f.st.on?'checked':''}> on</label> size <input type="number" id="lfTn" value="${f.st.n}" min="1" max="6"> <input type="color" id="lfTc" value="${f.st.col}" style="width:40px;height:30px;padding:2px"></div>
+    <div class="row" style="margin-top:12px"><button id="lfX" class="go">Done</button></div>`;
+  const q=s=>D.querySelector(s);q('#lfB').value=l.bm||'normal';const up=()=>{l.name=q('#lfN').value.trim()||l.name;l.op=+q('#lfO').value;l.bm=q('#lfB').value;f.sh={on:q('#lfS').checked,dx:+q('#lfSx').value|0,dy:+q('#lfSy').value|0,col:q('#lfSc').value,a:+q('#lfSa').value};f.st={on:q('#lfT').checked,n:clamp(+q('#lfTn').value|0,1,6),col:q('#lfTc').value};l.dc=l.nc=null;S.doc.dirty=true;draw();};
+  D.oninput=up;q('#lfX').onclick=()=>{D.oninput=null;D.close();ui();};D.showModal();};
+$('#bShape').onchange=e=>{S.shape=e.target.value;draw();};$('#bSoft').oninput=e=>{S.soft=+e.target.value;};$('#bDens').oninput=e=>{S.dens=+e.target.value;};
+$('#tiles').onclick=e=>{const i=e.target.closest('.tl')?.dataset.ti;if(i==null)return;S.tile=S.tile===TILES[i]?null:TILES[i];if(S.tile){if(S.layer!=='ground')S.layer='ground';if(!['pencil','fill','line','rect','ellipse'].includes(S.tool))setTool('pencil');}ui();};
+$('#bTileSel').onclick=()=>{const c=selCanvas();if(!c)return toast('Select a square of ground first (M)');if(c.width>128||c.height>128)return toast('Keep a tile under 128 px',true);commitFloat();addTile(c,false);setSel(null);ui();toast('Tile brush ready: paint with the pen or the fill');};
+$('#bTileVar').onclick=()=>{if(!S.tile)return toast('Pick a tile brush first');const c=selCanvas();if(!c)return toast('Select a square of ground first (M)');commitFloat();addTile(c,true);setSel(null);ui();};
+$('#bTilePng').onclick=()=>{fileFor='tile';$('#file').click();};
+$('#bTileDel').onclick=()=>{if(!S.tile)return;TILES.splice(TILES.indexOf(S.tile),1);S.tile=null;saveTiles();ui();};$('#brush').onchange=e=>{S.brush=clamp(+e.target.value||1,1,64);};
 $('#cBoth').onchange=e=>{S.both=e.target.checked;ui();};$('#cGrid').onchange=draw;$('#bFit').onclick=fit;
 $('#bDay').onclick=()=>setView('day');$('#bNight').onclick=()=>setView('night');$('#bUndo').onclick=()=>undo(false);$('#bRedo').onclick=()=>undo(true);
 $('#docSel').onchange=e=>show(e.target.value);
@@ -462,15 +672,32 @@ $('#bPlay').onclick=()=>{commitFloat();if(S.play){S.play=null;}else{const d=S.do
 $('#bRepl').onclick=()=>{const tg=targets();if(!tg.length||tg[0].kind==='block')return toast('Pick the Ground layer');commitFloat();const d=S.doc,[r,g,b]=rgb(S.bg),p=X2(tg[0].c).getImageData(0,0,d.w,d.h).data,m=new Uint8Array(d.w*d.h);let n=0,x0=d.w,y0=d.h,x1=0,y1=0;
   for(let i=0;i<m.length;i++)if(p[i*4]===r&&p[i*4+1]===g&&p[i*4+2]===b&&p[i*4+3]===255){m[i]=1;n++;const x=i%d.w,y=(i/d.w)|0;if(x<x0)x0=x;if(x>=x1)x1=x+1;if(y<y0)y0=y;if(y>=y1)y1=y+1;}
   if(!n)return toast('No pixels of the 2nd colour here');opBegin();applyMask({m,x0,y0,x1,y1},'fg');opEnd();toast(n+' pixels changed');};
+/* PIXELATE (his ask): a picture he uploads is shrunk to real game pixels and its colours become OUR colours (the map's own palette) */
+function gamePal(){const cnt=new Map(),add=c=>{const p=X2(c).getImageData(0,0,c.width,c.height).data,st=Math.max(1,Math.floor(p.length/4/40000))*4;for(let i=0;i<p.length;i+=st)if(p[i+3]===255){const k=(p[i]<<16)|(p[i+1]<<8)|p[i+2];cnt.set(k,(cnt.get(k)||0)+1);}};
+  if(DOCS.town)add(DOCS.town.day);else if(S.doc)add(S.doc.day);for(const l of Object.values(LIB))add(l.c);for(const d of Object.values(DOCS))if(d.kind==='hall')add(d.day);
+  return[...cnt.entries()].sort((a,b)=>b[1]-a[1]).slice(0,256).map(e=>[(e[0]>>16)&255,(e[0]>>8)&255,e[0]&255]);}
+function pixelate(c,w,usePal){w=clamp(Math.round(w),1,c.width);const h=Math.max(1,Math.round(c.height*w/c.width)),o=mk(w,h),x=X2(o);
+  if(w===c.width)x.drawImage(c,0,0);else{const s=X2(c).getImageData(0,0,c.width,c.height).data,im=x.createImageData(w,h),q=im.data,fx=c.width/w,fy=c.height/h;   /* each game pixel = the commonest colour of its block (keeps hard edges; an average would blur) */
+    for(let y=0;y<h;y++)for(let xx=0;xx<w;xx++){const m=new Map();let best=0,bk=0,al=0,n=0;for(let sy=Math.floor(y*fy);sy<Math.max(Math.floor(y*fy)+1,Math.floor((y+1)*fy));sy++)for(let sx=Math.floor(xx*fx);sx<Math.max(Math.floor(xx*fx)+1,Math.floor((xx+1)*fx));sx++){const i=(sy*c.width+sx)*4;n++;if(s[i+3]<128)continue;al++;const k=((s[i]>>3)<<10)|((s[i+1]>>3)<<5)|(s[i+2]>>3),v=(m.get(k)||0)+1;m.set(k,v);if(v>best){best=v;bk=i;}}
+      const j=(y*w+xx)*4;if(al*2>=n&&best){q[j]=s[bk];q[j+1]=s[bk+1];q[j+2]=s[bk+2];q[j+3]=255;}}x.putImageData(im,0,0);}
+  const im=x.getImageData(0,0,w,h),q=im.data,pal=usePal?gamePal():null,memo=new Map();
+  for(let i=0;i<q.length;i+=4){if(q[i+3]<128){q[i+3]=0;continue;}q[i+3]=255;if(!pal||!pal.length)continue;const k=(q[i]<<16)|(q[i+1]<<8)|q[i+2];let b=memo.get(k);
+    if(!b){let bd=1e9;for(const c2 of pal){const d=(c2[0]-q[i])**2*.3+(c2[1]-q[i+1])**2*.59+(c2[2]-q[i+2])**2*.11;if(d<bd){bd=d;b=c2;}}memo.set(k,b);}q[i]=b[0];q[i+1]=b[1];q[i+2]=b[2];}
+  x.putImageData(im,0,0);return o;}
+function askPixelate(c,name){return new Promise(res=>{const D=$('#dlg'),big=Math.max(c.width,c.height)>160;
+  D.innerHTML=`<h3>Bring in ${name||'picture'}</h3><canvas id="pxPrev"></canvas><div class="row">Width in game pixels <input id="pxW" type="number" min="4" max="${c.width}" value="${big?Math.round(c.width/Math.max(1,Math.round(Math.max(c.width,c.height)/64))):c.width}"> <small>now ${c.width} × ${c.height}</small></div>
+    <div class="row"><label><input type="checkbox" id="pxPal" checked> use our colours</label></div><div class="row" style="margin-top:10px"><button id="pxOk" class="go">Pixelate</button><button id="pxRaw">Use as it is</button><button id="pxNo">Cancel</button></div>`;
+  let out=null;const pv=()=>{out=pixelate(c,+D.querySelector('#pxW').value||c.width,D.querySelector('#pxPal').checked);const cv=D.querySelector('#pxPrev');cv.width=out.width;cv.height=out.height;cv.getContext('2d').drawImage(out,0,0);};pv();
+  D.querySelector('#pxW').oninput=pv;D.querySelector('#pxPal').onchange=pv;const done=v=>{D.close();res(v);};D.querySelector('#pxOk').onclick=()=>done(out);D.querySelector('#pxRaw').onclick=()=>done(c);D.querySelector('#pxNo').onclick=()=>done(null);D.showModal();});}
 let fileFor=null;$('#bImport').onclick=()=>{fileFor='float';$('#file').click();};$('#bLibAdd').onclick=()=>{fileFor='lib';$('#file').click();};
-$('#file').onchange=async e=>{for(const f of e.target.files){const c=toC(await loadImg(URL.createObjectURL(f)));if(fileFor==='lib'){const id=newLibId(f.name.replace(/\.[^.]+$/,''));addLib(id,c);S.placing=id;S.layer='props';}else{if(S.layer!=='ground'&&S.layer!=='block')S.layer='ground';floatFrom(c,Math.round((V.width/2-S.px)/S.zoom-c.width/2),Math.round((V.height/2-S.py)/S.zoom-c.height/2));}}e.target.value='';ui();};
+$('#file').onchange=async e=>{for(const f of e.target.files){let c=toC(await loadImg(URL.createObjectURL(f)));c=await askPixelate(c,f.name);if(!c)continue;if(fileFor==='tile'){addTile(c,false);}else if(fileFor==='lib'){const id=newLibId(f.name.replace(/\.[^.]+$/,''));addLib(id,c);S.libPick=id;setTool('place');}else{if(!isPaint())S.layer='ground';floatFrom(c,Math.round((V.width/2-S.px)/S.zoom-c.width/2),Math.round((V.height/2-S.py)/S.zoom-c.height/2));}}e.target.value='';ui();};
 $('#bLibEdit').onclick=()=>{const id=S.libPick||S.selProp?.lib;if(!id||!LIB[id])return toast('Click a prop in the list first');delete DOCS['lib:'+id];LIB[id].thumb=null;show('lib:'+id);};
 $('#bLibDel').onclick=()=>{const id=S.libPick;if(!id||!LIB[id]||LIB[id].fixed)return;if(Object.values(DOCS).some(d=>d.props.some(p=>p.lib===id)))return toast('Still used on the map. Delete those props first.',true);delete LIB[id];S.placing=null;S.libPick=null;if(DOCS.town)DOCS.town.dirty=true;ui();};
 
 /* ---------- map size ---------- */
 $('#bExtend').onclick=()=>{const d=S.doc,l=+$('#exL').value|0,r=+$('#exR').value|0,b=+$('#exB').value|0;if(d.kind!=='town'||l+r+b<=0)return;if(!confirm(`Make the map ${d.w+l+r} × ${d.h+b}? (now ${d.w} × ${d.h}). Undo history is cleared.`))return;commitFloat();
   const grow=(c,col)=>{const o=mk(d.w+l+r,d.h+b),x=X2(o);if(col){x.fillStyle=col;x.fillRect(0,0,o.width,o.height);}x.drawImage(c,l,0);return o;};
-  d.day=grow(d.day,S.fg);d.night=grow(d.night,hex(...nightRGB(...rgb(S.fg))));d.block=grow(d.block,null);d.w+=l+r;d.h+=b;d.ox+=l;for(const p of d.props)p.x+=l;d.sized=true;S.undo=[];S.redo=[];setSel(null);d.dirty=true;$('#exL').value=$('#exR').value=$('#exB').value=0;fit();ui();toast('Bigger. Paint the new ground, then Save to game.');};
+  for(const q of d.layers){q.c=grow(q.c,null);q.dc=q.nc=null;}d.day=grow(d.day,S.fg);d.night=grow(d.night,hex(...nightRGB(...rgb(S.fg))));d.block=grow(d.block,null);d.w+=l+r;d.h+=b;d.ox+=l;for(const p of d.props)p.x+=l;for(const g of d.glows||[])g.x+=l;d.sized=true;S.undo=[];S.redo=[];setSel(null);d.dirty=true;$('#exL').value=$('#exR').value=$('#exB').value=0;fit();ui();toast('Bigger. Paint the new ground, then Save to game.');};
 
 /* ---------- open / new ---------- */
 $('#bOpen').onclick=async()=>{const all=await (await fetch('/api/tree')).json(),D=$('#dlg');D.innerHTML=`<h3>Open a picture</h3><input id="q" placeholder="type to search: cabin, tavern, lamp…" style="width:100%"><div id="res" style="max-height:340px;overflow:auto;margin:8px 0;min-width:460px"></div><button id="x">Close</button>`;
@@ -484,26 +711,111 @@ $('#bNewInt').onclick=()=>{const D=$('#dlg');D.innerHTML=`<h3>New interior</h3><
       const wk=mk(w,h),y=X2(wk);y.fillStyle='#000';y.fillRect(0,0,w,h);y.fillStyle='#fff';y.fillRect(18,50,w-36,h-74);y.fillRect((w>>1)-10,h-26,20,12);
       const bimg=clone(DOCS.town.blds[0].img),nb={k,name:n,x:200,y:860,w:bimg.width,h:bimg.height},door=[w>>1,h-16],spawn=[w>>1,h-30];
       await api('/api/save',{files:[{path:`assets/interiors/${k}.png`,b64:png(pic),mode:'RGB'},{path:`assets/interiors/${k}-walk.png`,b64:png(wk),mode:'L'},{path:`assets/buildings/${k}.png`,b64:png(bimg)}]});
-      await api('/api/patch',{buildings:[...DOCS.town.blds.map(({k,name,x,y,w,h})=>({k,name,x,y,w,h})),nb],hall:{k,name:n,door,spawn}});
-      GAME.blds.push(nb);GAME.halls[k]={name:n,door,spawn};DOCS.town.blds.push({...nb,img:bimg});D.close();await show('town');S.layer='ref';S.selBld=DOCS.town.blds.at(-1);setTool('move');ui();toast('Made. Drag the new building where you want it, then Save. Its room is in the list at the top.');}
+      await api('/api/patch',{buildings:[...DOCS.town.blds.map(({k,name,x,y,w,h,fade})=>({k,name,x,y,w,h,fade})),nb],hall:{k,name:n,door,spawn}});
+      GAME.blds.push(nb);GAME.halls[k]={name:n,door,spawn};DOCS.town.blds.push({...nb,img:bimg,blk:defBlk(nb.w,nb.h)});D.close();await show('town');S.layer='ref';S.selBld=DOCS.town.blds.at(-1);setTool('move');ui();toast('Made. Drag the new building where you want it, then Save. Its room is in the list at the top.');}
     catch(e){toast('Could not make it: '+e.message,true);}};D.showModal();};
 
 /* ---------- PixelLab ---------- */
+/* sizes he can just pick (measured off what is already on the map), with a little picture of how big that is next to a person and a cabin */
+const PL_SIZES={prop:[['Tiny','plant, rock',16,24],['Small','bush, barrel',32,32],['Medium','snowman, sign',32,48],['Tall','small tree, lamp',48,64],['Big tree','like the pines',48,96],['Wide','bench, cart',64,48],['Large','well, stall',96,96],['Huge','building',128,128],['Custom','type a size',0,0]],
+  tile:[['16 × 16','small pattern',16,16],['32 × 32','most ground',32,32],['64 × 64','big pattern',64,64],['Custom','type a size',0,0]]};
+function plSizes(){const k=$('#plKind').value,L=PL_SIZES[k==='prop'?'prop':'tile'],w=+$('#plW').value,h=+$('#plH').value,cu=$('#plCustom').style.display!=='none';
+  $('#plSizes').innerHTML=L.map((s,i)=>`<button data-i="${i}" class="${(s[2]?!cu&&s[2]===w&&s[3]===h:cu)?'on':''}" title="${s[2]?s[2]+' × '+s[3]+' game pixels':'Type your own size'}"><b>${s[0]}</b><small>${s[1]}</small></button>`).join('');
+  $('#plSizes').style.display=k==='variant'?'none':'';
+  const cv=$('#plScale'),x=cv.getContext('2d');x.clearRect(0,0,260,110);x.imageSmoothingEnabled=false;const sc=Math.min(.7,100/Math.max(h,1),120/Math.max(w,1)),gy=104;x.fillStyle='rgba(0,0,0,.2)';x.fillRect(0,gy,260,2);
+  const cab=DOCS.town&&DOCS.town.cab[0]&&DOCS.town.cab[0].img;if(cab)x.drawImage(cab,6,gy-cab.height*sc,cab.width*sc,cab.height*sc);
+  const px=cab?cab.width*sc+14:10;x.fillStyle='#000';x.fillRect(px,gy-31*sc,20*sc,31*sc);x.fillStyle='#ffcf5e';x.fillRect(px+sc,gy-30*sc,18*sc,29*sc);   /* a person: 22 x 31 */
+  const bx=px+20*sc+12;x.fillStyle='rgba(255,255,255,.25)';x.fillRect(bx,gy-h*sc,w*sc,h*sc);x.strokeStyle='#fff';x.setLineDash([3,3]);x.strokeRect(bx+.5,gy-h*sc+.5,w*sc-1,h*sc-1);x.setLineDash([]);
+  x.fillStyle='#fff';x.font='12px "Pixelify Sans",sans-serif';x.fillText(w+' × '+h,Math.min(bx+w*sc+6,200),gy-6);}
+$('#plSizes').onclick=e=>{const b=e.target.closest('button');if(!b)return;const s=PL_SIZES[$('#plKind').value==='prop'?'prop':'tile'][+b.dataset.i];$('#plCustom').style.display=s[2]?'none':'';if(s[2]){$('#plW').value=s[2];$('#plH').value=s[3];}plSizes();};
+$('#plW').oninput=$('#plH').oninput=plSizes;
+$('#plKindSeg').onclick=e=>{const k=e.target.dataset.k;if(!k)return;if(k==='variant'&&!S.tile)return toast('Pick a tile brush first (Paint tab)');$('#plKind').value=k;$$('#plKindSeg button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));$('#plCustom').style.display='none';
+  if(k==='prop'){$('#plW').value=48;$('#plH').value=64;}else{$('#plW').value=k==='variant'?S.tile.w:32;$('#plH').value=k==='variant'?S.tile.h:32;}$('#plPrompt').placeholder=k==='prop'?'snowy pine tree with christmas lights':'snowy cobblestone path';plSizes();};
+$('#plStyleSeg').onclick=e=>{const s=e.target.dataset.s;if(!s)return;$$('#plStyleSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));$('#plMafia').style.display=s==='mafia'?'':'none';$('#plOther').style.display=s==='other'?'':'none';};
+$('#tabs').addEventListener('click',e=>{if(e.target.dataset.tab==='props')plSizes();});
+const pl=(path,body,method)=>api('/api/pl',{path,body:body===undefined?null:body,method},{'X-PL-Key':$('#plKey').value.trim()});
 $('#plKey').value=localStorage.getItem('plKey')||'';$('#plKey').onchange=e=>localStorage.setItem('plKey',e.target.value.trim());
-$('#bGen').onclick=async()=>{const desc=$('#plPrompt').value.trim();if(!desc)return toast('Say what to make first');const st=$('#plSt');st.textContent='making… (up to a minute)';$('#bGen').disabled=true;
-  try{const j=await api('/api/pixellab',{description:desc,image_size:{width:clamp(+$('#plW').value|0,16,400),height:clamp(+$('#plH').value|0,16,400)},no_background:true,view:$('#plView').value,outline:'single color black outline',shading:'detailed shading',detail:'highly detailed'},{'X-PL-Key':$('#plKey').value.trim()});
-    const b=j.image?.base64||j.data?.image?.base64||j.images?.[0]?.base64;if(!b)throw new Error('no picture came back');const c=toC(await loadImg(b.startsWith('data:')?b:'data:image/png;base64,'+b));
-    const id=newLibId(desc.split(/[ ,]+/).slice(0,3).join('-'));addLib(id,trim(c));S.placing=id;S.layer='props';if(DOCS.town)DOCS.town.dirty=true;st.textContent='done: click the map to place it';ui();}
+$('#bGen').onclick=async()=>{const desc=$('#plPrompt').value.trim(),mk_=$('#plKind').value;if(!desc)return toast('Say what to make first');if(mk_==='variant'&&!S.tile)return toast('Pick a tile brush first');const st=$('#plSt');st.textContent='making… (up to a minute)';$('#bGen').disabled=true;
+  try{/* MAFIA STYLE (his ask): how our own props look, measured off them: seen from above, one dark navy outline (17,36,50), medium shading, and only
+       the colours already on the map. PixelLab is asked for that, then the result is finished by hand: colours snapped to ours, the outline made navy. */
+    const mafia=$('#plStyleSeg .on').dataset.s==='mafia',prop=mk_==='prop',usePal=!mafia&&$('#plPal').checked   /* Mafia style has no colour limit (his call: it was not using all our colours): only the outline is made navy */,words=mafia?'cosy chunky pixel art, snowy winter village, soft snow on top':$('#plWords').value.trim();
+    const body={description:[desc,words,prop?'':'seamless tileable ground texture, flat top-down view, fills the whole picture'].filter(Boolean).join(', '),image_size:{width:clamp(+$('#plW').value|0,16,400),height:clamp(+$('#plH').value|0,16,400)},no_background:prop,
+      view:mafia?'high top-down':$('#plView').value,shading:mafia?'medium shading':$('#plShade').value,detail:mafia?'medium detail':$('#plDet').value};
+    if(prop)body.outline=mafia?'single color outline':$('#plOut').value;
+    if(usePal){const pal=gamePal(),pc=mk(16,Math.ceil(pal.length/16)),px2=X2(pc);pal.forEach((c,i)=>{px2.fillStyle=hex(...c);px2.fillRect(i%16,(i/16)|0,1,1);});body.color_image={type:'base64',base64:png(pc).split(',')[1],format:'png'};}
+    const j=await pl('/create-image-pixflux',body);
+    const b=j.image?.base64||j.data?.image?.base64||j.images?.[0]?.base64;if(!b)throw new Error('no picture came back');let c=toC(await loadImg(b.startsWith('data:')?b:'data:image/png;base64,'+b));if(usePal)c=pixelate(c,c.width,true);if(mafia&&prop)c=navyEdge(c);
+    if(mk_!=='prop'){addTile(c,mk_==='variant');tab('paint');st.textContent='tile brush ready';ui();}else{const id=newLibId(desc.split(/[ ,]+/).slice(0,3).join('-'));addLib(id,trim(c));S.libPick=id;setTool('place');if(DOCS.town)DOCS.town.dirty=true;st.textContent='done: click the map to place it';ui();}}
   catch(e){st.textContent='';toast('PixelLab: '+e.message,true);}$('#bGen').disabled=false;};
+/* the outside line of a cut-out becomes our outline colour */
+function navyEdge(c){const w=c.width,h=c.height,x=X2(c),im=x.getImageData(0,0,w,h),p=im.data,src=new Uint8ClampedArray(p),A=(xx,yy)=>xx<0||yy<0||xx>=w||yy>=h?0:src[(yy*w+xx)*4+3];
+  for(let y=0;y<h;y++)for(let xx=0;xx<w;xx++){const i=(y*w+xx)*4;if(src[i+3]<128)continue;if(!A(xx-1,y)||!A(xx+1,y)||!A(xx,y-1)||!A(xx,y+1)){p[i]=17;p[i+1]=36;p[i+2]=50;p[i+3]=255;}}x.putImageData(im,0,0);return c;}
 function trim(c){const d=X2(c).getImageData(0,0,c.width,c.height).data;let x0=c.width,y0=c.height,x1=0,y1=0;for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++)if(d[(y*c.width+x)*4+3]>0){if(x<x0)x0=x;if(x>=x1)x1=x+1;if(y<y0)y0=y;if(y>=y1)y1=y+1;}
   if(x1<=x0)return c;const o=mk(x1-x0,y1-y0);X2(o).drawImage(c,-x0,-y0);return o;}
 
+/* ---------- CAST: look at every character, edit them, add one from a sheet, animate with PixelLab ---------- */
+let CAST=[],CS=null;const CIMG={};
+const cimg=u=>{let o=CIMG[u];if(!o){o=CIMG[u]={im:null};loadImg(u).then(im=>{o.im=im;}).catch(()=>{});}return o.im;};
+const clog=m=>{const l=$('#caLog');l.textContent+=(l.textContent?'\n':'')+m;l.scrollTop=1e6;};
+async function loadCast(keep){try{CAST=await (await fetch('/api/cast')).json();}catch(e){return toast('Could not read the characters',true);}
+  $('#castGrid').innerHTML=CAST.map(c=>`<div class="ch" data-c="${c.id}" title="${c.id}" style="background-image:url(/assets/final/${c.id}/front.png?t=${Date.now()})"></div>`).join('');if(keep&&CS)pickCast(CS.id);}
+function castAnims(c){const out=c.views.map(v=>({n:v,fr:[{u:`assets/final/${c.id}/${v}.png`}]})),g={};
+  for(const[k,m]of Object.entries(c.poses||{})){const q=k.match(/^(.*)_(\d+)$/),n=q?q[1]:k;(g[n]=g[n]||[]).push({i:q?+q[2]:0,u:`assets/final/${c.id}/poses/${k}.png`,ax:m.ax});}
+  for(const n of Object.keys(g).sort())out.push({n,fr:g[n].sort((a,b)=>a.i-b.i)});return out;}
+function pickCast(id){CS=CAST.find(c=>c.id===id);if(!CS)return;CS.an=castAnims(CS);$$('#castGrid .ch').forEach(e=>e.classList.toggle('on',e.dataset.c===id));$('#castSel').style.display='';
+  $('#castName').textContent=id+(CS.poses?'':'  ·  no animations yet');$('#castAnim').innerHTML=CS.an.map((a,i)=>`<option value="${i}">${a.n}${a.fr.length>1?' ('+a.fr.length+')':''}</option>`).join('');$('#caPl').value=CS.pl||'';$('#caLog').textContent='';
+  ['ca1','ca2','ca3'].forEach(b=>$('#'+b).disabled=!!CS.locked);if(CS.locked)clog('This one is hand-made: it is never sent or rebuilt. You can still edit its pictures.');}
+function castFrame(){if(!CS)return null;const a=CS.an[+$('#castAnim').value||0];return a&&a.fr[Math.floor(performance.now()/125)%a.fr.length];}
+function castDraw(){const cv=$('#castCv');if(!CS||!cv.offsetParent)return;const f=castFrame(),im=f&&cimg('/'+f.u),x=cv.getContext('2d');x.clearRect(0,0,64,64);x.fillStyle='rgba(0,0,0,.18)';x.fillRect(22,55,20,3);if(!im)return;
+  x.imageSmoothingEnabled=false;x.drawImage(im,Math.round(32-(f.ax!=null?f.ax:im.width/2)),56-im.height);}
+setInterval(castDraw,60);
+$('#castGrid').onclick=e=>{const c=e.target.dataset.c;if(c)pickCast(c);};
+$('#bCastEdit').onclick=()=>{const f=castFrame();if(f)show(f.u);};
+/* a sheet -> its four characters: the background (see-through, or the flat colour of the corner) is dropped, then the columns with nothing in them split it */
+function cutSheet(c){const w=c.width,h=c.height,x=X2(c),im=x.getImageData(0,0,w,h),p=im.data;if(p[3]===255){const r=p[0],g=p[1],b=p[2];for(let i=0;i<p.length;i+=4)if(Math.abs(p[i]-r)+Math.abs(p[i+1]-g)+Math.abs(p[i+2]-b)<40)p[i+3]=0;}
+  const col=new Uint8Array(w);for(let i=0;i<w*h;i++)if(p[i*4+3]>127)col[i%w]=1;let runs=[],s=-1;for(let xx=0;xx<=w;xx++){if(xx<w&&col[xx]){if(s<0)s=xx;}else if(s>=0){runs.push([s,xx]);s=-1;}}
+  while(runs.length>4){let bi=0,bg=1e9;for(let i=0;i<runs.length-1;i++){const g=runs[i+1][0]-runs[i][1];if(g<bg){bg=g;bi=i;}}runs.splice(bi,2,[runs[bi][0],runs[bi+1][1]]);}
+  if(runs.length!==4)runs=[0,1,2,3].map(i=>[Math.round(i*w/4),Math.round((i+1)*w/4)]);
+  const src=mk(w,h);X2(src).putImageData(im,0,0);return runs.map(([a,b])=>{let y0=h,y1=0,x0=b,x1=a;for(let yy=0;yy<h;yy++)for(let xx=a;xx<b;xx++)if(p[(yy*w+xx)*4+3]>127){if(yy<y0)y0=yy;if(yy>=y1)y1=yy+1;if(xx<x0)x0=xx;if(xx>=x1)x1=xx+1;}
+    const o=mk(Math.max(1,x1-x0),Math.max(1,y1-y0));X2(o).drawImage(src,-x0,-y0);return o;});}
+$('#bCastNew').onclick=()=>{const D=$('#dlg'),V=['front','right','back','left'];let cuts=null;
+  D.innerHTML=`<h3>New character</h3><div class="row"><input type="file" id="shF" accept="image/*"></div><div class="cut" id="shCut"></div>
+    <div class="row">Short name <input id="shId" placeholder="pirate" style="width:110px"> Shown as <input id="shNm" placeholder="Pirate Pete" style="width:140px"></div>
+    <div class="row">Rarity <select id="shR"><option>common</option><option>rare</option><option>epic</option><option>legendary</option></select> Height in game pixels <input id="shH" type="number" value="31" min="12" max="64" title="The cast stand about 31 tall. A bigger sheet is shrunk to this."></div>
+    <div class="row" style="margin-top:10px"><button id="shOk" class="go">Add to the game</button><button id="shNo">Cancel</button></div>`;
+  let raw=null;const redo=()=>{if(!raw)return;const H=+D.querySelector('#shH').value||31,mh=Math.max(...raw.map(c=>c.height));cuts=raw.map(c=>mh>H?pixelate(c,Math.max(1,Math.round(c.width*H/mh)),false):c);
+    D.querySelector('#shCut').innerHTML=V.map((v,i)=>`<div><canvas id="shC${i}"></canvas><select id="shV${i}">${V.map(q=>`<option ${q===v?'selected':''}>${q}</option>`).join('')}</select><br><small>${cuts[i].width}×${cuts[i].height}</small></div>`).join('');
+    cuts.forEach((c,i)=>{const cv=D.querySelector('#shC'+i);cv.width=c.width;cv.height=c.height;cv.getContext('2d').drawImage(c,0,0);});};
+  D.querySelector('#shF').onchange=async e=>{const f=e.target.files[0];if(!f)return;raw=cutSheet(toC(await loadImg(URL.createObjectURL(f))));if(!D.querySelector('#shId').value)D.querySelector('#shId').value=f.name.replace(/\.[^.]+$/,'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,16);redo();};
+  D.querySelector('#shH').onchange=redo;D.querySelector('#shNo').onclick=()=>D.close();
+  D.querySelector('#shOk').onclick=async()=>{if(!cuts)return toast('Pick the sheet first',true);const id=D.querySelector('#shId').value.trim(),views={};V.forEach((v,i)=>views[D.querySelector('#shV'+i).value]=png(cuts[i]));
+    if(Object.keys(views).length!==4)return toast('Each of the four needs its own direction',true);if(!/^[a-z][a-z0-9]{1,15}$/.test(id))return toast('Short name: small letters only',true);
+    try{await api('/api/cast/new',{id,name:D.querySelector('#shNm').value.trim()||id,rar:D.querySelector('#shR').value,views});D.close();await loadCast();pickCast(id);toast('Added. It can stand and be picked in the game. Animate it next for walking and sitting.');}catch(e){toast('Not added: '+e.message,true);}};
+  D.showModal();};
+/* ANIMATE: the same three steps Claude does by hand. 1 the character goes to PixelLab from its four pictures, 2 PixelLab draws the same
+   animations every character has (same names, so the same scripts read them), 3 tools/pl_fetch + pl_poses + pl_actions + pack_poses run */
+const ANIMS=[['walk-sk','walking forward, a relaxed walk cycle',['south','east','north'],8],['sit2','sitting down on the ground with the legs forward, no chair',['south','east','north'],8],['pickup-sk','bending down and picking something up off the ground',['east'],8],['water-sk','holding one arm out and tipping a small watering can',['east'],4],['scared','jumps back scared with both arms up',['east'],6]];
+const plWait=async ids=>{const left=new Set(ids);for(let n=0;left.size&&n<240;n++){await new Promise(r=>setTimeout(r,5000));for(const id of[...left]){const j=await pl('/background-jobs/'+id);if(j.status==='completed'){left.delete(id);clog('  done ('+(ids.length-left.size)+' of '+ids.length+')');}else if(j.status==='failed')throw new Error('a PixelLab job failed: '+JSON.stringify(j.last_response||{}).slice(0,200));}}if(left.size)throw new Error('still not finished after 20 minutes');};
+const savePl=async()=>{const v=$('#caPl').value.trim();if(CS&&v&&v!==CS.pl){await api('/api/cast/plid',{id:CS.id,pl:v});CS.pl=v;}};
+$('#caPl').onchange=()=>savePl().catch(e=>toast(e.message,true));
+$('#ca1').onclick=async()=>{if(!CS||CS.locked)return;const desc=$('#caDesc').value.trim();if(!desc)return toast('Say who this is first');if(!confirm('Send '+CS.id+' to PixelLab? This uses your PixelLab credits.'))return;
+  try{clog('1 Sending '+CS.id+' to PixelLab…');const dirs={},M={south:'front',east:'right',north:'back',west:'left'};for(const[d,v]of Object.entries(M)){const im=await loadImg(`/assets/final/${CS.id}/${v}.png`),c=mk(48,48);X2(c).drawImage(im,Math.round(24-im.width/2),44-im.height);dirs[d]={type:'base64',base64:png(c).split(',')[1],format:'png'};}
+    const j=await pl('/create-character-with-4-directions',{description:desc,image_size:{width:48,height:48},view:'low top-down',directions:dirs});$('#caPl').value=j.character_id||'';await savePl();clog('  PixelLab id '+j.character_id);if(j.background_job_id)await plWait([j.background_job_id]);clog('1 done. Now press 2 Animate.');}
+  catch(e){clog('STOPPED: '+e.message);}};
+$('#ca2').onclick=async()=>{if(!CS||CS.locked)return;await savePl();if(!CS.pl)return toast('Do step 1 first (or paste its PixelLab id)');if(!confirm('Animate '+CS.id+' in PixelLab? About '+ANIMS.reduce((n,a)=>n+a[2].length,0)+' animations, uses your credits, takes a while.'))return;
+  try{for(const[name,act,dirs,fc]of ANIMS){clog('2 '+name+' ('+dirs.join(', ')+')…');const j=await pl('/characters/animations',{character_id:CS.pl,animation_name:name,action_description:act,mode:'skeleton-v3',directions:dirs,frame_count:fc});await plWait(j.background_job_ids||[]);}clog('2 done. Now press 3 Build.');}
+  catch(e){clog('STOPPED: '+e.message);}};
+$('#ca3').onclick=async()=>{if(!CS||CS.locked)return;await savePl();if(!CS.pl)return toast('It needs a PixelLab id first');if(CS.poses&&!confirm(CS.id+' already has animations. Building again REPLACES them, hand fixes included. Go on?'))return;
+  try{clog('3 Building the game poses…');const r=await api('/api/cast/run',{step:'build',id:CS.id});r.log.forEach(l=>clog('  '+l));clog(r.ok?'3 done. Reload the game to see it.':'STOPPED: a step failed (see above).');for(const k in CIMG)delete CIMG[k];await loadCast(true);}
+  catch(e){clog('STOPPED: '+e.message);}};
+$('#tabs').addEventListener('click',e=>{if(e.target.dataset.tab==='cast'&&!CAST.length)loadCast();});
+
 /* ---------- saving: straight into the game's files ---------- */
 async function save(){commitFloat();let d=S.doc;if(d.libId){d.dirty=false;d=Object.values(DOCS).find(q=>q.props.some(p=>p.lib===S.doc.libId))||DOCS.town||d;if(d.libId)return toast('Saved with the map it is used on');}
-  const files=[];let patch=null;
+  const files=[];let patch=null;const FD=flat(d,false),FN=d.night?flat(d,true):null;
   try{
     if(d.kind==='town'){
-      files.push({path:'assets/xmas/day-big.webp',b64:png(d.day),mode:'RGB'},{path:'assets/xmas/night-big.webp',b64:png(d.night),mode:'RGB'},{path:'assets/xmas/block-big.png',b64:png(maskOut(d.block,true)),mode:'L'});
+      files.push({path:'assets/xmas/day-big.webp',b64:png(FD),mode:'RGB'},{path:'assets/xmas/night-big.webp',b64:png(FN),mode:'RGB'},{path:'assets/xmas/block-big.png',b64:png(maskOut(d.block,true)),mode:'L'});
       const vs=new Map();for(const p of d.props){const k=p.lib+'|'+(p.shadow?1:0)+'|'+(p.flip?1:0);if(!vs.has(k))vs.set(k,{v:variant(p,false),n:variant(p,true)});}
       let x=0,y=0,rowH=0,W=1,H=1;const MAXW=512;for(const o of vs.values()){const w=o.v.c.width,h=o.v.c.height;if(x+w>MAXW){x=0;y+=rowH+1;rowH=0;}o.sx=x;o.sy=y;x+=w+1;rowH=Math.max(rowH,h);W=Math.max(W,x);H=Math.max(H,y+h);}
       const sh=mk(W,H),sn=mk(W,H);for(const o of vs.values()){X2(sh).drawImage(o.v.c,o.sx,o.sy);X2(sn).drawImage(o.n.c,o.sx,o.sy);}
@@ -511,22 +823,28 @@ async function save(){commitFloat();let d=S.doc;if(d.libId){d.dirty=false;d=Obje
       files.push({path:'assets/xmas/trees.png',b64:png(sh)},{path:'assets/xmas/trees-night.png',b64:png(sn)},{path:'assets/xmas/trees.json',text:JSON.stringify(items)});
       const libs=Object.values(LIB).filter(l=>!l.fixed);for(const l of libs)if(l.dirty)files.push({path:'assets/builder/props/'+l.id+'.png',b64:png(l.c)});
       files.push({path:'assets/builder/library.json',text:JSON.stringify(libs.map(l=>({id:l.id,fxo:l.fxo,baseo:l.baseo,fw:l.fw})))});
-      for(const b of d.blds)if(DOCS['assets/buildings/'+b.k+'.png']?.dirty){const q=DOCS['assets/buildings/'+b.k+'.png'];files.push({path:q.path,b64:png(q.day)});q.dirty=false;b.img=q.day;}
-      patch={map:{ox:d.ox,w:d.w,h:d.h},cabins:d.cab.length===GAME.doors.length?d.cab.map(c=>[c.cx,c.top]):null,buildings:d.blds.map(({k,name,x,y,w,h})=>({k,name,x,y,w:w,h:h}))};
-    }else if(d.kind==='hall'){files.push({path:`assets/interiors/${d.k}.png`,b64:png(d.day),mode:'RGB'},{path:`assets/interiors/${d.k}-walk.png`,b64:png(maskOut(d.block,false)),mode:'L'});}
-    else if(d.kind==='room'){files.push({path:'assets/room-objects/room-empty.png',b64:png(d.day)});const obj={},sh={};
+      for(const b of d.blds)if(DOCS['assets/buildings/'+b.k+'.png']?.dirty){const q=DOCS['assets/buildings/'+b.k+'.png'];files.push({path:q.path,b64:png(flat(q,false))});q.dirty=false;b.img=q.day;}
+      for(const b of d.blds){const q=DOCS['bmask:'+b.k];if(q&&q.dirty){files.push({path:`assets/buildings/${b.k}-block.png`,b64:png(maskOut(b.blk,true)),mode:'L'});q.dirty=false;}}
+      patch={lamps:d.glows.filter(g=>g.t==='lamp').map(g=>[g.x-d.ox,g.y]),bulbs:d.glows.filter(g=>g.t==='bulb').map(g=>[g.x-d.ox,g.y]),map:{ox:d.ox,w:d.w,h:d.h},cabins:d.cab.length===GAME.doors.length?d.cab.map(c=>[c.cx,c.top]):null,buildings:d.blds.map(({k,name,x,y,w,h,fade})=>({k,name,x,y,w,h,fade}))};
+    }else if(d.kind==='bmask'){files.push({path:`assets/buildings/${d.k}-block.png`,b64:png(maskOut(d.block,true)),mode:'L'});
+    }else if(d.kind==='hall'){files.push({path:`assets/interiors/${d.k}.png`,b64:png(FD),mode:'RGB'},{path:`assets/interiors/${d.k}-walk.png`,b64:png(maskOut(d.block,false)),mode:'L'});}
+    else if(d.kind==='room'){files.push({path:'assets/room-objects/room-empty.png',b64:png(FD)});const obj={},sh={};
       for(const p of d.props){const L=LIB[p.lib];obj[p.name]={x:p.x,y:p.y,w:L.c.width,h:L.c.height,base:p.baseRaw?p.y+p.baseo:0};sh[p.name]=[p.x-ORIG[p.name][0],p.y-ORIG[p.name][1]];if(L.dirty)files.push({path:L.file,b64:png(L.c)});}
       const mv=(a,[dx,dy])=>a.length===4&&a!==R.fire?[a[0]+dx,a[1]+dy,a[2]+dx,a[3]+dy]:[a[0]+dx,a[1]+dy,...a.slice(2)],R=JSON.parse(JSON.stringify(ROOM0)),z=n=>sh[n]||[0,0];
       for(const k in R.bed)R.bed[k]=mv(R.bed[k],z('bed'));for(const k in R.chair)R.chair[k]=mv(R.chair[k],z('chair'));for(const k in R.arm)R.arm[k]=mv(R.arm[k],z('armchair'));R.pc.hit=mv(R.pc.hit,z('desk'));
       const f=z('fireplace');R.fire=[R.fire[0]+f[0],R.fire[1]+f[1],R.fire[2],R.fire[3]];['fireplace','nightL','bed','nightR','floorlamp','desk'].forEach((n,i)=>R.block[i]=mv(R.block[i],z(n)));
       files.push({path:'assets/room-objects/objects.json',text:JSON.stringify(obj,null,1)},{path:'assets/room-objects/room.json',text:JSON.stringify({ROOM:R,BEDZ:mv(BEDZ0,z('bed'))})});}
-    else files.push({path:d.path,b64:png(d.day)});
-    toast('Saving…');const r=await api('/api/save',{files});if(patch)await api('/api/patch',patch);
+    else files.push({path:d.path,b64:png(FD)});
+    if(!d.libId&&d.layers&&(d.layers.length||d.hadLayers)){const P='assets/builder/layers/'+slug(d);if(d.layers.length){files.push({path:P+'-base-day.png',b64:png(d.day)});if(d.night)files.push({path:P+'-base-night.png',b64:png(d.night)});for(const l of d.layers)files.push({path:`${P}-${l.id}.png`,b64:png(l.c)});}
+      files.push({path:P+'.json',text:JSON.stringify({layers:d.layers.map(({id,name,vis,op,fx,g,bm})=>({id,name,vis,op,fx,g,bm})),groups:d.groups||[]})});d.hadLayers=d.layers.length>0;}
+    if(d.glows){const key=d.kind==='town'?'town':d.k,mine=d.glows.filter(g=>g.t==='glow').map(g=>({x:g.x-d.ox,y:g.y,r:g.r,col:hex2rgb(g.col),a:Math.round(g.a*100)/100,...(g.tint?{tint:1}:{})}));
+      if(mine.length||GLOWJ[key]){if(mine.length)GLOWJ[key]=mine;else delete GLOWJ[key];files.push({path:'assets/builder/glows.json',text:JSON.stringify(GLOWJ)});}}
+    toast('Saving…');const r=await api('/api/save',{files});if(patch)await api('/api/patch',patch);if(d.path&&/^assets\/final\/.+\/poses\//.test(d.path))await api('/api/cast/run',{step:'pack'});
     for(const l of Object.values(LIB))if(d.kind==='town'?!l.fixed:l.fixed)l.dirty=false;d.dirty=false;if(d.kind==='town')for(const k in DOCS)if(DOCS[k].libId)DOCS[k].dirty=false;
     fillDocSel();ui();toast(`Saved into the game (${r.wrote.length} files). Backup: ${r.backup}. Reload the game to see it.`);
   }catch(e){toast('NOT saved: '+e.message,true);}}
 $('#bSave').onclick=save;
 
 /* ---------- go ---------- */
-setTool('pencil');show(new URLSearchParams(location.search).get('doc')||'town');
+loadTiles();setTool('pencil');show(new URLSearchParams(location.search).get('doc')||'town');
 </script></body></html>

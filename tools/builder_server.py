@@ -20,6 +20,24 @@ def safe(path):
     if not re.fullmatch(r'assets/[A-Za-z0-9_\-./]+\.(png|webp|json)', p) or '..' in p: raise ValueError('bad path ' + path)
     return p
 
+PL_IDS = os.path.join(ROOT, 'tools', 'pl_ids.json')
+NO_REBUILD = {'beanie', 'sheik'}        # his hand-made Beanie and the Sheik's poses are never rebuilt by a script (his rule)
+def run(*args):
+    r = subprocess.run([sys.executable, '-I', *args], capture_output=True, text=True)
+    return (r.stdout + r.stderr).strip()[-1500:], r.returncode
+def cast():
+    ids = {}
+    try:
+        sys.path.insert(0, os.path.join(ROOT, 'tools')); import importlib, pl_fetch_ids; importlib.reload(pl_fetch_ids); ids = pl_fetch_ids.IDS
+    except Exception: pass
+    out = []
+    for n in sorted(os.listdir('assets/final')):
+        d = 'assets/final/' + n
+        if not os.path.exists(d + '/front.png'): continue
+        pj = d + '/poses/poses.json'
+        out.append({'id': n, 'views': [v for v in ('front', 'right', 'back', 'left') if os.path.exists('%s/%s.png' % (d, v))], 'poses': json.load(open(pj)) if os.path.exists(pj) else None, 'pl': ids.get(n), 'locked': n in NO_REBUILD})
+    return out
+
 def patch_index(body):
     t = open('index.html', encoding='utf-8', newline='').read(); done = []
     if body.get('map'):
@@ -27,13 +45,18 @@ def patch_index(body):
         t, n = re.subn(r'const MAPX=XMAS\?\d+:0,MAPW=XMAS\?\d+:560,MAPH=XMAS\?\d+:750', 'const MAPX=XMAS?%d:0,MAPW=XMAS?%d:560,MAPH=XMAS?%d:750' % (int(m['ox']), int(m['w']), int(m['h'])), t)
         assert n == 1, 'map size line not found'; done.append('map size')
     if body.get('buildings') is not None:
-        js = ','.join("{k:%s,name:%s,x:%d,y:%d,w:%d,h:%d}" % (json.dumps(b['k']).replace('"', "'"), json.dumps(b['name']).replace('"', "'"), b['x'], b['y'], b['w'], b['h']) for b in body['buildings'])
+        js = ','.join("{k:%s,name:%s,x:%d,y:%d,w:%d,h:%d%s}" % (json.dumps(b['k']).replace('"', "'"), json.dumps(b['name']).replace('"', "'"), b['x'], b['y'], b['w'], b['h'], ',fade:0' if b.get('fade') == 0 else '') for b in body['buildings'])
         t, n = re.subn(r'const BUILDINGS=XMAS\?\[.*?\]:\[\];', lambda _: 'const BUILDINGS=XMAS?[' + js + ']:[];', t)
         assert n == 1, 'BUILDINGS line not found'; done.append('buildings')
     if body.get('cabins'):
         js = '[' + ','.join('[%d,%d]' % (int(c[0]), int(c[1])) for c in body['cabins']) + ']'
         t, n = re.subn(r'const DOORS=\[\[.*?\]\];', lambda _: 'const DOORS=' + js + ';', t)
         assert n == 1, 'DOORS line not found'; done.append('cabins')
+    for key in ('lamps', 'bulbs'):                                    # the town's lamp and bulb glows: lists of [x, y]
+        if body.get(key) is not None:
+            js = '[' + ','.join('[%d,%d]' % (int(c[0]), int(c[1])) for c in body[key]) + ']'
+            t, n = re.subn(r'(\n  %s:)\[\[[^\n]*?\]\],' % key, lambda m: m.group(1) + js + ',', t)
+            assert n == 1, key + ' line not found'; done.append(key)
     if body.get('hall'):
         h = body['hall']
         assert re.fullmatch(r'[a-z][a-z0-9]{1,15}', h['k']), 'bad key'
@@ -56,6 +79,7 @@ class H(SimpleHTTPRequestHandler):
             d = parse_qs(u.query).get('dir', [''])[0].replace('\\', '/')
             if not d.startswith('assets') or '..' in d or not os.path.isdir(d): return self.out(200, [])
             return self.out(200, sorted(f for f in os.listdir(d) if f.lower().endswith(('.png', '.webp', '.json'))))
+        if u.path == '/api/cast': return self.out(200, cast())
         if u.path == '/api/tree':                                       # every picture in assets (for "open any picture")
             res = []
             for r, ds, fs in os.walk('assets'):
@@ -86,6 +110,42 @@ class H(SimpleHTTPRequestHandler):
             if self.path == '/api/patch':
                 shutil.copy2('index.html', os.path.join(BACK, 'index-%s.html' % time.strftime('%Y%m%d-%H%M%S'))) if os.path.isdir(BACK) or not os.makedirs(BACK, exist_ok=True) else None
                 return self.out(200, {'ok': True, 'done': patch_index(body)})
+            if self.path == '/api/cast/new':                            # a new character from his sheet: 4 pictures + the SKINS line + the eyes
+                k = body['id']; assert re.fullmatch(r'[a-z][a-z0-9]{1,15}', k), 'short name: letters only'
+                assert not os.path.exists('assets/final/' + k), 'that name is taken'
+                os.makedirs('assets/final/' + k)
+                for v in ('front', 'right', 'back', 'left'): Image.open(io.BytesIO(base64.b64decode(body['views'][v].split(',')[-1]))).convert('RGBA').save('assets/final/%s/%s.png' % (k, v))
+                t = open('index.html', encoding='utf-8', newline='').read()
+                line = "  {id:'%s',name:%s,rar:'%s'}," % (k, json.dumps(body.get('name') or k).replace('"', "'"), body.get('rar', 'common'))
+                t, n = re.subn(r'(const SKINS=\[\r?\n)', lambda m: m.group(1) + line + '\n', t); assert n == 1, 'SKINS list not found'
+                t, n = re.subn(r"(const FINAL=Object\.fromEntries\(\[)", lambda m: m.group(1) + "'%s'," % k, t); assert n == 1, 'FINAL list not found'   # the game reads its pictures from assets/final
+                open('index.html', 'w', encoding='utf-8', newline='').write(t)
+                log = [run('tools/make_eyes.py')[0], run('tools/asset_versions.py')[0]]
+                return self.out(200, {'ok': True, 'log': log})
+            if self.path == '/api/cast/plid':
+                k = body['id']; assert re.fullmatch(r'[a-z][a-z0-9]{1,15}', k)
+                ids = json.load(open(PL_IDS)) if os.path.exists(PL_IDS) else {}
+                ids[k] = body['pl'].strip(); json.dump(ids, open(PL_IDS, 'w'), indent=1); return self.out(200, {'ok': True})
+            if self.path == '/api/cast/run':                            # the same scripts Claude runs by hand: fetch the animations, make the poses, pack them
+                k = body.get('id', ''); step = body['step']; log = []
+                if step == 'build':
+                    assert re.fullmatch(r'[a-z][a-z0-9]{1,15}', k) and k not in NO_REBUILD, 'this character is never rebuilt by a script'
+                    for s in ('tools/pl_fetch.py', 'tools/pl_poses.py', 'tools/pl_actions.py'):
+                        o, rc = run(s, k); log.append(s + ': ' + o)
+                        if rc: return self.out(200, {'ok': False, 'log': log})
+                for s in ('tools/pack_poses.py', 'tools/asset_versions.py'):
+                    o, rc = run(s); log.append(s + ': ' + o[-300:])
+                return self.out(200, {'ok': True, 'log': log})
+            if self.path == '/api/pl':                                  # any PixelLab v2 call the builder needs (characters, animations, jobs)
+                key = self.headers.get('X-PL-Key') or os.environ.get('PIXELLAB_API_KEY') or os.environ.get('PIXELLAB_SECRET')
+                if not key: return self.out(400, {'error': 'No PixelLab key. Paste it in the builder (it stays in your browser).'})
+                path = body['path']; assert re.fullmatch(r'/[a-z0-9\-/]+', path), 'path'
+                data = json.dumps(body['body']).encode() if body.get('body') is not None else None
+                rq = urllib.request.Request('https://api.pixellab.ai/v2' + path, data=data, method=body.get('method', 'POST' if data else 'GET'), headers={'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json', 'User-Agent': 'map-builder'})
+                try:
+                    with urllib.request.urlopen(rq, timeout=240) as r: return self.out(200, json.loads(r.read()))
+                except urllib.error.HTTPError as e:
+                    return self.out(e.code, {'error': 'PixelLab said %d: %s' % (e.code, e.read().decode('utf-8', 'replace')[:500])})
             if self.path == '/api/pixellab':
                 key = self.headers.get('X-PL-Key') or os.environ.get('PIXELLAB_API_KEY') or os.environ.get('PIXELLAB_SECRET')
                 if not key: return self.out(400, {'error': 'No PixelLab key. Paste it in the builder (it stays in your browser).'})

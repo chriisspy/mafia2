@@ -12,3 +12,8 @@ IDS = {  # his finished sprites imported into PixelLab on 10 Nov 2026 ("M2F <nam
  'bape': '828246e2-72e7-4ff3-8e60-c65efd6c03f8',
  'fisher': '41b5598c-bcec-476a-88e8-3783538c15be',
  'matias': '87358fd1-6036-4910-b2bc-2530be7f8444'}
+
+# characters added in the map builder (tools/builder, Cast tab) keep their PixelLab ids in tools/pl_ids.json
+import json as _j, os as _o
+_p = _o.path.join(_o.path.dirname(_o.path.abspath(__file__)), 'pl_ids.json')
+if _o.path.exists(_p): IDS.update(_j.load(open(_p)))
