@@ -10,7 +10,7 @@ for root, dirs, files in os.walk('assets'):
     r = root.replace('\\', '/')
     if re.search(r'assets/final/[^/]+/poses$', r): continue      # the loose poses: the game reads the atlases instead
     for f in files:
-        if not f.lower().endswith(('.png', '.json', '.svg')): continue
+        if not f.lower().endswith(('.png', '.json', '.svg', '.webp')): continue
         p = f'{r}/{f}'
         av[p] = hashlib.md5(open(p, 'rb').read()).hexdigest()[:5]
 p = 'index.html'; t = open(p, encoding='utf-8').read()
