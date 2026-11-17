@@ -58,6 +58,7 @@ json.dump({'x': int(x0), 'y': int(y0), 'w': int(x1 - x0), 'h': int(y1 - y0), 'n'
 #      <outfit>-cast_0..8.png (0 = the frame that was sent). Cleaning: PixelLab likes to draw a thin fishing line; outside the
 #      standing body only blobs at least 2 px thick stay (the rod is 3 px thick, a line is 1), and loose crumbs go.
 RSRC = '../mafia2-art/fishing/rods/'; os.makedirs(OUT + 'rods', exist_ok=True); rods = {}
+EYES_ = json.load(open('assets/final/eyes.json'))
 # THE ROD IN THE HAND, ONE FOR EACH TIER (his ask, 17 Nov: "make on-hand items for each rod ... look really good and work with each
 # character"). PixelLab's own rod is taken off every frame and a clean one is drawn in its place, from where it leaves the body to
 # its tip: a 1 px core in the tier's colours inside a navy outline, so it is the same crisp rod on all 19 outfits and never bends
@@ -74,12 +75,30 @@ def line_px(x0, y0, x1, y1):
 # Two views of every outfit: 'cast' = from behind (casting up the lake), 'side' = facing right (casting across it; the game mirrors it to
 # face left). his ask, 17 Nov: "make new side view animations then, fishing from the side is important". -> <outfit>-<tier>.png and
 # <outfit>-<tier>-side.png; rods.json[outfit][tier] and [tier + '-side'] = the rod tip in each cell.
+def rod_tip(a, box, handx):
+    """where PixelLab's rod ends in this frame (the furthest rod pixel outside the body's box from the hands), or None when no rod shows"""
+    m = a[..., 3] > 0; thick = nd.binary_opening(m, structure=np.ones((2, 2), bool)); thick = nd.binary_dilation(thick, iterations=1) & m
+    rgb_ = a[..., :3].astype(int); rodish = (rgb_.sum(-1) < 190) | (np.abs(rgb_ - (150, 96, 52)).sum(-1) < 110)
+    rod = thick & ~box & rodish & ~(rgb_.min(-1) > 150)
+    if rod.sum() < 3: return None
+    rl, rn = nd.label(rod, structure=np.ones((3, 3), bool)); edge = nd.binary_dilation(box, iterations=2)
+    best = max(range(1, rn + 1), key=lambda q: ((rl == q) & edge).any() * 1000 + (rl == q).sum()); ys, xs = np.nonzero(rl == best)
+    far = np.argmax((xs - handx) ** 2 + (ys - 46) ** 2); return int(xs[far]), int(ys[far])
 JOBS_ = [(f[:-len(v) - 7], v, spr, suf, hx, mr) for f in sorted(os.listdir(RSRC)) for v, spr, suf, hx, mr in (('cast', 'back', '', 34, 4), ('side', 'right', '-side', 37, 8)) if f.endswith(f'-{v}_8.png')]
 for name, view, spr, suf, handx, mright in JOBS_:
     back = np.asarray(Image.open(f'assets/final/{name}/{spr}.png').convert('RGBA')); body0 = back[..., 3] > 0
     own = np.unique(back[body0][:, :3].reshape(-1, 3), axis=0).astype(int)                    # the outfit's own colours
     bw, bh = body0.shape[1], body0.shape[0]; box = np.zeros((64, 64), bool); box[max(0, 56 - bh - (1 if view == 'cast' else 2)):60, max(0, 32 - bw // 2 - 3):min(64, 32 + bw // 2 + mright)] = True
+    # HIS FACE NEVER CHANGES (his rule, 17 Nov: "It's changing their faces. The faces should not change at all."). PixelLab redraws the head on
+    # the side casts, so on every side frame its head is wiped and HIS OWN head (the top of right.png, down to just under the eyes + chin) is
+    # put back exactly where it stands. Only the body and arms below it are PixelLab's.
+    er = EYES_.get(name, {}).get('right') or []; hrows = min(bh - 6, (max(e[1] + e[3] for e in er) + 6) if er else int(round(bh * .62)))
+    bx0, by0 = 32 - bw // 2, 56 - bh
     sheets = {t: np.zeros((64, 64 * 9, 4), np.uint8) for t in TIERS}; tips = {t: [] for t in TIERS}
+    stip = None
+    if view == 'side':       # the side rod is always drawn whole, from his hands to PixelLab's rod tip; a frame where its rod is hidden takes the nearest frame's tip
+        raw = [rod_tip(hard(Image.open(f'{RSRC}{name}-{view}_{i}.png')), box, handx) for i in range(9)]; known = [i for i in range(9) if raw[i]]
+        stip = [raw[min(known, key=lambda k: abs(k - i))] if known else (handx + 12, 20) for i in range(9)]
     for i in range(9):
         a = hard(Image.open(f'{RSRC}{name}-{view}_{i}.png')); m = a[..., 3] > 0
         thick = nd.binary_opening(m, structure=np.ones((2, 2), bool)); thick = nd.binary_dilation(thick, iterations=1) & m
@@ -87,13 +106,16 @@ for name, view, spr, suf, handx, mright in JOBS_:
         lab, n = nd.label(m2)
         if n > 1: m2 = lab == np.bincount(lab[lab > 0]).argmax()
         a[~m2] = 0
+        if view == 'side':
+            a[:by0 + hrows, max(0, bx0 - 3):min(64, bx0 + bw + mright)] = 0          # PixelLab's head (and anything it drew over it) goes
+            hd_ = back[:hrows]; sel = hd_[..., 3] > 0; a[by0:by0 + hrows, bx0:bx0 + bw][sel] = hd_[sel]   # his head comes back
         rgb_ = a[..., :3].astype(int); rodish = (rgb_.sum(-1) < 190) | (np.abs(rgb_ - (150, 96, 52)).sum(-1) < 110)   # navy outline or wood: an arm that swings out of the box is neither
         rod = (a[..., 3] > 0) & ~box & rodish; ys, xs = np.nonzero(rod)
-        if len(xs) < 3:                                              # the rod is hidden behind him in this frame
+        if len(xs) < 3 and view == 'cast':                           # the rod is hidden behind him in this frame
             for t in TIERS: sheets[t][:, i * 64:(i + 1) * 64] = a; tips[t].append(tips[t][-1] if tips[t] else [8, -36])
             continue
         rl, rn = nd.label(rod, structure=np.ones((3, 3), bool)); edge = nd.binary_dilation(box, iterations=2)   # PixelLab sometimes draws two rods, or a loose one: keep the biggest piece that touches him
-        best = max(range(1, rn + 1), key=lambda q: ((rl == q) & edge).any() * 1000 + (rl == q).sum()); ys, xs = np.nonzero(rl == best)
+        best = max(range(1, rn + 1), key=lambda q: ((rl == q) & edge).any() * 1000 + (rl == q).sum(), default=0); ys, xs = np.nonzero(rl == best)
         hd = (xs - handx) ** 2 + (ys - 46) ** 2                         # measured from his hands
         far = np.argmax(hd); tx, ty = int(xs[far]), int(ys[far])     # its tip
         near = np.argmin(hd); ex, ey = int(xs[near]), int(ys[near])  # where it leaves the body
@@ -101,12 +123,16 @@ for name, view, spr, suf, handx, mright in JOBS_:
         clash = (np.abs(own - wcol).sum(-1) < 60).any()             # does the outfit wear a brown like the rod's?
         body = a.copy(); body[rod] = 0
         L = np.hypot(tx - ex, ty - ey); ux, uy = (tx - ex) / max(L, 1), (ty - ey) / max(L, 1)
+        if view == 'side':      # from the side the whole rod is drawn, from his hands to the tip, over him (it is held in front of the body); never longer than 27 px
+            tx, ty = stip[i]; ex, ey = handx, 46; L = np.hypot(tx - ex, ty - ey)
+            if L > 27: ex, ey = int(round(tx - (tx - ex) / L * 27)), int(round(ty - (ty - ey) / L * 27))
+            L = np.hypot(tx - ex, ty - ey); ux, uy = (tx - ex) / max(L, 1), (ty - ey) / max(L, 1)
         for t, T in TIERS.items():
             c = body.copy(); x1, y1 = ex + ux * L * T['len'], ey + uy * L * T['len']; px = line_px(ex, ey, x1, y1)
             for (x, y) in px:                                        # the navy outline first...
                 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                     X_, Y_ = x + dx, y + dy
-                    if 0 <= X_ < 64 and 0 <= Y_ < 64 and (not box[Y_, X_] or c[Y_, X_, 3] == 0): c[Y_, X_] = (*NAVY, 255)
+                    if 0 <= X_ < 64 and 0 <= Y_ < 64 and (view == 'side' or not box[Y_, X_] or c[Y_, X_, 3] == 0): c[Y_, X_] = (*NAVY, 255)
             if T.get('nub') and len(px) > 8:                         # the twig has a little stump where a branch was
                 x, y = px[int(len(px) * .45)]; nx, ny = int(round(x - uy * 2)), int(round(y + ux * 2))
                 for X_, Y_ in ((nx, ny), (int(round(x - uy)), int(round(y + ux)))):
@@ -115,7 +141,7 @@ for name, view, spr, suf, handx, mright in JOBS_:
                             if 0 <= X_ + dx < 64 and 0 <= Y_ + dy < 64 and c[Y_ + dy, X_ + dx, 3] == 0: c[Y_ + dy, X_ + dx] = (*NAVY, 255)
                         c[Y_, X_] = (*T['core'], 255)
             for k, (x, y) in enumerate(px):                          # ...then the core in the tier's colours
-                if box[y, x] and body[y, x, 3]: continue
+                if not (0 <= x < 64 and 0 <= y < 64) or (view != 'side' and box[y, x] and body[y, x, 3]): continue
                 col = T['hi'] if k % 3 == 1 else T['core']
                 for at, bc in T['bands']:
                     if abs(k - at * (len(px) - 1)) < .75: col = bc
@@ -133,6 +159,7 @@ for name, view, spr, suf, handx, mright in JOBS_:
             woody = (col[:, 0] > col[:, 2] + 30) & (np.abs(col - wcol).sum(-1) < 80)
             hit = (dist < 1.6) & (tt < 2) & (tt > -22) & woody & flank(1) & flank(-1) & (not clash or ((dist < 1.1) & (tt > -6)))   # an outfit that wears the rod's brown: only right where the rod enters
             for k_ in np.nonzero(hit)[0]: c[yy[k_], xx[k_], :3] = T['hi'] if int(round(-tt[k_])) % 3 == 1 else T['core']
+            if view == 'side': c[by0:by0 + hrows, bx0:bx0 + bw][sel] = hd_[sel]   # and his head goes back on top, so the rod never crosses his face: it passes behind his head
             sheets[t][:, i * 64:(i + 1) * 64] = c; tips[t].append([int(round(x1)) - 32, int(round(y1)) - 56])   # the tip, measured from the middle of the feet
     for t in TIERS: Image.fromarray(sheets[t]).save(f'{OUT}rods/{name}-{t}{suf}.png', optimize=True)
     if os.path.exists(f'{OUT}rods/{name}.png'): os.remove(f'{OUT}rods/{name}.png')

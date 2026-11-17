@@ -123,7 +123,7 @@ function fishLose(msg){const F=FISH;if(F.cand){F.cand.st='flee';F.cand.t=0;F.can
 /* ---- taps ---- */
 function fishTap(e,m,x,y){const F=FISH;
   if(F.on){if(F.ph!=='card'&&F.ph!=='land'){F.held=true;F.press=true;F.px=x;F.py=y;}return true;}
-  if(fishWet(x,y)){const dx=x-m.x,dy=y-m.y,pref=Math.abs(dx)>Math.abs(dy)*1.2?(dx>0?'right':'left'):'back';if(fishFace(m,pref)){F.want=pref;fishStart();if(F.on){F.held=true;F.press=true;F.px=x;F.py=y;}}else wlGo(m,FISH_ME[0],FISH_ME[1],()=>{m.dir='back';fishStart();});return true;}   /* a tap on the water: fish from here if you can, else walk out to the end of the jetty */
+  if(fishWet(x,y)){const dx=x-m.x,dy=y-m.y,pref=Math.abs(dx)>Math.abs(dy)*1.2?(dx>0?'right':'left'):'back';if(fishFace(m,pref)){F.want=pref;fishStart();if(F.on){F.held=true;F.press=true;F.px=x;F.py=y;}}return true;}   /* a tap on the water: fish from here if you can, else walk out to the end of the jetty */
   return false;}
 addEventListener('pointerup',()=>{FISH.held=false;});addEventListener('pointercancel',()=>{FISH.held=false;});
 cv.addEventListener('pointermove',e=>{if(FISH.on&&FISH.held){const q=wxy(e);FISH.px=q[0];FISH.py=q[1];}});
