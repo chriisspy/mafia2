@@ -252,19 +252,40 @@ function openBMask(k){const b=DOCS.town&&DOCS.town.blds.find(b=>b.k===k);if(!b)t
    lamp and bulb glows. Kinds: 'glow' = his, saved to assets/builder/glows.json; 'lamp' / 'bulb' = the town's own lists in the game. x is in picture px here. */
 const hex2rgb=h=>rgb(h).join(','),rgb2hex=s=>hex(...s.split(',').map(Number));
 let GLOWJ={};
+/* kinds: glow = his own · lamp, bulb = the square's · win = a hut's window (kept as dx,dy from its door, so it follows the hut) · square = the big wash ·
+   hall = a room's own light (fl = flicker). All of them: place, size, colour, strength. c2 / ct are a lamp's hot middle and ground tint: kept as they
+   were until he changes its colour, then they follow the colour he picked. */
+const HALL_GLOW={tavern:[[160,76,64,'255,150,70',.2,.12],[120,144,16,'255,214,130',.2],[234,113,16,'255,214,130',.2],[42,167,16,'255,214,130',.2],[223,174,16,'255,214,130',.2],[279,70,26,'255,230,150',.08,.05]],
+  casino:[[90,24,26,'90,255,200',.16,.08],[192,52,20,'255,220,110',.14],[220,52,20,'255,220,110',.14],[87,56,60,'255,120,160',.07,.04]]};
+const GKIND={glow:'Glow',lamp:'Lamp glow',bulb:'Bulb glow',win:'Window glow',square:'Square glow',hall:'Room light'};
 async function loadGlows(d,key){d.glows=[];try{GLOWJ=await (await fetch('/assets/builder/glows.json?t='+Date.now())).json();}catch(e){}
-  for(const g of GLOWJ[key]||[])d.glows.push({t:'glow',x:g.x+d.ox,y:g.y,r:g.r,col:rgb2hex(g.col),a:g.a,tint:!!g.tint});
-  if(key==='town'){const t=await (await fetch('/index.html?t='+Date.now())).text();for(const[k,r,col,a]of[['lamp',30,'#ff822d',.3],['bulb',7,'#ff963c',.3]]){const m=t.match(new RegExp('\\n  '+k+'s:(\\[\\[[^\\n]*?\\]\\]),'));
-      if(m)for(const[x,y]of JSON.parse(m[1]))d.glows.push({t:k,x:x+d.ox,y,r,col,a});}}}
-function drawGlows(d,night){if(!d.glows||!S.vis.glow)return;const act=S.layer==='glow';vx.save();if(night||!d.night)vx.globalCompositeOperation='lighter';
-  for(const g of d.glows){const c=rgb(g.col).join(','),gr=vx.createRadialGradient(g.x,g.y,0,g.x,g.y,g.r);gr.addColorStop(0,`rgba(${c},${Math.min(1,g.a*(night||!d.night?1:.8))})`);gr.addColorStop(1,`rgba(${c},0)`);vx.fillStyle=gr;vx.fillRect(g.x-g.r,g.y-g.r,2*g.r,2*g.r);}
-  vx.restore();if(!act)return;const lw=1/S.zoom;vx.lineWidth=lw;for(const g of d.glows){const s=g===S.selGlow;vx.strokeStyle=s?'#fff':'rgba(255,255,255,.35)';vx.beginPath();vx.arc(g.x,g.y,g.r,0,7);vx.stroke();vx.fillStyle=s?'#fff':g.col;vx.fillRect(g.x-1.5,g.y-1.5,3,3);vx.strokeStyle='#000';vx.strokeRect(g.x-1.5,g.y-1.5,3,3);}}
+  const mk_=(t,g,ex)=>({t,x:(g.x||0)+d.ox,y:g.y||0,r:g.r,col:rgb2hex(g.col),a:g.a,...(g.c2?{c2:g.c2}:{}),...(g.ct?{ct:g.ct}:{}),...(g.tint?{tint:true}:{}),...(g.fl?{fl:g.fl}:{}),...ex});
+  for(const g of GLOWJ[key]||[])d.glows.push(mk_('glow',g));
+  if(key==='town'){const t=await (await fetch('/index.html?t='+Date.now())).text(),lst=k=>{const m=t.match(new RegExp('\\n  '+k+'s:(\\[\\[[^\\n]*?\\]\\]),'));return m?JSON.parse(m[1]):[];};
+    for(const g of GLOWJ.lamps||lst('lamp').map(([x,y])=>({x,y,r:30,col:'255,130,45',a:.16,c2:'255,170,80',ct:'255,120,30'})))d.glows.push(mk_('lamp',g));
+    for(const g of GLOWJ.bulbs||lst('bulb').map(([x,y])=>({x,y,r:6,col:'255,150,60',a:.2,ct:'255,120,30'})))d.glows.push(mk_('bulb',g));
+    d.glows.push(mk_('square',GLOWJ.square||{x:280,y:365,r:175,col:'255,125,30',a:.4}));
+    d.winFor=ci=>((GLOWJ.win||{})[ci]||[[-25,11],[24,11],[0,-21]].map(([dx,dy])=>({dx,dy,r:13,col:'255,170,80',a:.42}))).map(g=>mk_('win',g,{ci,dx:g.dx,dy:g.dy}));}
+  else for(const g of (GLOWJ.base||{})[key]||(HALL_GLOW[key]||[]).map(([x,y,r,col,a,fl])=>({x,y,r,col,a,fl})))d.glows.push(mk_('hall',g));}
+/* window glows sit on their hut: where they are now, and (after a drag) how far that is from the door */
+function winSync(d,back){for(const g of d.glows||[])if(g.t==='win'){const c=d.cab[g.ci];if(!c)continue;if(back===g){g.dx=g.x-d.ox-c.cx;g.dy=g.y-c.top;}else{g.x=c.cx+g.dx+d.ox;g.y=c.top+g.dy;}}}
+function drawGlows(d,night){if(!d.glows||!S.vis.glow)return;const act=S.layer==='glow',lit=night||!d.night;winSync(d);
+  const gl=(x,y,r,c,al)=>{if(r<=0||al<=0)return;const gr=vx.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,`rgba(${c},${Math.min(1,al)})`);gr.addColorStop(1,`rgba(${c},0)`);vx.fillStyle=gr;vx.fillRect(x-r,y-r,2*r,2*r);};
+  if(lit||act){vx.save();const k=lit?1:.7;   /* drawn the way the game stacks them: a tint on the ground (soft-light), then the light itself (added) */
+    vx.globalCompositeOperation='soft-light';for(const g of d.glows){const c=rgb(g.col).join(',');if(g.t==='square')gl(g.x,g.y,g.r,c,g.a*k);else if(g.t==='lamp')gl(g.x,g.y+14,g.r*44/30,g.ct||c,g.a*3.125*k);else if(g.t==='bulb')gl(g.x,g.y+8,g.r*22/6,g.ct||c,g.a*k);else if(g.tint)gl(g.x,g.y,g.r*1.5,c,Math.min(.6,g.a*1.6)*k);}
+    vx.globalCompositeOperation=lit?'lighter':'source-over';for(const g of d.glows){if(g.t==='square')continue;const c=rgb(g.col).join(',');gl(g.x,g.y,g.r,c,g.a*k);if(g.t==='lamp')gl(g.x,g.y,g.r*.3,g.c2||c,g.a*1.375*k);}vx.restore();}
+  if(!act)return;const lw=1/S.zoom;vx.lineWidth=lw;for(const g of d.glows){const s=g===S.selGlow;if(!s&&g.t==='square')continue;vx.strokeStyle=s?'#fff':'rgba(255,255,255,.3)';vx.beginPath();vx.arc(g.x,g.y,g.r,0,7);vx.stroke();}
+  for(const g of d.glows){const s=g===S.selGlow,q=g.t==='square'?2.5:1.5;vx.fillStyle=s?'#fff':g.col;vx.fillRect(g.x-q,g.y-q,2*q,2*q);vx.strokeStyle='#000';vx.strokeRect(g.x-q,g.y-q,2*q,2*q);}}
 function glowAdd(t){const d=S.doc,r=$('#stage').getBoundingClientRect(),x=Math.round(clamp((r.width/2-S.px)/S.zoom,4,d.w-4)),y=Math.round(clamp((r.height/2-S.py)/S.zoom,4,d.h-4));opBegin();
-  const g=t==='lamp'?{t,x,y,r:30,col:'#ff822d',a:.3}:t==='bulb'?{t,x,y,r:7,col:'#ff963c',a:.3}:{t:'glow',x,y,r:28,col:'#ffaa50',a:.35,tint:false};d.glows.push(g);S.selGlow=g;opEnd();ui();}
+  const g=t==='lamp'?{t,x,y,r:30,col:'#ff822d',a:.16,c2:'255,170,80',ct:'255,120,30'}:t==='bulb'?{t,x,y,r:6,col:'#ff963c',a:.2,ct:'255,120,30'}:{t:'glow',x,y,r:28,col:'#ffaa50',a:.35,tint:false};d.glows.push(g);S.selGlow=g;opEnd();ui();}
 function glowInsp(d){const g=S.selGlow,add=`<div class="row"><button data-a="gadd" title="A new glow in the middle of the view">+ Glow</button>${d.kind==='town'?'<button data-a="gaddlamp" title="A glow like the square\'s lamps">+ Lamp</button><button data-a="gaddbulb" title="A small glow like the string bulbs">+ Bulb</button>':''}</div>`;
-  if(!g||!d.glows.includes(g))return`<b>Glows</b> <small>${d.glows.length}</small>${add}<small>Click a glow to pick it. Drag its middle to move it, its ring to resize it.</small>`;
-  return`<b>${g.t==='glow'?'Glow':g.t==='lamp'?'Lamp glow':'Bulb glow'}</b> <small>${g.x-d.ox}, ${g.y}</small>`+(g.t==='glow'?`<div class="row"><input type="color" data-g="col" value="${g.col}" style="width:40px;height:30px;padding:2px" title="Colour"><label>Size <input type="range" data-g="r" min="3" max="220" value="${g.r}"></label></div>
-    <div class="row"><label>Strength <input type="range" data-g="a" min="3" max="100" value="${Math.round(g.a*100)}"></label></div><div class="row"><label title="Also warms the ground under it, like the square's lamps"><input type="checkbox" data-g="tint" ${g.tint?'checked':''}> warms the ground</label></div>`:'<div class="row"><small>Looks the same as the others of its kind. Move it or delete it.</small></div>')+`<div class="row"><button data-a="gdup">Duplicate</button><button data-a="gdel">Delete</button></div>${add}`;}
+  if(!g||!d.glows.includes(g))return`<b>Glows</b> <small>${d.glows.length}</small>${add}<small>Click a glow's dot to pick it. Drag the dot to move it, the ring to resize it. Switch to Night to see them lit.</small>`;
+  return`<b>${GKIND[g.t]}${g.t==='win'?' · cabin '+(g.ci+1):''}</b> <small>${Math.round(g.x-d.ox)}, ${Math.round(g.y)}</small>
+    <div class="row"><input type="color" data-g="col" value="${g.col}" style="width:40px;height:30px;padding:2px" title="Colour"><label>Size <input type="range" data-g="r" min="2" max="300" value="${g.r}"></label></div>
+    <div class="row"><label>Strength <input type="range" data-g="a" min="0" max="100" value="${Math.round(g.a*100)}"></label></div>`
+    +(g.t==='glow'?`<div class="row"><label title="Also warms the ground under it, like the square's lamps"><input type="checkbox" data-g="tint" ${g.tint?'checked':''}> warms the ground</label></div>`:'')
+    +(g.t==='hall'?`<div class="row"><label title="How much it flickers, like a fire">Flicker <input type="range" data-g="fl" min="0" max="40" value="${Math.round((g.fl||0)*100)}"></label></div>`:'')
+    +`<div class="row">${g.t==='square'?'':'<button data-a="gdup">Duplicate</button><button data-a="gdel">Delete</button>'}</div>${add}`;}
 async function openTown(){await readGame();
   const [day,night,blk,sheet,tj]=await Promise.all([loadImg('/assets/xmas/day-big.webp'),loadImg('/assets/xmas/night-big.webp'),loadImg('/assets/xmas/block-big.png'),loadImg('/assets/xmas/trees.png'),fetch('/assets/xmas/trees.json?t='+Date.now()).then(r=>r.json())]);
   let lj=[];try{lj=await (await fetch('/assets/builder/library.json?t='+Date.now())).json();}catch(e){}
@@ -278,6 +299,7 @@ async function openTown(){await readGame();
   await loadGlows(d,'town');
   for(const b of GAME.blds){try{d.blds.push({...b,img:toC(await loadImg('/assets/buildings/'+b.k+'.png')),blk:await bldBlk(b)});}catch(e){}}
   for(let i=0;i<GAME.doors.length;i++){try{d.cab.push({img:await loadImg('/assets/xmas/cabins/cabin'+i+'.png'),cx:GAME.doors[i][0],top:GAME.doors[i][1]});}catch(e){}}
+  for(let i=0;i<d.cab.length;i++)d.glows.push(...d.winFor(i));
   return d;}
 async function openHall(k){const[pic,walk]=await Promise.all([loadImg('/assets/interiors/'+k+'.png'),loadImg('/assets/interiors/'+k+'-walk.png')]);
   const d={kind:'hall',k,name:'Inside: '+(GAME.halls[k]?.name||k),w:pic.width,h:pic.height,ox:0,day:toC(pic),night:null,block:maskFrom(walk,false),props:[],opaque:true,door:GAME.halls[k]?.door};await loadGlows(d,k);return d;}
@@ -496,8 +518,8 @@ V.addEventListener('pointerdown',e=>{V.setPointerCapture(e.pointerId);const[fx,f
   if(tool==='picker'){const c=S.layer==='ground'?(S.view==='night'&&d.night?d.night:d.day):null;let col=null;const p=S.vis.props&&propAt(fx,fy);
     if(p){const v=variant(p,S.view==='night'&&d.night),q=X2(v.c).getImageData(Math.floor(fx-p.x-v.dx),Math.floor(fy-p.y-v.dy),1,1).data;if(q[3]===255)col=hex(q[0],q[1],q[2]);}
     if(!col&&x>=0&&y>=0&&x<d.w&&y<d.h){const q=X2(c||d.day).getImageData(x,y,1,1).data;if(q[3])col=hex(q[0],q[1],q[2]);}if(col){if(rb)S.bg=col;else S.fg=col;ui();}return;}
-  if(S.layer==='glow'&&d.glows){const sg=S.selGlow,near=Math.max(3,5/S.zoom);if(sg&&d.glows.includes(sg)&&sg.t==='glow'&&Math.abs(Math.hypot(fx-sg.x,fy-sg.y)-sg.r)<near){opBegin();drag={k:'glowr',g:sg};return;}
-    const g=[...d.glows].reverse().map(q=>[q,Math.hypot(fx-q.x,fy-q.y)]).filter(q=>q[1]<Math.max(near*1.5,Math.min(q[0].r*.45,14))).sort((a,b)=>a[1]-b[1])[0];S.selGlow=g?g[0]:null;if(g){opBegin();drag={k:'glow',g:g[0],ox:fx-g[0].x,oy:fy-g[0].y};}ui();return;}
+  if(S.layer==='glow'&&d.glows){const sg=S.selGlow,near=Math.max(3,5/S.zoom);if(sg&&d.glows.includes(sg)&&Math.abs(Math.hypot(fx-sg.x,fy-sg.y)-sg.r)<near){opBegin();drag={k:'glowr',g:sg};return;}
+    const g=[...d.glows].reverse().map(q=>[q,Math.hypot(fx-q.x,fy-q.y)]).filter(q=>q[1]<Math.max(near*1.5,Math.min(q[0].r*.45,q[0].t==='square'?6:14))).sort((a,b)=>a[1]-b[1])[0];S.selGlow=g?g[0]:null;if(g){opBegin();drag={k:'glow',g:g[0],ox:fx-g[0].x,oy:fy-g[0].y};}ui();return;}
   if(S.layer==='props'||S.layer==='ref'){if(S.layer==='ref'){const b=[...d.blds].reverse().find(b=>fx>=b.x+d.ox&&fx<b.x+d.ox+b.w&&fy>=b.y&&fy<b.y+b.h);S.selBld=b||null;S.selCab=null;if(b){opBegin();drag={k:'bld',b,ox:fx-b.x,oy:fy-b.y};}
       else{const c=[...d.cab].sort((a,b)=>b.top-a.top).find(c=>{const lx=Math.floor(fx-(c.cx-68+d.ox)),ly=Math.floor(fy-(c.top-90));if(lx<0||ly<0||lx>=c.img.width||ly>=c.img.height)return false;c.cv=c.cv||toC(c.img);return X2(c.cv).getImageData(lx,ly,1,1).data[3]>40;});
         if(c){S.selCab=c;opBegin();drag={k:'cab',c,ox:fx-c.cx,oy:fy-c.top};}}draw();return;}
@@ -529,8 +551,8 @@ V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Ma
   else if(drag.k==='prop'){drag.p.x=Math.round(fx-drag.ox);drag.p.y=Math.round(fy-drag.oy);drag.moved=true;draw();}
   else if(drag.k==='bld'){drag.b.x=Math.round(fx-drag.ox);drag.b.y=Math.round(fy-drag.oy);draw();}
   else if(drag.k==='cab'){drag.c.cx=Math.round(fx-drag.ox);drag.c.top=Math.round(fy-drag.oy);draw();}
-  else if(drag.k==='glow'){drag.g.x=Math.round(fx-drag.ox);drag.g.y=Math.round(fy-drag.oy);draw();}
-  else if(drag.k==='glowr'){drag.g.r=clamp(Math.round(Math.hypot(fx-drag.g.x,fy-drag.g.y)),3,220);draw();}});
+  else if(drag.k==='glow'){drag.g.x=Math.round(fx-drag.ox);drag.g.y=Math.round(fy-drag.oy);winSync(d,drag.g);draw();}
+  else if(drag.k==='glowr'){drag.g.r=clamp(Math.round(Math.hypot(fx-drag.g.x,fy-drag.g.y)),2,300);draw();}});
 V.addEventListener('pointerup',e=>{const g=drag;drag=null;if(!g)return;
   if(g.k==='lay'){for(const l of g.ls){const dx=l.mx||0,dy=l.my||0;l.mx=l.my=0;shiftLayer(l,dx,dy);}opEnd();draw();return;}
   if(g.k==='draw')opEnd();
@@ -553,9 +575,9 @@ addEventListener('keydown',e=>{if(e.target.matches('input,textarea,select'))retu
   if(c&&k==='a'){e.preventDefault();commitFloat();setSel(rectSel(0,0,S.doc.w,S.doc.h));return;}if(c&&k==='d'){e.preventDefault();commitFloat();setSel(null);return;}
   if(c)return;
   if(k==='escape'){if(S.tool==='place')setTool('move');commitFloat();setSel(null);S.selProp=null;ui();return;}
-  if(k==='delete'||k==='backspace'){if(S.layer==='glow'&&S.selGlow){opBegin();S.doc.glows=S.doc.glows.filter(g=>g!==S.selGlow);S.selGlow=null;opEnd();ui();return;}if(S.layer==='props'&&S.selProp&&!S.selProp.fixed){opBegin();S.doc.props=S.doc.props.filter(p=>p!==S.selProp);S.selProp=null;opEnd();ui();}else selAct('del');return;}
+  if(k==='delete'||k==='backspace'){if(S.layer==='glow'&&S.selGlow&&S.selGlow.t!=='square'){opBegin();S.doc.glows=S.doc.glows.filter(g=>g!==S.selGlow);S.selGlow=null;opEnd();ui();return;}if(S.layer==='props'&&S.selProp&&!S.selProp.fixed){opBegin();S.doc.props=S.doc.props.filter(p=>p!==S.selProp);S.selProp=null;opEnd();ui();}else selAct('del');return;}
   if(k.startsWith('arrow')){const dx=k==='arrowleft'?-1:k==='arrowright'?1:0,dy=k==='arrowup'?-1:k==='arrowdown'?1:0,n=e.shiftKey?8:1;e.preventDefault();
-    if(S.layer==='glow'&&S.selGlow){opBegin();S.selGlow.x+=dx*n;S.selGlow.y+=dy*n;opEnd();ui();}
+    if(S.layer==='glow'&&S.selGlow){opBegin();S.selGlow.x+=dx*n;S.selGlow.y+=dy*n;winSync(S.doc,S.selGlow);opEnd();ui();}
     else if(S.layer==='props'&&S.selProp){opBegin();S.selProp.x+=dx*n;S.selProp.y+=dy*n;opEnd();ui();}
     else if(S.layer==='ref'&&(S.selCab||S.selBld)){opBegin();if(S.selCab){S.selCab.cx+=dx*n;S.selCab.top+=dy*n;}else{S.selBld.x+=dx*n;S.selBld.y+=dy*n;}opEnd();ui();}else if(!S.float&&!S.sel&&curL()){opBegin();const ls=picked();OP.tg=ls.map(l=>({c:l.c,kind:'layer',L:l}));OP.cl=ls.map(l=>clone(l.c));for(const l of ls)shiftLayer(l,dx*n,dy*n);opEnd();}
     else{if(!S.float&&S.sel)lift(true);if(S.float){S.float.x+=dx*n;S.float.y+=dy*n;draw();}}return;}
@@ -629,11 +651,11 @@ $('#layers').onclick=e=>{{const row=!e.target.matches('input,.tw')&&e.target.clo
     if(cx*S.zoom+S.px<0||cx*S.zoom+S.px>r.width||cy*S.zoom+S.py<0||cy*S.zoom+S.py>r.height){S.px=r.width/2-cx*S.zoom;S.py=r.height/2-cy*S.zoom;}ui();return;}
 const l=e.target.closest('.lay');if(l){commitFloat();S.layer=l.dataset.l;if(S.layer==='block')S.vis.block=true;if(S.layer==='props'||S.layer==='ref'||S.layer==='glow')setTool('move');if(S.layer==='glow')S.vis.glow=true;S.selBld=null;ui();}};
 $('#lib').onclick=e=>{const it=e.target.closest('.it');if(!it)return;const id=it.dataset.id;S.libPick=id;if(S.doc.kind==='town'){setTool('place');}else{S.selProp=S.doc.props.find(p=>p.lib===id);S.layer='props';}ui();};
-$('#insp').addEventListener('input',e=>{const k=e.target.dataset.g,g=S.selGlow;if(!k||!g)return;if(!OP)opBegin();g[k]=k==='col'?e.target.value:k==='tint'?e.target.checked:k==='a'?+e.target.value/100:+e.target.value;draw();});
+$('#insp').addEventListener('input',e=>{const k=e.target.dataset.g,g=S.selGlow;if(!k||!g)return;if(!OP)opBegin();g[k]=k==='col'?e.target.value:k==='tint'?e.target.checked:k==='a'||k==='fl'?+e.target.value/100:+e.target.value;if(k==='col'){delete g.c2;delete g.ct;}draw();});   /* a new colour: its hot middle and ground tint follow it */
 $('#insp').addEventListener('change',e=>{if(e.target.dataset.g){opEnd();S.doc.dirty=true;ui();return;}if(e.target.dataset.b&&S.selBld){S.selBld.fade=e.target.checked?1:0;S.doc.dirty=true;ui();return;}const p=S.selProp;if(!p)return;opBegin();if(e.target.dataset.p)p[e.target.dataset.p]=e.target.checked;if(e.target.dataset.n)p[e.target.dataset.n]=+e.target.value||0;opEnd();ui();});
 $('#insp').addEventListener('click',e=>{const a=e.target.dataset.a,p=S.selProp,d=S.doc;if(a==='editb'&&S.selBld){show('assets/buildings/'+S.selBld.k+'.png');return;}if(a==='blockb'&&S.selBld){show('bmask:'+S.selBld.k);return;}
   if(a==='gadd'){glowAdd('glow');return;}if(a==='gaddlamp'){glowAdd('lamp');return;}if(a==='gaddbulb'){glowAdd('bulb');return;}
-  if((a==='gdel'||a==='gdup')&&S.selGlow){opBegin();if(a==='gdel'){d.glows=d.glows.filter(g=>g!==S.selGlow);S.selGlow=null;}else{const q={...S.selGlow,x:S.selGlow.x+12,y:S.selGlow.y+8};d.glows.push(q);S.selGlow=q;}opEnd();ui();return;}if(!a||!p)return;opBegin();
+  if((a==='gdel'||a==='gdup')&&S.selGlow){opBegin();if(a==='gdel'){d.glows=d.glows.filter(g=>g!==S.selGlow);S.selGlow=null;}else{const q={...S.selGlow,x:S.selGlow.x+12,y:S.selGlow.y+8};d.glows.push(q);winSync(d,q);S.selGlow=q;}opEnd();ui();return;}if(!a||!p)return;opBegin();
   if(a==='dup'){const q={...p,x:p.x+10,y:p.y+6};d.props.push(q);S.selProp=q;}
   if(a==='del'){d.props=d.props.filter(q=>q!==p);S.selProp=null;}
   if(a==='bake'){OP.tg=[{c:d.day},{c:d.night}];OP.cl=[clone(d.day),clone(d.night)];const v=variant(p,false),n=variant(p,true);X2(d.day).drawImage(v.c,p.x+v.dx,p.y+v.dy);X2(d.night).drawImage(n.c,p.x+n.dx,p.y+n.dy);dirty(p.x+v.dx,p.y+v.dy,p.x+v.dx+v.c.width,p.y+v.dy+v.c.height);d.props=d.props.filter(q=>q!==p);S.selProp=null;}
@@ -825,7 +847,7 @@ async function save(){commitFloat();let d=S.doc;if(d.libId){d.dirty=false;d=Obje
       files.push({path:'assets/builder/library.json',text:JSON.stringify(libs.map(l=>({id:l.id,fxo:l.fxo,baseo:l.baseo,fw:l.fw})))});
       for(const b of d.blds)if(DOCS['assets/buildings/'+b.k+'.png']?.dirty){const q=DOCS['assets/buildings/'+b.k+'.png'];files.push({path:q.path,b64:png(flat(q,false))});q.dirty=false;b.img=q.day;}
       for(const b of d.blds){const q=DOCS['bmask:'+b.k];if(q&&q.dirty){files.push({path:`assets/buildings/${b.k}-block.png`,b64:png(maskOut(b.blk,true)),mode:'L'});q.dirty=false;}}
-      patch={lamps:d.glows.filter(g=>g.t==='lamp').map(g=>[g.x-d.ox,g.y]),bulbs:d.glows.filter(g=>g.t==='bulb').map(g=>[g.x-d.ox,g.y]),map:{ox:d.ox,w:d.w,h:d.h},cabins:d.cab.length===GAME.doors.length?d.cab.map(c=>[c.cx,c.top]):null,buildings:d.blds.map(({k,name,x,y,w,h,fade})=>({k,name,x,y,w,h,fade}))};
+      patch={map:{ox:d.ox,w:d.w,h:d.h},cabins:d.cab.length===GAME.doors.length?d.cab.map(c=>[c.cx,c.top]):null,buildings:d.blds.map(({k,name,x,y,w,h,fade})=>({k,name,x,y,w,h,fade}))};
     }else if(d.kind==='bmask'){files.push({path:`assets/buildings/${d.k}-block.png`,b64:png(maskOut(d.block,true)),mode:'L'});
     }else if(d.kind==='hall'){files.push({path:`assets/interiors/${d.k}.png`,b64:png(FD),mode:'RGB'},{path:`assets/interiors/${d.k}-walk.png`,b64:png(maskOut(d.block,false)),mode:'L'});}
     else if(d.kind==='room'){files.push({path:'assets/room-objects/room-empty.png',b64:png(FD)});const obj={},sh={};
@@ -837,8 +859,12 @@ async function save(){commitFloat();let d=S.doc;if(d.libId){d.dirty=false;d=Obje
     else files.push({path:d.path,b64:png(FD)});
     if(!d.libId&&d.layers&&(d.layers.length||d.hadLayers)){const P='assets/builder/layers/'+slug(d);if(d.layers.length){files.push({path:P+'-base-day.png',b64:png(d.day)});if(d.night)files.push({path:P+'-base-night.png',b64:png(d.night)});for(const l of d.layers)files.push({path:`${P}-${l.id}.png`,b64:png(l.c)});}
       files.push({path:P+'.json',text:JSON.stringify({layers:d.layers.map(({id,name,vis,op,fx,g,bm})=>({id,name,vis,op,fx,g,bm})),groups:d.groups||[]})});d.hadLayers=d.layers.length>0;}
-    if(d.glows){const key=d.kind==='town'?'town':d.k,mine=d.glows.filter(g=>g.t==='glow').map(g=>({x:g.x-d.ox,y:g.y,r:g.r,col:hex2rgb(g.col),a:Math.round(g.a*100)/100,...(g.tint?{tint:1}:{})}));
-      if(mine.length||GLOWJ[key]){if(mine.length)GLOWJ[key]=mine;else delete GLOWJ[key];files.push({path:'assets/builder/glows.json',text:JSON.stringify(GLOWJ)});}}
+    if(d.glows){winSync(d);const key=d.kind==='town'?'town':d.k,out=g=>({x:Math.round(g.x-d.ox),y:Math.round(g.y),r:g.r,col:hex2rgb(g.col),a:Math.round(g.a*1000)/1000}),of=t=>d.glows.filter(g=>g.t===t);
+      const mine=of('glow').map(g=>({...out(g),...(g.tint?{tint:1}:{})}));if(mine.length)GLOWJ[key]=mine;else delete GLOWJ[key];
+      if(d.kind==='town'){GLOWJ.lamps=of('lamp').map(g=>({...out(g),c2:g.c2||hex2rgb(g.col),ct:g.ct||hex2rgb(g.col)}));GLOWJ.bulbs=of('bulb').map(g=>({...out(g),ct:g.ct||hex2rgb(g.col)}));GLOWJ.square=out(of('square')[0]);
+        GLOWJ.win={};d.cab.forEach((c,ci)=>GLOWJ.win[ci]=of('win').filter(g=>g.ci===ci).map(g=>({dx:Math.round(g.dx),dy:Math.round(g.dy),r:g.r,col:hex2rgb(g.col),a:Math.round(g.a*1000)/1000})));}
+      else if(d.kind==='hall'){GLOWJ.base=GLOWJ.base||{};GLOWJ.base[key]=of('hall').map(g=>({...out(g),fl:g.fl||0}));}
+      files.push({path:'assets/builder/glows.json',text:JSON.stringify(GLOWJ)});}
     toast('Saving…');const r=await api('/api/save',{files});if(patch)await api('/api/patch',patch);if(d.path&&/^assets\/final\/.+\/poses\//.test(d.path))await api('/api/cast/run',{step:'pack'});
     for(const l of Object.values(LIB))if(d.kind==='town'?!l.fixed:l.fixed)l.dirty=false;d.dirty=false;if(d.kind==='town')for(const k in DOCS)if(DOCS[k].libId)DOCS[k].dirty=false;
     fillDocSel();ui();toast(`Saved into the game (${r.wrote.length} files). Backup: ${r.backup}. Reload the game to see it.`);

@@ -1183,7 +1183,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11171929'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11171935'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1533,22 +1533,29 @@ const winFill=(x,y,i)=>i<2?lx.fillRect(X(x)-5,Y(y)-7,12,14):lx.fillRect(X(x)-6,Y
    behave like the lamps (same dimming); tint = they also warm the ground under them. The lamps and bulbs themselves are TOWN.lamps / TOWN.bulbs,
    which the builder rewrites when he moves, adds or deletes one. */
 let GLOWS={};
+/* EVERY GLOW IS HIS TO EDIT (18 Nov, "make everything editable"). glows.json may also hold: lamps / bulbs [{x,y,r,col,a,c2,ct}] (c2 = the hot middle,
+   ct = the tint on the ground), win {hut: [{dx,dy,r,col,a}]} (from the hut's door), square {x,y,r,col,a}, base {room: [{x,y,r,col,a,fl}]} (fl = how much it
+   flickers). Whatever is missing falls back to the numbers that were always here, so an untouched file changes nothing. */
+let GLC=null;function glSrc(){if(GLC&&GLC.of===GLOWS)return GLC;return GLC={of:GLOWS,lamps:GLOWS.lamps||TOWN.lamps.map(([x,y])=>({x,y,r:30,col:'255,130,45',a:.16,c2:'255,170,80',ct:'255,120,30'})),
+  bulbs:GLOWS.bulbs||TOWN.bulbs.map(([x,y])=>({x,y,r:6,col:'255,150,60',a:.2,ct:'255,120,30'})),sq:GLOWS.square||{x:280,y:365,r:175,col:'255,125,30',a:.4}};}
 function townLights(t,o={},part){ // part 'win' = only the cabin windows (draw before people), 'rest' = everything else, none = all
   const dim=o.dim??1,dark=o.dark??-1,darkK=o.darkK||[],red=o.red||0,tone=o.tone||'255,40,40',lampK=o.lampK??1;const L=[];
   if(part!=='win'){
     // the square is lit orange by its lights: a soft tint (not added brightness, which washes colour out),
     // strongest by the ring of bulbs and fading away from it
     const wk=dim*lampK;
-    glowBatch('soft-light','source-over',c=>{glowOn(c,X(280),Y(365),175,'255,125,30',.4*wk);
-      TOWN.lamps.forEach(([x,y])=>glowOn(c,X(x),Y(y)+14,44,'255,120,30',.5*wk));
-      TOWN.bulbs.forEach(([x,y])=>glowOn(c,X(x),Y(y)+8,22,'255,120,30',.2*wk));
+    const GS=glSrc();
+    glowBatch('soft-light','source-over',c=>{glowOn(c,X(GS.sq.x),Y(GS.sq.y),GS.sq.r,GS.sq.col,GS.sq.a*wk);
+      GS.lamps.forEach(g=>glowOn(c,X(g.x),Y(g.y)+14,g.r*44/30,g.ct||g.col,g.a*3.125*wk));
+      GS.bulbs.forEach(g=>glowOn(c,X(g.x),Y(g.y)+8,g.r*22/6,g.ct||g.col,g.a*wk));
       (GLOWS.town||[]).forEach(g=>{if(g.tint)glowOn(c,X(g.x),Y(g.y),g.r*1.5,g.col,Math.min(.6,g.a*1.6)*wk);});});
-    TOWN.lamps.forEach(([x,y],i)=>{L.push([x,y,30,'255,130,45',.16*dim*lampK,i]);L.push([x,y,9,'255,170,80',.22*dim*lampK,i+9]);});
-    TOWN.bulbs.forEach(([x,y],i)=>L.push([x,y,6,'255,150,60',.2*dim*lampK,i*7+3]));
+    GS.lamps.forEach((g,i)=>{L.push([g.x,g.y,g.r,g.col,g.a*dim*lampK,i]);L.push([g.x,g.y,g.r*.3,g.c2||g.col,g.a*1.375*dim*lampK,i+9]);});
+    GS.bulbs.forEach((g,i)=>L.push([g.x,g.y,g.r,g.col,g.a*dim*lampK,i*7+3]));
     (GLOWS.town||[]).forEach((g,i)=>L.push([g.x,g.y,g.r,g.col,g.a*dim*lampK,i*5+11]));
   }
   if(part!=='rest'){
-    TOWN.cabins.forEach((c,ci)=>c.win.forEach(([x,y],i)=>{const k=ci===dark?(darkK[i]??1):1;L.push([x,y,13,'255,170,80',.42*dim*k,ci*3+i]);}));
+    TOWN.cabins.forEach((c,ci)=>{const W=GLOWS.win&&GLOWS.win[ci];if(W)W.forEach((g,i)=>{const k=ci===dark?(darkK[i]??1):1;L.push([c.cx+g.dx,c.top+g.dy,g.r,g.col,g.a*dim*k,ci*3+i]);});
+      else c.win.forEach(([x,y],i)=>{const k=ci===dark?(darkK[i]??1):1;L.push([x,y,13,'255,170,80',.42*dim*k,ci*3+i]);});});
     if(red>0&&dark>=0)TOWN.cabins[dark].win.forEach(([x,y])=>L.push([x,y,26,tone,.9*red,0]));
   }
   lights(L,t);
@@ -1634,7 +1641,8 @@ function hallFrame(m,people,dt,t){const H=hallOf(m.loc),img=IMG['hall/'+H.k];hal
   else if(H.k==='tavern'){const k=Math.floor(t/110);   // the fire: a few solid embers hopping up the chimney
     for(let i=0;i<4;i++){const ph=(k+i*7)%11;lx.fillStyle=ph%3?'#ffb24a':'#ffe9a8';lx.fillRect(X(151+((i*5+k)%18)),Y(74-ph),1,1);}}
   const hits=drawScene(people,null,img,null);wlFx(dt,m.loc);drawPuffs(dt);wlCases(dt,m.loc);
-  if(cas)lights([[90,24,26,'90,255,200',.16+.08*fl,3],[192,52,20,'255,220,110',.14,5],[220,52,20,'255,220,110',.14,6],[87,56,60,'255,120,160',.07+.04*fl,7]],t);
+  const HB=GLOWS.base&&GLOWS.base[H.k];if(HB)lights(HB.map((g,i)=>[g.x,g.y,g.r,g.col,g.a+(g.fl||0)*fl,i+1]),t);   /* the room's own lights, edited in the map builder */
+  else if(cas)lights([[90,24,26,'90,255,200',.16+.08*fl,3],[192,52,20,'255,220,110',.14,5],[220,52,20,'255,220,110',.14,6],[87,56,60,'255,120,160',.07+.04*fl,7]],t);
   else if(H.k==='tavern')lights([[160,76,64,'255,150,70',.2+.12*fl,1],[120,144,16,'255,214,130',.2,2],[234,113,16,'255,214,130',.2,3],[42,167,16,'255,214,130',.2,4],[223,174,16,'255,214,130',.2,5],[279,70,26,'255,230,150',.08+.05*fl,6]],t);
   if(GLOWS[H.k])lights(GLOWS[H.k].map((g,i)=>[g.x,g.y,g.r,g.col,g.a,i*5+11]),t);   /* his own glows, from the map builder */
   hallAmb(H,dt);return hits;}
