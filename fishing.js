@@ -107,33 +107,39 @@ function fishPh(p){const F=FISH;F.ph=p;F.t=0;
   else if(p==='fly'||p==='wait')fishSay('Wait for a bite...');
   else if(p==='bite')fishSay('TAP NOW!');
   else if(p==='fight')fishSay('Hold to reel. Let go on red.');}
-/* FISH FROM WHERE YOU STAND (his ask, 17 Nov): anywhere on the jetty or the bank with open water straight ahead (you always face up the lake:
-   the rod pictures are from behind). fishNear = the first bit of water in front of you, or null when there is none within reach. */
-function fishNear(m){if(!m||m.loc!==LAKE||m.ko)return null;const reach=m.y<418&&m.x>110&&m.x<170?110:34;   /* on the jetty you are out over the lake; on the bank you must be at the water's edge */
-  for(let d=6;d<=reach;d+=3)if(fishWet(m.x,m.y-d)&&fishWet(m.x,m.y-d-6))return[m.x,m.y-d-5];return null;}
-function fishStart(){const F=FISH,m=WL.me;if(F.on||!m||m.loc!==LAKE)return;F.on=true;F.held=false;F.press=false;F.bob=null;F.cand=null;F.hook=null;F.land=null;const nw=fishNear(m);if(!nw){F.on=false;wlSay('Stand at the edge of the water to fish.','bad');return;}F.near=nw;m.dir='back';m.walk=false;m.path=[];m.todo=null;
+/* FISH FROM WHERE YOU STAND, THE WAY YOU FACE (his asks, 17 Nov). You can cast up the lake ('back', seen from behind) or across it to the
+   'right' or 'left' (the side pictures; left is the right ones mirrored). fishNear = the first bit of water that way, or null when there is none
+   within reach. fishFace picks the way: the way you are facing if there is water there, else whichever way has some. */
+const FISH_V={back:[0,-1],right:[1,0],left:[-1,0]};
+function fishNear(m,face){if(!m||m.loc!==LAKE||m.ko)return null;const v=FISH_V[face||'back'],side=v[0]!==0,jet=m.y<418&&m.x>110&&m.x<170,reach=side?40:jet?110:34,oy=side?-5:0;
+  for(let d=6;d<=reach;d+=3)if(fishWet(m.x+v[0]*d,m.y+oy+v[1]*d)&&fishWet(m.x+v[0]*(d+6),m.y+oy+v[1]*(d+6)))return[m.x+v[0]*(d+5),m.y+oy+v[1]*(d+5)];return null;}
+function fishFace(m,pref){if(!m)return null;for(const f of[pref,m.dir,'back','right','left']){if(!FISH_V[f])continue;const nw=fishNear(m,f);if(nw)return{face:f,near:nw};}return null;}
+function fishStart(){const F=FISH,m=WL.me;if(F.on||!m||m.loc!==LAKE)return;F.on=true;F.held=false;F.press=false;F.bob=null;F.cand=null;F.hook=null;F.land=null;const ff=fishFace(m,F.want);F.want=null;if(!ff){F.on=false;wlSay('Stand at the edge of the water to fish.','bad');return;}F.near=ff.near;F.face=ff.face;F.px=m.x;F.py=m.y-8;m.dir=ff.face;m.walk=false;m.path=[];m.todo=null;
   $('#townHud').classList.add('fishing');paintCoins();fishPh('idle');sfx('open');netMove();}
 function fishStop(){const F=FISH;if(!F.on)return;F.on=false;F.held=false;F.bob=null;F.hook=null;F.land=null;if(F.cand){F.cand.st='swim';F.cand=null;}
-  $('#townHud').classList.remove('fishing');fishSay('Tap the water to fish');$('#fishModal').classList.remove('on');$('#fishBookModal').classList.remove('on');}
+  $('#townHud').classList.remove('fishing');fishSay('');$('#fishModal').classList.remove('on');$('#fishBookModal').classList.remove('on');}
 function fishLose(msg){const F=FISH;if(F.cand){F.cand.st='flee';F.cand.t=0;F.cand=null;}if(F.hook){F.hook.st='flee';F.hook.t=0;F.hook=null;}F.bob=null;wlSay(msg,'bad');fishPh('idle');}
 
 /* ---- taps ---- */
 function fishTap(e,m,x,y){const F=FISH;
-  if(F.on){if(F.ph!=='card'&&F.ph!=='land'){F.held=true;F.press=true;F.px=x;}return true;}
-  if(fishWet(x,y)||y<316){if(fishNear(m)){fishStart();F.held=true;F.press=true;F.px=x;}else wlGo(m,FISH_ME[0],FISH_ME[1],()=>{m.dir='back';fishStart();});return true;}   /* a tap on the water: fish from here if you can, else walk out to the end of the jetty */
+  if(F.on){if(F.ph!=='card'&&F.ph!=='land'){F.held=true;F.press=true;F.px=x;F.py=y;}return true;}
+  if(fishWet(x,y)){const dx=x-m.x,dy=y-m.y,pref=Math.abs(dx)>Math.abs(dy)*1.2?(dx>0?'right':'left'):'back';if(fishFace(m,pref)){F.want=pref;fishStart();if(F.on){F.held=true;F.press=true;F.px=x;F.py=y;}}else wlGo(m,FISH_ME[0],FISH_ME[1],()=>{m.dir='back';fishStart();});return true;}   /* a tap on the water: fish from here if you can, else walk out to the end of the jetty */
   return false;}
 addEventListener('pointerup',()=>{FISH.held=false;});addEventListener('pointercancel',()=>{FISH.held=false;});
-cv.addEventListener('pointermove',e=>{if(FISH.on&&FISH.held)FISH.px=wxy(e)[0];});
+cv.addEventListener('pointermove',e=>{if(FISH.on&&FISH.held){const q=wxy(e);FISH.px=q[0];FISH.py=q[1];}});
 addEventListener('keydown',e=>{if(e.code==='Space'&&FISH.on&&!e.repeat&&!document.querySelector('.modal.on')){FISH.held=true;FISH.press=true;e.preventDefault();}});
 addEventListener('keyup',e=>{if(e.code==='Space')FISH.held=false;});
 
 /* ---- one step of the game ---- */
-function fishTip(m){const F=FISH,c=fishCell(),B=c!=null&&F.rods[looksLike(0)][KIT.rod];if(B)return[m.x+B[c][0],m.y+B[c][1]];
+const fishSide=()=>FISH.face==='right'?1:FISH.face==='left'?-1:0;
+function fishTip(m){const F=FISH,c=fishCell(),sd=fishSide(),B=c!=null&&F.rods[looksLike(0)][KIT.rod+(sd?'-side':'')];if(B)return[m.x+(sd<0?-1:1)*B[c][0],m.y+B[c][1]];
+  if(sd)return F.ph==='charge'?[m.x+sd*(16-24*F.pow),m.y-31+4*F.pow]:[m.x+sd*16,m.y-30];
   if(F.ph==='charge')return[m.x+11-22*F.pow,m.y-34+5*F.pow];if(F.ph==='fight'&&F.held)return[m.x-7+Math.round(Math.sin(F.fr*.02)*1),m.y-37];return[m.x+11,m.y-34];}
 /* which of this outfit's 9 fishing pictures to show (PixelLab's cast: 0 standing with the rod, 1-6 the swing back, 7-8 the throw; 8 = holding the line out).
    null = no pictures for this outfit (yet): it gets a rod drawn here. */
-function fishCell(){const F=FISH,n=looksLike(0),k='rod/'+n+'/'+KIT.rod;if(!F.rods[n]||!F.rods[n][KIT.rod])return null;
-  if(!IMG[k]){if(!F.rodAsk[k]){F.rodAsk[k]=1;load(k,`assets/fishing/rods/${n}-${KIT.rod}.png`).catch(()=>{});}return null;}   /* each outfit has one sheet per rod (the rod in the hand is the rod you own): fetched the first time it is needed */
+function fishKey(){return'rod/'+looksLike(0)+'/'+KIT.rod+(fishSide()?'-side':'');}
+function fishCell(){const F=FISH,n=looksLike(0),v=fishSide()?'-side':'',k=fishKey();if(!F.rods[n]||!F.rods[n][KIT.rod+v])return null;
+  if(!IMG[k]){if(!F.rodAsk[k]){F.rodAsk[k]=1;load(k,`assets/fishing/rods/${n}-${KIT.rod}${v}.png`).catch(()=>{});}return null;}   /* each outfit has one sheet per rod and view (the rod in the hand is the rod you own): fetched the first time it is needed */
   if(F.ph==='charge')return 1+Math.min(5,Math.floor(F.pow*6));if(F.ph==='fly')return F.t<.25?7:8;
   if(F.ph==='fight')return F.held?7+(Math.floor(F.fr/150)%2):8;if(F.ph==='idle'||F.ph==='card')return 0;return 8;}
 function fishTick(dt,t,m){const F=FISH;F.fr=t;F.t+=dt;F.dip=Math.max(0,F.dip-dt*5);
@@ -152,7 +158,8 @@ function fishTick(dt,t,m){const F=FISH;F.fr=t;F.t+=dt;F.dip=Math.max(0,F.dip-dt*
   if(!F.on)return;const press=F.press;F.press=false;
   if(F.ph==='idle'){if(press){if(!fishBait()){wlSay('No bait left. Fisherman Joe sells it.','bad');F.held=false;}else if(KIT.bag.length>=FISH_BAG){wlSay('Your bag is full. Sell your fish to Fisherman Joe.','bad');F.held=false;}else{F.pow=0;F.pdir=1;fishPh('charge');}}}
   else if(F.ph==='charge'){F.pow+=F.pdir*dt*.85;if(F.pow>=1){F.pow=1;F.pdir=-1;}if(F.pow<=0){F.pow=0;F.pdir=1;}
-    const ang=clamp((F.px-m.x)/95,-.62,.62);let R=38+F.pow*190*fishRod().range,tx,ty;for(;;){tx=m.x+Math.sin(ang)*R;ty=m.y-12-Math.cos(ang)*R;if(fishWet(tx,ty)||R<24)break;R-=4;}F.tg=[tx,ty];
+    const sd=fishSide(),ang=sd?clamp((F.py-(m.y-8))/95,-.62,.62):clamp((F.px-m.x)/95,-.62,.62);let R=38+F.pow*190*fishRod().range,tx,ty;   /* slide your finger across the way you face to swing the aim */
+    for(;;){if(sd){tx=m.x+sd*(8+Math.cos(ang)*R);ty=m.y-8+Math.sin(ang)*R;}else{tx=m.x+Math.sin(ang)*R;ty=m.y-12-Math.cos(ang)*R;}if(fishWet(tx,ty)||R<24)break;R-=4;}F.tg=[tx,ty];
     if(!F.held){if(F.pow<.06||!fishWet(tx,ty)){fishPh('idle');}else{fishUseBait(1);const tip=fishTip(m);F.bob={x:tip[0],y:tip[1],x0:tip[0],y0:tip[1],x1:tx,y1:ty,z:0,lx:tx,ly:ty};sfx('fish_cast');fishPh('fly');}}}
   else if(F.ph==='fly'){const k=Math.min(1,F.t/.55),B=F.bob;B.x=lerp(B.x0,B.x1,k);B.y=lerp(B.y0,B.y1,k);B.z=Math.sin(k*Math.PI)*34;
     if(k>=1){B.z=0;sfx('fish_plop');fishRipple(B.x,B.y,9,.8);fishRipple(B.x,B.y,5,.5);F.dip=1;F.lure=1+Math.random()*2.4;F.cand=null;
@@ -202,8 +209,8 @@ $('#fishRodBtn').onclick=()=>{sfx('click');fishStart();};
 $('#fishStopBtn').onclick=()=>{sfx('close');fishStop();const H=hallOf(LAKE);wlHead(H.name,'Tap the water to fish. Walk down to leave.');};
 
 /* ---- drawing the lake: called for every frame you are there ---- */
-function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud').classList.contains('lake')){F.lakeOn=1;$('#townHud').classList.add('lake');paintCoins();if(!F.on)fishSay('Tap the water to fish');}fishTick(dt,t,m);
-  {const can=!!fishNear(m)&&!m.walk,b=$('#fishRodBtn'),show=!F.on&&$('#joy').classList.contains('on');if(b.disabled===can)b.disabled=!can;
+function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud').classList.contains('lake')){F.lakeOn=1;$('#townHud').classList.add('lake');paintCoins();if(!F.on)fishSay('');}fishTick(dt,t,m);
+  {const can=!!fishFace(m)&&!m.walk,b=$('#fishRodBtn'),show=!F.on&&$('#joy').classList.contains('on');if(b.disabled===can)b.disabled=!can;
     if(!F.pbSet){const v=$('#punchBtn').style.getPropertyValue('--pb');if(v){b.style.setProperty('--pb',v);F.pbSet=1;}}
     if(show)b.style.bottom=(parseFloat($('#joy').style.bottom)+23)+'px';if(b.classList.contains('on')!==show)b.classList.toggle('on',show);}   /* the rod button is grey wherever you cannot fish from */
   const lhE=Hh()/Math.max(1,Math.round(W/190)),B=F.bob,foc=F.on?(B?[(m.x*2+B.x)/3,(m.y+B.y)/2+lhE*.02]:[m.x,m.y-lhE*.2]):[m.x,m.y-lhE*.08];
@@ -223,9 +230,9 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
   /* you, with the rod */
   const me=people.find(p=>p.e===m),rest=people.filter(p=>p!==me),hits=new Map();
   if(me&&F.on){const c=fishCell(),tip=fishTip(m),px=XP(m.x),py=YP(m.y);
-    if(c!=null){shadow(px,py,6,2,.28);lx.drawImage(IMG['rod/'+looksLike(0)+'/'+KIT.rod],c*64,0,64,64,px-32,py-56,64,64);
+    if(c!=null){shadow(px,py,6,2,.28);const sh=IMG[fishKey()];if(fishSide()<0){lx.save();lx.translate(px,0);lx.scale(-1,1);lx.drawImage(sh,c*64,0,64,64,-32,py-56,64,64);lx.restore();}else lx.drawImage(sh,c*64,0,64,64,px-32,py-56,64,64);
       if(KIT.rod==='gold'&&Math.floor(t/110)%7===0){lx.fillStyle='#fffbe0';lx.fillRect(X(tip[0])+(Math.floor(t/770)%3)-1,Y(tip[1])-1+(Math.floor(t/770)%2),1,1);}   /* the Golden Rod glints */hits.set(me,{cx:px,top:py-36});}
-    else{const h=drawChar({...me,dir:'back',walk:false});if(h)hits.set(me,h);fishLine(X(m.x+8),Y(m.y-9),X(tip[0]),Y(tip[1]),'#3a2413');fishLine(X(m.x+8)+1,Y(m.y-9),X(tip[0])+1,Y(tip[1]),{twig:'#a36a35',oak:'#ba6c32',steel:'#96acd0',gold:'#eeb632'}[KIT.rod]||'#a36a35');}
+    else{const h=drawChar({...me,dir:F.face||'back',walk:false}),hx=fishSide()?m.x+fishSide()*5:m.x+8;if(h)hits.set(me,h);fishLine(X(hx),Y(m.y-9),X(tip[0]),Y(tip[1]),'#3a2413');fishLine(X(hx)+1,Y(m.y-9),X(tip[0])+1,Y(tip[1]),{twig:'#a36a35',oak:'#ba6c32',steel:'#96acd0',gold:'#eeb632'}[KIT.rod]||'#a36a35');}
     /* the line, the float, the fish on the end of it */
     if(B&&F.ph!=='fight'){const dip=Math.round(Math.min(2,F.dip)),bx=X(B.x),by=Y(B.y-B.z)+(F.ph==='fly'?0:dip+Math.round(Math.sin(t*.004)*.6));
       fishLine(X(tip[0]),Y(tip[1]),bx,by-2,'#eef6ff',F.ph==='fly'?0:5);

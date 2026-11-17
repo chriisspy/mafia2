@@ -71,26 +71,30 @@ TIERS = {   # len = how much of the length it keeps; core / hi = the two shades 
     'gold':  {'len': 1, 'core': (238, 182, 50), 'hi': (255, 240, 164), 'bands': [(.5, (255, 252, 226))], 'tip': [(126, 214, 255), (240, 252, 255)]}}
 def line_px(x0, y0, x1, y1):
     n = int(max(abs(x1 - x0), abs(y1 - y0))); return [(int(round(x0 + (x1 - x0) * k / max(1, n))), int(round(y0 + (y1 - y0) * k / max(1, n)))) for k in range(n + 1)]
-for f in sorted(os.listdir(RSRC)):
-    if not f.endswith('-cast_8.png'): continue
-    name = f[:-11]; back = np.asarray(Image.open(f'assets/final/{name}/back.png').convert('RGBA')); body0 = back[..., 3] > 0
+# Two views of every outfit: 'cast' = from behind (casting up the lake), 'side' = facing right (casting across it; the game mirrors it to
+# face left). his ask, 17 Nov: "make new side view animations then, fishing from the side is important". -> <outfit>-<tier>.png and
+# <outfit>-<tier>-side.png; rods.json[outfit][tier] and [tier + '-side'] = the rod tip in each cell.
+JOBS_ = [(f[:-len(v) - 7], v, spr, suf, hx, mr) for f in sorted(os.listdir(RSRC)) for v, spr, suf, hx, mr in (('cast', 'back', '', 34, 4), ('side', 'right', '-side', 37, 8)) if f.endswith(f'-{v}_8.png')]
+for name, view, spr, suf, handx, mright in JOBS_:
+    back = np.asarray(Image.open(f'assets/final/{name}/{spr}.png').convert('RGBA')); body0 = back[..., 3] > 0
     own = np.unique(back[body0][:, :3].reshape(-1, 3), axis=0).astype(int)                    # the outfit's own colours
-    bw, bh = body0.shape[1], body0.shape[0]; box = np.zeros((64, 64), bool); box[max(0, 56 - bh - 1):60, max(0, 32 - bw // 2 - 3):min(64, 32 + bw // 2 + 4)] = True
+    bw, bh = body0.shape[1], body0.shape[0]; box = np.zeros((64, 64), bool); box[max(0, 56 - bh - (1 if view == 'cast' else 2)):60, max(0, 32 - bw // 2 - 3):min(64, 32 + bw // 2 + mright)] = True
     sheets = {t: np.zeros((64, 64 * 9, 4), np.uint8) for t in TIERS}; tips = {t: [] for t in TIERS}
     for i in range(9):
-        a = hard(Image.open(f'{RSRC}{name}-cast_{i}.png')); m = a[..., 3] > 0
+        a = hard(Image.open(f'{RSRC}{name}-{view}_{i}.png')); m = a[..., 3] > 0
         thick = nd.binary_opening(m, structure=np.ones((2, 2), bool)); thick = nd.binary_dilation(thick, iterations=1) & m
         m2 = np.where(box, m, thick & ~(a[..., :3].min(-1) > 150))   # outside the body: only what is 2 px thick and not pale (PixelLab's fishing line is thin and white)
         lab, n = nd.label(m2)
         if n > 1: m2 = lab == np.bincount(lab[lab > 0]).argmax()
         a[~m2] = 0
-        rod = (a[..., 3] > 0) & ~box; ys, xs = np.nonzero(rod)
+        rgb_ = a[..., :3].astype(int); rodish = (rgb_.sum(-1) < 190) | (np.abs(rgb_ - (150, 96, 52)).sum(-1) < 110)   # navy outline or wood: an arm that swings out of the box is neither
+        rod = (a[..., 3] > 0) & ~box & rodish; ys, xs = np.nonzero(rod)
         if len(xs) < 3:                                              # the rod is hidden behind him in this frame
             for t in TIERS: sheets[t][:, i * 64:(i + 1) * 64] = a; tips[t].append(tips[t][-1] if tips[t] else [8, -36])
             continue
         rl, rn = nd.label(rod, structure=np.ones((3, 3), bool)); edge = nd.binary_dilation(box, iterations=2)   # PixelLab sometimes draws two rods, or a loose one: keep the biggest piece that touches him
         best = max(range(1, rn + 1), key=lambda q: ((rl == q) & edge).any() * 1000 + (rl == q).sum()); ys, xs = np.nonzero(rl == best)
-        hd = (xs - 34) ** 2 + (ys - 46) ** 2                         # measured from his hands
+        hd = (xs - handx) ** 2 + (ys - 46) ** 2                         # measured from his hands
         far = np.argmax(hd); tx, ty = int(xs[far]), int(ys[far])     # its tip
         near = np.argmin(hd); ex, ey = int(xs[near]), int(ys[near])  # where it leaves the body
         wood = rod & (a[..., :3].astype(int).sum(-1) > 150); wcol = np.median(a[wood][:, :3], axis=0) if wood.sum() > 2 else np.array([150, 96, 52])
@@ -130,9 +134,9 @@ for f in sorted(os.listdir(RSRC)):
             hit = (dist < 1.6) & (tt < 2) & (tt > -22) & woody & flank(1) & flank(-1) & (not clash or ((dist < 1.1) & (tt > -6)))   # an outfit that wears the rod's brown: only right where the rod enters
             for k_ in np.nonzero(hit)[0]: c[yy[k_], xx[k_], :3] = T['hi'] if int(round(-tt[k_])) % 3 == 1 else T['core']
             sheets[t][:, i * 64:(i + 1) * 64] = c; tips[t].append([int(round(x1)) - 32, int(round(y1)) - 56])   # the tip, measured from the middle of the feet
-    for t in TIERS: Image.fromarray(sheets[t]).save(f'{OUT}rods/{name}-{t}.png', optimize=True)
+    for t in TIERS: Image.fromarray(sheets[t]).save(f'{OUT}rods/{name}-{t}{suf}.png', optimize=True)
     if os.path.exists(f'{OUT}rods/{name}.png'): os.remove(f'{OUT}rods/{name}.png')
-    rods[name] = tips
+    rods.setdefault(name, {}).update({t + suf: v for t, v in tips.items()})
 json.dump(rods, open(OUT + 'rods.json', 'w'))
 for old in ('beanie.png', 'beanie.json'):
     if os.path.exists(OUT + old): os.remove(OUT + old)
@@ -163,6 +167,12 @@ bank = np.zeros((H, W), bool); bank[416:476, 84:226] = True
 bank &= nd.binary_opening(snow, iterations=1)
 walk = jetty | bank
 walk[410:426, 124:158] = True                   # the step from the bank onto the planks
+# and the snowy banks round the lake, so you can fish from its sides too (his ask: "fishing from the side is important"): every bit of open snow
+# below the far trees, clear of bushes, trunks, posts and the boat, that you can reach from the jetty
+snow2 = nd.binary_closing(nd.binary_opening((r > 170) & (g > 195) & (b > 215), iterations=1), iterations=2)
+solid = (r + g + b < 330) & ~((b > 105) & (b - r > 62))
+snow2 &= ~nd.binary_dilation(solid, iterations=3); snow2[:96] = False
+walk |= nd.binary_erosion(snow2, iterations=2)
 lab, n = nd.label(walk); walk = lab == lab[452, 140]
 Image.fromarray((walk * 255).astype(np.uint8)).save(OUT + 'lake-walk.png', optimize=True)
 print('fish', len(FISH_ORDER), '| water', out.shape, os.path.getsize(OUT + 'water.webp') // 1024, 'KB | rods', sorted(rods), '| walk', int(walk.sum()), '| splash frames', len(sp))
