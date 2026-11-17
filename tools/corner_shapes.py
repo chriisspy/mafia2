@@ -5,6 +5,7 @@ painted on the ground, solid) and to ask Nano Banana for the art.  BOXES: name -
 import numpy as np
 from scipy import ndimage as nd
 H, W, OX = 1000, 800, 120
+STRIPS = {'all': (0, 0, 800, 1000)}   # 18 Nov: the whole map in one picture, forest continued round the edges (no picture edges, so no straight lines)
 BOXES = {'tl': (0, 0, 320, 320), 'tr': (480, 0, 800, 320), 'bl': (0, 680, 320, 1000), 'br': (480, 680, 800, 1000)}   # 18 Nov: the corner pictures the painter was shown (no shapes any more, his call)
 CABINS = [[0, 212, -12], [1, 83, 56], [2, 341, 56], [3, 10, 190], [4, 414, 190], [5, 10, 356], [6, 414, 356], [7, 56, 522], [8, 368, 522], [9, 212, 576]]
 BUILD = [(66, 743, 174, 134), (546, 743, 174, 134)]

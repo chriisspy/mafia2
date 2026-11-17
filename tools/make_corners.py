@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage as nd
 sys.path.insert(0, 'tools')
-from corner_shapes import BOXES
+from corner_shapes import BOXES, STRIPS
 Image.MAX_IMAGE_PIXELS = None
 SRC = '../mafia2-art/corners/'; OUT = 'assets/xmas/'; TAG = '-src'
 if len(sys.argv) > 2: TAG, OUT = '-' + sys.argv[1], sys.argv[2].rstrip('/') + '/'
@@ -23,11 +23,11 @@ OX = 120
 CABINS = [[0, 212, -12], [1, 83, 56], [2, 341, 56], [3, 10, 190], [4, 414, 190], [5, 10, 356], [6, 414, 356], [7, 56, 522], [8, 368, 522], [9, 212, 576]]
 BUILD = [(66, 743, 174, 134), (546, 743, 174, 134)]
 
-def shrink(path, n):
-    a = np.asarray(Image.open(path).convert('RGB')).astype(int); c = a.shape[0] / n; out = np.zeros((n, n, 3), np.uint8)
-    for y in range(n):
-        for x in range(n):
-            blk = a[int((y + .3) * c):int((y + .7) * c) + 1, int((x + .3) * c):int((x + .7) * c) + 1].reshape(-1, 3)
+def shrink(path, w, h):
+    a = np.asarray(Image.open(path).convert('RGB')).astype(int); cy, cx = a.shape[0] / h, a.shape[1] / w; out = np.zeros((h, w, 3), np.uint8)
+    for y in range(h):
+        for x in range(w):
+            blk = a[int((y + .3) * cy):int((y + .7) * cy) + 1, int((x + .3) * cx):int((x + .7) * cx) + 1].reshape(-1, 3)
             out[y, x] = np.median(blk, axis=0)
     return out
 
@@ -41,10 +41,14 @@ if __name__ == '__main__':
     paved = nd.binary_fill_holes(nd.binary_closing(nd.binary_opening(cob, iterations=1), iterations=3))
     l, k = nd.label(paved); s = nd.sum(paved, l, range(1, k + 1)); paved = np.isin(l, [i + 1 for i, z in enumerate(s) if z > 1500])
     protect |= nd.binary_dilation(paved, iterations=3)
-    for nm, (x0, y0, x1, y1) in BOXES.items():
-        try: new = shrink(f'{SRC}{nm}{TAG}.png', x1 - x0).astype(int)
+    # the edge strips (18 Nov, his note "the edge trees look weirdly cut"): the painter was shown the map WITH the corner
+    # forests (input-map2.png) and continued them along the edges, so the forest runs all the way round with no cut ends
+    ref2 = np.asarray(Image.open(SRC + 'input-map2.png').convert('RGB')).astype(int)
+    for nm, (x0, y0, x1, y1) in list(BOXES.items()) + list(STRIPS.items()):
+        strip = nm in STRIPS; base = ref                                     # compared with the map before any corner forest, so every bit of forest it painted counts
+        try: new = shrink(f'{SRC}{nm}{TAG}.png', x1 - x0, y1 - y0).astype(int)
         except FileNotFoundError: continue
-        old = ref[y0:y1, x0:x1]
+        old = base[y0:y1, x0:x1]
         diff = np.abs(new - old).sum(-1) > 90
         diff = nd.binary_closing(nd.binary_opening(diff, iterations=1), iterations=3)
         diff = nd.binary_fill_holes(diff)
@@ -60,8 +64,13 @@ if __name__ == '__main__':
         inner.append(ww - 1 - xx if nm[1] == 'l' else xx)                    # its side that faces the middle of the map
         inner.append(hh - 1 - yy if nm[0] == 't' else yy)
         dist = np.minimum(*inner)
-        rng = np.random.RandomState({'tl': 1, 'tr': 2, 'bl': 3, 'br': 4}[nm]); wob = nd.gaussian_filter(rng.rand(hh, ww), 5); wob = (wob - wob.mean()) / wob.std() * 6
-        keep &= dist > 16 + wob
+        rng = np.random.RandomState({'tl': 1, 'tr': 2, 'bl': 3, 'br': 4}.get(nm, 5)); wob = nd.gaussian_filter(rng.rand(hh, ww), 5); wob = (wob - wob.mean()) / wob.std() * 6
+        if not strip: keep &= dist > 16 + wob
+        if strip:                                                              # the whole map: only the border, never the town in the middle
+            edge_d = np.minimum.reduce([xx, ww - 1 - xx, yy, hh - 1 - yy]); keep &= edge_d < 150 + wob * 3
+            # only the border forest itself: pieces that reach the edge of the map, or big ones; never a loose bit
+            lab, n = nd.label(keep); s = nd.sum(keep, lab, range(1, n + 1)); edge_ids = set(np.unique(np.r_[lab[:3].ravel(), lab[-3:].ravel(), lab[:, :3].ravel(), lab[:, -3:].ravel()])) - {0}
+            keep = np.isin(lab, [i + 1 for i, z in enumerate(s) if z > 2500 or (i + 1) in edge_ids])
         keep = nd.binary_opening(keep, iterations=1)
         diff = keep & ~protect[y0:y1, x0:x1]
         out = np.zeros(new.shape[:2] + (4,), np.uint8); out[..., :3] = new; out[..., 3] = diff * 255

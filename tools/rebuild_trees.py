@@ -129,17 +129,18 @@ w_ = w_ * ~(big(KEEP, 2) & centre)[..., None]
 night_g = np.round(night_c * (1 - w_) + NIfit * w_).astype(np.uint8)
 
 # ================= 3c. the four corner forests (tools/make_corners.py), painted on, solid =================
-sys.path.insert(0, 'tools'); from corner_shapes import BOXES as CBOX
+sys.path.insert(0, 'tools'); from corner_shapes import BOXES as CBOX, STRIPS as CSTRIP
 CORNER = np.zeros((H, W), bool)
 def nightify_rgb(a, alpha):
     o = a.astype(float); r_, g_, b_ = o[..., 0], o[..., 1], o[..., 2]
     bulb = ((r_ > 190) & (g_ < 120)) | ((b_ > 190) & (r_ < 120) & (g_ < 170)) | ((r_ > 200) & (g_ > 170) & (b_ < 110))
     dark = np.stack([r_ * .22 + 4, g_ * .30 + 10, b_ * .46 + 30], -1); o = np.where(bulb[..., None], o * .9, dark)
     return o.clip(0, 255).astype(np.uint8)
-for nm, (x0, y0, x1, y1) in CBOX.items():
+for nm, (x0, y0, x1, y1) in list(CBOX.items()) + list(CSTRIP.items()):
     try: cimg = np.asarray(Image.open(CDIR + f'corner-{nm}.png').convert('RGBA'))
     except FileNotFoundError: continue
     a = cimg[..., 3] > 0; ch, cw = a.shape
+    if nm in CSTRIP: a &= ~CORNER[y0:y0 + ch, x0:x0 + cw]          # where a corner already painted, the corner wins
     day_g[y0:y0 + ch, x0:x0 + cw][a] = cimg[..., :3][a]
     night_g[y0:y0 + ch, x0:x0 + cw][a] = nightify_rgb(cimg[..., :3], a)[a]
     CORNER[y0:y0 + ch, x0:x0 + cw] |= a
@@ -208,6 +209,9 @@ out = []
 for kd, fx, fb in placed:
     if any(bx + 4 < fx < bx + bw - 4 and by + 20 < fb < by + bh + 2 for bx, by, bw, bh in BUILDINGS): continue
     if CORNER[min(H - 1, max(0, fb - 6)):min(H, fb + 10), max(0, fx - 8):fx + 9].any(): continue     # the corner forest stands there now
+    v_ = VAR[kd]; sx0, sy0 = fx - v_['fx'], fb - v_['base']; ys_, xs_ = np.nonzero(v_['solid']); ty_, tx_ = ys_ + sy0, xs_ + sx0
+    ok_ = (ty_ >= 0) & (ty_ < H) & (tx_ >= 0) & (tx_ < W)
+    if CORNER[ty_[ok_], tx_[ok_]].mean() > .12: continue                                              # a tree half in the forest looks merged into it (his note)
     for bx, by, bw, bh in BUILDINGS:
         if kd == 'tallpine' and abs(fx - (bx + 87)) < 52 and by + bh < fb < by + bh + 90: kd = 'smallpine'
     out.append((kd, fx, fb))
@@ -250,6 +254,8 @@ def compose(ground, sh):
     for sx_, sy_, w, h, x, y, base, fx, fw, kd in items:
         c.alpha_composite(s.crop((sx_, sy_, sx_ + w, sy_ + h)), (max(0, x), max(0, y)), (max(0, -x), max(0, -y), w, h))
     return c.convert('RGB')
+if PREVIEW and len(sys.argv) > 4:                                   # preview <corner dir> <out> <ground prefix>: also save the bare grounds (no trees)
+    Image.fromarray(day_g).save(sys.argv[4] + '-day.png'); Image.fromarray(night_g).save(sys.argv[4] + '-night.png')
 dp = compose(day_g, sheet); npv = compose(night_g, nightify(sheet))
 o = Image.new('RGB', (W * 2 + 10, H)); o.paste(dp, (0, 0)); o.paste(npv, (W + 10, 0)); o.save(POUT or BIG + 'rebuild-preview.png')
 if PREVIEW: sys.exit()
