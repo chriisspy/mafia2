@@ -20,13 +20,15 @@
 const RODS=[
   {id:'twig',name:'Twig Rod',price:0,ten:1.45,reel:.85,win:.7,luck:0,range:.55,blurb:'Free. Short casts. The line snaps easily.'},
   {id:'oak',name:'Oak Rod',price:400,ten:1.15,reel:1,win:.9,luck:1,range:.72,blurb:'Casts further. A stronger line and better fish.'},
-  {id:'steel',name:'Steel Rod',price:2000,ten:.92,reel:1.25,win:1.05,luck:2,range:.88,blurb:'Reaches the deep water. Reels fast.'},
-  {id:'gold',name:'Golden Rod',price:7500,ten:.72,reel:1.5,win:1.25,luck:3.5,range:1,blurb:'The best there is. Rare fish love it.'}];
+  {id:'steel',name:'Steel Rod',price:2000,ten:.92,reel:1.25,win:1.05,luck:2,range:.88,pay:1.5,blurb:'Reaches the deep water. Fish sell for 1.5x.'},
+  {id:'gold',name:'Golden Rod',price:7500,ten:.72,reel:1.5,win:1.25,luck:3.5,range:1,pay:2.5,blurb:'The best there is. Fish sell for 2.5x.'}];
 /* what you carry: your rods, your bait and the fish you have not sold yet (each: fish, cm, coins). Kept on the phone. */
 const KIT={rod:'twig',rods:['twig'],bait:10,bag:[]};
 try{Object.assign(KIT,JSON.parse(localStorage.getItem('m2_fishkit')||'{}'));}catch(e){}
 function kitSave(){try{localStorage.setItem('m2_fishkit',JSON.stringify(KIT));}catch(e){}}
 const fishRod=()=>RODS.find(r=>r.id===KIT.rod)||RODS[0];
+/* what Joe pays for a fish: its own worth times the rod you are using (his call, 18 Nov: Steel 1.5x, Golden 2.5x). The bag keeps the plain worth. */
+const fishPay=v=>Math.round(v*(fishRod().pay||1));
 const FISH_BAIT_IMG='<img class="bic" src="assets/fishing/bait.png?v='+BUILD+'" alt="bait">';   /* the bait icon: PixelLab, 16 x 16, shown at 2x like every 16-grid icon */
 const FISH_BAG=12,BAIT_PACK=10,BAIT_PRICE=30;   /* the bag holds 12 fish; Joe sells 10 bait for 30 coins */
 /* sheet cell, name, rarity, shortest and longest (cm), coins for a middling one, how hard it pulls, seconds to hook it, shadow size */
@@ -43,7 +45,21 @@ const FISHES=[
   {id:'koi',name:'Koi',rar:'epic',min:40,max:82,val:90,str:1.15,win:.7,s:1},
   {id:'eel',name:'Baby Ice Whale',rar:'epic',min:90,max:160,val:110,str:1.25,win:.7,s:2},
   {id:'gold',name:'Golden Fish',rar:'legendary',min:20,max:40,val:320,str:1.45,win:.55,s:1},
-  {id:'cod',name:'The Codfather',rar:'legendary',min:70,max:120,val:420,str:1.6,win:.55,s:2}];
+  {id:'cod',name:'The Codfather',rar:'legendary',min:70,max:120,val:420,str:1.6,win:.55,s:2},
+  /* 18 Nov (his ask): more fish, some real, some silly. Only ever ADD AT THE END: the bag keeps a fish by its place in this list. */
+  {id:'bass',name:'Bass',rar:'common',min:25,max:55,val:11,str:.55,win:1,s:1},
+  {id:'salmon',name:'Salmon',rar:'rare',min:50,max:100,val:30,str:.85,win:.85,s:2},
+  {id:'puffer',name:'Pufferfish',rar:'rare',min:15,max:35,val:36,str:.7,win:.85,s:0},
+  {id:'angler',name:'Anglerfish',rar:'epic',min:30,max:70,val:100,str:1.2,win:.7,s:1},
+  {id:'sturgeon',name:'Sturgeon',rar:'epic',min:100,max:200,val:120,str:1.3,win:.7,s:2},
+  {id:'blob',name:'Blobfish',rar:'rare',min:20,max:40,val:28,str:.6,win:.85,s:1},
+  {id:'shark',name:'Loan Shark',rar:'legendary',min:120,max:220,val:380,str:1.55,win:.55,s:2},
+  {id:'sleepy',name:'Sleeps With The Fishes',rar:'epic',min:30,max:60,val:95,str:1,win:.7,s:1},
+  {id:'clown',name:'Clown Fish',rar:'rare',min:10,max:20,val:38,str:.75,win:.85,s:0},
+  {id:'star',name:'Movie Star',rar:'epic',min:15,max:30,val:105,str:1.05,win:.7,s:0},
+  {id:'finger',name:'Battered Fish',rar:'common',min:12,max:25,val:12,str:.45,win:1,s:0},
+  {id:'plug',name:'Electric Eel',rar:'rare',min:60,max:120,val:34,str:.9,win:.85,s:2},
+  {id:'sword',name:'Sword Fish',rar:'epic',min:150,max:280,val:130,str:1.35,win:.7,s:2}];
 /* how likely each rarity is, by how far out the shadow lives: near the jetty, the middle, the far side */
 const FISH_ODDS=[{common:82,rare:17,epic:1,legendary:0},{common:64,rare:28,epic:7,legendary:1},{common:50,rare:32,epic:15,legendary:3}];
 const FISH_RC={junk:'#9a8f86',common:'#7bc96f',rare:'#6fb5ff',epic:'#c58bff',legendary:'#ffcf4a'};
@@ -193,14 +209,14 @@ function fishCard(i){const F=FISH,K=FISHES[i],pct=Math.random(),cm=Math.round(le
   const L=F.log[K.id]||(F.log[K.id]={n:0,best:0}),isNew=!L.n,rec=!isNew&&cm>L.best&&K.rar!=='junk';L.n++;L.best=Math.max(L.best,cm);fishSaveLog();KIT.bag.push([i,cm,gain]);kitSave();
   fishPic($('#fcCv'),i,2);$('#fcName').textContent=K.name;$('#fcName').style.color=K.rar==='junk'?'':FISH_RC[K.rar];$('#fcStage').style.setProperty('--rc',FISH_RC[K.rar]);
   $('#fcTag').textContent=isNew?'NEW':rec?'RECORD':'';$('#fcTag').style.display=isNew||rec?'':'none';
-  $('#fcInfo').innerHTML=`<b style="color:${FISH_RC[K.rar]}">${K.rar.toUpperCase()}</b> · ${cm} cm · <span class="wal">worth ${ic('coin',2)}${gain}</span>`;
+  $('#fcInfo').innerHTML=`<b style="color:${FISH_RC[K.rar]}">${K.rar.toUpperCase()}</b> · ${cm} cm · <span class="wal">worth ${ic('coin',2)}${fishPay(gain)}</span>`;
   $('#fcAgain').textContent=KIT.bag.length>=FISH_BAG?'Bag is full':fishBait()?'Cast again':'Out of bait';$('#fishModal').classList.add('on');
   if(K.rar==='epic'||K.rar==='legendary')winSound(K.rar,.1);else sfx(K.rar==='junk'?'nope':K.rar==='rare'?'rare':'prize');
   if(K.rar==='legendary'&&NET.on)wlSay('You caught '+K.name+'!','good');}
-function fishBook(){$('#fishBookGrid').innerHTML=FISHES.map((K,i)=>{const L=FISH.log[K.id],own=L&&L.n;
+function fishBook(){$('#fishBookGrid').innerHTML=FISHES.map((K,i)=>{if(K.rar==='junk')return'';   /* the book is for fish: the boot and the tin can are not in it (his call, 18 Nov) */const L=FISH.log[K.id],own=L&&L.n;
     return `<div class="ocard fcard${own?'':' lock'}" style="--rc:${own?FISH_RC[K.rar]:'#8a7f9c'}"><canvas width="48" height="32" data-i="${i}" data-d="${own?0:1}"></canvas><span>${own?K.name:'? ? ?'}</span><em>${own?(K.rar==='junk'?'x'+L.n:L.best+' cm · x'+L.n):K.rar==='junk'?'JUNK':K.rar.toUpperCase()}</em></div>`;}).join('');
   document.querySelectorAll('#fishBookGrid canvas').forEach(c=>fishPic(c,+c.dataset.i,1,c.dataset.d==='1'));
-  const got=FISHES.filter(K=>FISH.log[K.id]&&FISH.log[K.id].n).length;$('#fishBookN').textContent=got+' of '+FISHES.length;$('#fishModal').classList.remove('on');$('#fishBookModal').classList.add('on');}
+  const real=FISHES.filter(K=>K.rar!=='junk'),got=real.filter(K=>FISH.log[K.id]&&FISH.log[K.id].n).length;$('#fishBookN').textContent=got+' of '+real.length;$('#fishModal').classList.remove('on');$('#fishBookModal').classList.add('on');}
 $('#fcAgain').onclick=()=>{$('#fishModal').classList.remove('on');sfx('click');fishPh('idle');};
 $('#fcBook').onclick=()=>{sfx('click');fishBook();};
 $('#fishBookX').onclick=()=>{$('#fishBookModal').classList.remove('on');if(FISH.ph==='card')fishPh('idle');};
@@ -225,8 +241,8 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
   for(const r of F.rip){const k=r.t/r.life,im=fishRing(Math.max(2,Math.round(2+k*r.max)),k>.55,'#d6ecff');lx.drawImage(im,X(r.x)-(im.width>>1),Y(r.y)-(im.height>>1));}
   const sim=IMG['fish/splash'];for(const s of F.spl){const f=Math.min(4,Math.floor(s.t/.1));if(sim)lx.drawImage(sim,f*48,0,48,48,X(s.x)-24,Y(s.y)-28,48,48);}
   /* where the float will land */
-  if(F.on&&F.ph==='charge'&&F.tg){const q=Math.floor(t/120)%2,im=fishRing(5+q,false,'#ffd25e'),gx=X(F.tg[0]),gy=Y(F.tg[1]);lx.drawImage(im,gx-(im.width>>1),gy-(im.height>>1));lx.fillStyle='#fff6cf';lx.fillRect(gx,gy,1,1);
-    const tp=fishTip(m);for(let i=1;i<9;i++){const k=i/9;lx.fillStyle=i%2?'#ffd25e':'#fff6cf';lx.fillRect(Math.round(lerp(X(tp[0]),gx,k)),Math.round(lerp(Y(tp[1]),gy,k)-Math.sin(k*Math.PI)*10),1,1);}}
+  if(F.on&&F.ph==='charge'&&F.tg){const q=Math.floor(t/120)%2,im=fishRing(5+q,false,q?'#ffffff':'#8fc4ff'),gx=X(F.tg[0]),gy=Y(F.tg[1]);lx.drawImage(im,gx-(im.width>>1),gy-(im.height>>1));lx.fillStyle='#ffffff';lx.fillRect(gx,gy,1,1);
+    const tp=fishTip(m);for(let i=1;i<9;i++){const k=i/9;lx.fillStyle=i%2?'#8fc4ff':'#ffffff';lx.fillRect(Math.round(lerp(X(tp[0]),gx,k)),Math.round(lerp(Y(tp[1]),gy,k)-Math.sin(k*Math.PI)*10),1,1);}}
   /* you, with the rod */
   const me=people.find(p=>p.e===m),rest=people.filter(p=>p!==me),hits=new Map();
   if(me&&F.on){const c=fishCell(),tip=fishTip(m),px=XP(m.x),py=YP(m.y);
@@ -237,11 +253,11 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
     if(B&&F.ph!=='fight'){const dip=Math.round(Math.min(2,F.dip)),bx=X(B.x),by=Y(B.y-B.z)+(F.ph==='fly'?0:dip+Math.round(Math.sin(t*.004)*.6));
       fishLine(X(tip[0]),Y(tip[1]),bx,by-2,'#eef6ff',F.ph==='fly'?0:5);
       if(dip<2){lx.fillStyle='#14203c';lx.fillRect(bx-2,by-3,4,5);lx.fillStyle='#e4544f';lx.fillRect(bx-1,by-2,2,2);lx.fillStyle='#fff';lx.fillRect(bx-1,by,2,1);}}
-    if(F.ph==='fight'&&F.hook){const col=F.ten>.8?'#e4544f':F.ten>.55?'#ffd25e':'#eef6ff';fishLine(X(tip[0]),Y(tip[1]),X(F.hook.x),Y(F.hook.y),col,F.held?0:4);
+    if(F.ph==='fight'&&F.hook){const col=F.ten>.8?'#e4544f':F.ten>.55?'#8fc4ff':'#eef6ff';fishLine(X(tip[0]),Y(tip[1]),X(F.hook.x),Y(F.hook.y),col,F.held?0:4);
       const bx=Math.round(px)-21,by=Math.round(py)-52,w=42;lx.fillStyle='#14203c';lx.fillRect(bx-1,by-1,w+2,7);lx.fillStyle='#2a3a66';lx.fillRect(bx,by,w,5);
-      lx.fillStyle='#5fc46f';lx.fillRect(bx,by,Math.round(w*.55),5);lx.fillStyle='#ffd25e';lx.fillRect(bx+Math.round(w*.55),by,Math.round(w*.25),5);lx.fillStyle='#e4544f';lx.fillRect(bx+Math.round(w*.8),by,w-Math.round(w*.8),5);
+      lx.fillStyle='#3f86e0';lx.fillRect(bx,by,Math.round(w*.55),5);lx.fillStyle='#e8f2ff';lx.fillRect(bx+Math.round(w*.55),by,Math.round(w*.25),5);   /* blue = safe, white = getting tight, red = about to snap */lx.fillStyle='#e4544f';lx.fillRect(bx+Math.round(w*.8),by,w-Math.round(w*.8),5);
       const nx=bx+Math.round(clamp(F.ten,0,1)*(w-1));lx.fillStyle='#14203c';lx.fillRect(nx-1,by-3,3,11);lx.fillStyle='#fff';lx.fillRect(nx,by-2,1,9);}
-    if(F.ph==='bite'&&Math.floor(t/90)%2){const bx=X(B?B.x:m.x)-3,by=Y(B?B.y:m.y-30)-20;   /* the "!" pops up over the fish on the hook, not over you (his call, 17 Nov) */lx.fillStyle='#14203c';lx.fillRect(bx-1,by-1,8,11);lx.fillStyle='#ffd25e';lx.fillRect(bx,by,6,9);lx.fillStyle='#14203c';lx.fillRect(bx+2,by+1,2,4);lx.fillRect(bx+2,by+6,2,2);}
+    if(F.ph==='bite'&&Math.floor(t/90)%2){const bx=X(B?B.x:m.x)-3,by=Y(B?B.y:m.y-30)-20;   /* the "!" pops up over the fish on the hook, not over you (his call, 17 Nov) */lx.fillStyle='#14203c';lx.fillRect(bx-1,by-1,8,11);lx.fillStyle='#ffffff';lx.fillRect(bx,by,6,9);lx.fillStyle='#2a63b8';lx.fillRect(bx+2,by+1,2,4);lx.fillRect(bx+2,by+6,2,2);}
     if(F.land){const L=F.land,k=Math.min(1,L.t/.6),fx=lerp(X(L.x0),px,k),fy=lerp(Y(L.y0),py-44,k)-Math.sin(k*Math.PI)*26;lx.drawImage(IMG['fish/sheet'],L.kind*48,0,48,32,Math.round(fx)-24,Math.round(fy)-16,48,32);}
   }else if(me)rest.push(me);
   for(const[p,h]of drawScene(rest,null,img,null))hits.set(p,h);
@@ -256,22 +272,27 @@ fetch('assets/fishing/rods.json?v='+BUILD).then(r=>r.json()).then(j=>{FISH.rods=
 /* ================= FISHERMAN JOE (17 Nov, his ask): a stall by the lake =================
    You sell your fish here, buy better rods and buy bait. The stall and Joe are one PixelLab picture (assets/fishing/stall.png),
    drawn in the town like the wheel: in order with the people, its counter solid. Tap it, or walk up to the counter. */
-const STALL={x:493,y:496,w:96,h:96,stand:[541,584]};   /* by the lake, where a tall pine stood (his pick, 17 Nov: "place it here, but remove the tree"): any tree whose foot is under the counter is left out of the day town (trees()) */
-function stallObj(){return{img:IMG['fish/stall'],x:STALL.x,y:STALL.y,base:STALL.y+80};}
-const stallSolid=(px,py)=>px>STALL.x+10&&px<STALL.x+86&&py>STALL.y+54&&py<STALL.y+81;
-const stallHit=(x,y)=>x>STALL.x+8&&x<STALL.x+88&&y>STALL.y+18&&y<STALL.y+84;
+const STALL={x:474,y:480,w:128,h:112,foot:96,stand:[536,585]};   /* by the lake, where a tall pine stood (his pick, 17 Nov: "place it here, but remove the tree"): any tree whose foot is under the counter is left out of the day town (trees()). 18 Nov: the roomier stall (128 x 112, its feet at row 96, its ground shadow painted into the picture) */
+/* JOE IS ALIVE (his ask, 18 Nov): the stall is drawn in three goes: the stall itself (with its shadow on the ground), then Joe as a real character
+   standing inside it (so he breathes and blinks like everyone else: SP.joe, made from assets/fishing/joe.png and the eye places in joe.json), then
+   stall-front.png, the same stall with its dark inside cut out, so the counter, the fish and the awning are in front of him. */
+function stallObj(){const J=FISH.joe;if(J&&!SP.joe&&IMG['fish/joe'])SP.joe={front:makeDir(IMG['fish/joe'],false,J.eyes)};
+  return{img:IMG['fish/stall'],x:STALL.x,y:STALL.y,base:STALL.y+STALL.foot,after(){if(!J||!SP.joe)return;
+    drawChar({name:'joe',dir:'front',x:STALL.x+J.x,y:STALL.y+J.y,t:performance.now(),phase:900,noShadow:true});lx.drawImage(IMG['fish/stallf'],X(STALL.x),Y(STALL.y));}};}
+const stallSolid=(px,py)=>px>STALL.x+19&&px<STALL.x+105&&py>STALL.y+70&&py<STALL.y+STALL.foot+1;
+const stallHit=(x,y)=>x>STALL.x+12&&x<STALL.x+106&&y>STALL.y+12&&y<STALL.y+STALL.foot+3;
 function joeOpen(){const now=performance.now();if(now-(STALL.t||0)<900||document.querySelector('.modal.on'))return;const m=WL.me;if(m){m.path=[];m.todo=null;m.walk=false;m.dir='back';}
   joeUI();$('#joeModal').classList.add('on');sfx('open');}
-function joeUI(){const worth=KIT.bag.reduce((a,b)=>a+b[2],0),free=!LAB&&KIT.bait<=0&&coins<BAIT_PRICE&&!KIT.bag.length;
+function joeUI(){const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0),free=!LAB&&KIT.bait<=0&&coins<BAIT_PRICE&&!KIT.bag.length;
   $('#joeBag').innerHTML=KIT.bag.length?KIT.bag.map(b=>`<canvas width="48" height="32" data-i="${b[0]}"></canvas>`).join(''):'<div class="small">Your bag is empty. Go and catch something.</div>';
   document.querySelectorAll('#joeBag canvas').forEach(c=>fishPic(c,+c.dataset.i,1));
-  $('#joeBagN').textContent=KIT.bag.length+' of '+FISH_BAG;$('#joeSell').disabled=!KIT.bag.length;$('#joeSell').innerHTML=KIT.bag.length?'Sell all · '+ic('coin',2)+' '+worth:'Nothing to sell';
+  $('#joeBagN').textContent=KIT.bag.length+' of '+FISH_BAG;$('#joeSell').disabled=!KIT.bag.length;$('#joeSell').innerHTML=KIT.bag.length?'Sell all · '+ic('coin',2)+' '+worth+((fishRod().pay||1)>1?' ('+fishRod().pay+'x)':''):'Nothing to sell';
   $('#joeRods').innerHTML=RODS.map(r=>{const own=KIT.rods.includes(r.id),on=KIT.rod===r.id;
     return `<div class="jrod${on?' on':''}"><img class="jimg" src="assets/fishing/rod-${r.id}.png?v=${BUILD}" alt=""><div class="jt"><b>${r.name}</b><div class="small">${r.blurb}</div></div><button class="btn${own?'':' go'}" data-r="${r.id}"${on||(!own&&coins<r.price)?' disabled':''}>${on?'In use':own?'Use':ic('coin',2)+' '+r.price}</button></div>`;}).join('');
   $('#joeBaitN').textContent=LAB?'99':KIT.bait;$('#joeBait').disabled=!free&&coins<BAIT_PRICE;$('#joeBait').innerHTML=free?FISH_BAIT_IMG+' Take 5 on the house':FISH_BAIT_IMG+' x'+BAIT_PACK+' · '+ic('coin',2)+' '+BAIT_PRICE;$('#joeBait').dataset.free=free?'1':'';
   paintCoins();}
 $('#joeX').onclick=()=>{$('#joeModal').classList.remove('on');STALL.t=performance.now();sfx('close');};
-$('#joeSell').onclick=()=>{const worth=KIT.bag.reduce((a,b)=>a+b[2],0);if(!worth)return;coins+=worth;KIT.bag=[];kitSave();saveInv();sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),200+k*140);wlSay('Sold for '+worth+' coins.','good');joeUI();};
+$('#joeSell').onclick=()=>{const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0);if(!worth)return;coins+=worth;KIT.bag=[];kitSave();saveInv();sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),200+k*140);wlSay('Sold for '+worth+' coins.','good');joeUI();};
 $('#joeRods').onclick=e=>{const b=e.target.closest('button');if(!b)return;const r=RODS.find(q=>q.id===b.dataset.r);if(!r)return;
   if(!KIT.rods.includes(r.id)){if(coins<r.price)return;coins-=r.price;KIT.rods.push(r.id);saveInv();sfx('rare');wlSay('You bought the '+r.name+'.','good');}else sfx('click');
   KIT.rod=r.id;kitSave();joeUI();};

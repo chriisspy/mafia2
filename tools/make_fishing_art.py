@@ -14,8 +14,10 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage as nd
 SRC = '../mafia2-art/fishing/pl/'; OUT = 'assets/fishing/'
-FISH_ORDER = ['boot', 'can', 'minnow', 'perch', 'carp', 'sunfish', 'trout', 'pike', 'catfish', 'koi', 'eel', 'gold', 'cod']
-FLIP = {'minnow', 'cod'}                       # these two came out facing right
+FISH_ORDER = ['boot', 'can', 'minnow', 'perch', 'carp', 'sunfish', 'trout', 'pike', 'catfish', 'koi', 'eel', 'gold', 'cod',
+              # 18 Nov, his ask: more fish, some real and some comical, in the style of the Koi and the Codfather (same PixelLab prompt pattern). ONLY ADD AT THE END: the bag stores a fish by its place here.
+              'bass', 'salmon', 'puffer', 'angler', 'sturgeon', 'blob', 'shark', 'sleepy', 'clown', 'star', 'finger', 'plug', 'sword']
+FLIP = {'minnow', 'cod', 'salmon'}                       # these two came out facing right
 
 def hard(im):                                  # no half see-through pixels
     a = np.asarray(im.convert('RGBA')).copy(); a[..., 3] = np.where(a[..., 3] > 127, 255, 0); a[a[..., 3] == 0] = 0; return a
@@ -169,7 +171,7 @@ for old in ('beanie.png', 'beanie.json'):
     if os.path.exists(OUT + old): os.remove(OUT + old)
 
 # ---- Fisherman Joe's stall (PixelLab map object 477e4fd3)
-Image.fromarray(hard(Image.open(SRC + 'stall.png'))).save(OUT + 'stall.png', optimize=True)
+import subprocess, sys as _sys; subprocess.run([_sys.executable, '-I', 'tools/make_joe.py'], check=True)   # the stall, with OUR Joe behind the counter (tools/make_joe.py)
 # ---- a picture of each rod for Joe's shop (PixelLab map objects, 64 x 64: his ask, "images for the rods like we did for the case")
 for k in ('twig', 'oak', 'steel', 'gold'): Image.fromarray(hard(Image.open(f'{SRC}rod-{k}.png'))).save(f'{OUT}rod-{k}.png', optimize=True)
 # ---- the bait icon (PixelLab create_image_pixen, 16 x 16: a fat pink worm (his pick: the first of three); his ask: an icon for buying bait and for the bait counter, at the small pixel scale)
