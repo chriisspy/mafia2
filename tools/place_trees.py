@@ -26,7 +26,10 @@ KIND = {**{k: 'plant' for k in (8, 9, 13, 24, 28, 33, 37, 48, 51, 52, 63, 64)},
         **{k: 'widebush' for k in (18, 19, 30, 31, 36, 45, 58)},
         **{k: 'smallpine' for k in (39, 67)},
         **{k: 'tallpine' for k in (17, 23, 25, 38, 44, 49, 74, 76)},
-        42: ['plant', 'widebush'], 77: ['widebush', 'plant'], 50: ['roundbush', 'roundbush'], 66: ['roundbush', 'roundbush']}
+        42: ['plant', 'widebush'], 77: ['widebush', 'plant'], 50: ['roundbush', 'roundbush'], 66: ['roundbush', 'roundbush'],
+        # 18 Nov his call "just replace all of them with these new ones": the round trees with bows become his tall pines too
+        **{k: 'tallpine' for k in (3, 4, 11, 14, 21, 22, 26, 29, 32, 35, 43, 54, 55, 61, 65)}, 34: 'widebush', 57: ['widebush', 'roundbush']}
+# everything else on the list is a piece of the edge forest: it stays painted on exactly as it was ("edge forest stays the same")
 
 # ---- 1. his cut-outs at game size ----
 src = np.asarray(Image.open(ART + 'plants-and-trees-cut-out-smaller.png').convert('RGBA')).astype(int)
@@ -89,14 +92,56 @@ day_g[own_d] = day_with[own_d]
 night_g = np.asarray(Image.open(BIG + 'night-no-trees.png').convert('RGB')).copy(); his_n = np.zeros_like(night_g); his_n[:H0, OX:OX + W0] = np.asarray(Image.open(X + 'night.png').convert('RGB'))
 own_n = nd.binary_dilation(np.any(OWN, 0), iterations=10) & ~rep_core
 night_g[own_n & centre] = his_n[own_n & centre]                                       # in his town: his own night trees
-# out in the new ground (the painter's trees): the day tree, in night colours, on the night snow
-out_tree = np.any(OWN, 0) & ~centre
-if out_tree.any():
-    dw = day_with.astype(float); r_, g_, b_ = dw[..., 0], dw[..., 1], dw[..., 2]
-    snowpx = (r_ > 150) & (g_ > 185) & (b_ > 215)
-    tm = nd.binary_fill_holes(nd.binary_closing(out_tree, iterations=2)) & ~(snowpx & ~out_tree)
-    nn = np.stack([r_ * .22 + 4, g_ * .30 + 10, b_ * .46 + 30], -1); bulb = ((r_ > 190) & (g_ < 120)) | ((b_ > 190) & (r_ < 120) & (g_ < 170)) | ((r_ > 200) & (g_ > 170) & (b_ < 110))
-    nn[bulb] = dw[bulb] * .9; night_g[tm] = nn[tm].clip(0, 255).astype(np.uint8)
+# THE JOIN (18 Nov, his note: "i dont want to see the harsh line from the map expansion"): along the edge of his picture the
+# painter's version of the same place is mixed in, in little blobs that thin out over SEAM px, so there is no straight line.
+# Only where both show the same kind of ground (snow and snow, forest and forest...). Night: a soft fade (his night is soft).
+SEAM = 34
+def kind_of(a):
+    a = a.astype(int); r, g, b = a[..., 0], a[..., 1], a[..., 2]; k = np.zeros(a.shape[:2], np.uint8)
+    k[(r > 140) & (g > 175) & (b > 205)] = 1                                                   # snow
+    k[(g > r + 30) & (g > b + 30) & (g > 100)] = 2                                             # grass
+    k[(r < 70) & (g < 110) & (b < 110) & ~((g > r + 30) & (g > b + 30) & (g > 100))] = 3       # forest, dark
+    k[(r > 120) & (r > b + 18) & (g > b) & (r - g < 45) & (r + g + b > 330)] = 4               # cobbles, dirt
+    k[(b > g + 25) & (g > r + 15) & (r < 125) & (b > 120)] = 5                                 # water
+    return k
+def shrink(path, cache):
+    try: return np.asarray(Image.open(cache).convert('RGB'))
+    except FileNotFoundError: pass
+    a = np.asarray(Image.open(path).convert('RGB')); sy, sx = a.shape[0] / H, a.shape[1] / W
+    xs = [(int(round((x + .3) * sx)), int(round((x + .7) * sx)) + 1) for x in range(W)]
+    ys = [(int(round((y + .3) * sy)), int(round((y + .7) * sy)) + 1) for y in range(H)]
+    out = np.zeros((H, W, 3), np.uint8)
+    for y in range(H):
+        row = a[ys[y][0]:ys[y][1]]
+        for x in range(W): out[y, x] = np.median(row[:, xs[x][0]:xs[x][1]].reshape(-1, 3), axis=0)
+    Image.fromarray(out).save(cache); return out
+dist_in = np.minimum.reduce([XX - OX, OX + W0 - 1 - XX, (H0 - 1 - YY) + 0 * XX]).astype(float)   # how far inside his picture (his top edge is the map's top edge: no join there)
+band = centre & (dist_in < SEAM)
+rng = np.random.RandomState(11); blob = nd.gaussian_filter(rng.rand(H, W), 1.3); blob = (blob - blob.min()) / (blob.max() - blob.min())
+AI_D = shrink(BIG + 'bigmap-src.png', BIG + 'bigmap-src-800.png')
+same = kind_of(AI_D) == kind_of(day_g)
+take = band & same & (blob < 1 - dist_in / SEAM) & ~nd.binary_dilation(np.any(REP, 0), iterations=3)
+day_g[take] = AI_D[take]
+# little leftovers in the open (a shadow or a stump that was just outside a lifted tree's hole): back to the snow round them
+k = kind_of(day_g); grey = (np.abs(day_g.astype(int) - day_g.astype(int).mean(-1, keepdims=True)).max(-1) < 22) & (day_g.mean(-1) > 105) & (day_g.mean(-1) < 212)
+odd = (k == 0) | (k == 3) | grey
+lab_, n_ = nd.label(odd); sz = nd.sum(odd, lab_, range(1, n_ + 1)); small = np.isin(lab_, [i + 1 for i, z in enumerate(sz) if z < 70])
+ring = nd.binary_dilation(small, iterations=3) & ~small
+snowy_ring = nd.uniform_filter((k == 1).astype(float), 9) > .6
+SNOWMAN = (40, 470, 100, 520)                                                                # (map picture px) his snowman stays
+keep_box = np.zeros((H, W), bool); keep_box[SNOWMAN[1]:SNOWMAN[3], SNOWMAN[0]:SNOWMAN[2]] = True
+fix = small & snowy_ring & ~keep_box & ~nd.binary_dilation(own_d, iterations=2)
+ix = nd.distance_transform_edt(fix | ~(k == 1), return_distances=False, return_indices=True)
+day_g[fix] = day_g[ix[0], ix[1]][fix]
+# night: the painter's whole night, its colours fitted once to his (the same fit everywhere, so it makes no line of its own),
+# outside his picture; and a soft fade from his into it over the last NSEAM px inside his edge
+NSEAM = 56
+NI = shrink(BIG + 'night-notrees-src.png', BIG + 'night-notrees-800.png').astype(float)
+fitm = centre & (dist_in > 4) & (dist_in < 120) & ~nd.binary_dilation(np.any(OWN, 0) | np.any(REP, 0), iterations=6)
+A_ = np.c_[NI[fitm], np.ones(fitm.sum())]; coef = np.linalg.lstsq(A_, night_g[fitm].astype(float), rcond=None)[0]
+NIc = np.clip(np.c_[NI.reshape(-1, 3), np.ones(H * W)] @ coef, 0, 255).reshape(H, W, 3)
+w_ = np.where(centre, np.clip(1 - dist_in / NSEAM, 0, 1), 1.)[..., None]
+night_g = np.round(night_g * (1 - w_) + NIc * w_).astype(np.uint8)
 BLOCK_FULL = np.asarray(Image.open(BIG + 'block-big.png').convert('L')) > 127              # his mask + the new ground's, trees and all
 block = BLOCK_FULL & ~(nd.binary_dilation(np.any(REP, 0), iterations=2) if REP else False)  # the lifted trees are not solid any more (only their feet, in the game)
 
