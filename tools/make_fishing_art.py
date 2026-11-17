@@ -136,6 +136,8 @@ Image.fromarray(hard(Image.open(SRC + 'stall.png'))).save(OUT + 'stall.png', opt
 for k in ('twig', 'oak', 'steel', 'gold'): Image.fromarray(hard(Image.open(f'{SRC}rod-{k}.png'))).save(f'{OUT}rod-{k}.png', optimize=True)
 # ---- the bait icon (PixelLab create_image_pixen, 16 x 16: a fat pink worm (his pick: the first of three); his ask: an icon for buying bait and for the bait counter, at the small pixel scale)
 Image.fromarray(hard(Image.open(SRC + 'bait-a.png'))).save(OUT + 'bait.png', optimize=True)
+# ---- the rod on the lake's Fish button (PixelLab create_image_pixen, 16 x 16)
+Image.fromarray(hard(Image.open(SRC + 'rod-icon.png'))).save(OUT + 'rod-icon.png', optimize=True)
 
 # ---- the splash
 sp = sorted(f for f in os.listdir(SRC) if f.startswith('splash_'))

@@ -107,7 +107,11 @@ function fishPh(p){const F=FISH;F.ph=p;F.t=0;
   else if(p==='fly'||p==='wait')fishSay('Wait for a bite...');
   else if(p==='bite')fishSay('TAP NOW!');
   else if(p==='fight')fishSay('Hold to reel. Let go on red.');}
-function fishStart(){const F=FISH,m=WL.me;if(F.on||!m||m.loc!==LAKE)return;F.on=true;F.held=false;F.press=false;F.bob=null;F.cand=null;F.hook=null;F.land=null;m.x=FISH_ME[0];m.y=FISH_ME[1];m.dir='back';m.walk=false;m.path=[];
+/* FISH FROM WHERE YOU STAND (his ask, 17 Nov): anywhere on the jetty or the bank with open water straight ahead (you always face up the lake:
+   the rod pictures are from behind). fishNear = the first bit of water in front of you, or null when there is none within reach. */
+function fishNear(m){if(!m||m.loc!==LAKE||m.ko)return null;const reach=m.y<418&&m.x>110&&m.x<170?110:34;   /* on the jetty you are out over the lake; on the bank you must be at the water's edge */
+  for(let d=6;d<=reach;d+=3)if(fishWet(m.x,m.y-d)&&fishWet(m.x,m.y-d-6))return[m.x,m.y-d-5];return null;}
+function fishStart(){const F=FISH,m=WL.me;if(F.on||!m||m.loc!==LAKE)return;F.on=true;F.held=false;F.press=false;F.bob=null;F.cand=null;F.hook=null;F.land=null;const nw=fishNear(m);if(!nw){F.on=false;wlSay('Stand at the edge of the water to fish.','bad');return;}F.near=nw;m.dir='back';m.walk=false;m.path=[];m.todo=null;
   $('#townHud').classList.add('fishing');paintCoins();fishPh('idle');sfx('open');netMove();}
 function fishStop(){const F=FISH;if(!F.on)return;F.on=false;F.held=false;F.bob=null;F.hook=null;F.land=null;if(F.cand){F.cand.st='swim';F.cand=null;}
   $('#townHud').classList.remove('fishing');fishSay('Tap the water to fish');$('#fishModal').classList.remove('on');$('#fishBookModal').classList.remove('on');}
@@ -116,7 +120,7 @@ function fishLose(msg){const F=FISH;if(F.cand){F.cand.st='flee';F.cand.t=0;F.can
 /* ---- taps ---- */
 function fishTap(e,m,x,y){const F=FISH;
   if(F.on){if(F.ph!=='card'&&F.ph!=='land'){F.held=true;F.press=true;F.px=x;}return true;}
-  if(fishWet(x,y)||y<316){wlGo(m,FISH_ME[0],FISH_ME[1],()=>{m.dir='back';fishStart();});return true;}
+  if(fishWet(x,y)||y<316){if(fishNear(m)){fishStart();F.held=true;F.press=true;F.px=x;}else wlGo(m,FISH_ME[0],FISH_ME[1],()=>{m.dir='back';fishStart();});return true;}   /* a tap on the water: fish from here if you can, else walk out to the end of the jetty */
   return false;}
 addEventListener('pointerup',()=>{FISH.held=false;});addEventListener('pointercancel',()=>{FISH.held=false;});
 cv.addEventListener('pointermove',e=>{if(FISH.on&&FISH.held)FISH.px=wxy(e)[0];});
@@ -170,7 +174,7 @@ function fishTick(dt,t,m){const F=FISH;F.fr=t;F.t+=dt;F.dip=Math.max(0,F.dip-dt*
     if(F.held){F.d-=dt*(F.burst>0?.09:.34)*RD.reel/(1+K.str*.25);F.ten+=dt*(.5+pull*.75)*RD.ten;F.reelT-=dt;if(F.reelT<=0){sfx('fish_reel');F.reelT=.07;}}
     else{F.ten-=dt*.95;F.d+=dt*pull*.085*RD.ten;}
     F.ten=Math.max(0,F.ten);F.warnT-=dt;if(F.ten>.8&&F.warnT<=0){sfx('fish_warn');F.warnT=.16;}
-    const ex=m.x,ey=m.y-30,k=clamp(F.d,0,1.3),side=Math.sin(t*.004+s.wig*.2)*(8+14*K.str)*Math.min(1,k*1.5)*(F.burst>0?1.5:1);
+    const ex=F.near[0],ey=F.near[1],k=clamp(F.d,0,1.3),side=Math.sin(t*.004+s.wig*.2)*(8+14*K.str)*Math.min(1,k*1.5)*(F.burst>0?1.5:1);
     const nx=lerp(ex,B.lx,k)+side,ny=lerp(ey,B.ly,k);s.a=Math.atan2(ny-s.y,nx-s.x)+(F.held?Math.PI:0);s.x=nx;s.y=ny;if(Math.random()<dt*5)fishRipple(s.x,s.y,6,.5);
     if(F.ten>=1){sfx('fish_snap');F.hook=null;s.st='flee';s.t=0;s.a=-Math.PI/2;F.bob=null;wlSay('The line snapped!','bad');fishPh('idle');}
     else if(F.d>=1.3){fishLose('It got away.');}
@@ -194,10 +198,12 @@ $('#fcAgain').onclick=()=>{$('#fishModal').classList.remove('on');sfx('click');f
 $('#fcBook').onclick=()=>{sfx('click');fishBook();};
 $('#fishBookX').onclick=()=>{$('#fishBookModal').classList.remove('on');if(FISH.ph==='card')fishPh('idle');};
 $('#fishBookBtn').onclick=()=>{sfx('click');fishBook();};
+$('#fishRodBtn').onclick=()=>{sfx('click');fishStart();};
 $('#fishStopBtn').onclick=()=>{sfx('close');fishStop();const H=hallOf(LAKE);wlHead(H.name,'Tap the water to fish. Walk down to leave.');};
 
 /* ---- drawing the lake: called for every frame you are there ---- */
 function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud').classList.contains('lake')){F.lakeOn=1;$('#townHud').classList.add('lake');paintCoins();if(!F.on)fishSay('Tap the water to fish');}fishTick(dt,t,m);
+  {const can=!!fishNear(m)&&!m.walk,b=$('#fishRodBtn');if(b.disabled===can)b.disabled=!can;}   /* the rod button is grey wherever you cannot fish from */
   const lhE=Hh()/Math.max(1,Math.round(W/190)),B=F.bob,foc=F.on?(B?[(m.x*2+B.x)/3,(m.y+B.y)/2+lhE*.02]:[m.x,m.y-lhE*.2]):[m.x,m.y-lhE*.08];
   F.cx+=(foc[0]-F.cx)*Math.min(1,dt*3);F.cy+=(foc[1]-F.cy)*Math.min(1,dt*3);
   view(img,F.cx,F.cy,190,{hi:true,void:'#dfeefc',loose:.8});
