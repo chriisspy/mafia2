@@ -100,7 +100,7 @@ function fishLine(x0,y0,x1,y1,col,sag){lx.fillStyle=col;const n=Math.max(2,Math.
 
 /* ---- starting and stopping ---- */
 function fishSay(a){$('#fishLine').textContent=a;$('#fishBaitN').textContent=LAB?'99':fishBait();}   /* the lake shows ONE line of words; bait and coins are the two chips beside the buttons */
-function lakeOff(){fishStop();$('#townHud').classList.remove('lake');}
+function lakeOff(){fishStop();$('#townHud').classList.remove('lake');$('#fishRodBtn').classList.remove('on');}
 function fishPh(p){const F=FISH;F.ph=p;F.t=0;
   if(p==='idle')fishSay(fishBait()?'Hold on the water to cast':'Out of bait');
   else if(p==='charge')fishSay('Let go to cast');
@@ -203,7 +203,9 @@ $('#fishStopBtn').onclick=()=>{sfx('close');fishStop();const H=hallOf(LAKE);wlHe
 
 /* ---- drawing the lake: called for every frame you are there ---- */
 function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud').classList.contains('lake')){F.lakeOn=1;$('#townHud').classList.add('lake');paintCoins();if(!F.on)fishSay('Tap the water to fish');}fishTick(dt,t,m);
-  {const can=!!fishNear(m)&&!m.walk,b=$('#fishRodBtn');if(b.disabled===can)b.disabled=!can;}   /* the rod button is grey wherever you cannot fish from */
+  {const can=!!fishNear(m)&&!m.walk,b=$('#fishRodBtn'),show=!F.on&&$('#joy').classList.contains('on');if(b.disabled===can)b.disabled=!can;
+    if(!F.pbSet){const v=$('#punchBtn').style.getPropertyValue('--pb');if(v){b.style.setProperty('--pb',v);F.pbSet=1;}}
+    if(show)b.style.bottom=(parseFloat($('#joy').style.bottom)+23)+'px';if(b.classList.contains('on')!==show)b.classList.toggle('on',show);}   /* the rod button is grey wherever you cannot fish from */
   const lhE=Hh()/Math.max(1,Math.round(W/190)),B=F.bob,foc=F.on?(B?[(m.x*2+B.x)/3,(m.y+B.y)/2+lhE*.02]:[m.x,m.y-lhE*.2]):[m.x,m.y-lhE*.08];
   F.cx+=(foc[0]-F.cx)*Math.min(1,dt*3);F.cy+=(foc[1]-F.cy)*Math.min(1,dt*3);
   view(img,F.cx,F.cy,190,{hi:true,void:'#dfeefc',loose:.8});

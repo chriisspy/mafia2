@@ -117,11 +117,18 @@ for f in sorted(os.listdir(RSRC)):
                     if abs(k - at * (len(px) - 1)) < .75: col = bc
                 if k >= len(px) - len(T['tip']): col = T['tip'][k - (len(px) - len(T['tip']))]
                 c[y, x] = (*col, 255)
-            if not clash:                                            # the part of PixelLab's rod that lies across the body takes the tier's colour too
-                yy, xx = np.nonzero(box & (c[..., 3] > 0)); col = c[yy, xx, :3].astype(int)
-                tt = (xx - ex) * ux + (yy - ey) * uy; dist = np.abs((xx - ex) * uy - (yy - ey) * ux)
-                hit = (dist < 1.3) & (tt < 1) & (tt > -16) & (np.abs(col - wcol).sum(-1) < 45)
-                c[yy[hit], xx[hit], :3] = T['core']
+            # PixelLab's own rod where it shows INSIDE the body's box (beside the head, or lying across him) takes the tier's colour too, so no
+            # brown wood is left on a steel or golden rod (his note: "remove the wood and make it all gold"). A pixel counts as rod when it is
+            # on the rod's line, about PixelLab's wood colour, and has the dark outline on both sides of it: a brown coat never has that.
+            yy, xx = np.nonzero(box & (c[..., 3] > 0)); col = c[yy, xx, :3].astype(int)
+            tt = (xx - ex) * ux + (yy - ey) * uy; dist = np.abs((xx - ex) * uy - (yy - ey) * ux)
+            dark = c[..., :3].astype(int).sum(-1) < 190
+            def flank(sg):
+                X_ = np.clip(np.round(xx + sg * -uy * 1.2).astype(int), 0, 63); Y_ = np.clip(np.round(yy + sg * ux * 1.2).astype(int), 0, 63)
+                return dark[Y_, X_] | (c[Y_, X_, 3] == 0)
+            woody = (col[:, 0] > col[:, 2] + 30) & (np.abs(col - wcol).sum(-1) < 80)
+            hit = (dist < 1.6) & (tt < 2) & (tt > -22) & woody & flank(1) & flank(-1) & (not clash or ((dist < 1.1) & (tt > -6)))   # an outfit that wears the rod's brown: only right where the rod enters
+            for k_ in np.nonzero(hit)[0]: c[yy[k_], xx[k_], :3] = T['hi'] if int(round(-tt[k_])) % 3 == 1 else T['core']
             sheets[t][:, i * 64:(i + 1) * 64] = c; tips[t].append([int(round(x1)) - 32, int(round(y1)) - 56])   # the tip, measured from the middle of the feet
     for t in TIERS: Image.fromarray(sheets[t]).save(f'{OUT}rods/{name}-{t}.png', optimize=True)
     if os.path.exists(f'{OUT}rods/{name}.png'): os.remove(f'{OUT}rods/{name}.png')
