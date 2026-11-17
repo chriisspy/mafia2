@@ -128,6 +128,15 @@ w_ = np.where(centre, np.clip(1 - dist_in / NSEAM, 0, 1), 1.)[..., None]
 w_ = w_ * ~(big(KEEP, 2) & centre)[..., None]
 night_g = np.round(night_c * (1 - w_) + NIfit * w_).astype(np.uint8)
 
+# ================= 3b'. HIS day ground (18 Nov: "new day background", he fixed the patchwork himself) =================
+# mafia2-art/ground/his-day.png: the tree-less day ground with his fixes (his-day-changes.png = where he painted). It replaces
+# the day ground made above; whatever he painted away (a tree, a blotch) is no longer solid either.
+try:
+    day_g = np.asarray(Image.open(ART + 'ground/his-day.png').convert('RGB')).copy()
+    his_ch = np.asarray(Image.open(ART + 'ground/his-day-changes.png').convert('L')) > 127
+    KEEP &= ~his_ch; print('his day ground used')
+except FileNotFoundError: pass
+
 # ================= 3c. the four corner forests (tools/make_corners.py), painted on, solid =================
 sys.path.insert(0, 'tools'); from corner_shapes import BOXES as CBOX, STRIPS as CSTRIP
 CORNER = np.zeros((H, W), bool)
@@ -204,6 +213,33 @@ for _ in range(3):                                                     # big pie
         edge = fx < 135 or fx > 665 or fb > 880
         placed.append(('tallpine' if (edge or hh > 50) else 'widebush' if xs.max() - xs.min() > 34 else 'roundbush', fx, fb)); added += 1
     if not added: break
+# PAINTED SINGLE TREES (18 Nov, his rule: "the only stand alone trees on the map should be our own trees and plants placed
+# individually"): tools/make_his_day.py took the trees painted along the top of his FLOOR-NEW off the day ground and listed
+# their feet; one of his cut-outs stands on each. At night the top of the map follows his new day ground (the dark forest
+# there was missing at night), in the same night colours as the border forest.
+import json
+try:
+    added2 = 0
+    for kd, fx, fb in json.load(open(ART + 'ground/his-day-trees.json')):
+        if any(abs(fx - q[1]) < 14 and abs(fb - q[2]) < 14 for q in placed): continue
+        placed.append((kd, fx, fb)); added2 += 1
+    print('painted single trees swapped for his:', added2)
+    topn = np.zeros((H, W), bool); topn[:262] = True
+    nmask = topn & (his_ch | big(np.asarray(Image.open(ART + 'ground/his-day-taken.png').convert('L')) > 127, 2)) & ~big(ex, 1)
+    nmask = nd.binary_closing(nmask, iterations=2) & topn & ~big(ex, 1)
+    dgi = day_g.astype(int); nmask &= ~((dgi[..., 1] > dgi[..., 0] + 40) & (dgi[..., 1] > 150))   # his lawns are snow at night
+    # night colours fitted to his night ground round it (plain nightify left square patches): day -> night, one straight
+    # fit for the snow and one for the dark forest
+    ring = topn & ~big(nmask, 3) & ~big(ex, 2); ring[:, :] &= True
+    dkd = dgi.mean(-1) < 90
+    for part in (dkd, ~dkd):
+        fm = ring & part
+        if fm.sum() < 200: continue
+        X_ = np.c_[dgi[fm], np.ones(fm.sum())]; cf = np.linalg.lstsq(X_, night_g[fm].astype(float), rcond=None)[0]
+        pm = nmask & part
+        night_g[pm] = np.clip(np.c_[dgi[pm], np.ones(pm.sum())] @ cf, 0, 255).astype(np.uint8)
+except FileNotFoundError: pass
+
 # nothing on the buildings; no tall tree in front of their doors (his note: the big tree he stood on at the Tavern)
 out = []
 for kd, fx, fb in placed:
@@ -211,11 +247,14 @@ for kd, fx, fb in placed:
     if CORNER[min(H - 1, max(0, fb - 6)):min(H, fb + 10), max(0, fx - 8):fx + 9].any(): continue     # the corner forest stands there now
     v_ = VAR[kd]; sx0, sy0 = fx - v_['fx'], fb - v_['base']; ys_, xs_ = np.nonzero(v_['solid']); ty_, tx_ = ys_ + sy0, xs_ + sx0
     ok_ = (ty_ >= 0) & (ty_ < H) & (tx_ >= 0) & (tx_ < W)
-    if CORNER[ty_[ok_], tx_[ok_]].mean() > .12: continue                                              # a tree half in the forest looks merged into it (his note)
+    if CORNER[ty_[ok_], tx_[ok_]].mean() > .02 or big(CORNER, 8)[min(H - 1, fb), min(W - 1, max(0, fx))]: continue   # a tree touching the forest looks merged into it (his note): none near it
     for bx, by, bw, bh in BUILDINGS:
         if kd == 'tallpine' and abs(fx - (bx + 87)) < 52 and by + bh < fb < by + bh + 90: kd = 'smallpine'
     out.append((kd, fx, fb))
 placed = out
+# HIS PICK (18 Nov, his red circle round the top right corner by the lake: "add trees/bushes to populate"). Placed by hand,
+# so the forest check above does not drop them.
+placed += [('tallpine', 716, 112), ('roundbush', 750, 130), ('smallpine', 694, 160), ('widebush', 744, 176)]
 print('trees placed:', {q: sum(1 for p in placed if p[0] == q) for q in NAMES})
 
 # last tidy of the day ground: brown blobs left in the snow (a stump, some earth) that no tree stands on go back to snow
@@ -232,6 +271,18 @@ if fixb.any():
     ix = nd.distance_transform_edt(~sn, return_distances=False, return_indices=True)
     fd = cv2.medianBlur(np.ascontiguousarray(day_g[ix[0], ix[1]]), 5); day_g[fixb] = fd[fixb]
 print('brown leftovers cleaned:', int(fixb.sum()), 'px')
+
+# HIS TOUCH-UPS (18 Nov: mafia2-art/final-patch-ups.png, he patched the finished map; ground/his-patch.png keeps only what he
+# changed on the ground, never a tree). Day: his pixels. Night: filled from the night ground right round each touch-up
+# (a colour fit made red spots on the dirt).
+try:
+    hp = np.asarray(Image.open(ART + 'ground/his-patch.png').convert('RGBA')); pm_ = hp[..., 3] > 0
+    old_d = day_g.astype(int); day_g[pm_] = hp[..., :3][pm_]
+    nfill = big(pm_, 1) & ~big(ex, 1)                                   # night: the night ground right round each touch-up
+    ix = nd.distance_transform_edt(nfill, return_distances=False, return_indices=True)
+    night_g[nfill] = night_g[ix[0], ix[1]][nfill]
+    print('his touch-ups:', int(pm_.sum()), 'px')
+except FileNotFoundError: pass
 
 # ================= sheets, the list, the walls =================
 def nightify(a):

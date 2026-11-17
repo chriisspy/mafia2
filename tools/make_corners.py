@@ -45,7 +45,8 @@ if __name__ == '__main__':
     # forests (input-map2.png) and continued them along the edges, so the forest runs all the way round with no cut ends
     ref2 = np.asarray(Image.open(SRC + 'input-map2.png').convert('RGB')).astype(int)
     for nm, (x0, y0, x1, y1) in list(BOXES.items()) + list(STRIPS.items()):
-        strip = nm in STRIPS; base = ref                                     # compared with the map before any corner forest, so every bit of forest it painted counts
+        strip = nm in STRIPS; base = ref
+        if strip: base = np.asarray(Image.open(SRC + '../FLOOR-NEW.png').convert('RGB')).astype(int)   # 18 Nov: the border was painted on HIS new ground (FLOOR-NEW), option 3 (his pick)
         try: new = shrink(f'{SRC}{nm}{TAG}.png', x1 - x0, y1 - y0).astype(int)
         except FileNotFoundError: continue
         old = base[y0:y1, x0:x1]
@@ -71,6 +72,10 @@ if __name__ == '__main__':
             # only the border forest itself: pieces that reach the edge of the map, or big ones; never a loose bit
             lab, n = nd.label(keep); s = nd.sum(keep, lab, range(1, n + 1)); edge_ids = set(np.unique(np.r_[lab[:3].ravel(), lab[-3:].ravel(), lab[:, :3].ravel(), lab[:, -3:].ravel()])) - {0}
             keep = np.isin(lab, [i + 1 for i, z in enumerate(s) if z > 2500 or (i + 1) in edge_ids])
+            # the forest is solid right out to the edge of the map: its lighter snowy bits and whatever lies between it and the
+            # map edge are forest too (they were left see-through: the torn bottom edge he caught)
+            near_edge = (edge_d < 40) & nd.binary_dilation(keep, iterations=10)
+            keep = (nd.binary_fill_holes(nd.binary_closing(keep, iterations=3)) | near_edge) & ~protect[y0:y1, x0:x1]
         keep = nd.binary_opening(keep, iterations=1)
         diff = keep & ~protect[y0:y1, x0:x1]
         out = np.zeros(new.shape[:2] + (4,), np.uint8); out[..., :3] = new; out[..., 3] = diff * 255
