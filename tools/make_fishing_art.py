@@ -58,24 +58,74 @@ json.dump({'x': int(x0), 'y': int(y0), 'w': int(x1 - x0), 'h': int(y1 - y0), 'n'
 #      <outfit>-cast_0..8.png (0 = the frame that was sent). Cleaning: PixelLab likes to draw a thin fishing line; outside the
 #      standing body only blobs at least 2 px thick stay (the rod is 3 px thick, a line is 1), and loose crumbs go.
 RSRC = '../mafia2-art/fishing/rods/'; os.makedirs(OUT + 'rods', exist_ok=True); rods = {}
+# THE ROD IN THE HAND, ONE FOR EACH TIER (his ask, 17 Nov: "make on-hand items for each rod ... look really good and work with each
+# character"). PixelLab's own rod is taken off every frame and a clean one is drawn in its place, from where it leaves the body to
+# its tip: a 1 px core in the tier's colours inside a navy outline, so it is the same crisp rod on all 19 outfits and never bends
+# or doubles. Where the rod crosses IN FRONT of the body its pixels are recoloured (only when the outfit has no colour of its own
+# near PixelLab's rod brown, so a brown coat is never touched). -> assets/fishing/rods/<outfit>-<tier>.png
+NAVY = (17, 36, 50)
+TIERS = {   # len = how much of the length it keeps; core / hi = the two shades down its length; bands = [where, colour]; tip = colours of the last pixels
+    'twig':  {'len': .8, 'core': (146, 94, 52), 'hi': (176, 122, 72), 'bands': [], 'tip': [(176, 122, 72)], 'nub': True},
+    'oak':   {'len': 1, 'core': (186, 108, 50), 'hi': (222, 150, 80), 'bands': [(.3, (244, 204, 96)), (.65, (244, 204, 96))], 'tip': [(244, 204, 96), (244, 204, 96)]},
+    'steel': {'len': 1, 'core': (150, 172, 204), 'hi': (228, 238, 250), 'bands': [(.0, (64, 72, 100)), (.08, (64, 72, 100)), (.16, (64, 72, 100))], 'tip': [(228, 84, 79), (228, 84, 79)]},
+    'gold':  {'len': 1, 'core': (238, 182, 50), 'hi': (255, 240, 164), 'bands': [(.5, (255, 252, 226))], 'tip': [(126, 214, 255), (240, 252, 255)]}}
+def line_px(x0, y0, x1, y1):
+    n = int(max(abs(x1 - x0), abs(y1 - y0))); return [(int(round(x0 + (x1 - x0) * k / max(1, n))), int(round(y0 + (y1 - y0) * k / max(1, n)))) for k in range(n + 1)]
 for f in sorted(os.listdir(RSRC)):
     if not f.endswith('-cast_8.png'): continue
-    name = f[:-11]; body0 = np.asarray(Image.open(f'assets/final/{name}/back.png').convert('RGBA'))[..., 3] > 0
-    bw, bh = body0.shape[1], body0.shape[0]; box = np.zeros((64, 64), bool); box[max(0, 56 - bh - 3):60, max(0, 32 - bw // 2 - 4):min(64, 32 + bw // 2 + 5)] = True
-    sh = np.zeros((64, 64 * 9, 4), np.uint8); tips = []
+    name = f[:-11]; back = np.asarray(Image.open(f'assets/final/{name}/back.png').convert('RGBA')); body0 = back[..., 3] > 0
+    own = np.unique(back[body0][:, :3].reshape(-1, 3), axis=0).astype(int)                    # the outfit's own colours
+    bw, bh = body0.shape[1], body0.shape[0]; box = np.zeros((64, 64), bool); box[max(0, 56 - bh - 1):60, max(0, 32 - bw // 2 - 3):min(64, 32 + bw // 2 + 4)] = True
+    sheets = {t: np.zeros((64, 64 * 9, 4), np.uint8) for t in TIERS}; tips = {t: [] for t in TIERS}
     for i in range(9):
         a = hard(Image.open(f'{RSRC}{name}-cast_{i}.png')); m = a[..., 3] > 0
         thick = nd.binary_opening(m, structure=np.ones((2, 2), bool)); thick = nd.binary_dilation(thick, iterations=1) & m
-        m2 = np.where(box, m, thick & ~(a[..., :3].min(-1) > 150))   # and nothing pale out there: the rod is brown, a white streak is the line again
+        m2 = np.where(box, m, thick & ~(a[..., :3].min(-1) > 150))   # outside the body: only what is 2 px thick and not pale (PixelLab's fishing line is thin and white)
         lab, n = nd.label(m2)
         if n > 1: m2 = lab == np.bincount(lab[lab > 0]).argmax()
         a[~m2] = 0
-        ys, xs = np.nonzero(a[..., 3]); out_ = ~box[ys, xs]
-        if out_.any(): ys, xs = ys[out_], xs[out_]
-        far = np.argmax((xs - 32) ** 2 + (ys - 46) ** 2)             # the rod tip: the pixel furthest from the body
-        tips.append([int(xs[far]) - 32, int(ys[far]) - 56])           # measured from the middle of the feet
-        sh[:, i * 64:(i + 1) * 64] = a
-    Image.fromarray(sh).save(f'{OUT}rods/{name}.png', optimize=True); rods[name] = tips
+        rod = (a[..., 3] > 0) & ~box; ys, xs = np.nonzero(rod)
+        if len(xs) < 3:                                              # the rod is hidden behind him in this frame
+            for t in TIERS: sheets[t][:, i * 64:(i + 1) * 64] = a; tips[t].append(tips[t][-1] if tips[t] else [8, -36])
+            continue
+        rl, rn = nd.label(rod, structure=np.ones((3, 3), bool)); edge = nd.binary_dilation(box, iterations=2)   # PixelLab sometimes draws two rods, or a loose one: keep the biggest piece that touches him
+        best = max(range(1, rn + 1), key=lambda q: ((rl == q) & edge).any() * 1000 + (rl == q).sum()); ys, xs = np.nonzero(rl == best)
+        hd = (xs - 34) ** 2 + (ys - 46) ** 2                         # measured from his hands
+        far = np.argmax(hd); tx, ty = int(xs[far]), int(ys[far])     # its tip
+        near = np.argmin(hd); ex, ey = int(xs[near]), int(ys[near])  # where it leaves the body
+        wood = rod & (a[..., :3].astype(int).sum(-1) > 150); wcol = np.median(a[wood][:, :3], axis=0) if wood.sum() > 2 else np.array([150, 96, 52])
+        clash = (np.abs(own - wcol).sum(-1) < 60).any()             # does the outfit wear a brown like the rod's?
+        body = a.copy(); body[rod] = 0
+        L = np.hypot(tx - ex, ty - ey); ux, uy = (tx - ex) / max(L, 1), (ty - ey) / max(L, 1)
+        for t, T in TIERS.items():
+            c = body.copy(); x1, y1 = ex + ux * L * T['len'], ey + uy * L * T['len']; px = line_px(ex, ey, x1, y1)
+            for (x, y) in px:                                        # the navy outline first...
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    X_, Y_ = x + dx, y + dy
+                    if 0 <= X_ < 64 and 0 <= Y_ < 64 and (not box[Y_, X_] or c[Y_, X_, 3] == 0): c[Y_, X_] = (*NAVY, 255)
+            if T.get('nub') and len(px) > 8:                         # the twig has a little stump where a branch was
+                x, y = px[int(len(px) * .45)]; nx, ny = int(round(x - uy * 2)), int(round(y + ux * 2))
+                for X_, Y_ in ((nx, ny), (int(round(x - uy)), int(round(y + ux)))):
+                    if 0 <= X_ < 64 and 0 <= Y_ < 64 and not box[Y_, X_]:
+                        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1), (0, 0)):
+                            if 0 <= X_ + dx < 64 and 0 <= Y_ + dy < 64 and c[Y_ + dy, X_ + dx, 3] == 0: c[Y_ + dy, X_ + dx] = (*NAVY, 255)
+                        c[Y_, X_] = (*T['core'], 255)
+            for k, (x, y) in enumerate(px):                          # ...then the core in the tier's colours
+                if box[y, x] and body[y, x, 3]: continue
+                col = T['hi'] if k % 3 == 1 else T['core']
+                for at, bc in T['bands']:
+                    if abs(k - at * (len(px) - 1)) < .75: col = bc
+                if k >= len(px) - len(T['tip']): col = T['tip'][k - (len(px) - len(T['tip']))]
+                c[y, x] = (*col, 255)
+            if not clash:                                            # the part of PixelLab's rod that lies across the body takes the tier's colour too
+                yy, xx = np.nonzero(box & (c[..., 3] > 0)); col = c[yy, xx, :3].astype(int)
+                tt = (xx - ex) * ux + (yy - ey) * uy; dist = np.abs((xx - ex) * uy - (yy - ey) * ux)
+                hit = (dist < 1.3) & (tt < 1) & (tt > -16) & (np.abs(col - wcol).sum(-1) < 45)
+                c[yy[hit], xx[hit], :3] = T['core']
+            sheets[t][:, i * 64:(i + 1) * 64] = c; tips[t].append([int(round(x1)) - 32, int(round(y1)) - 56])   # the tip, measured from the middle of the feet
+    for t in TIERS: Image.fromarray(sheets[t]).save(f'{OUT}rods/{name}-{t}.png', optimize=True)
+    if os.path.exists(f'{OUT}rods/{name}.png'): os.remove(f'{OUT}rods/{name}.png')
+    rods[name] = tips
 json.dump(rods, open(OUT + 'rods.json', 'w'))
 for old in ('beanie.png', 'beanie.json'):
     if os.path.exists(OUT + old): os.remove(OUT + old)
@@ -84,6 +134,8 @@ for old in ('beanie.png', 'beanie.json'):
 Image.fromarray(hard(Image.open(SRC + 'stall.png'))).save(OUT + 'stall.png', optimize=True)
 # ---- a picture of each rod for Joe's shop (PixelLab map objects, 64 x 64: his ask, "images for the rods like we did for the case")
 for k in ('twig', 'oak', 'steel', 'gold'): Image.fromarray(hard(Image.open(f'{SRC}rod-{k}.png'))).save(f'{OUT}rod-{k}.png', optimize=True)
+# ---- the bait icon (PixelLab create_image_pixen, 16 x 16: a worm on a hook; his ask: an icon for buying bait and for the bait counter, at the small pixel scale)
+Image.fromarray(hard(Image.open(SRC + 'bait-b.png'))).save(OUT + 'bait.png', optimize=True)
 
 # ---- the splash
 sp = sorted(f for f in os.listdir(SRC) if f.startswith('splash_'))
