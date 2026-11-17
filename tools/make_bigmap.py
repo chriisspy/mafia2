@@ -29,36 +29,53 @@ for y in range(OH):
 small = np.asarray(Image.fromarray(small).quantize(200, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).convert('RGB'))   # a real pixel-art palette (and a far smaller file)
 his_day = Image.open(X + 'day.png').convert('RGB'); his_night = Image.open(X + 'night.png').convert('RGB')
 W0, H0 = his_day.size
-day = Image.fromarray(small); day.paste(his_day, (OX, OY)); day.save(X + 'day-big.webp', lossless=True, quality=100, method=6)   # lossless WebP: a third smaller than PNG, every pixel the same
+day = Image.fromarray(small); day.paste(his_day, (OX, OY)); day.save(X + 'day-big.webp', lossless=True, quality=100, method=6)
+day.save(ART + 'day-big-with-trees.png')   # tools/make_trees.py lifts the trees off this one   # lossless WebP: a third smaller than PNG, every pixel the same
 new = np.ones((OH, OW), bool); new[OY:OY + H0, OX:OX + W0] = False     # True = the new ground
 
-# ---- 2. night: learn day -> night from the snowy edge of his own two pictures ----
-d = np.asarray(his_day).astype(float); n = np.asarray(his_night).astype(float); g = small.astype(float)
+# ---- 2. night: its own picture, painted outward from HIS night town by Nano Banana (bignight-src.png) so there is no join
+# (17 Nov, his ask: "make night time map SEAMLESS and perfect"; the first try recoloured the day ground and the join showed).
+# The trees stay painted on at night (nobody walks under them then), so it does not have to match the day tree for tree. ----
+def shrink(path):
+    a = np.asarray(Image.open(path).convert('RGB')); sy, sx = a.shape[0] / OH, a.shape[1] / OW
+    xs = [(int(round((x + .3) * sx)), int(round((x + .7) * sx)) + 1) for x in range(OW)]
+    ys = [(int(round((y + .3) * sy)), int(round((y + .7) * sy)) + 1) for y in range(OH)]
+    out = np.zeros((OH, OW, 3), np.uint8)
+    for y in range(OH):
+        row = a[ys[y][0]:ys[y][1]]
+        for x in range(OW): out[y, x] = np.median(row[:, xs[x][0]:xs[x][1]].reshape(-1, 3), axis=0)
+    return out
+G = shrink(ART + 'bignight-src.png').astype(float); Hn = np.asarray(his_night).astype(float)
+# the painter also repainted his town in the middle, a little paler than his own. That middle is the bridge: where both
+# show the same place (the rim of his town, away from the cabins it drew in) learn "its colour -> his colour", use that on
+# all the new ground, then nudge the brightness along the join so the two meet exactly.
 yy, xx = np.mgrid[0:H0, 0:W0]
-ring = (xx < 45) | (xx >= W0 - 45) | (yy >= H0 - 55) | ((yy < 40) & ((xx < 150) | (xx > 410)))
-ring &= ~((d[..., 1] > d[..., 0] + 30) & (d[..., 1] > d[..., 2] + 30) & (d[..., 1] > 110))   # not the grass: it is snowed over at night
-Q = 8; q = (d[ring] // Q).astype(int); key = q[:, 0] * 1024 + q[:, 1] * 32 + q[:, 2]
-cnt = np.bincount(key, minlength=32768)
-lut = np.stack([np.bincount(key, weights=n[ring][:, c], minlength=32768) for c in range(3)], 1) / np.maximum(cnt, 1)[:, None]
-lut = lut.reshape(32, 32, 32, 3); idx = nd.distance_transform_edt(cnt.reshape(32, 32, 32) == 0, return_distances=False, return_indices=True)
-lut = lut[idx[0], idx[1], idx[2]]
-for c in range(3): lut[..., c] = nd.uniform_filter(lut[..., c], 3, mode='nearest')
-q = (g // Q).astype(int); night = lut[q[..., 0], q[..., 1], q[..., 2]]
-water = (g[..., 2] > g[..., 1] + 25) & (g[..., 1] > g[..., 0] + 15) & (g[..., 0] < 125) & (g[..., 2] > 120)   # open water is not in his art: plain dark navy
-night[water] = g[water] * (.26, .36, .56) + (2, 6, 18)
-# darken the new ground so it meets the dark edge of his night picture (his night is lit in the middle, dark at the rim)
-full = night.copy(); full[OY:OY + H0, OX:OX + W0] = n
-def soft(img, mask, s=14):
+rim = (xx < 70) | (xx >= W0 - 70) | (yy >= H0 - 70) | ((yy < 60) & ((xx < 150) | (xx > 410)))
+for cx, cy in ((212, -12), (83, 56), (341, 56), (10, 190), (414, 190), (10, 356), (414, 356), (56, 522), (368, 522), (212, 576)):
+    rim[max(0, cy - 4):cy + 158, max(0, cx - 4):cx + 130] = False                     # the cabins it drew in are not his ground
+def soft(img, mask, s):
     w = nd.gaussian_filter(mask.astype(float), s); return np.stack([nd.gaussian_filter(img[..., c] * mask, s) for c in range(3)], -1) / np.maximum(w, 1e-6)[..., None]
-lo_old, lo_new = soft(full, ~new), soft(full, new)
-edge = new & nd.binary_dilation(~new, iterations=2)
-gain = np.where(edge[..., None], lo_old / np.maximum(lo_new, 1), 0)
-idx = nd.distance_transform_edt(~edge, return_distances=False, return_indices=True)
-gain = np.clip(gain[idx[0], idx[1]], .35, 1.15)
-gain = soft(gain, new, 22)
-night = np.clip(night * gain, 0, 255)
-night = (np.round(night / 4) * 4).clip(0, 255).astype(np.uint8)
+rimbig = np.zeros((OH, OW), bool); rimbig[OY:OY + H0, OX:OX + W0] = rim
+Hfull = G.copy(); Hfull[OY:OY + H0, OX:OX + W0] = Hn
+ratio = soft(Hfull, rimbig, 7) / np.maximum(soft(G, rimbig, 7), 1)                  # his / the painter's, colour by colour, blurred: a smooth "how to turn its light into his"
+edge = ~new & nd.binary_dilation(new, iterations=2) & rimbig
+ix = nd.distance_transform_edt(~edge, return_distances=False, return_indices=True)
+gain = np.clip(ratio[ix[0], ix[1]], .3, 1.12)                                          # carried straight out from the join...
+gain = soft(gain, new, 14)                                                            # ...and smoothed, so the new ground keeps the painter's crisp pixels with his brightness
+Gm = G
+night = Gm * gain
+# last touch, right at the join: his outermost pixels against the new pixels beside them (his picture darkens in its last few
+# rows; the new ground must start exactly as dark), smoothed along the join and faded out over a few dozen pixels
+inner = ~new & nd.binary_dilation(new, iterations=3); outer = new & nd.binary_dilation(~new, iterations=3)
+Hf2 = night.copy(); Hf2[OY:OY + H0, OX:OX + W0] = Hn
+r2 = soft(Hf2, inner, 10) / np.maximum(soft(night, outer, 10), 1)
+dist, ix = nd.distance_transform_edt(~outer, return_indices=True)
+r2 = np.clip(r2[ix[0], ix[1]], .45, 1.1)                          # mostly a darkening; never a bright streak where a dark tree of his meets pale new snow
+r2 = soft(r2, new, 8)
+night = night * (1 + (r2 - 1) * np.exp(-dist / 34.)[..., None])
+night = (np.round(np.clip(night, 0, 255) / 4) * 4).clip(0, 255).astype(np.uint8)
 nim = Image.fromarray(night); nim.paste(his_night, (OX, OY)); nim.save(X + 'night-big.webp', lossless=True, quality=100, method=6)
+g = small.astype(float)
 
 # ---- 3. what blocks you ----
 r, gg, b = g[..., 0], g[..., 1], g[..., 2]
