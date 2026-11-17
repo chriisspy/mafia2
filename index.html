@@ -298,18 +298,12 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #dailyDot{display:none;position:absolute;right:-7px;top:-8px;min-width:20px;height:20px;padding:0 4px;border-radius:5px;background:#e4544f;border:2px solid #0f0b1e;color:#fff;font:700 13px/16px "Pixelify Sans";text-shadow:none;text-align:center}
 .tbtn.daily.new #dailyDot{display:block;animation:ddPop .3s ease-out}@keyframes ddPop{0%{transform:scale(.4)}100%{transform:scale(1)}}
 #dailyModal{text-align:left;padding:12px}
-#fishPanel{display:none;padding:11px 13px;margin-bottom:0}#townHud.fishing #fishPanel{display:block}#townHud.fishing .tpanel{display:none}
-#fishPanel .thead{display:flex;align-items:center;gap:10px}#fishPanel .tt{flex:1}#fishPanel .tt b{font-size:20px}
-/* Fisherman Joe's window is blue and white, like his awning (his call, 17 Nov) */
-#joeModal{--accent:#3f86e0;--wood:#2a5fb0;background:#f4f9ff;color:#16305c;border-color:#2a5fb0;box-shadow:inset 0 -10px 0 #dcebfb}
-#phone.xmas #joeModal{border-color:#2a5fb0;box-shadow:inset 0 -10px 0 #dcebfb;border-image-source:url(assets/fishing/panel-joe.svg)}
-#phone.xmas #joeModal .mhead b,#joeModal .mhead b{color:#1f55a8}
-#joeModal .btn{background:#eaf3ff;color:#16305c;border-color:#2a5fb0;box-shadow:inset 0 -4px 0 #c5dcf7,0 3px 0 #0009}
-#joeModal .btn.go{background:#3f86e0;color:#fff;border-color:#163a78;box-shadow:inset 0 -4px 0 #2a63b8,0 3px 0 #0009}
-#joeModal .jrod{background:#fff;border-color:#9cc3f2}#joeModal .jrod.on{background:#d6e8ff;border-color:#2a5fb0}
-#joeBag{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 8px;min-height:36px}#joeBag canvas{width:72px;height:48px;image-rendering:pixelated;background:#2b4f9c;border:2px solid #1a1430;border-radius:4px}
-#joeModal .btn.wide{display:flex;width:100%;justify-content:center;align-items:center;gap:6px;font-size:17px;padding:8px 8px 11px}#joeModal .btn:disabled{opacity:.5}
-.jrod{display:flex;align-items:center;gap:10px;background:#fff6df;border:3px solid var(--wood);border-radius:6px;padding:7px 9px;margin-top:6px}.jrod.on{border-color:#1a1430;background:#ffe08a}.bic{width:32px;height:32px;image-rendering:pixelated;vertical-align:middle;margin:-6px 0}.baitIc{display:inline-flex}.jimg{width:64px;height:64px;flex:none;image-rendering:pixelated;margin:-4px 0 -4px -4px}.jrod .jt{flex:1}.jrod .jt b{font-size:17px}.jrod .small{margin:0;font-size:12px}.jrod .btn{min-width:86px;display:flex;justify-content:center;align-items:center;gap:5px;font-size:15px;padding:6px 8px 9px}
+/* THE LAKE HAS NO BOTTOM PANEL (his call, 17 Nov: "very simple"): one line of words, bait and coins as two small chips, Fish book, and a red Stop while you fish */
+#lakeBar{display:none;padding:0 2px 6px}#townHud.lake #lakeBar{display:block}#townHud.lake .tpanel,#townHud.lake .title.banner{display:none}
+#fishLine{text-align:center;font:700 21px "Pixelify Sans";color:#fff;letter-spacing:.5px;margin-bottom:9px;text-shadow:2px 0 0 #0f0b1e,-2px 0 0 #0f0b1e,0 2px 0 #0f0b1e,0 -2px 0 #0f0b1e,2px 2px 0 #0f0b1e,-2px 2px 0 #0f0b1e,2px -2px 0 #0f0b1e,-2px -2px 0 #0f0b1e,0 4px 0 #0f0b1e}
+.lrow{display:flex;align-items:center;gap:7px}.lgap{flex:1}
+.lchip{display:inline-flex;align-items:center;gap:5px;height:40px;padding:0 10px;background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-radius:6px;font:700 18px "Pixelify Sans";box-shadow:0 3px 0 #0009}.lchip .bic{margin:0 -3px}
+#lakeBar .btn{height:40px;font-size:16px;padding:0 12px 3px;pointer-events:auto}#fishStopBtn{display:none}#townHud.fishing #fishStopBtn{display:block}
 #fishModal{text-align:center;padding:12px;z-index:10}#fishModal .mhead{text-align:left}#fishModal .btn{font-size:17px;padding:8px 14px 11px}
 #fcStage{position:relative;width:240px;max-width:100%;margin:2px auto 8px;padding:14px 0;border:3px solid var(--rc,#1a1430);border-radius:6px;background:#2b4f9c;box-shadow:inset 0 0 0 3px #1a1430}
 #fcCv{display:block;width:192px;height:128px;margin:0 auto;image-rendering:pixelated}
@@ -659,9 +653,9 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div id="townToast"></div>
     <div id="wheelPop"></div><div id="casePop"></div>
     <div class="panel" id="duelAsk"><img class="f" id="daFace" alt=""><div class="datx"><b id="daLine"></b><span class="wal"><i data-ic="coin" data-c="solo"></i><span id="daAmt"></span></span></div><button class="btn go" id="daYes" title="Accept"><i data-ic="check" data-s="3" data-c="solo"></i></button><button class="btn red" id="daNo" title="No"><i data-ic="cross" data-s="3" data-c="solo"></i></button></div>
-    <div class="bottom"><div class="panel" id="fishPanel">
-      <div class="thead"><div class="tt"><b id="fishLine">Hold on the water to cast</b><div class="small" id="fishSub"></div></div><span class="wal"><span class="baitIc"></span><span id="fishBaitN">0</span></span><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span></div>
-      <div class="row" style="margin-top:10px;gap:10px"><button class="tbtn shop" id="fishBookBtn">Fish book</button><button class="tbtn coll" id="fishStopBtn">Stop</button></div>
+    <div class="bottom"><div id="lakeBar">
+      <div id="fishLine">Tap the water to fish</div>
+      <div class="lrow"><span class="lchip"><span class="baitIc"></span><span id="fishBaitN">0</span></span><span class="lchip"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><span class="lgap"></span><button class="btn dark" id="fishBookBtn">Fish book</button><button class="btn red" id="fishStopBtn">Stop</button></div>
     </div><div class="panel tpanel">
       <div class="thead"><div class="tt"><b id="townLine">Waiting for the host</b><div class="small" id="townSub"></div></div></div>
       <div id="townRoles"><button class="rtog" data-r="d"><i data-ic="detective" data-c="solo"></i>Detective</button><button class="rtog" data-r="b"><i data-ic="bodyguard" data-c="solo"></i>Bodyguard</button><button class="rtog" data-r="j"><i data-ic="jester" data-c="solo"></i>Jester</button><button class="rtog" data-r="f"><i data-ic="framer" data-c="solo"></i>Framer</button><button class="rtog rand" data-r="r"><i data-ic="dice" data-c="solo"></i>Random</button></div>
@@ -1225,7 +1219,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11172147'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11172154'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2270,7 +2264,7 @@ function floatXTick(){const fx=$('#floatX');let show=false;const m=[...document.
 document.addEventListener('scroll',floatXTick,{capture:true,passive:true});
 function joyPlace(){floatXTick();const el=$('#joy'),ok=[scenes.town,scenes.cabin,scenes.ghost].includes(scene)&&!FISH.on&&!document.querySelector('.modal.on')&&!$('#clk').classList.contains('on');
   let show=false;if(ok){const hud=$(scene.hud),ph=$('#phone').getBoundingClientRect();let top=ph.bottom;
-    for(const e of hud.querySelectorAll('.panel')){if(!e.offsetParent||e.classList.contains('modal')||e.classList.contains('toast'))continue;const r=e.getBoundingClientRect();if(r.bottom>ph.bottom-260&&r.top<top)top=r.top;}
+    for(const e of hud.querySelectorAll('.panel,#lakeBar')){if(!e.offsetParent||e.classList.contains('modal')||e.classList.contains('toast'))continue;const r=e.getBoundingClientRect();if(r.bottom>ph.bottom-260&&r.top<top)top=r.top;}
     const b=ph.bottom-top+22;show=top-ph.top>330;if(show)el.style.bottom=b+'px';}
   if(el.classList.contains('on')!==show)el.classList.toggle('on',show);if(!show&&JOY.on){JOY.on=false;JOY.m=0;}
   const pb=$('#punchBtn'),ps=show&&scene===scenes.ghost;if(ps)pb.style.bottom=(parseFloat(el.style.bottom)+23)+'px';if(pb.classList.contains('on')!==ps)pb.classList.toggle('on',ps);}
@@ -3755,7 +3749,7 @@ function wlDoor(ci){if(WL.fading)return;WL.fading=true;sfx('door');const xf=$('#
     if(ci>=100){const H=hallOf(ci);m.x=H.spawn[0];m.y=H.spawn[1];m.dir='back';$('#phone').style.background='#000';wlHead(H.name,H.k==='lake'?'Tap the water to fish. Walk down to leave.':'Walk to the door to leave');WL.ambT=.2;if(H.k==='casino')sfx('cas_win');if(H.k==='lake'){FISH.cx=m.x;FISH.cy=m.y-60;music('lake');}}
     else if(ci>=0){m.x=98;m.y=190;m.dir='back';$('#phone').style.background=ROOM_VOID;const o=CABIN_OF.indexOf(ci);
       wlHead(o===0?'Your cabin':o>0?`${PEOPLE[o].n}'s cabin`:'An empty cabin','Walk to the door to leave');}
-    else{if(was===LAKE){fishStop();m.x=JETTY[0]-22;m.y=JETTY[1];music(SCENE_TUNE.town);}else if(was>=100){const d=bldDoor(BUILDINGS[was-100]);m.x=d[0];m.y=d[1];}else{const c=TOWN.cabins[was];m.x=c.cx;m.y=c.top+38;}m.dir=was===LAKE?'left':'front';$('#phone').style.background='';wlHead();}
+    else{if(was===LAKE){lakeOff();m.x=JETTY[0]-22;m.y=JETTY[1];music(SCENE_TUNE.town);}else if(was>=100){const d=bldDoor(BUILDINGS[was-100]);m.x=d[0];m.y=d[1];}else{const c=TOWN.cabins[was];m.x=c.cx;m.y=c.top+38;}m.dir=was===LAKE?'left':'front';$('#phone').style.background='';wlHead();}
     $('#townCount').style.display=ci>=0?'none':'';netMove();xf.classList.remove('on');setTimeout(()=>WL.fading=false,230);},240);}
 function wlBotDoor(b,ci){const was=b.loc;b.path=[];b.todo=null;b.walk=false;
   if(ci>=0){b.loc=ci;b.x=98;b.y=190;b.dir='back';b.stay=2+Math.floor(Math.random()*3);if(WL.me.loc===ci)wlSay(`${wlName(b)} came in.`);}
@@ -4023,7 +4017,7 @@ scenes.town={hud:'#townHud',
     else{WL.me=wlEnt(0,280,436);WL.bots=PEOPLE.slice(1).map((p,k)=>{const s=wlSpot();return wlEnt(k+1,s[0],s[1]);});}
     WL.fx=[];WL.sel=null;WL.feed=[];WL.fading=false;WL.shake=0;WL.wheel.busy=false;WL.wheel.by=null;wlMenu();paintCoins();$('#townCount').style.display='';$('#townCount').textContent=`${PEOPLE.length} of 10 players here`;
     $('#townHud').classList.toggle('net',NET.on);$('#townCodeT').textContent=NET.code||'';$('#townCodeBox').classList.remove('ok');wlHead();$('#townToast').className='';$('#wheelPop').className='';$('#casePop').className='';WL.pop=0;WL.cpop=null;netApply();netMove();},
-  leave(){$('#phone').style.background='';fishStop();WL.sel=null;wlMenu();ckClose();$('#pcModal').classList.remove('on');duelAskHide();clearTimeout(DUEL.t);DUEL.out=null;},
+  leave(){$('#phone').style.background='';lakeOff();WL.sel=null;wlMenu();ckClose();$('#pcModal').classList.remove('on');duelAskHide();clearTimeout(DUEL.t);DUEL.out=null;},
   frame(dt,t){const m=WL.me;wheelTick(dt);
     for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.remote&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
     {const J=FISH.on?null:joyVec();   /* the joystick: you walk the way it is pushed; push into a door to go through it */

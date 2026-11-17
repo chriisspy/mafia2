@@ -99,17 +99,18 @@ function fishLine(x0,y0,x1,y1,col,sag){lx.fillStyle=col;const n=Math.max(2,Math.
   for(let i=0;i<=n;i++){const k=i/n,x=Math.round(x0+(x1-x0)*k),y=Math.round(y0+(y1-y0)*k+Math.sin(k*Math.PI)*(sag||0));if(x!==qx||y!==qy){lx.fillRect(x,y,1,1);qx=x;qy=y;}}}
 
 /* ---- starting and stopping ---- */
-function fishSay(a,b){$('#fishLine').textContent=a;const left=fishBait();$('#fishBaitN').textContent=LAB?'99':left;$('#fishSub').textContent=b||((left?'':'No bait. Fisherman Joe sells it. · ')+'Bag: '+KIT.bag.length+' of '+FISH_BAG);}
+function fishSay(a){$('#fishLine').textContent=a;$('#fishBaitN').textContent=LAB?'99':fishBait();}   /* the lake shows ONE line of words; bait and coins are the two chips beside the buttons */
+function lakeOff(){fishStop();$('#townHud').classList.remove('lake');}
 function fishPh(p){const F=FISH;F.ph=p;F.t=0;
   if(p==='idle')fishSay(fishBait()?'Hold on the water to cast':'Out of bait');
-  else if(p==='charge')fishSay('Let go to cast','Slide left or right to aim. Further out, rarer fish.');
-  else if(p==='fly'||p==='wait')fishSay('Wait for a bite...','Tap to pull the line back in.');
-  else if(p==='bite')fishSay('TAP NOW!','It is on the hook!');
-  else if(p==='fight')fishSay('Hold to reel it in','Let go when the bar turns red.');}
+  else if(p==='charge')fishSay('Let go to cast');
+  else if(p==='fly'||p==='wait')fishSay('Wait for a bite...');
+  else if(p==='bite')fishSay('TAP NOW!');
+  else if(p==='fight')fishSay('Hold to reel. Let go on red.');}
 function fishStart(){const F=FISH,m=WL.me;if(F.on||!m||m.loc!==LAKE)return;F.on=true;F.held=false;F.press=false;F.bob=null;F.cand=null;F.hook=null;F.land=null;m.x=FISH_ME[0];m.y=FISH_ME[1];m.dir='back';m.walk=false;m.path=[];
   $('#townHud').classList.add('fishing');paintCoins();fishPh('idle');sfx('open');netMove();}
 function fishStop(){const F=FISH;if(!F.on)return;F.on=false;F.held=false;F.bob=null;F.hook=null;F.land=null;if(F.cand){F.cand.st='swim';F.cand=null;}
-  $('#townHud').classList.remove('fishing');$('#fishModal').classList.remove('on');$('#fishBookModal').classList.remove('on');}
+  $('#townHud').classList.remove('fishing');fishSay('Tap the water to fish');$('#fishModal').classList.remove('on');$('#fishBookModal').classList.remove('on');}
 function fishLose(msg){const F=FISH;if(F.cand){F.cand.st='flee';F.cand.t=0;F.cand=null;}if(F.hook){F.hook.st='flee';F.hook.t=0;F.hook=null;}F.bob=null;wlSay(msg,'bad');fishPh('idle');}
 
 /* ---- taps ---- */
@@ -196,7 +197,7 @@ $('#fishBookBtn').onclick=()=>{sfx('click');fishBook();};
 $('#fishStopBtn').onclick=()=>{sfx('close');fishStop();const H=hallOf(LAKE);wlHead(H.name,'Tap the water to fish. Walk down to leave.');};
 
 /* ---- drawing the lake: called for every frame you are there ---- */
-function fishFrame(m,people,dt,t,H,img){const F=FISH;fishTick(dt,t,m);
+function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud').classList.contains('lake')){F.lakeOn=1;$('#townHud').classList.add('lake');paintCoins();if(!F.on)fishSay('Tap the water to fish');}fishTick(dt,t,m);
   const lhE=Hh()/Math.max(1,Math.round(W/190)),B=F.bob,foc=F.on?(B?[(m.x*2+B.x)/3,(m.y+B.y)/2+lhE*.02]:[m.x,m.y-lhE*.2]):[m.x,m.y-lhE*.08];
   F.cx+=(foc[0]-F.cx)*Math.min(1,dt*3);F.cy+=(foc[1]-F.cy)*Math.min(1,dt*3);
   view(img,F.cx,F.cy,190,{hi:true,void:'#dfeefc',loose:.8});
