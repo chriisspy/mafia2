@@ -126,6 +126,22 @@ w_ = np.where(centre, np.clip(1 - dist_in / NSEAM, 0, 1), 1.)[..., None]
 w_ = w_ * ~(big(KEEP, 2) & centre)[..., None]
 night_g = np.round(night_c * (1 - w_) + NIfit * w_).astype(np.uint8)
 
+# ================= 3c. the four corner forests (tools/make_corners.py), painted on, solid =================
+sys.path.insert(0, 'tools'); from corner_shapes import BOXES as CBOX
+CORNER = np.zeros((H, W), bool)
+def nightify_rgb(a, alpha):
+    o = a.astype(float); r_, g_, b_ = o[..., 0], o[..., 1], o[..., 2]
+    bulb = ((r_ > 190) & (g_ < 120)) | ((b_ > 190) & (r_ < 120) & (g_ < 170)) | ((r_ > 200) & (g_ > 170) & (b_ < 110))
+    dark = np.stack([r_ * .22 + 4, g_ * .30 + 10, b_ * .46 + 30], -1); o = np.where(bulb[..., None], o * .9, dark)
+    return o.clip(0, 255).astype(np.uint8)
+for nm, (x0, y0, x1, y1) in CBOX.items():
+    try: cimg = np.asarray(Image.open(X + f'corner-{nm}.png').convert('RGBA'))
+    except FileNotFoundError: continue
+    a = cimg[..., 3] > 0; ch, cw = a.shape
+    day_g[y0:y0 + ch, x0:x0 + cw][a] = cimg[..., :3][a]
+    night_g[y0:y0 + ch, x0:x0 + cw][a] = nightify_rgb(cimg[..., :3], a)[a]
+    CORNER[y0:y0 + ch, x0:x0 + cw] |= a
+
 # ================= 4. his trees on every tree that was taken off =================
 src = np.asarray(Image.open(ART + 'plants-and-trees-cut-out-smaller.png').convert('RGBA')).astype(int)
 lab, n = nd.label(src[..., 3] > 0); boxes = sorted([sl for i, sl in enumerate(nd.find_objects(lab), 1) if (lab[sl] == i).sum() > 20], key=lambda s: s[1].start)
@@ -189,11 +205,27 @@ for _ in range(3):                                                     # big pie
 out = []
 for kd, fx, fb in placed:
     if any(bx + 4 < fx < bx + bw - 4 and by + 20 < fb < by + bh + 2 for bx, by, bw, bh in BUILDINGS): continue
+    if CORNER[min(H - 1, max(0, fb - 6)):min(H, fb + 10), max(0, fx - 8):fx + 9].any(): continue     # the corner forest stands there now
     for bx, by, bw, bh in BUILDINGS:
         if kd == 'tallpine' and abs(fx - (bx + 87)) < 52 and by + bh < fb < by + bh + 90: kd = 'smallpine'
     out.append((kd, fx, fb))
 placed = out
 print('trees placed:', {q: sum(1 for p in placed if p[0] == q) for q in NAMES})
+
+# last tidy of the day ground: brown blobs left in the snow (a stump, some earth) that no tree stands on go back to snow
+cov = cover() | CORNER
+dg = day_g.astype(int); br_ = (dg[..., 0] > dg[..., 2] + 22) & (dg[..., 0] >= dg[..., 1] + 6) & (dg.mean(-1) < 185) & ~big(paved, 3) & ~ex & ~big(keep_big(kind_of(day) == 4, 300), 2)
+bl_, bk_ = nd.label(br_); fixb = np.zeros((H, W), bool)
+snowy = nd.uniform_filter((kind_of(day_g) == 1).astype(float), 21) > .3
+for i, sl in enumerate(nd.find_objects(bl_), 1):
+    mm = bl_[sl] == i
+    if 12 <= mm.sum() <= 900 and (snowy[sl][mm].mean() > .5 or R[sl][mm].mean() > .5) and cov[sl][mm].mean() < .6 and not KEEP[sl][mm].any(): fixb[sl] |= mm
+fixb = big(fixb, 2) & ~cov & ~ex
+if fixb.any():
+    sn = (kind_of(day_g) == 1) & ~fixb                                  # snow it is: from the nearest snow, then a tidy
+    ix = nd.distance_transform_edt(~sn, return_distances=False, return_indices=True)
+    fd = cv2.medianBlur(np.ascontiguousarray(day_g[ix[0], ix[1]]), 5); day_g[fixb] = fd[fixb]
+print('brown leftovers cleaned:', int(fixb.sum()), 'px')
 
 # ================= sheets, the list, the walls =================
 def nightify(a):
@@ -233,7 +265,7 @@ for i, sl in enumerate(nd.find_objects(hl), 1):
     near_stage = ((sl[1].start + sl[1].stop) / 2 - 400) ** 2 / 90 ** 2 + ((sl[0].start + sl[0].stop) / 2 - 380) ** 2 / 60 ** 2 < 1
     if (fence or near_stage) and not treey: keep_his[sl] |= m
     elif not treey and not icy and n_ < 120: keep_his[sl] |= m          # small odd bits he painted on purpose
-block = keep_his | KEEP | nd.binary_erosion(water, iterations=2)
+block = keep_his | KEEP | nd.binary_erosion(water, iterations=2) | nd.binary_erosion(CORNER, iterations=2)
 block = keep_big(block, 12)                                             # no single stray pixels
 # little closed-in pockets you could never walk out of become solid; little holes in a wall too
 free = ~block; fl, fk = nd.label(free); fs = nd.sum(free, fl, range(1, fk + 1)); main = 1 + int(np.argmax(fs))

@@ -2,3 +2,5 @@
 assets/gen/
 assets/chars/
 assets/*.webp
+
+__pycache__/
