@@ -219,11 +219,26 @@ def compose(ground, sh):
 dp = compose(day_g, sheet); npv = compose(night_g, nightify(sheet))
 o = Image.new('RGB', (W * 2 + 10, H)); o.paste(dp, (0, 0)); o.paste(npv, (W + 10, 0)); o.save(BIG + 'rebuild-preview.png')
 if PREVIEW: sys.exit()
-BLOCK_FULL = np.asarray(Image.open(BIG + 'block-big.png').convert('L')) > 127
-lr, kr = nd.label(R); edge_ids = set(np.unique(np.r_[lr[:6].ravel(), lr[-6:].ravel(), lr[:, :6].ravel(), lr[:, -6:].ravel()])) - {0}
-inner = R & ~np.isin(lr, list(edge_ids))                               # trees in the open: walk behind them (only the foot is solid, in the game)
-block = (BLOCK_FULL & ~big(inner, 2)) | KEEP | water
-block[716:754, 386:414] = False
+# THE WALK MASK (18 Nov, his note: "a lot that stops walking annoyingly ... make sure its clean"). Only real things block:
+# the lake and the pond, the dark corner forest, his picket fences and the presents by the stage (from his own mask),
+# never a puddle, never an old tree shape (each of his trees blocks only its foot, in the game, like a lamp post).
+his_m = np.zeros((H, W), bool); his_m[:H0, OX:OX + W0] = np.asarray(Image.open(X + 'block.png').convert('L')) > 127
+hl, hk = nd.label(his_m); keep_his = np.zeros((H, W), bool)
+for i, sl in enumerate(nd.find_objects(hl), 1):
+    m = hl[sl] == i; px = d[sl][m]; n_ = m.sum()
+    treey = R[sl][m].mean() > .25 or KEEP[sl][m].mean() > .25
+    icy = ((px[:, 2] > 190) & (px[:, 0] > 120)).mean() > .45 or (((px[:, 0] > px[:, 2] + 18) & (px[:, 1] > px[:, 2])).mean() > .3 and n_ > 150)   # a puddle: ice, or its brown rim
+    hh = sl[0].stop - sl[0].start; ww = sl[1].stop - sl[1].start
+    fence = hh <= 16 and ww >= 2 * hh                                   # the picket fences: long and low
+    near_stage = ((sl[1].start + sl[1].stop) / 2 - 400) ** 2 / 90 ** 2 + ((sl[0].start + sl[0].stop) / 2 - 380) ** 2 / 60 ** 2 < 1
+    if (fence or near_stage) and not treey: keep_his[sl] |= m
+    elif not treey and not icy and n_ < 120: keep_his[sl] |= m          # small odd bits he painted on purpose
+block = keep_his | KEEP | nd.binary_erosion(water, iterations=2)
+block = keep_big(block, 12)                                             # no single stray pixels
+# little closed-in pockets you could never walk out of become solid; little holes in a wall too
+free = ~block; fl, fk = nd.label(free); fs = nd.sum(free, fl, range(1, fk + 1)); main = 1 + int(np.argmax(fs))
+block |= free & (fl != main) & np.isin(fl, [i + 1 for i, z in enumerate(fs) if z < 400])
+block[430:462, 690:762] = False                                         # the jetty
 Image.fromarray(sheet).save(X + 'trees.png', optimize=True); Image.fromarray(nightify(sheet)).save(X + 'trees-night.png', optimize=True)
 json.dump(items, open(X + 'trees.json', 'w'), separators=(',', ':'))
 Image.fromarray(day_g).save(X + 'day-big.webp', lossless=True, quality=100, method=6)
