@@ -62,6 +62,8 @@ const FISHES=[
   {id:'sword',name:'Sword Fish',rar:'epic',min:150,max:280,val:130,str:1.35,win:.7,s:2}];
 /* how likely each rarity is, by how far out the shadow lives: near the jetty, the middle, the far side */
 const FISH_ODDS=[{common:82,rare:17,epic:1,legendary:0},{common:64,rare:28,epic:7,legendary:1},{common:50,rare:32,epic:15,legendary:3}];
+/* a rare fish (or better) shows a PINK "!" when it bites, and fights harder: this much more pull (his call, 18 Nov) */
+const FISH_TOUGH={rare:1.4,epic:1.55,legendary:1.7};
 const FISH_RC={junk:'#9a8f86',common:'#7bc96f',rare:'#6fb5ff',epic:'#c58bff',legendary:'#ffcf4a'};
 Object.assign(FISH,{ph:'idle',t:0,held:false,press:false,px:140,pow:0,pdir:1,tg:null,bob:null,shad:[],rip:[],spl:[],cand:null,hook:null,d:1,ten:0,burst:0,nextB:2,
   cx:140,cy:300,rods:{},rodAsk:{},spawnT:0,dip:0,reelT:0,warnT:0,land:null,mask:null,log:{},fr:0});
@@ -193,7 +195,7 @@ function fishTick(dt,t,m){const F=FISH;F.fr=t;F.t+=dt;F.dip=Math.max(0,F.dip-dt*
     else if(F.t>K.win*fishRod().win)fishLose('Too slow. It got away.');}
   else if(F.ph==='fight'){const s=F.hook,K=FISHES[s.kind],B=F.bob,RD=fishRod();
     F.nextB-=dt;if(F.burst>0)F.burst-=dt;else if(F.nextB<=0&&K.str>0){F.burst=.6+Math.random()*.7;F.nextB=F.burst+(1.3+Math.random()*2.2/K.str)/RD.ten;fishSplash(s.x,s.y);}
-    const pull=K.str*Math.max(.4,1-F.t/45)*(F.burst>0?1.5:.35);   /* it tires as the fight goes on, so no tug of war lasts for ever */
+    const pull=K.str*(FISH_TOUGH[K.rar]||1)*Math.max(.4,1-F.t/45)*(F.burst>0?1.5:.35);   /* it tires as the fight goes on, so no tug of war lasts for ever */
     if(F.held){F.d-=dt*(F.burst>0?.09:.34)*RD.reel/(1+K.str*.25);F.ten+=dt*(.5+pull*.75)*RD.ten;F.reelT-=dt;if(F.reelT<=0){sfx('fish_reel');F.reelT=.07;}}
     else{F.ten-=dt*.95;F.d+=dt*pull*.085*RD.ten;}
     F.ten=Math.max(0,F.ten);F.warnT-=dt;if(F.ten>.8&&F.warnT<=0){sfx('fish_warn');F.warnT=.16;}
@@ -253,11 +255,11 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
     if(B&&F.ph!=='fight'){const dip=Math.round(Math.min(2,F.dip)),bx=X(B.x),by=Y(B.y-B.z)+(F.ph==='fly'?0:dip+Math.round(Math.sin(t*.004)*.6));
       fishLine(X(tip[0]),Y(tip[1]),bx,by-2,'#eef6ff',F.ph==='fly'?0:5);
       if(dip<2){lx.fillStyle='#14203c';lx.fillRect(bx-2,by-3,4,5);lx.fillStyle='#e4544f';lx.fillRect(bx-1,by-2,2,2);lx.fillStyle='#fff';lx.fillRect(bx-1,by,2,1);}}
-    if(F.ph==='fight'&&F.hook){const col=F.ten>.8?'#e4544f':F.ten>.55?'#8fc4ff':'#eef6ff';fishLine(X(tip[0]),Y(tip[1]),X(F.hook.x),Y(F.hook.y),col,F.held?0:4);
+    if(F.ph==='fight'&&F.hook){const col=F.ten>.8?'#e4544f':F.ten>.55?'#ffd25e':'#eef6ff';fishLine(X(tip[0]),Y(tip[1]),X(F.hook.x),Y(F.hook.y),col,F.held?0:4);
       const bx=Math.round(px)-21,by=Math.round(py)-52,w=42;lx.fillStyle='#14203c';lx.fillRect(bx-1,by-1,w+2,7);lx.fillStyle='#2a3a66';lx.fillRect(bx,by,w,5);
-      lx.fillStyle='#3f86e0';lx.fillRect(bx,by,Math.round(w*.55),5);lx.fillStyle='#e8f2ff';lx.fillRect(bx+Math.round(w*.55),by,Math.round(w*.25),5);   /* blue = safe, white = getting tight, red = about to snap */lx.fillStyle='#e4544f';lx.fillRect(bx+Math.round(w*.8),by,w-Math.round(w*.8),5);
+      lx.fillStyle='#3f86e0';lx.fillRect(bx,by,Math.round(w*.55),5);lx.fillStyle='#ffd25e';lx.fillRect(bx+Math.round(w*.55),by,Math.round(w*.25),5);   /* blue = safe, yellow = getting tight, red = about to snap (he asked for the yellow back, 18 Nov) */lx.fillStyle='#e4544f';lx.fillRect(bx+Math.round(w*.8),by,w-Math.round(w*.8),5);
       const nx=bx+Math.round(clamp(F.ten,0,1)*(w-1));lx.fillStyle='#14203c';lx.fillRect(nx-1,by-3,3,11);lx.fillStyle='#fff';lx.fillRect(nx,by-2,1,9);}
-    if(F.ph==='bite'&&Math.floor(t/90)%2){const bx=X(B?B.x:m.x)-3,by=Y(B?B.y:m.y-30)-20;   /* the "!" pops up over the fish on the hook, not over you (his call, 17 Nov) */lx.fillStyle='#14203c';lx.fillRect(bx-1,by-1,8,11);lx.fillStyle='#ffffff';lx.fillRect(bx,by,6,9);lx.fillStyle='#2a63b8';lx.fillRect(bx+2,by+1,2,4);lx.fillRect(bx+2,by+6,2,2);}
+    if(F.ph==='bite'&&Math.floor(t/90)%2){const bx=X(B?B.x:m.x)-3,by=Y(B?B.y:m.y-30)-20;   /* the "!" pops up over the fish on the hook, not over you (his call, 17 Nov) */lx.fillStyle='#14203c';lx.fillRect(bx-1,by-1,8,11);lx.fillStyle=F.cand&&FISH_TOUGH[FISHES[F.cand.kind].rar]?'#ff7ac8':'#ffd25e';   /* yellow, or PINK when what is on the hook is rare or better (his call, 18 Nov) */lx.fillRect(bx,by,6,9);lx.fillStyle='#14203c';lx.fillRect(bx+2,by+1,2,4);lx.fillRect(bx+2,by+6,2,2);}
     if(F.land){const L=F.land,k=Math.min(1,L.t/.6),fx=lerp(X(L.x0),px,k),fy=lerp(Y(L.y0),py-44,k)-Math.sin(k*Math.PI)*26;lx.drawImage(IMG['fish/sheet'],L.kind*48,0,48,32,Math.round(fx)-24,Math.round(fy)-16,48,32);}
   }else if(me)rest.push(me);
   for(const[p,h]of drawScene(rest,null,img,null))hits.set(p,h);
@@ -272,7 +274,7 @@ fetch('assets/fishing/rods.json?v='+BUILD).then(r=>r.json()).then(j=>{FISH.rods=
 /* ================= FISHERMAN JOE (17 Nov, his ask): a stall by the lake =================
    You sell your fish here, buy better rods and buy bait. The stall and Joe are one PixelLab picture (assets/fishing/stall.png),
    drawn in the town like the wheel: in order with the people, its counter solid. Tap it, or walk up to the counter. */
-const STALL={x:474,y:480,w:128,h:112,foot:96,stand:[536,585]};   /* by the lake, where a tall pine stood (his pick, 17 Nov: "place it here, but remove the tree"): any tree whose foot is under the counter is left out of the day town (trees()). 18 Nov: the roomier stall (128 x 112, its feet at row 96, its ground shadow painted into the picture) */
+const STALL={x:474,y:480,w:128,h:112,foot:96,get stand(){return[this.x+62,this.y+this.foot+9];}};   /* x and y are rewritten by the map builder when he drags the stall (tools/builder_server.py, 'stall'); keep this line's shape */   /* by the lake, where a tall pine stood (his pick, 17 Nov: "place it here, but remove the tree"): any tree whose foot is under the counter is left out of the day town (trees()). 18 Nov: the roomier stall (128 x 112, its feet at row 96, its ground shadow painted into the picture) */
 /* JOE IS ALIVE (his ask, 18 Nov): the stall is drawn in three goes: the stall itself (with its shadow on the ground), then Joe as a real character
    standing inside it (so he breathes and blinks like everyone else: SP.joe, made from assets/fishing/joe.png and the eye places in joe.json), then
    stall-front.png, the same stall with its dark inside cut out, so the counter, the fish and the awning are in front of him. */

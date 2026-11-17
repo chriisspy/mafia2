@@ -238,6 +238,8 @@ async function readGame(){const t=await (await fetch('/index.html?t='+Date.now()
   const m=t.match(/const MAPX=XMAS\?(\d+):0,MAPW=XMAS\?(\d+):560,MAPH=XMAS\?(\d+):750/);if(m)GAME.ox=+m[1];
   try{GAME.doors=JSON.parse(t.match(/const DOORS=(\[\[.*?\]\])/)[1]);}catch(e){}
   try{GAME.blds=Function('return '+t.match(/const BUILDINGS=XMAS\?(\[.*?\]):\[\];/)[1])();}catch(e){GAME.blds=[];}
+  /* FISHERMAN JOE'S STALL (18 Nov, his ask: "is he editable on the map builder?"): its place is the STALL line in fishing.js. It is shown with the cabins and buildings and dragged like one; Joe is part of it. */
+  try{const ft=await (await fetch('/fishing.js?t='+Date.now())).text(),sm=ft.match(/const STALL=\{x:(-?\d+),y:(-?\d+),/);GAME.stall=sm?{x:+sm[1],y:+sm[2]}:null;}catch(e){GAME.stall=null;}
   for(const b of GAME.blds){const h=t.match(new RegExp("\\{k:'"+b.k+"',name:'([^']*)'[^\\n]*?door:\\[(\\d+),(\\d+)\\],spawn:\\[(\\d+),(\\d+)\\]"));if(h)GAME.halls[b.k]={name:h[1],door:[+h[2],+h[3]],spawn:[+h[4],+h[5]]};}}
 function maskFrom(im,whiteIsBlocked){const c=toC(im),x=X2(c),d=x.getImageData(0,0,c.width,c.height),p=d.data;
   for(let i=0;i<p.length;i+=4){const b=(p[i]>127)===whiteIsBlocked;p[i]=255;p[i+1]=42;p[i+2]=42;p[i+3]=b?255:0;}x.putImageData(d,0,0);return c;}
@@ -298,6 +300,9 @@ async function openTown(){await readGame();
     const v=variant(p);p.x=x-v.dx;p.y=y-v.dy;p.baseo=base-p.y;p.fxo=p.flip?L.c.width-1-(fx-p.x):fx-p.x;d.props.push(p);}
   await loadGlows(d,'town');
   for(const b of GAME.blds){try{d.blds.push({...b,img:toC(await loadImg('/assets/buildings/'+b.k+'.png')),blk:await bldBlk(b)});}catch(e){}}
+  if(GAME.stall){try{const J=await (await fetch('/assets/fishing/joe.json?t='+Date.now())).json(),bk=await loadImg('/assets/fishing/stall.png'),jo=await loadImg('/assets/fishing/joe.png'),fr=await loadImg('/assets/fishing/stall-front.png');
+    const c=mk(bk.width,bk.height),x=X2(c);x.drawImage(bk,0,0);x.drawImage(jo,Math.round(J.x-jo.width/2),J.y-jo.height);x.drawImage(fr,0,0);const blk=mk(bk.width,bk.height),bx=X2(blk);bx.fillStyle='rgb(255,42,42)';bx.fillRect(20,71,85,J.foot-70);
+    d.blds.push({k:'stall',name:"Fisherman Joe's stall",stall:true,x:GAME.stall.x,y:GAME.stall.y,w:bk.width,h:J.foot+2,fade:0,img:c,blk});}catch(e){}}
   for(let i=0;i<GAME.doors.length;i++){try{d.cab.push({img:await loadImg('/assets/xmas/cabins/cabin'+i+'.png'),cx:GAME.doors[i][0],top:GAME.doors[i][1]});}catch(e){}}
   for(let i=0;i<d.cab.length;i++)d.glows.push(...d.winFor(i));
   return d;}
@@ -626,7 +631,7 @@ function ui(){const d=S.doc;if(!d)return;$('#cfg').style.background=S.fg;$('#cbg
      <div class="row"><label title="Its foot blocks walking"><input type="checkbox" data-p="solid" ${p.solid?'checked':''}> solid</label></div>
      <div class="row"><label><input type="checkbox" data-p="shadow" ${p.shadow?'checked':''}> shadow</label> <label><input type="checkbox" data-p="flip" ${p.flip?'checked':''}> flipped</label></div>
      <div class="row"><small>Foot</small><input type="number" data-n="fw" value="${p.fw}" min="1" max="60" title="Foot half-width"><input type="number" data-n="fxo" value="${p.fxo}" title="Foot x inside the picture"><input type="number" data-n="baseo" value="${p.baseo}" title="Foot y inside the picture"></div>
-     <div class="row"><button data-a="dup">Duplicate</button><button data-a="bake" title="Paint it into the ground for good (day and night)">Bake</button><button data-a="del">Delete</button></div>`):S.selBld&&d.blds?.includes(S.selBld)?`<b>${S.selBld.name}</b> <small>${S.selBld.x}, ${S.selBld.y}</small><div class="row"><label title="Goes see-through when you walk behind it"><input type="checkbox" data-b="fade" ${S.selBld.fade!==0?'checked':''}> fade when behind</label></div><div class="row"><button data-a="editb">Edit pixels</button><button data-a="blockb" title="Paint where this building blocks walking (red = solid). It moves with the building.">Edit walk block</button></div>`
+     <div class="row"><button data-a="dup">Duplicate</button><button data-a="bake" title="Paint it into the ground for good (day and night)">Bake</button><button data-a="del">Delete</button></div>`):S.selBld&&S.selBld.stall?`<b>${S.selBld.name}</b> <small>${S.selBld.x}, ${S.selBld.y}</small><div class="row"><small>Drag it where you want it. Joe moves with it, and any tree standing under its counter is left out of the town.</small></div>`:S.selBld&&d.blds?.includes(S.selBld)?`<b>${S.selBld.name}</b> <small>${S.selBld.x}, ${S.selBld.y}</small><div class="row"><label title="Goes see-through when you walk behind it"><input type="checkbox" data-b="fade" ${S.selBld.fade!==0?'checked':''}> fade when behind</label></div><div class="row"><button data-a="editb">Edit pixels</button><button data-a="blockb" title="Paint where this building blocks walking (red = solid). It moves with the building.">Edit walk block</button></div>`
     :S.selCab&&d.cab?.includes(S.selCab)?`<b>Cabin ${d.cab.indexOf(S.selCab)+1}</b> <small>${S.selCab.cx}, ${S.selCab.top}</small><div class="row"><small>Drag it or nudge with the arrows.</small></div>`:'';
   $('#info').textContent=`${d.name}  ${d.w}×${d.h}`+(d.kind==='town'?`  ·  ${d.props.length} props`:'');$('#dirty').textContent=d.dirty?'unsaved changes':'';draw();}
 $('#tools').innerHTML=TOOLS.map(t=>`<button data-t="${t[0]}" title="${t[3]} (${t[1]})">${icon(t[0])}</button>`).join('');
@@ -733,7 +738,7 @@ $('#bNewInt').onclick=()=>{const D=$('#dlg');D.innerHTML=`<h3>New interior</h3><
       const wk=mk(w,h),y=X2(wk);y.fillStyle='#000';y.fillRect(0,0,w,h);y.fillStyle='#fff';y.fillRect(18,50,w-36,h-74);y.fillRect((w>>1)-10,h-26,20,12);
       const bimg=clone(DOCS.town.blds[0].img),nb={k,name:n,x:200,y:860,w:bimg.width,h:bimg.height},door=[w>>1,h-16],spawn=[w>>1,h-30];
       await api('/api/save',{files:[{path:`assets/interiors/${k}.png`,b64:png(pic),mode:'RGB'},{path:`assets/interiors/${k}-walk.png`,b64:png(wk),mode:'L'},{path:`assets/buildings/${k}.png`,b64:png(bimg)}]});
-      await api('/api/patch',{buildings:[...DOCS.town.blds.map(({k,name,x,y,w,h,fade})=>({k,name,x,y,w,h,fade})),nb],hall:{k,name:n,door,spawn}});
+      await api('/api/patch',{buildings:[...DOCS.town.blds.filter(b=>!b.stall).map(({k,name,x,y,w,h,fade})=>({k,name,x,y,w,h,fade})),nb],hall:{k,name:n,door,spawn}});
       GAME.blds.push(nb);GAME.halls[k]={name:n,door,spawn};DOCS.town.blds.push({...nb,img:bimg,blk:defBlk(nb.w,nb.h)});D.close();await show('town');S.layer='ref';S.selBld=DOCS.town.blds.at(-1);setTool('move');ui();toast('Made. Drag the new building where you want it, then Save. Its room is in the list at the top.');}
     catch(e){toast('Could not make it: '+e.message,true);}};D.showModal();};
 
@@ -847,7 +852,7 @@ async function save(){commitFloat();let d=S.doc;if(d.libId){d.dirty=false;d=Obje
       files.push({path:'assets/builder/library.json',text:JSON.stringify(libs.map(l=>({id:l.id,fxo:l.fxo,baseo:l.baseo,fw:l.fw})))});
       for(const b of d.blds)if(DOCS['assets/buildings/'+b.k+'.png']?.dirty){const q=DOCS['assets/buildings/'+b.k+'.png'];files.push({path:q.path,b64:png(flat(q,false))});q.dirty=false;b.img=q.day;}
       for(const b of d.blds){const q=DOCS['bmask:'+b.k];if(q&&q.dirty){files.push({path:`assets/buildings/${b.k}-block.png`,b64:png(maskOut(b.blk,true)),mode:'L'});q.dirty=false;}}
-      patch={map:{ox:d.ox,w:d.w,h:d.h},cabins:d.cab.length===GAME.doors.length?d.cab.map(c=>[c.cx,c.top]):null,buildings:d.blds.map(({k,name,x,y,w,h,fade})=>({k,name,x,y,w,h,fade}))};
+      patch={map:{ox:d.ox,w:d.w,h:d.h},cabins:d.cab.length===GAME.doors.length?d.cab.map(c=>[c.cx,c.top]):null,buildings:d.blds.filter(b=>!b.stall).map(({k,name,x,y,w,h,fade})=>({k,name,x,y,w,h,fade})),stall:(q=>q?{x:q.x,y:q.y}:null)(d.blds.find(b=>b.stall))};
     }else if(d.kind==='bmask'){files.push({path:`assets/buildings/${d.k}-block.png`,b64:png(maskOut(d.block,true)),mode:'L'});
     }else if(d.kind==='hall'){files.push({path:`assets/interiors/${d.k}.png`,b64:png(FD),mode:'RGB'},{path:`assets/interiors/${d.k}-walk.png`,b64:png(maskOut(d.block,false)),mode:'L'});}
     else if(d.kind==='room'){files.push({path:'assets/room-objects/room-empty.png',b64:png(FD)});const obj={},sh={};

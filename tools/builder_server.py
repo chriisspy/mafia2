@@ -57,6 +57,11 @@ def patch_index(body):
             js = '[' + ','.join('[%d,%d]' % (int(c[0]), int(c[1])) for c in body[key]) + ']'
             t, n = re.subn(r'(\n  %s:)\[\[[^\n]*?\]\],' % key, lambda m: m.group(1) + js + ',', t)
             assert n == 1, key + ' line not found'; done.append(key)
+    if body.get('stall'):                                             # Fisherman Joe's stall (it lives in fishing.js, not in index.html)
+        st = body['stall']; ft = open('fishing.js', encoding='utf-8', newline='').read()
+        ft, n = re.subn(r'const STALL=\{x:-?\d+,y:-?\d+,', 'const STALL={x:%d,y:%d,' % (int(st['x']), int(st['y'])), ft)
+        assert n == 1, 'STALL line not found in fishing.js'
+        open('fishing.js', 'w', encoding='utf-8', newline='').write(ft); done.append('stall')
     if body.get('hall'):
         h = body['hall']
         assert re.fullmatch(r'[a-z][a-z0-9]{1,15}', h['k']), 'bad key'
