@@ -563,6 +563,15 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #talkSkip{position:absolute;right:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
 #townLeave,#gameLeave{display:none!important}
 #menuBtn{position:absolute;left:10px;top:calc(16px + env(safe-area-inset-top));z-index:23;padding:6px 7px 8px;display:flex;align-items:center;justify-content:center}
+#chatBtn{position:absolute;left:10px;top:calc(108px + env(safe-area-inset-top));z-index:23;padding:6px 7px 8px;align-items:center;justify-content:center}#chatBtn:not([style*=none]){display:flex}
+#chatBtn .chDot{position:absolute;right:-3px;top:-3px;width:10px;height:10px;border-radius:50%;background:#e4544f;border:2px solid #0f0b1e;display:none}#chatBtn.new .chDot{display:block}
+#chatBox{position:absolute;left:58px;right:10px;top:calc(62px + env(safe-area-inset-top));z-index:24;padding:8px 9px 9px;display:none}#chatBox.on{display:block}
+#chatLog{max-height:132px;overflow:auto;font:600 14px 'Pixelify Sans';text-align:left;margin-bottom:6px}#chatLog:empty{display:none}#chatLog div{padding:1px 0}#chatLog b{color:#a92b2c}
+.chRow{display:flex;gap:6px}#chatTxt{flex:1;min-width:0;font:600 16px 'Pixelify Sans';padding:6px 8px;border:3px solid var(--wood);border-radius:6px;background:#fff}#chatGo{font-size:15px;padding:4px 12px 7px}
+#heads{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}
+.hb{position:absolute;transform:translate(-50%,-100%);background:rgba(26,20,48,.93);border:3px solid #0f0b1e;border-radius:6px;color:#fff;font:600 13px 'Pixelify Sans';padding:2px 8px 4px;white-space:nowrap;text-align:center;line-height:1.15}
+.hb small{display:block;font-size:10px;letter-spacing:1.5px;opacity:.75}.hb b{font-weight:700}.hb b.up{color:#7dff9c}.hb b.dn{color:#ff8a8a}.hb em{font-style:normal;opacity:.75;margin-left:4px}.hb i{vertical-align:-2px}
+.hb.say{background:#fff;color:#1a1430;border-color:#1a1430;white-space:normal;max-width:190px;width:max-content;font-size:14px;padding:3px 8px 5px}.hb.say::after{content:'';position:absolute;left:50%;bottom:-7px;margin-left:-4px;border:4px solid transparent;border-top-color:#1a1430}   /* (his ask, 18 Nov) chat and results over heads */
 #playersBtn{position:absolute;left:10px;top:calc(62px + env(safe-area-inset-top));z-index:23;padding:6px 7px 8px;align-items:center;justify-content:center}#playersBtn:not([style*=none]){display:flex}
 #plList{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto}#plInvite{margin-top:4px;font-size:17px;padding:8px 10px 11px}.plr{display:flex;align-items:center;gap:9px;text-align:left;padding:5px 8px 7px;border:3px solid var(--wood);border-radius:6px;background:#fff;box-shadow:inset 0 -4px 0 #0002}
 .plr img{width:34px;height:34px;image-rendering:pixelated;object-fit:contain;border-radius:4px;background:#f6dfae}.plr .pt{flex:1;min-width:0}.plr b{display:block;font:700 17px 'Pixelify Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -709,7 +718,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <button class="panel" id="townCodeBox"><small>LOBBY CODE</small><b id="townCodeT">ABCD</b></button>
     <div class="title banner"><small id="townCode">PRACTICE TOWN</small><span id="placeName">THE TOWN</span><div class="tcount" id="townCount"></div></div>
     <div id="townMenu"><button class="btn" data-a="punch" title="Punch"><i data-ic="fist" data-s="3" data-c="solo"></i></button><button class="btn" data-a="five" title="High five"><i data-ic="hand" data-s="3" data-c="solo"></i></button></div>
-    <div id="townToast"></div>
+    <div id="townToast"></div><div id="heads"></div>
     <div id="wheelPop"></div><div id="casePop"></div>
     <div class="panel" id="duelAsk"><img class="f" id="daFace" alt=""><div class="datx"><b id="daLine"></b><span class="wal"><i data-ic="coin" data-c="solo"></i><span id="daAmt"></span></span></div><button class="btn go" id="daYes" title="Accept"><i data-ic="check" data-s="3" data-c="solo"></i></button><button class="btn red" id="daNo" title="No"><i data-ic="cross" data-s="3" data-c="solo"></i></button></div>
     <div class="bottom"><div id="lakeBar">
@@ -949,7 +958,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     </div>
 
   <button class="btn dark" id="gameLeave">Leave</button>
-  <button class="btn dark" id="menuBtn" title="Menu"><i data-ic="menu" data-c="solo"></i></button><button class="btn dark" id="playersBtn" title="Players" style="display:none"><i data-ic="players" data-c="solo"></i></button>
+  <button class="btn dark" id="menuBtn" title="Menu"><i data-ic="menu" data-c="solo"></i></button><button class="btn dark" id="playersBtn" title="Players" style="display:none"><i data-ic="players" data-c="solo"></i></button><button class="btn dark" id="chatBtn" title="Chat" style="display:none"><i data-ic="chat" data-c="solo"></i><em class="chDot"></em></button>
   <button class="btn dark" id="hideBtn" title="Hide my role outfit"></button>
   <button class="btn dark" id="spyBtn" title="Notes"><i data-ic="notes" data-c="solo"></i></button>
   <div class="modal panel" id="spyModal">
@@ -967,6 +976,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div class="small" style="margin-bottom:6px">Lab only. Tap one to watch it.</div>
     <div id="filmList"></div>
   </div>
+  <div class="panel" id="chatBox"><div id="chatLog"></div><div class="chRow"><input id="chatTxt" maxlength="80" placeholder="Say something" autocomplete="off" enterkeyhint="send"><button class="btn red" id="chatGo">Send</button></div></div>
   <div class="modal panel" id="playersModal"><div class="mhead"><b>PLAYERS</b><button class="btn" id="playersX"><i data-ic="cross" data-c="solo"></i></button></div><div id="plList"></div></div>
   <div class="modal panel" id="menuModal">
     <div class="mhead"><b>MENU</b><button class="btn" id="menuX"><i data-ic="cross" data-c="solo"></i></button></div>
@@ -1285,7 +1295,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11181938'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11181959'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3928,11 +3938,35 @@ function plPaint(){const L=$('#plList');if(!L)return;const rows=[],here=new Set(
   if(NET.world&&typeof WORLD!=='undefined')for(const[u,m]of Object.entries(WORLD.members||{}))if(!here.has(u))rows.push(row(SP[m.skin]?face(m.skin):(typeof wFace==='function'?wFace(m):''),m.n||'Player','Offline',1));
   const own=NET.world&&typeof WORLD!=='undefined'&&WORLD.meta&&WORLD.meta.owner===NET.uid;   /* (his ask) the owner can invite from here */
   L.innerHTML=rows.join('')+(own?'<button class="btn red" id="plInvite">Invite</button>':'');}
-function plSync(){const b=$('#playersBtn');if(!b)return;const on=!!(NET.on&&scene===scenes.town);if((b.style.display!=='none')!==on)b.style.display=on?'':'none';if(!on)$('#playersModal').classList.remove('on');}
+function plSync(){const b=$('#playersBtn'),c=$('#chatBtn');if(!b)return;const on=!!(NET.on&&scene===scenes.town);if((b.style.display!=='none')!==on){b.style.display=on?'':'none';c.style.display=on?'':'none';}if(!on){$('#playersModal').classList.remove('on');$('#chatBox').classList.remove('on');}}
 $('#playersBtn').onclick=()=>{const M=$('#playersModal');if(M.classList.contains('on')){M.classList.remove('on');return;}document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));sfx('click');plPaint();M.classList.add('on');};
 $('#plList').addEventListener('click',e=>{if(!e.target.closest('#plInvite'))return;sfx('click');$('#playersModal').classList.remove('on');worldPanel();setTimeout(()=>{const i=$('#wmUser');if(i){i.scrollIntoView({block:'center'});i.focus();}},60);});   /* opens the world window at the email box */
 $('#playersX').onclick=()=>{sfx('close');$('#playersModal').classList.remove('on');};
 setInterval(()=>{plSync();if($('#playersModal').classList.contains('on'))plPaint();},1000);
+/* OVER THEIR HEADS (his ask, 18 Nov): what someone says in chat, and what they just won or lost (slots, the coin flip, blackjack, the
+   knives, a fish), shows over their head for a few seconds, for everyone in the same place. e.bub = {html, t, cls}; drawn as little panels. */
+function headSay(e,html,o){if(!e||!html)return;o=o||{};e.bub={html,t:o.t||4.5,cls:o.cls||''};}
+function headsDraw(dt){const box=$('#heads'),m=WL.me;if(!box||!m)return;
+  for(const e of wlAll()){const b=e&&e.bub;if(!e)continue;if(!b||b.t<=0){if(e.bubEl){e.bubEl.remove();e.bubEl=null;}if(b)e.bub=null;continue;}b.t-=dt;
+    if(!e.bubEl){e.bubEl=document.createElement('div');box.appendChild(e.bubEl);}const el=e.bubEl,q=WL.pos.get(e);
+    if(el._h!==b.html){el.innerHTML=b.html;el._h=b.html;}const cl='hb '+b.cls;if(el.className!==cl)el.className=cl;
+    if(!q||e.loc!==m.loc){el.style.display='none';continue;}el.style.display='';el.style.left=Math.round(q.x)+'px';el.style.top=Math.round(q.y-TAG-6)+'px';el.style.opacity=String(Math.min(1,b.t*2.5));}}
+const BRAG={slot:'SLOTS',flip:'COIN FLIP',bj:'BLACKJACK',knife:'KNIVES'};
+function bragHtml(v){if(v.g==='fish'){const f=typeof FISHES!=='undefined'&&FISHES[v.k|0];if(!f)return'';return`<small>CAUGHT</small><b style="color:${RAR_COL[f.rar]||'#fff'}">${esc(f.name)}</b>${v.cm?`<em>${v.cm|0} cm</em>`:''}`;}
+  if(v.g==='knife')return`<small>KNIVES</small><b>${v.n|0} points</b>`;if(!BRAG[v.g])return'';
+  const n=v.n|0;return`<small>${BRAG[v.g]}</small>`+(n?`<b class="${n>0?'up':'dn'}">${n>0?'+':'-'}${ic('coin',2)} ${Math.abs(n)}</b>`:'<b>EVEN</b>');}
+function brag(g,o){const v={g,...(o||{})},h=bragHtml(v),m=WL.me;if(!h||!m)return;headSay(m,h,{t:4.5,cls:'res'});
+  if(NET.on)NET.ref.child('ev').push({k:'brag',by:NET.uid,...v,x:Math.round(m.x),y:Math.round(m.y),loc:m.loc,ts:TS()}).catch(()=>{});}
+/* CHAT (his ask): the speech button under the menu. What you type goes over your head and into the chat box, for everyone here. */
+const CHAT={log:[]};
+function chatLog(n,t){CHAT.log.push([n,t]);if(CHAT.log.length>40)CHAT.log.shift();const L=$('#chatLog');L.innerHTML=CHAT.log.map(([a,b])=>`<div><b>${esc(a)}:</b> ${esc(b)}</div>`).join('');L.scrollTop=L.scrollHeight;
+  if(!$('#chatBox').classList.contains('on')&&n!=='You')$('#chatBtn').classList.add('new');}
+function chatSend(){const i=$('#chatTxt'),t=i.value.replace(/\s+/g,' ').trim().slice(0,80),m=WL.me;if(!t||!m)return;i.value='';sfx('click');
+  headSay(m,esc(t),{t:5.5,cls:'say'});chatLog('You',t);if(NET.on)NET.ref.child('ev').push({k:'chat',by:NET.uid,t,x:Math.round(m.x),y:Math.round(m.y),loc:m.loc,ts:TS()}).catch(()=>{});}
+$('#chatBtn').onclick=()=>{const B=$('#chatBox'),on=!B.classList.contains('on');B.classList.toggle('on',on);$('#chatBtn').classList.remove('new');sfx('click');if(on)setTimeout(()=>$('#chatTxt').focus(),30);else $('#chatTxt').blur();};
+$('#chatGo').onclick=chatSend;
+$('#chatTxt').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){$('#chatBox').classList.remove('on');$('#chatTxt').blur();}});
+$('#chatTxt').addEventListener('keyup',e=>e.stopPropagation());
 function wlDoor(ci){if(WL.fading)return;WL.fading=true;sfx('door');const xf=$('#xfade');xf.classList.add('on');
   setTimeout(()=>{const m=WL.me,was=m.loc;m.seat=null;m.loc=ci;m.path=[];m.todo=null;m.walk=false;WL.sel=null;wlMenu();
     {const H=ci>=100?hallOf(ci):null,on=!!H&&H.k!=='lake';$('#townHud').classList.toggle('hall',on);if(on){$('#hallLine').textContent='';paintCoins();}}
@@ -4122,7 +4156,7 @@ function duelStart(o){const F=FLIP;Object.assign(F,{mode:'duel',amt:o.amt,opp:o.
   F.a0=F.side==='h'?0:Math.PI;F.a1=(F.res==='h'?0:Math.PI)+Math.PI*10;
   for(const[id,e,s]of[['#fvH',o.h,'h'],['#fvT',o.t,'t']]){const el=$(id);el.classList.toggle('me',s===o.mine);el.querySelector('img').src=face(PEOPLE[e.i]?PEOPLE[e.i].skin:'beanie');el.querySelector('span').textContent=wlName(e);}
   flipShow();sfx('swish');}
-function flipLand(){const F=FLIP,won=F.res===F.side,duel=F.mode==='duel',gain=duel?F.amt:F.pays;F.busy=false;F.won=won;F.t=0;F.a1=F.res==='h'?0:Math.PI;sfx('shove');
+function flipLand(){const F=FLIP,won=F.res===F.side,duel=F.mode==='duel',gain=duel?F.amt:F.pays;F.busy=false;F.won=won;if(!duel)brag('flip',{n:won?F.pays-F.price:-F.price});F.t=0;F.a1=F.res==='h'?0:Math.PI;sfx('shove');
   if(won){F.flash=.07;sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),260+k*150);
     for(let k=0;k<34;k++){const a=-Math.PI*(.12+.76*Math.random()),sp=50+Math.random()*80;F.parts.push({x:52,y:62,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:1.1+Math.random()*.7,t:0,c:k%3});}
     $('#flipWord').innerHTML=pxWord('YOU WIN',6,'legendary')+pxWord('+'+gain,6,'good',.4);}
@@ -4265,7 +4299,7 @@ scenes.town={hud:'#townHud',
     // stars going round the head of anyone knocked flat
     for(const p of people){const k=p.e.ko,h=hits.get(p);if(!k||k.t>1.25||!h)continue;lx.fillStyle='#ffd25e';for(let i=0;i<3;i++){const a=t*.009+i*2.1;lx.fillRect(Math.round(h.cx+Math.cos(a)*8),Math.round(h.top-3+Math.sin(a)*2.5),2,2);}}
     present();dayMode=false;
-    WL.pos.clear();for(const p of people){const h=hits.get(p);if(!h)continue;WL.pos.set(p.e,{x:(h.cx-(cam.fx||0))*S/DPR,y:(h.top-(cam.fy||0))*S/DPR});nameTag(h,wlName(p.e),p.e===m?(m.loc===LAKE?'#9fd0ff':'#ffd25e'):'#fff');}
+    WL.pos.clear();for(const p of people){const h=hits.get(p);if(!h)continue;WL.pos.set(p.e,{x:(h.cx-(cam.fx||0))*S/DPR,y:(h.top-(cam.fy||0))*S/DPR});nameTag(h,wlName(p.e),p.e===m?(m.loc===LAKE?'#9fd0ff':'#ffd25e'):'#fff');}headsDraw(dt);
     if(WL.sel){const q=WL.pos.get(WL.sel);if(!q||WL.sel.ko){WL.sel=null;wlMenu();}else{const mn=$('#townMenu');mn.style.left=clamp(q.x,50,cv.clientWidth-50)+'px';mn.style.top=(q.y-TAG-10)+'px';}}
     {const wp=$('#wheelPop');WL.pop=Math.max(0,(WL.pop||0)-dt);const on=WL.pop>0&&m.loc<0;if(wp.classList.contains('on')!==on)wp.classList.toggle('on',on);
       if(on){wp.style.left=clamp((WHEEL_AT[0]-cam.x-(cam.fx||0))*S/DPR,90,cv.clientWidth-90)+'px';wp.style.top=((WHEEL_AT[1]-58-cam.y-(cam.fy||0))*S/DPR)+'px';}}
@@ -4406,13 +4440,13 @@ function netApply(){if(!NET.on)return;const pl=NET.players||{},mine=pl[NET.uid],
   others.forEach(([u,p],k)=>{keep.add(u);const m=p.m;let e=NET.ents.get(u);
     if(!e){e=wlEnt(k+1,m.x,m.y);e.remote=true;e.uid=u;e.loc=m.loc;e.ms=-1;NET.ents.set(u,e);if(NET.sawRoster){wlSay(`${String(p.n).slice(0,10)} joined.`,'good');sfx('join');}}
     e.i=k+1;e.n=String(p.n).slice(0,10);
-    if(m.s!==e.ms){e.ms=m.s;if(e.loc!==m.loc||Math.hypot(e.x-m.x,e.y-m.y)>48){e.loc=m.loc;e.x=m.x;e.y=m.y;e.path=[];e.walk=false;}
+    if(m.s!==e.ms){e.ms=m.s;e.fish=m.f||null;if(e.loc!==m.loc||Math.hypot(e.x-m.x,e.y-m.y)>48){e.loc=m.loc;e.x=m.x;e.y=m.y;e.path=[];e.walk=false;}
       if(!e.ko&&!e.act){if(Math.hypot(m.tx-e.x,m.ty-e.y)>2)wlGo(e,m.tx,m.ty);else{e.path=[];e.walk=false;if(m.dir)e.dir=m.dir;}}
-      const sk=SEATK.includes(m.seat)?m.seat:null,cur=e.seat&&!e.seat.out?e.seat.k:null;
-      if(sk!==cur&&!e.ko&&e.loc>=0&&e.loc<100){if(sk){const s=wlSeat(sk,e);e.path=[];e.todo=null;e.walk=false;e.act=null;e.x=s.stand[0];e.y=s.stand[1];e.seat={k:sk,t:0};if(e.loc===WL.me.loc)sfx('sit');}else e.seat={k:cur,t:0,out:true};}}});
-  for(const[u,e]of[...NET.ents])if(!keep.has(u)){NET.ents.delete(u);wlSay(`${e.n||'Someone'} left.`);}
+      const sk=SEATK.includes(m.seat)||/^(bj\d_\d|tv\d+)$/.test(m.seat||'')?m.seat:null,cur=e.seat&&!e.seat.out?e.seat.k:null;   /* the blackjack and tavern stools too, so a shared table shows who is sat at it */
+      if(sk!==cur&&!e.ko&&e.loc>=0){if(sk){const s=wlSeat(sk,e);e.path=[];e.todo=null;e.walk=false;e.act=null;e.x=s.stand[0];e.y=s.stand[1];e.seat={k:sk,t:0};if(e.loc===WL.me.loc)sfx('sit');}else e.seat={k:cur,t:0,out:true};}}});
+  for(const[u,e]of[...NET.ents])if(!keep.has(u)){if(e.bubEl)e.bubEl.remove();NET.ents.delete(u);wlSay(`${e.n||'Someone'} left.`);}
   WL.bots=others.map(([u])=>NET.ents.get(u));NET.sawRoster=true;gameLobbyUI();if(WL.sel&&!WL.bots.includes(WL.sel)){WL.sel=null;wlMenu();}}
-const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:m.joyT||[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,seat:m.seat&&!m.seat.out?m.seat.k:null,s:++NET.seq};};
+const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:m.joyT||[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,seat:m.seat&&!m.seat.out?m.seat.k:null,f:m.loc===LAKE&&FISH.on?{fc:FISH.face||'back',rd:(typeof KIT!=='undefined'&&KIT.rod)||'twig',ph:FISH.ph,bx:FISH.bob?Math.round(FISH.bob.x):null,by:FISH.bob?Math.round(FISH.bob.y):null}:null,s:++NET.seq};};   /* f: fishing, so the others see your rod and float (his ask) */
 // tell everyone where I am and where I am walking to (at most about five times a second)
 function netMove(){if(!NET.on||!WL.me)return;clearTimeout(NET.mt);const send=()=>{NET.ml=performance.now();if(NET.on)NET.me.child('m').set(netM()).catch(()=>{});};
   if(performance.now()-(NET.ml||0)>180)send();else NET.mt=setTimeout(send,180);}
@@ -4422,6 +4456,8 @@ function netEvent(s){const v=s.val();if(!NET.on||!v||v.by===NET.uid||!(v.ts>NET.
   if(v.k==='haunt'){if(GAME.on&&v.to===NET.uid&&!GAME.meDead)hauntFx(HAUNTS.includes(v.h)?v.h:'ghost');return;}
   if(v.k==='gpunch'){if(GAME.on)ghostPunched(v);return;}   // a ghost haunts you: it swoops across your screen
   if(scene!==scenes.town)return;const e=NET.ents.get(v.by);if(!e)return;
+  if(v.k==='brag'){headSay(e,bragHtml(v),{t:4.5,cls:'res'});return;}                                             // what they just won, lost or caught
+  if(v.k==='chat'){const t=String(v.t||'').replace(/\s+/g,' ').trim().slice(0,80);if(!t)return;headSay(e,esc(t),{t:5.5,cls:'say'});chatLog(wlName(e),t);return;}
   if(typeof v.k==='string'&&v.k.slice(0,4)==='flip'){duelNet(v,e);return;}                                          // coin flip, one on one
   if(v.k==='spin'){wheelSpin(e,{k:v.res,f:v.fr,win:v.win});wheelUI();return;}
   if(v.k==='case'){e.caseFx={kind:CASE_DEF[v.kind]?v.kind:'mafia',t:0,win:null,wt:0};return;}                       // somebody is opening a case

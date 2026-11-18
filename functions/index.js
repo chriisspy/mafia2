@@ -12,7 +12,8 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 const db = admin.database();
 const C = require('./catalog.json');
-const ADMINS = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2']);   // his Google account: the lab's test buttons only work for him
+const ADMINS = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2']);
+const GIFT_NOW = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2', 'XAnbqovmaFUIHDkziEIyPO6Yg5m2']);   // his accounts (@mafia, @chrispy) can send coins on day one (his call, 18 Nov)   // his Google account: the lab's test buttons only work for him
 const MIGRATE_MAX = 20000;
 const PROP_PRICE = 7500, PROP_MAX = 48;                       // the prop maker (phase 5): what a drawing costs, and its biggest side                                    // coins carried over from a phone, once, at most
 
@@ -109,8 +110,41 @@ function blackjack(w, a, amt) {
   return bjView(B, B.ph === 'done');
 }
 
+/* ---- SHARED BLACKJACK (his ask, 18 Nov): the rules are in bjt.js ---- */
+const BJT = require('./bjt.js');
+async function bjtRun(wid, t, fn) {
+  let err; const ref = db.ref(`bjtx/${wid}/${t}`);
+  const res = await ref.transaction(cur => {
+    err = null; const T = BJT.norm(cur);
+    try { fn(T); T.v = (T.v | 0) + 1; T.now = Date.now(); return T; } catch (e) { err = e; return; }
+  });
+  if (err) { if (err instanceof BJT.Bad) bad(err.message); throw err; }
+  if (!res.committed) bad('Try again.');
+  const T = BJT.norm(res.snapshot.val()), P = BJT.pub(T);
+  await db.ref(`worlds/${wid}/bjt/${t}`).transaction(cur => (!cur || (cur.v | 0) < P.v) ? P : undefined);   // the copy the phones watch (never an older one)
+  if (T.ph === 'done' && T.pay) await Promise.all(Object.entries(T.pay).filter(([, p]) => p.back > 0).map(([u, p]) =>   // pay everyone at the table, once per round
+    tx(u, w => { w.bjr = w.bjr || {}; const key = `${wid}_${t}_${T.r}`; if (w.bjr[key]) return {}; w.bjr[key] = Date.now();
+      for (const [k, v] of Object.entries(w.bjr)) if (Date.now() - v > 864e5) delete w.bjr[k]; w.c += p.back; return {}; }).catch(() => {})));
+  return P;
+}
+
 /* ---- everything else ---- */
 const OPS = {
+  // the shared blackjack table: sit, leave, bet, hit, stand, double, split, tick (a deadline has passed)
+  async bjt(uid, d) {
+    const wid = String(d.wid || ''), t = d.t | 0, a = String(d.a || '');
+    if (!/^[-\w]{5,40}$/.test(wid) || t < 0 || t > 1) bad('Bad table.');
+    const mem = (await db.ref(`worlds/${wid}/members/${uid}`).get()).val(); if (!mem) bad('You are not in that world.');
+    const o = { n: String(mem.n || 'Player').slice(0, 12), s: Math.max(0, Math.min(3, d.s | 0)), amt: 0 };
+    if (a === 'bet') o.amt = bet(d.amt);
+    if (a === 'double' || a === 'split') {   // costs the same again as the hand in play
+      const T = BJT.norm((await db.ref(`bjtx/${wid}/${t}`).get()).val()), me = T.seats[uid], h = me && T.order[T.cur] === uid && me.hands[T.hi];
+      if (!h) bad('Not your turn.'); o.amt = h.bet;
+    }
+    if (o.amt) await tx(uid, w => { spend(w, o.amt); return {}; });
+    try { return { T: await bjtRun(wid, t, T => BJT.move(T, uid, a, o)) }; }
+    catch (e) { if (o.amt) await tx(uid, w => { w.c += o.amt; return {}; }).catch(() => {}); throw e; }   // it did not go through: the coins go back
+  },
   // first time on the server: what this phone had comes over once (capped). Afterwards it just answers with the wallet.
   async init(uid, d) {
     const ref = db.ref('wallet/' + uid);
@@ -258,7 +292,7 @@ const OPS = {
   async gift(uid, d) {
     const to = String(d.uid || ''), amt = bet(d.amt); if (to === uid) bad('That is you.');
     if (!d._google) bad('Sign in with Google to send coins.');   // no throwaway accounts feeding a main one
-    const born = (await db.ref('wallet/' + uid + '/born').get()).val(); if (born && Date.now() - born < 864e5) bad('New accounts can send coins after a day.');
+    const born = (await db.ref('wallet/' + uid + '/born').get()).val(); if (born && Date.now() - born < 864e5 && !GIFT_NOW.has(uid)) bad('New accounts can send coins after a day.');   // his own account does not wait (his call, 18 Nov)
     if (!(await db.ref('friends/' + uid + '/' + to).get()).exists()) bad('You can only send coins to friends.');
     if (!(await db.ref('wallet/' + to + '/ts').get()).exists()) bad('They have no wallet yet.');
     await tx(uid, w => spend(w, amt));

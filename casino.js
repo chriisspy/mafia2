@@ -33,7 +33,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 #bjCtl{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2}
 #bjModal #bjSub{color:#fff6cf;opacity:.85;text-shadow:0 1px 0 #0f0b1e}
 #bjActs{display:none;margin:0 0 8px}#bjActs .btn{flex:1;font-size:15px;padding:6px 2px 9px;justify-content:center;flex-direction:column;gap:3px}#bjActs .btn:disabled{opacity:.45}
-#bjModal.play #bjActs{display:flex}#bjModal.play #bjStakes,#bjModal.play #bjDeal{display:none}
+#bjModal.play #bjActs{display:flex}#bjModal.play #bjStakes,#bjModal.play #bjDeal{display:none}#bjModal.watch #bjStakes,#bjModal.watch #bjDeal{display:none}
 #bjDeal{font-size:20px;padding:9px 8px 12px}#bjSub{margin-top:8px;min-height:15px}
 </style>`);
 document.querySelectorAll('#bjModal [data-ic]').forEach(e=>{e.outerHTML=ic(e.dataset.ic,+(e.dataset.s||2));});
@@ -92,7 +92,7 @@ function bjApply(S){BJ.q=0;
   setTimeout(()=>{const c=BJ.d[1];if(c&&c.down){c.r=S.d[1].r;c.su=S.d[1].su;c.down=false;c.flip=BJ.t;sfx('bj_flip');}BJ.ph='dealer';bjUI();
     let k=2;const step=()=>{if(k<S.d.length){BJ.q=0;give(BJ.d,S.d[k++]);bjUI();setTimeout(step,560);}else setTimeout(()=>bjEnd(S),350);};setTimeout(step,deal?400:520);},wait);}
 function bjCanSplit(){const h=bjHand();return BJ.hands.length===1&&h.cs.length===2&&bjVal(h.cs[0].r)===bjVal(h.cs[1].r)&&coins>=h.bet;}
-function bjEnd(S){const res=S.hands.map(h=>h.res),net=S.net|0;S.hands.forEach((h,i)=>{if(BJ.hands[i])BJ.hands[i].res=h.res;});BJ.ph='done';
+function bjEnd(S){const res=S.hands.map(h=>h.res),net=S.net|0;brag('bj',{n:net});S.hands.forEach((h,i)=>{if(BJ.hands[i])BJ.hands[i].res=h.res;});BJ.ph='done';
   const W=res.includes('bj')?'BLACKJACK':net>0?'YOU WIN':net===0&&res.some(r=>r==='push')?'PUSH':res.every(r=>r==='bust')?'BUST':'DEALER WINS';
   $('#bjWord').innerHTML=pxWord(W,W.length>8?5:6,net>0?'legendary':net===0?'sub':'bad')+(net?pxWord((net>0?'+':'-')+Math.abs(net),5,net>0?'good':'bad',.35):'');
   if(res.includes('bj'))sfx('bj_bj');else if(net>0){sfx('cas_win');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),300+k*140);}else if(net<0)sfx('nope');
@@ -105,14 +105,14 @@ function bjUI(){const M=$('#bjModal'),play=BJ.ph==='play'||BJ.ph==='wait'||BJ.ph
   document.querySelectorAll('#bjActs .btn').forEach(b=>{const a=b.dataset.a;b.disabled=!go||(a==='double'&&!(h&&h.cs.length===2&&coins>=h.bet))||(a==='split'&&!(h&&bjCanSplit()));});
   const tot=h?bjTotal(h.cs):null;
   $('#bjSub').textContent=BJ.ph==='bet'?(coins<amt?'You need '+amt+' coins to play.':'Blackjack pays 3 to 2. The dealer stands on 17.'):BJ.ph==='done'?'':BJ.hands.length>1?'Hand '+(BJ.act+1)+' of 2 · '+(h.bet)+' coins':(h&&h.dbl?'Doubled: '+h.bet+' coins':'');}
-$('#bjStakes').onclick=e=>{const b=e.target.closest('button');if(!b||BJ.ph==='play')return;BJ.stake=+b.dataset.a;$('#bjAmt').value='';sfx('click');bjUI();};
-$('#bjAmt').oninput=()=>bjUI();
-$('#bjDeal').onclick=()=>bjDeal();
-$('#bjActs').onclick=e=>{const b=e.target.closest('button');if(b&&!b.disabled){sfx('click');bjAct(b.dataset.a);}};
-$('#bjX').onclick=()=>{if(BJ.ph==='play'||BJ.ph==='deal'||BJ.ph==='wait'||BJ.ph==='dealer'){wlSay('Finish the hand first.');return;}bjClose();};
-function bjOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));srv('bj',{a:'view'}).then(S=>{if(S&&S.ph==='play'&&!BJ.hands.length){BJ.d=[];BJ.hands=[{cs:[],bet:S.hands[0].bet,done:false,dbl:false,split:false}];bjApply(S);}}).catch(()=>{});if(BJ.ph!=='done'&&BJ.ph!=='bet')BJ.ph='bet';if(BJ.ph==='done'){BJ.ph='bet';BJ.d=[];BJ.hands=[];$('#bjWord').innerHTML='';}
+$('#bjStakes').onclick=e=>{const b=e.target.closest('button');if(!b||(!BJ.sh&&BJ.ph==='play'))return;BJ.stake=+b.dataset.a;$('#bjAmt').value='';sfx('click');BJ.sh?bjShUI():bjUI();};
+$('#bjAmt').oninput=()=>BJ.sh?bjShUI():bjUI();
+$('#bjDeal').onclick=()=>BJ.sh?bjShBet():bjDeal();
+$('#bjActs').onclick=e=>{const b=e.target.closest('button');if(b&&!b.disabled){sfx('click');if(BJ.sh)bjShAct(b.dataset.a);else bjAct(b.dataset.a);}};
+$('#bjX').onclick=()=>{if(BJ.sh){if(bjShMyTurn()){wlSay('Finish your hand first.');return;}bjClose();return;}if(BJ.ph==='play'||BJ.ph==='deal'||BJ.ph==='wait'||BJ.ph==='dealer'){wlSay('Finish the hand first.');return;}bjClose();};
+function bjOpen(){{const m=WL.me,k=m&&m.seat&&!m.seat.out&&m.seat.k;if(NET.on&&NET.world&&k&&/^bj\d_\d$/.test(k)){const[ti,j]=k.slice(2).split('_').map(Number);return bjShOpen(ti,j);}}document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));srv('bj',{a:'view'}).then(S=>{if(S&&S.ph==='play'&&!BJ.hands.length){BJ.d=[];BJ.hands=[{cs:[],bet:S.hands[0].bet,done:false,dbl:false,split:false}];bjApply(S);}}).catch(()=>{});if(BJ.ph!=='done'&&BJ.ph!=='bet')BJ.ph='bet';if(BJ.ph==='done'){BJ.ph='bet';BJ.d=[];BJ.hands=[];$('#bjWord').innerHTML='';}
   $('#bjModal').classList.add('on');sfx('cas_chips');bjUI();BJ.last=performance.now();cancelAnimationFrame(BJ.raf);bjFit();const loop=now=>{if(!$('#bjModal').classList.contains('on'))return;bjFrame(Math.min(.05,(now-BJ.last)/1000));BJ.last=now;BJ.raf=requestAnimationFrame(loop);};BJ.raf=requestAnimationFrame(loop);}
-function bjClose(){$('#bjModal').classList.remove('on');cancelAnimationFrame(BJ.raf);sfx('close');}
+function bjClose(){$('#bjModal').classList.remove('on');cancelAnimationFrame(BJ.raf);sfx('close');if(BJ.sh)bjShLeave();}
 
 /* ---- the picture ----
    THE TABLE IN 3D (his note, 18 Nov: "make it look more like a 3d pixel art table ... and have the dealer behind the table"). Layers, back to
@@ -131,16 +131,72 @@ function bjFrame(dt){BJ.t+=dt;bjFit();if(!BJV.scene)BJV.scene=mk(152,128);const 
   x.clearRect(0,0,W,H);
   const D=SP.mafia&&SP.mafia.front;if(D){const ms=BJ.t*1000,o=BREATH[Math.floor((ms%2600)/200)],b=(ms%4300)<130?1:0,fr=D.frames[o][b];x.drawImage(fr,Math.round(W/2-D.w/2),BJ_TY+8-D.h+4);   /* stood behind the table: it hides him from the waist down */}
   if(IMG['bj/table'])x.drawImage(IMG['bj/table'],0,BJ_TY);
-  for(const c of bjLay()){const k=clamp((BJ.t-c.t0)/.28,0,1),e=1-Math.pow(1-k,3);if(k<=0)continue;const cx=lerp(BJ_FROM[0],c.tx,e),cy=lerp(BJ_FROM[1],c.ty,e);
+  for(const c of(BJ.sh?bjShLay():bjLay())){const k=clamp((BJ.t-c.t0)/.28,0,1),e=1-Math.pow(1-k,3);if(k<=0)continue;const cx=lerp(BJ_FROM[0],c.tx,e),cy=lerp(BJ_FROM[1],c.ty,e);
     x.globalAlpha=.35;x.fillStyle='#04140a';x.fillRect(Math.round(cx)+1,Math.round(cy)+2,15,21);x.globalAlpha=1;   /* a little shadow under each card */
     let im=bjCard(c);if(c.flip!=null){const f=clamp((BJ.t-c.flip)/.22,0,1),w=Math.max(1,Math.round(15*Math.abs(1-2*f)));if(f<.5)im=bjCard({down:true});x.drawImage(im,0,0,15,21,Math.round(cx+(15-w)/2),Math.round(cy),w,21);if(f>=1)c.flip=null;}
     else x.drawImage(im,Math.round(cx),Math.round(cy));}
   const tag=(str,cx,y,col)=>{const w=str.length*4+3;x.fillStyle='#0f0b1e';x.fillRect(Math.round(cx-w/2),y,w,9);x.fillStyle=col;pxText(x,str,Math.round(cx-w/2)+2,y+2);};
+  if(BJ.sh){bjShTags(x,tag,W);bjRoom(cv);return;}
   if(BJ.d.length){const T=bjTotal(BJ.d),r=BJ.d[BJ.d.length-1];tag(String(T.t),(r.tx||W/2)+15+8,53,'#fff6cf');}   /* the dealer's total sits beside his cards */
   BJ.hands.forEach((h,i)=>{const T=bjTotal(h.cs),cx=BJ.hands.length===1?W/2:i===0?W*.3:W*.7,on=BJ.hands.length>1&&i===BJ.act&&BJ.ph==='play';
     const s=T.t>21?'BUST':(T.soft&&T.t<21&&BJ.ph!=='done'?(T.t-10)+'/'+T.t:String(T.t));if(h.cs.length)tag(s,cx,95,h.res==='bust'||T.t>21?'#ff7a7a':on?'#ffd25e':'#fff6cf');
     if(on){x.fillStyle='#ffd25e';x.fillRect(Math.round(cx)-1,106,3,2);}});
   bjRoom(cv);}
+/* ================= THE SHARED TABLE (his ask, 18 Nov) =================
+   In a world, everyone sitting at a table plays the same round against one dealer and sees everyone's cards. The server keeps the table
+   (functions/bjt.js) and writes a copy to worlds/{wid}/bjt/{t}; this watches it. You bet, the round deals when the betting time runs out
+   (sooner when everyone sitting has bet), then each player in turn, then the dealer. Any phone asks for a 'tick' when a deadline passes. */
+function bjShOpen(ti,j){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));if(BJ.sh)bjShLeave(true);
+  const wid=NET.world,ref=NET.db.ref('worlds/'+wid+'/bjt/'+ti);BJ.sh={wid,ti,j,ref,T:null,skew:0,seen:{},shown:0,tickAt:0,busy:false};BJ.ph='bet';$('#bjWord').innerHTML='';
+  ref.on('value',sn=>{const T=sn.val();if(!BJ.sh||BJ.sh.ref!==ref)return;if(T&&T.now)BJ.sh.skew=T.now-Date.now();BJ.sh.T=T;bjShUI();},()=>{});
+  srv('bjt',{wid,t:ti,a:'sit',s:j}).catch(e=>{$('#bjSub').textContent=e.message;});
+  clearInterval(BJ.tk);BJ.tk=setInterval(bjShTick,400);
+  $('#bjModal').classList.add('on','shared');sfx('cas_chips');BJ.last=performance.now();cancelAnimationFrame(BJ.raf);bjFit();bjShUI();
+  const loop=now=>{if(!$('#bjModal').classList.contains('on'))return;bjFrame(Math.min(.05,(now-BJ.last)/1000));BJ.last=now;BJ.raf=requestAnimationFrame(loop);};BJ.raf=requestAnimationFrame(loop);}
+function bjShLeave(quiet){const S=BJ.sh;if(!S)return;S.ref.off();clearInterval(BJ.tk);BJ.sh=null;$('#bjModal').classList.remove('shared');if(!quiet)srv('bjt',{wid:S.wid,t:S.ti,a:'leave'}).catch(()=>{});}
+const bjShNow=()=>Date.now()+(BJ.sh?BJ.sh.skew:0);
+function bjShMe(){const T=BJ.sh&&BJ.sh.T;return T&&T.seats&&T.seats[NET.uid];}
+function bjShMyTurn(){const T=BJ.sh&&BJ.sh.T;return!!(T&&T.ph==='play'&&(T.order||[])[T.cur|0]===NET.uid);}
+function bjShTick(){const S=BJ.sh,T=S&&S.T;if(!T||!T.dl||!/^(bet|play|done)$/.test(T.ph))return;const n=Date.now();
+  if(bjShNow()>=T.dl+250&&n-S.tickAt>1500){S.tickAt=n;srv('bjt',{wid:S.wid,t:S.ti,a:'tick'}).catch(()=>{});}
+  if($('#bjModal').classList.contains('on'))bjShUI();}
+async function bjShCall(a,amt){const S=BJ.sh;if(!S||S.busy)return;S.busy=true;bjShUI();try{await srv('bjt',{wid:S.wid,t:S.ti,a,amt});}catch(e){$('#bjSub').textContent=e.message;sfx('nope');}if(BJ.sh===S)S.busy=false;bjShUI();}
+function bjShBet(){const amt=bjAmt();if(coins<amt){sfx('nope');return;}try{localStorage.setItem('m2_bj_stake',String(amt));}catch(e){}sfx('cas_chips');$('#bjWord').innerHTML='';bjShCall('bet',amt);}
+function bjShAct(a){if(!bjShMyTurn())return;if(a==='double'||a==='split')sfx('cas_chips');bjShCall(a);}
+/* where every card goes: the dealer along the top, the players along the bottom in stool order, each new card slides out from the dealer */
+function bjShSeats(){const T=BJ.sh&&BJ.sh.T;if(!T||!T.seats)return[];return Object.entries(T.seats).map(([u,s])=>({u,...s,hands:s.hands||[]})).sort((a,b)=>a.s-b.s);}
+function bjShLay(){const S=BJ.sh,T=S.T,W=152,out=[];if(!T)return out;let q=0;
+  const put=(key,c,x,y)=>{let o=S.seen[key];if(!o||o.r!==T.r){o=S.seen[key]={r:T.r,t0:BJ.t+(q++)*.18,down:!!c.down};setTimeout(()=>sfx('bj_card'),(q-1)*180);}
+    if(o.down&&!c.down){o.down=false;o.flip=BJ.t;sfx('bj_flip');}out.push({r:c.r,su:c.su,down:!!c.down,tx:Math.round(x),ty:y,t0:o.t0,flip:o.flip!=null&&BJ.t-o.flip<.25?o.flip:null});};
+  const d=T.d||[],dw=15+(d.length-1)*11;d.forEach((c,i)=>put('d'+i,c,W/2-dw/2+i*11,47));
+  const seats=bjShSeats(),n=Math.max(1,seats.length),step=n<=2?11:n===3?7:5;
+  seats.forEach((st,k)=>{const cx=W*(k+.5)/n,hs=st.hands;hs.forEach((h,hi)=>{const hx=hs.length>1?cx+(hi?1:-1)*W/n*.22:cx,cs=h.cs||[],w=15+(cs.length-1)*step;cs.forEach((c,i)=>put(st.u+':'+hi+':'+i,c,hx-w/2+i*step,72));});});
+  return out;}
+function bjShTags(x,tag,W){const T=BJ.sh.T;if(!T)return;const d=T.d||[];
+  if(d.length&&!d.some(c=>c.down)){const t=bjTotal(d).t;tag(String(t),W/2,38,t>21?'#ff7a7a':'#fff6cf');}
+  const seats=bjShSeats(),n=Math.max(1,seats.length),cur=T.ph==='play'?(T.order||[])[T.cur|0]:null;
+  seats.forEach((st,k)=>{const cx=W*(k+.5)/n,me=st.u===NET.uid,hs=st.hands;
+    hs.forEach((h,hi)=>{const cs=h.cs||[];if(!cs.length)return;const hx=hs.length>1?cx+(hi?1:-1)*W/n*.22:cx,Tt=bjTotal(cs),on=st.u===cur&&hi===(T.hi|0);
+      const str=h.res?{bj:'BJ',win:'WIN',push:'PUSH',lose:'LOSE',bust:'BUST'}[h.res]:Tt.t>21?'BUST':String(Tt.t);
+      tag(str,hx,95,h.res==='win'||h.res==='bj'?'#7dff9c':h.res==='lose'||h.res==='bust'||Tt.t>21?'#ff7a7a':on?'#ffd25e':'#fff6cf');});
+    const nm=(me?'YOU':String(st.n||'').toUpperCase()).slice(0,7)+(st.bet&&T.ph==='bet'?' '+st.bet:'');
+    tag(nm,cx,106,me?'#ffd25e':st.u===cur?'#ffd25e':st.gone?'#8a8a9a':'#fff6cf');
+    if(st.u===cur&&Math.floor(BJ.t*3)%2===0){x.fillStyle='#ffd25e';x.fillRect(Math.round(cx)-1,117,3,2);}});}
+/* the buttons and the words under the table */
+function bjShUI(){const S=BJ.sh;if(!S)return;const T=S.T,M=$('#bjModal'),me=bjShMe(),ph=T?T.ph:'idle',left=T&&T.dl?Math.max(0,Math.ceil((T.dl-bjShNow())/1000)):0,inRound=!!(T&&(T.order||[]).includes(NET.uid)),myTurn=bjShMyTurn();
+  const playing=ph==='play'&&inRound;M.classList.toggle('play',playing);M.classList.toggle('watch',ph==='play'&&!inRound);paintCoins();
+  const own=Math.floor(+$('#bjAmt').value)>0;$('#bjAmt').classList.toggle('sel',own);document.querySelectorAll('#bjStakes button').forEach(b=>b.classList.toggle('sel',!own&&+b.dataset.a===BJ.stake));
+  const amt=bjAmt(),bet=ph==='bet'&&me&&me.bet;$('#bjDeal').innerHTML=bet?'Bet placed · '+ic('coin',2)+' '+me.bet:'Bet · '+ic('coin',2)+' '+amt;$('#bjDeal').disabled=!!bet||S.busy||coins<amt||!me;
+  const h=myTurn&&me&&me.hands&&me.hands[T.hi|0];
+  document.querySelectorAll('#bjActs .btn').forEach(b=>{const a=b.dataset.a;b.disabled=!myTurn||S.busy||(a==='double'&&!(h&&(h.cs||[]).length===2&&coins>=h.bet))||(a==='split'&&!(h&&me.hands.length===1&&(h.cs||[]).length===2&&bjVal(h.cs[0].r)===bjVal(h.cs[1].r)&&coins>=h.bet));});
+  const who=T&&ph==='play'&&T.seats&&T.seats[(T.order||[])[T.cur|0]];
+  $('#bjSub').textContent=!me?'Sitting down...':ph==='bet'?(bet?'Dealing in '+left:'Bet now · dealing in '+left):ph==='play'?(myTurn?'Your turn · '+left:who?who.n+"'s turn":''):ph==='done'?'':(coins<amt?'You need '+amt+' coins to play.':'Bet to start a hand. Anyone sitting here can join in.');
+  /* the end of a round: your result, once */
+  if(T&&ph==='done'&&T.pay&&T.pay[NET.uid]&&S.shown!==T.r){S.shown=T.r;const net=T.pay[NET.uid].net|0,res=(me&&me.hands||[]).map(h=>h.res);
+    const Wd=res.includes('bj')?'BLACKJACK':net>0?'YOU WIN':net===0?'PUSH':res.length&&res.every(r=>r==='bust')?'BUST':'DEALER WINS';
+    setTimeout(()=>{$('#bjWord').innerHTML=pxWord(Wd,Wd.length>8?5:6,net>0?'legendary':net===0?'sub':'bad')+(net?pxWord((net>0?'+':'-')+Math.abs(net),5,net>0?'good':'bad',.35):'');
+      if(res.includes('bj'))sfx('bj_bj');else if(net>0){sfx('cas_win');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),300+k*140);}else if(net<0)sfx('nope');brag('bj',{n:net});},700);}
+}
 /* the room round the table on the full screen: the wall carries on to the sides (mirrored), the dark wall above, the casino's red carpet below */
 /* THE ROOM (his call, 18 Nov: "make it full screen"): a tall Christmas casino room made for the phone's shape (assets/casino/bj-room.png, PixelLab,
    200 x 400: chandelier, garland round a glowing card sign, wood panels, red carpet). It is lined up so the table's far edge sits against the
@@ -261,7 +317,7 @@ async function slotSpin(){const a=slotAmt();if(SLOT.busy||SLOT.ask)return;
   try{localStorage.setItem('m2_slot_stake',String(a));}catch(e){}
   sfx('sl_spin');
   SLOT.reels.forEach((r,i)=>{const n=r.strip.length;let j=Math.round(r.p)+16+i*7;while(r.strip[((j%n)+n)%n]!==SLOT.res[i])j++;r.p=Math.round(r.p);r.p0=r.p;r.p1=j;r.t0=SLOT.t;r.T=.95+i*.45;r.done=false;});}
-function slotEnd(){const m=slotPays(SLOT.res),w=SLOT.srvWin|0;SLOT.busy=false;SLOT.win=w;SLOT.end={t:SLOT.t,m};
+function slotEnd(){const m=slotPays(SLOT.res),w=SLOT.srvWin|0;SLOT.busy=false;SLOT.win=w;SLOT.end={t:SLOT.t,m};brag('slot',{n:w-(SLOT.bet|0)});
   if(w){sfx('cas_win');if(m>=80)sfx('bj_bj');SLOT.flash=m>=80?.6:.3;const{ox,oy}=SLV,J=SLOT.j;
     for(let k=0;k<(m>=80?70:30);k++){const a=-Math.PI*(.15+.7*Math.random()),sp=40+Math.random()*70;SLOT.parts.push({x:ox+J.hx+J.hw/2,y:oy+J.hy+J.hh-6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:1+Math.random()*.8,t:0,c:k%3});}
     for(let k=0;k<Math.min(6,2+m/40);k++)setTimeout(()=>sfx('coin'),300+k*140);
@@ -424,7 +480,7 @@ function knLand(){const{cx,ty}=KNV,p=knPos(),dx=cx-p.x,dy=ty-p.y,d=Math.hypot(dx
   else{KN.wall.push({x:cx,y:ty});sfx('kn_wall');word='MISS';}
   KN.score+=pts;KN.left--;KN.k++;KN.ph=KN.left?'ready':'done';KN.up=0;
   const big=pts===100?'legendary':pts>=25?'good':'sub';
-  if(KN.ph==='done'){KN.end=KN.t;if(KN.score>KN.best){KN.best=KN.score;KN.newBest=true;try{localStorage.setItem('m2_knife_best',String(KN.best));}catch(e){}}
+  if(KN.ph==='done'){KN.end=KN.t;brag('knife',{n:KN.score});if(KN.score>KN.best){KN.best=KN.score;KN.newBest=true;try{localStorage.setItem('m2_knife_best',String(KN.best));}catch(e){}}
     setTimeout(()=>{if(KN.ph!=='done')return;$('#knifeWord').innerHTML=pxWord(KN.newBest?'NEW BEST':'SCORE',5,KN.newBest?'legendary':'sub')+pxWord(String(KN.score),8,'good',.25);if(KN.newBest)sfx('cas_win');},450);}
   $('#knifeWord').innerHTML=word==='MISS'||word==='CLANK'?pxWord(word,5,'bad'):pxWord(word?word:'+'+pts,word?5:6,big)+(word?pxWord('+'+pts,5,'good',.2):'');}
 
