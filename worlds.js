@@ -31,10 +31,10 @@ document.querySelector('#townHud').insertAdjacentHTML('beforeend',`<div class="m
 document.querySelectorAll('#worldModal [data-ic]').forEach(e=>{e.outerHTML=ic(e.dataset.ic,+(e.dataset.s||2),e.dataset.c);});
 document.head.insertAdjacentHTML('beforeend',`<style>
 #homeWorlds{display:flex;flex-direction:column;gap:6px}#homeWorlds:not(:empty){margin-bottom:8px}
-.wcard{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px 10px;border:3px solid var(--wood);border-radius:6px;background:var(--paper);color:var(--text);box-shadow:inset 0 -5px 0 #0002,0 3px 0 #0009;font:700 19px "Pixelify Sans";text-align:left;cursor:pointer}
+.wcard{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px 10px;border:3px solid var(--wood);border-radius:6px;background:#fff;color:var(--text);box-shadow:inset 0 -5px 0 #0002,0 3px 0 #0009;font:700 19px "Pixelify Sans";text-align:left;cursor:pointer}
 .wcard b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wcard small{display:block;font:600 12px "Pixelify Sans";opacity:.7}
 .wcard .wt{flex:1;min-width:0}.wcard .wt b{display:block}
-.wcard.mine{background:#ffe08a}.wcard.inv{cursor:default;background:#e8f6ea;border-color:#2f7a45}
+.wcard.mine{background:#fff}   /* white (his call, 18 Nov) */.wcard.inv{cursor:default;background:#e8f6ea;border-color:#2f7a45}
 .wcard .btn{font-size:15px;padding:4px 10px 7px}
 .wcard:active{transform:translateY(2px)}.wcard.inv:active{transform:none}
 #homeCreate.gone{display:none}
@@ -113,7 +113,7 @@ async function worldEnter(wid,back){await netLoad();const u=acctUser();if(!u)thr
 function worldOff(){if(WORLD.wref){WORLD.wref.off();WORLD.wref=null;}WORLD.wid=null;$('#worldModal').classList.remove('on');}
 
 /* ---- the world's own box at the top of the town, and its window ---- */
-function worldPaint(){const box=$('#townCodeBox');if(!box)return;const on=!!(NET.on&&NET.world);box.classList.toggle('world',on);
+function worldPaint(){const box=$('#townCodeBox');if(!box)return;const on=!!(NET.on&&NET.world);box.classList.toggle('world',on);$('#townHud').classList.toggle('inworld',on);   /* (his call, 18 Nov) in a world the name box is in the menu, not on screen */
   box.querySelector('small').textContent=on?'WORLD':'LOBBY CODE';if(on&&!box.classList.contains('ok'))$('#townCodeT').textContent=(WORLD.meta&&WORLD.meta.name)||'';
   if($('#worldModal').classList.contains('on'))worldPanel();}
 function worldPanel(){const M=$('#worldModal'),own=WORLD.meta&&WORLD.meta.owner===NET.uid,pl=NET.players||{};

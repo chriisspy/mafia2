@@ -305,11 +305,11 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .tbtn.daily.new #dailyDot{display:block;animation:ddPop .3s ease-out}@keyframes ddPop{0%{transform:scale(.4)}100%{transform:scale(1)}}
 #dailyModal{text-align:left;padding:12px}
 /* THE LAKE HAS NO BOTTOM PANEL (his call, 17 Nov: "very simple"): one line of words, bait and coins as two small chips, Fish book, and a red Stop while you fish */
-#lakeBar{display:none;padding:0 2px 6px}#townHud.lake #lakeBar{display:block}#townHud.lake .tpanel,#townHud.lake .title.banner{display:none}
+#lakeBar{display:none;padding:0 2px 6px}#townHud.lake #lakeBar{display:block}#townHud.lake .tpanel{display:none}
 #fishLine,#hallLine{text-align:center;font:700 21px "Pixelify Sans";color:#fff;letter-spacing:.5px;margin-bottom:9px;text-shadow:2px 0 0 #0f0b1e,-2px 0 0 #0f0b1e,0 2px 0 #0f0b1e,0 -2px 0 #0f0b1e,2px 2px 0 #0f0b1e,-2px 2px 0 #0f0b1e,2px -2px 0 #0f0b1e,-2px -2px 0 #0f0b1e,0 4px 0 #0f0b1e}
 .lrow{display:flex;align-items:center;gap:7px}.lgap{flex:1}
 /* THE CASINO AND THE TAVERN LOOK LIKE THE LAKE (his call, 18 Nov: "super simple"): one line of words and the coins as a chip, no town panel */
-#hallBar{display:none;padding:0 2px 6px}#townHud.hall #hallBar{display:block}#townHud.hall .tpanel,#townHud.hall .title.banner{display:none}
+#hallBar{display:none;padding:0 2px 6px}#townHud.hall #hallBar{display:block}#townHud.hall .tpanel{display:none}
 .lchip{display:inline-flex;align-items:center;gap:5px;height:40px;padding:0 10px;background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-radius:6px;font:700 18px "Pixelify Sans";box-shadow:0 3px 0 #0009}.lchip .bic{margin:0 -3px}
 #lakeBar .btn{height:40px;font-size:15px;padding:0 9px 3px;pointer-events:auto;white-space:nowrap}#fishStopBtn{display:none}#townHud.fishing #fishStopBtn{display:block}
 /* Fisherman Joe's window is blue and white, like his awning (his call, 17 Nov) */
@@ -541,7 +541,9 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #joinErr{min-height:17px;margin-top:6px;font-weight:600}
 #townLeave{position:absolute;left:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
 #townCodeBox{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);display:none;flex-direction:column;align-items:center;padding:4px 16px 6px;cursor:pointer;font-family:inherit;z-index:21;min-width:150px}
-#townHud.net #townCodeBox{display:flex}#townHud.net .banner{top:calc(86px + env(safe-area-inset-top))}#townHud.net #townCode{display:none}
+#townHud.net #townCodeBox{display:flex}#townHud.net.inworld #townCodeBox{display:none!important}#townHud.net.inworld .banner{top:calc(54px + env(safe-area-inset-top))}
+#townHud .title.banner{opacity:0;pointer-events:none}#townHud .title.banner.place{animation:placeFade 3s ease forwards}#placeName{text-transform:uppercase}
+@keyframes placeFade{0%{opacity:0;transform:translateY(-8px)}14%{opacity:1;transform:none}72%{opacity:1;transform:none}100%{opacity:0;transform:none}}   /* (his ask, 18 Nov) the name of where you are fades in, then out */#townHud.net .banner{top:calc(86px + env(safe-area-inset-top))}#townHud.net #townCode{display:none}
 #townCodeBox small{font-size:10px;letter-spacing:3px;opacity:.7;line-height:1.2}#townCodeBox b{font-size:34px;letter-spacing:8px;margin-right:-8px;line-height:1}
 #townCodeBox i{font-style:normal;font-size:9px;letter-spacing:2px;opacity:.55;line-height:1.3}
 #townCodeBox.ok{border-color:#2f7a45;background:#dff5e3;color:#1f5a31;box-shadow:inset 0 0 0 3px #7fc98f,inset 0 -6px 0 #b9e3c2,0 5px 0 #0008}#townCodeBox.ok b{color:#2f7a45;font-size:26px;letter-spacing:3px;margin-right:-3px;line-height:34px;animation:gYay .35s cubic-bezier(.3,1.7,.5,1)}
@@ -701,7 +703,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <div class="hud" id="townHud">
     <button class="btn dark" id="townLeave">Leave</button>
     <button class="panel" id="townCodeBox"><small>LOBBY CODE</small><b id="townCodeT">ABCD</b></button>
-    <div class="title banner"><small id="townCode">PRACTICE TOWN</small>THE TOWN<div class="tcount" id="townCount"></div></div>
+    <div class="title banner"><small id="townCode">PRACTICE TOWN</small><span id="placeName">THE TOWN</span><div class="tcount" id="townCount"></div></div>
     <div id="townMenu"><button class="btn" data-a="punch" title="Punch"><i data-ic="fist" data-s="3" data-c="solo"></i></button><button class="btn" data-a="five" title="High five"><i data-ic="hand" data-s="3" data-c="solo"></i></button></div>
     <div id="townToast"></div>
     <div id="wheelPop"></div><div id="casePop"></div>
@@ -1278,7 +1280,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11181641'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11181702'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1524,6 +1526,28 @@ function drawScene(people,occ,img,objs){
   for(const it of items){if(it.p)hits.set(it.p,drawChar(it.p));else if(it.o)drawProp(it.o);else drawObj(it.ob);}
   return hits;
 }
+/* the highest the YOU tag may sit: just under the world's name box, so a cabin at the top of the map still shows it */
+/* the part of the screen the YOU tag may use: under the world's name box, above the bottom buttons */
+function youBand(){const c=$('#c'),r=c&&c.getBoundingClientRect(),f=v=>r&&r.height?(v-r.top)/r.height*cam.lh:0,tb=$('#tabs');
+  const ti=$('#townHud .title.banner'),tt=ti&&ti.offsetParent&&+getComputedStyle(ti).opacity>.05?Math.ceil(f(ti.getBoundingClientRect().bottom))+2:0;   /* the arrow also keeps clear of the town's title */
+  return[youTop(),tb&&tb.offsetParent?Math.floor(f(tb.getBoundingClientRect().top))-2:cam.lh,Math.max(youTop(),tt)];}
+/* a pixel triangle pointing along (ux, uy), tip `a` ahead of (x, y), base `b` behind, half as wide as `w` */
+function pxTri(x,y,ux,uy,a,b,w,col){const P=[[x+ux*a,y+uy*a],[x-ux*b-uy*w,y-uy*b+ux*w],[x-ux*b+uy*w,y-uy*b-ux*w]],cr=(p,q,X0,Y0)=>(q[0]-p[0])*(Y0-p[1])-(q[1]-p[1])*(X0-p[0]);
+  const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);lx.fillStyle=col;
+  for(let yy=Math.floor(Math.min(...ys));yy<=Math.ceil(Math.max(...ys));yy++)for(let xx=Math.floor(Math.min(...xs));xx<=Math.ceil(Math.max(...xs));xx++){const X0=xx+.5,Y0=yy+.5,s1=cr(P[0],P[1],X0,Y0),s2=cr(P[1],P[2],X0,Y0),s3=cr(P[2],P[0],X0,Y0);
+    if((s1>=0&&s2>=0&&s3>=0)||(s1<=0&&s2<=0&&s3<=0))lx.fillRect(xx,yy,1,1);}}
+/* YOU over your own cabin while it is on screen; once it leaves the screen, a yellow arrow on the edge points the way back */
+function youTag(o,t){let c=TOWN.cabins[o.ci],b=Math.round(Math.sin(t*.005+1)*1.5),tx=X(c.cx)-6,ty=Y(o.y+cabPeak(o)-12),[T,B,T2]=youBand(),L=cam.lw;
+  /* (his note) as soon as any of the cabin is on screen it is the tag, kept on screen; only when the whole cabin is gone is it the arrow */
+  const cx0=X(o.x),cx1=X(o.x+o.img.width),cy0=Y(o.y+cabPeak(o)),cy1=Y(Math.max(o.base||0,(c.feet?c.feet[1]:c.top+34)+10));   /* down to its porch steps */
+  if(cx1>0&&cx0<L&&cy1>2&&cy0<B){const fx=clamp(tx,1,L-15),fy0=clamp(ty,T,B-10)+b;const tx2=tx;tx=fx;lx.fillStyle='#1a1430';lx.fillRect(tx-1,fy0-1,15,9);lx.fillRect(tx+5,fy0+8,3,2);lx.fillStyle='#ffd25e';lx.fillRect(tx,fy0,13,7);lx.fillStyle='#1a1430';pxText(lx,'YOU',tx+1,fy0+1);tx=tx2;return;}
+  const m=WL.me,px=clamp(X(m.x),8,L-8),py=clamp(Y(m.y-12),T2+8,B-8),dx=tx+6.5-px,dy=ty+4-py,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,M=7;let k=1e9;
+  if(ux>1e-3)k=Math.min(k,(L-M-px)/ux);if(ux<-1e-3)k=Math.min(k,(M-px)/ux);if(uy>1e-3)k=Math.min(k,(B-M-py)/uy);if(uy<-1e-3)k=Math.min(k,(T2+M-py)/uy);
+  k=Math.max(0,Math.min(k,d))+b;const ax=Math.round(px+ux*k),ay=Math.round(py+uy*k);
+  pxTri(ax,ay,ux,uy,5.5,4,5.2,'#1a1430');pxTri(ax,ay,ux,uy,4,2.8,3.7,'#ffd25e');}
+function youTop(){const c=$('#c'),b=[$('#townCodeBox'),$('#menuBtn')].find(e=>e&&e.offsetParent&&getComputedStyle(e).display!=='none');if(!b||!c)return 0;const r=c.getBoundingClientRect(),bb=b.getBoundingClientRect();return r.height?Math.ceil((bb.bottom-r.top)/r.height*cam.lh)+3:0;}
+/* the top of a cabin's roof, in rows from the top of its picture (worked out once per picture) */
+const CABPK=new WeakMap();function cabPeak(o){if(CABPK.has(o.img))return CABPK.get(o.img);const im=o.img,c=mk(im.width,im.height),g=c.getContext('2d');g.drawImage(im,0,0);const cx=Math.max(0,Math.min(im.width-1,Math.round(TOWN.cabins[o.ci].cx-o.x))),d=g.getImageData(cx,0,1,im.height).data;let y=0;while(y<im.height&&d[y*4+3]<128)y++;CABPK.set(im,y);return y;}
 function nameTag(hit,txt,col){if(hit)label(txt,(hit.cx-(cam.fx||0))*S,(hit.top-(cam.fy||0))*S-4*DPR,TAG*DPR,col);}
 function dirFrom(dx,dy){return Math.abs(dy)>Math.abs(dx)*1.1?(dy<0?'back':'front'):(dx<0?'left':'right');}
 // a face for the UI, cropped from the front sprite
@@ -3862,6 +3886,11 @@ function wlHit(e,a){const tg=a.tg;if(!tg)return;
 // in and out of a cabin. You: the screen fades through black. Bots just come and go.
 /* at the door of the Tavern or the Casino: step inside (HALLS) */
 function bldEnter(b){const m=WL.me,now=performance.now();if(!m||now-(WL.bldT||0)<900)return;WL.bldT=now;m.path=[];m.todo=null;m.walk=false;m.dir='back';wlDoor(100+BUILDINGS.indexOf(b));}
+/* WHERE YOU ARE (his ask, 18 Nov): walking into the town, the lake, the tavern, the casino or a cabin fades its name in and out at the top */
+function placeName(ci){if(ci===LAKE)return'Fishing Lake';if(ci>=100){const H=hallOf(ci);return H?H.name:'';}if(ci<0)return'The Town';
+  if(NET.world&&typeof WORLD!=='undefined'){const e=Object.entries(WORLD.members||{}).find(([u,m])=>+m.s===ci);return!e?'Empty Cabin':e[0]===NET.uid?'Your Cabin':(e[1].n||'Player')+"'s Cabin";}
+  const o=CABIN_OF.indexOf(ci);return o===0?'Your Cabin':o>0?PEOPLE[o].n+"'s Cabin":'Empty Cabin';}
+function placeShow(ci){const b=$('#townHud .title.banner');if(!b)return;$('#placeName').textContent=placeName(ci);$('#townCount').style.display=ci<0?'':'none';b.classList.remove('place');void b.offsetWidth;b.classList.add('place');}
 function wlDoor(ci){if(WL.fading)return;WL.fading=true;sfx('door');const xf=$('#xfade');xf.classList.add('on');
   setTimeout(()=>{const m=WL.me,was=m.loc;m.seat=null;m.loc=ci;m.path=[];m.todo=null;m.walk=false;WL.sel=null;wlMenu();
     {const H=ci>=100?hallOf(ci):null,on=!!H&&H.k!=='lake';$('#townHud').classList.toggle('hall',on);if(on){$('#hallLine').textContent='';paintCoins();}}
@@ -3869,7 +3898,7 @@ function wlDoor(ci){if(WL.fading)return;WL.fading=true;sfx('door');const xf=$('#
     else if(ci>=0){m.x=98;m.y=190;m.dir='back';$('#phone').style.background=ROOM_VOID;const o=CABIN_OF.indexOf(ci);
       wlHead(o===0?'Your cabin':o>0?`${PEOPLE[o].n}'s cabin`:'An empty cabin','Walk to the door to leave');}
     else{if(was===LAKE){lakeOff();m.x=JETTY[0]-22;m.y=JETTY[1];music(SCENE_TUNE.town);}else if(was>=100){const d=bldDoor(BUILDINGS[was-100]);m.x=d[0];m.y=d[1];}else{const c=TOWN.cabins[was];m.x=c.cx;m.y=c.top+38;}m.dir=was===LAKE?'left':'front';$('#phone').style.background='';wlHead();}
-    $('#townCount').style.display=ci>=0?'none':'';netMove();xf.classList.remove('on');setTimeout(()=>WL.fading=false,230);},240);}
+    placeShow(ci);netMove();xf.classList.remove('on');setTimeout(()=>WL.fading=false,230);},240);}
 function wlBotDoor(b,ci){const was=b.loc;b.path=[];b.todo=null;b.walk=false;
   if(ci>=0){b.loc=ci;b.x=98;b.y=190;b.dir='back';b.stay=2+Math.floor(Math.random()*3);if(WL.me.loc===ci)wlSay(`${wlName(b)} came in.`);}
   else{const c=TOWN.cabins[was];b.loc=-1;b.x=c.cx;b.y=c.top+38;b.dir='front';if(WL.me.loc===was)wlSay(`${wlName(b)} left.`);}}
@@ -4143,7 +4172,7 @@ scenes.town={hud:'#townHud',
     if(NET.on){const c=TOWN.cabins[NET.slot];WL.me=wlEnt(0,c.cx,c.top+40);WL.bots=[];NET.ents.clear();NET.sig=null;NET.sawRoster=false;}   // online: the others are real, they arrive in netApply
     else{WL.me=wlEnt(0,280,436);WL.bots=PEOPLE.slice(1).map((p,k)=>{const s=wlSpot();return wlEnt(k+1,s[0],s[1]);});}
     WL.fx=[];WL.sel=null;WL.feed=[];WL.fading=false;WL.shake=0;WL.wheel.busy=false;WL.wheel.by=null;wlMenu();paintCoins();$('#townCount').style.display='';$('#townCount').textContent=`${PEOPLE.length} of 10 players here`;
-    $('#townHud').classList.toggle('net',NET.on);$('#townCodeT').textContent=NET.code||'';$('#townCodeBox').classList.remove('ok');if(window.worldPaint)worldPaint();wlHead();$('#townToast').className='';$('#wheelPop').className='';$('#casePop').className='';WL.pop=0;WL.cpop=null;netApply();netMove();},
+    $('#townHud').classList.toggle('net',NET.on);$('#townCodeT').textContent=NET.code||'';$('#townCodeBox').classList.remove('ok');if(window.worldPaint)worldPaint();wlHead();setTimeout(()=>placeShow(WL.me?WL.me.loc:-1),250);$('#townToast').className='';$('#wheelPop').className='';$('#casePop').className='';WL.pop=0;WL.cpop=null;netApply();netMove();},
   leave(){$('#phone').style.background='';lakeOff();WL.sel=null;wlMenu();ckClose();$('#pcModal').classList.remove('on');$('#bjAskModal').classList.remove('on');$('#beerModal').classList.remove('on');duelAskHide();clearTimeout(DUEL.t);DUEL.out=null;},
   frame(dt,t){const m=WL.me;wheelTick(dt);
     for(const e of wlAll()){wlStep(e,dt);if(e!==m&&!e.remote&&!e.ko&&!e.act&&!e.path.length){e.wait-=dt;if(e.wait<=0)wlThink(e);}}
@@ -4189,6 +4218,7 @@ scenes.town={hud:'#townHud',
       hits=drawScene(people,TOWN.occ,img,[wheelObj(),...huts,...bldObjs(m,dt),...treeObjs(m,dt),...(XMAS?[stallObj()]:[]),...(window.decorObjs?decorObjs('out'):[])]);wlFx(dt,-1);drawPuffs(dt);wlCases(dt,-1);
       if(daySpin()&&!WL.wheel.busy){const fx0=X(WHEEL_AT[0])-9,fy0=Y(WHEEL_AT[1])-64+Math.round(Math.sin(t*.005)*1.5);lx.fillStyle='#1a1430';lx.fillRect(fx0-1,fy0-1,19,9);lx.fillRect(fx0+7,fy0+8,3,2);lx.fillStyle='#5fc46f';lx.fillRect(fx0,fy0,17,7);lx.fillStyle='#fff';pxText(lx,'FREE',fx0+1,fy0+1);}   /* today's free spin has not been used: a little tag over the wheel */
       if(XMAS){const fx0=X(JETTY[0]-20)-9,fy0=Y(JETTY[1])-24+Math.round(Math.sin(t*.005)*1.5);lx.fillStyle='#1a1430';lx.fillRect(fx0-1,fy0-1,19,9);lx.fillRect(fx0+7,fy0+8,3,2);lx.fillStyle='#4f9be0';lx.fillRect(fx0,fy0,17,7);lx.fillStyle='#fff';pxText(lx,'FISH',fx0+1,fy0+1);}   /* a little tag over the jetty: you can fish here */
+      if(NET.world&&NET.slot!=null&&TOWN.cabins[NET.slot]){const o=huts.find(o=>o.ci===NET.slot);if(o)youTag(o,t);}   /* (his ask, 18 Nov) YOU over your own cabin; off screen it becomes an arrow at the edge pointing home */
       lx.fillStyle='rgba(255,236,190,.06)';lx.fillRect(0,0,cam.lw,cam.lh);}
     // stars going round the head of anyone knocked flat
     for(const p of people){const k=p.e.ko,h=hits.get(p);if(!k||k.t>1.25||!h)continue;lx.fillStyle='#ffd25e';for(let i=0;i<3;i++){const a=t*.009+i*2.1;lx.fillRect(Math.round(h.cx+Math.cos(a)*8),Math.round(h.top-3+Math.sin(a)*2.5),2,2);}}
