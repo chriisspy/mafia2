@@ -1295,7 +1295,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11182013'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11191034'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3952,7 +3952,7 @@ function headsDraw(dt){const box=$('#heads'),m=WL.me;if(!box||!m)return;
     if(el._h!==b.html){el.innerHTML=b.html;el._h=b.html;}const cl='hb '+b.cls;if(el.className!==cl)el.className=cl;
     if(!q||e.loc!==m.loc){el.style.display='none';continue;}el.style.display='';el.style.left=Math.round(q.x)+'px';el.style.top=Math.round(q.y-TAG-6)+'px';el.style.opacity=String(Math.min(1,b.t*2.5));}}
 const BRAG={slot:'SLOTS',flip:'COIN FLIP',bj:'BLACKJACK',knife:'KNIVES'};
-function bragHtml(v){if(v.g==='fish'){const f=typeof FISHES!=='undefined'&&FISHES[v.k|0];if(!f)return'';return`<small>CAUGHT</small><b style="color:${RAR_COL[f.rar]||'#fff'}">${esc(f.name)}</b>${v.cm?`<em>${v.cm|0} cm</em>`:''}`;}
+function bragHtml(v){if(v.g==='fish'){const f=typeof FISHES!=='undefined'&&FISHES[v.fk|0];if(!f)return'';return`<small>CAUGHT</small><b style="color:${RAR_COL[f.rar]||'#fff'}">${esc(f.name)}</b>${v.cm?`<em>${v.cm|0} cm</em>`:''}`;}
   if(v.g==='knife')return`<small>KNIVES</small><b>${v.n|0} points</b>`;if(!BRAG[v.g])return'';
   const n=v.n|0;return`<small>${BRAG[v.g]}</small>`+(n?`<b class="${n>0?'up':'dn'}">${n>0?'+':'-'}${ic('coin',2)} ${Math.abs(n)}</b>`:'<b>EVEN</b>');}
 function brag(g,o){const v={g,...(o||{})},h=bragHtml(v),m=WL.me;if(!h||!m)return;headSay(m,h,{t:4.5,cls:'res'});
@@ -4456,7 +4456,7 @@ function netEvent(s){const v=s.val();if(!NET.on||!v||v.by===NET.uid||!(v.ts>NET.
   if(v.k==='haunt'){if(GAME.on&&v.to===NET.uid&&!GAME.meDead)hauntFx(HAUNTS.includes(v.h)?v.h:'ghost');return;}
   if(v.k==='gpunch'){if(GAME.on)ghostPunched(v);return;}   // a ghost haunts you: it swoops across your screen
   if(scene!==scenes.town)return;const e=NET.ents.get(v.by);if(!e)return;
-  if(v.k==='brag'){headSay(e,bragHtml(v),{t:4.5,cls:'res'});return;}                                             // what they just won, lost or caught
+  if(v.k==='brag'){if(v.g==='fish'){const V=e.fv;e.fland={kind:v.fk|0,t:0,x0:V&&V.fx!=null?V.fx:e.x,y0:V&&V.fy!=null?V.fy:e.y-30};setTimeout(()=>headSay(e,bragHtml(v),{t:4.5,cls:'res'}),1250);}else headSay(e,bragHtml(v),{t:4.5,cls:'res'});return;}   /* a catch: the fish flies out of the water to them, then the name shows */                                             // what they just won, lost or caught
   if(v.k==='chat'){const t=String(v.t||'').replace(/\s+/g,' ').trim().slice(0,80);if(!t)return;headSay(e,esc(t),{t:5.5,cls:'say'});chatLog(wlName(e),t);return;}
   if(typeof v.k==='string'&&v.k.slice(0,4)==='flip'){duelNet(v,e);return;}                                          // coin flip, one on one
   if(v.k==='spin'){wheelSpin(e,{k:v.res,f:v.fr,win:v.win});wheelUI();return;}

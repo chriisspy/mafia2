@@ -206,7 +206,7 @@ function fishTick(dt,t,m){const F=FISH;F.fr=t;F.t+=dt;F.dip=Math.max(0,F.dip-dt*
     if(F.ten>=1){sfx('fish_snap');F.hook=null;s.st='flee';s.t=0;s.a=-Math.PI/2;F.bob=null;wlSay('The line snapped!','bad');fishPh('idle');}
     else if(F.d>=1.3){fishLose('It got away.');}
     else if(F.d<=0){s.gone=true;F.hook=null;fishSplash(s.x,s.y);sfx('fish_up');F.land={kind:s.kind,x0:s.x,y0:s.y,t:0};F.bob=null;F.ph='land';F.t=0;}}
-  else if(F.ph==='land'){F.land.t+=dt;if(F.land.t>=.6&&!F.landAsk){F.landAsk=true;srv('fland').then(r=>{F.landAsk=false;F.land=null;F.sk=null;F.ph='card';fishCard(r.k,r.cm,r.g);brag('fish',{k:r.k,cm:r.cm});netMove();}).catch(e=>{F.landAsk=false;F.land=null;F.sk=null;wlSay(e.message,'bad');fishPh('idle');});}}   /* the server puts it in your bag */
+  else if(F.ph==='land'){F.land.t+=dt;if(F.land.t>=.6&&!F.landAsk){F.landAsk=true;srv('fland').then(r=>{F.landAsk=false;F.land=null;F.sk=null;F.ph='card';fishCard(r.k,r.cm,r.g);brag('fish',{fk:r.k,cm:r.cm});netMove();}).catch(e=>{F.landAsk=false;F.land=null;F.sk=null;wlSay(e.message,'bad');fishPh('idle');});}}   /* the server puts it in your bag */
 }
 /* ---- what you caught ---- */
 function fishCard(i,cm,gain){const F=FISH,K=FISHES[i];
@@ -265,13 +265,43 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
     if(F.land){const L=F.land,k=Math.min(1,L.t/.6),fx=lerp(X(L.x0),px,k),fy=lerp(Y(L.y0),py-44,k)-Math.sin(k*Math.PI)*26;lx.drawImage(IMG['fish/sheet'],L.kind*48,0,48,32,Math.round(fx)-24,Math.round(fy)-16,48,32);}
   }else if(me)rest.push(me);
   /* THE OTHERS FISHING (his ask, 18 Nov): they face the water with a rod out, the line runs to their float, bobbing */
-  const fishers=rest.filter(p=>p.e&&p.e.remote&&p.e.fish&&p.e.loc===LAKE);for(const p of fishers){p.dir=p.e.fish.fc||'back';p.walk=false;}
-  for(const[p,h]of drawScene(rest,null,img,null))hits.set(p,h);
-  for(const p of fishers){const e=p.e,f=e.fish,sd=f.fc==='right'?1:f.fc==='left'?-1:0,tip=sd?[e.x+sd*16,e.y-30]:[e.x+11,e.y-34],hx=sd?e.x+sd*5:e.x+8;
-    fishLine(X(hx),Y(e.y-9),X(tip[0]),Y(tip[1]),'#3a2413');fishLine(X(hx)+1,Y(e.y-9),X(tip[0])+1,Y(tip[1]),{twig:'#a36a35',oak:'#ba6c32',steel:'#96acd0',gold:'#eeb632'}[f.rd]||'#a36a35');
-    if(f.bx!=null&&(f.ph==='wait'||f.ph==='bite'||f.ph==='fight'||f.ph==='fly')){const bx=X(f.bx),by=Y(f.by)+(f.ph==='bite'?Math.round(Math.sin(t*.03)*1.5):Math.round(Math.sin(t*.004+e.i)*.6));
-      fishLine(X(tip[0]),Y(tip[1]),bx,by-2,f.ph==='fight'?'#ffd25e':'#eef6ff',f.ph==='fight'?0:5);
-      if(f.ph!=='fight'){lx.fillStyle='#14203c';lx.fillRect(bx-2,by-3,4,5);lx.fillStyle='#e4544f';lx.fillRect(bx-1,by-2,2,2);lx.fillStyle='#fff';lx.fillRect(bx-1,by,2,1);}}}
+  /* THE OTHERS FISHING (his ask, 18 Nov; smoothed 19 Nov: "really snappy, it doesn't show them pulling in the line"). Only the phase and the
+     float's spot come over the network, so each phase is played out here: the swing back, the cast flying out in an arc, the float bobbing
+     with a ring now and then, the bite shaking it with a "!", the reel dragging a splashing fish in towards them, and the catch flying up. */
+  const fishers=rest.filter(p=>p.e&&p.e.remote&&p.e.loc===LAKE&&(p.e.fish||p.e.fland));
+  for(const p of fishers){const e=p.e,f=e.fish;if(f){p.dir=f.fc||'back';p.walk=false;}
+    if(f){let V=e.fv;if(!V||V.ph!==f.ph||V.bx!==f.bx||V.by!==f.by){const o=V;V=e.fv={ph:f.ph,t:0,bx:f.bx,by:f.by,fx:o&&o.fx!=null&&f.ph==='fight'?o.fx:f.bx,fy:o&&o.fy!=null&&f.ph==='fight'?o.fy:f.by};}V.t+=dt;}
+    else e.fv=null;}
+  /* (his ask, 19 Nov) the others get the same PixelLab rod animation as you: their outfit's sheet for their rod, the frame picked from their phase */
+  const sheetOf=p=>{const e=p.e,f=e.fish,V=e.fv;if(!f||!V)return null;const n=looksLike(e.i),sd=f.fc==='right'?1:f.fc==='left'?-1:0,v=sd?'-side':'',R=F.rods&&F.rods[n]&&F.rods[n][f.rd+v];if(!R)return null;
+    const k='rod/'+n+'/'+f.rd+v;if(!IMG[k]){if(!F.rodAsk[k]){F.rodAsk[k]=1;load(k,`assets/fishing/rods/${n}-${f.rd}${v}.png`).catch(()=>{});}return null;}
+    const c=V.ph==='charge'?1+Math.min(5,Math.floor(V.t/.7*6)):V.ph==='fly'?(V.t<.25?7:8):V.ph==='fight'?7+(Math.floor(t/150)%2):(V.ph==='idle'||V.ph==='card')?0:8;
+    return{k,c,sd,tip:[e.x+(sd<0?-1:1)*R[c][0],e.y+R[c][1]]};};
+  for(const p of fishers)p.sh=sheetOf(p);
+  for(const[p,h]of drawScene(rest.filter(p=>!p.sh),null,img,null))hits.set(p,h);
+  for(const p of fishers)if(p.sh){const e=p.e,q=p.sh,im=IMG[q.k],px=XP(e.x),py=YP(e.y);shadow(px,py,6,2,.28);
+    if(q.sd<0){lx.save();lx.translate(px,0);lx.scale(-1,1);lx.drawImage(im,q.c*64,0,64,64,-32,py-56,64,64);lx.restore();}else lx.drawImage(im,q.c*64,0,64,64,px-32,py-56,64,64);hits.set(p,{cx:px,top:py-36});}
+  for(const p of fishers){const e=p.e,f=e.fish,V=e.fv;
+    if(f&&V){const sd=f.fc==='right'?1:f.fc==='left'?-1:0,k=V.ph==='charge'?Math.min(1,V.t/.7):0;
+      let tip=sd?[e.x+sd*(16-24*k),e.y-30-1*k]:[e.x+11-22*k,e.y-34+5*k];
+      if(V.ph==='fight')tip=[tip[0]+Math.round(Math.sin(t*.02)*1),tip[1]+Math.round(Math.sin(t*.031)*1)];   /* the rod shakes as they reel */
+      if(p.sh)tip=p.sh.tip;else{const hx=sd?e.x+sd*5:e.x+8;   /* no sheet for that outfit: a rod drawn here */
+      fishLine(X(hx),Y(e.y-9),X(tip[0]),Y(tip[1]),'#3a2413');fishLine(X(hx)+1,Y(e.y-9),X(tip[0])+1,Y(tip[1]),{twig:'#a36a35',oak:'#ba6c32',steel:'#96acd0',gold:'#eeb632'}[f.rd]||'#a36a35');}
+      if(V.bx!=null){
+        if(V.ph==='fly'){const q=Math.min(1,V.t/.55),bx=lerp(tip[0],V.bx,q),by=lerp(tip[1],V.by,q)-Math.sin(q*Math.PI)*24;fishLine(X(tip[0]),Y(tip[1]),X(bx),Y(by),'#eef6ff',0);
+          lx.fillStyle='#14203c';lx.fillRect(X(bx)-2,Y(by)-3,4,5);lx.fillStyle='#e4544f';lx.fillRect(X(bx)-1,Y(by)-2,2,2);
+          if(q>=1&&!V.sp){V.sp=1;fishSplash(V.bx,V.by);fishRipple(V.bx,V.by,6,.8);}}
+        else if(V.ph==='wait'||V.ph==='bite'){const bite=V.ph==='bite',bx=X(V.bx)+(bite?Math.round(Math.sin(t*.05)*1):0),by=Y(V.by)+(bite?(Math.floor(t/90)%2?2:0):Math.round(Math.sin(t*.004+e.i)*.6));
+          fishLine(X(tip[0]),Y(tip[1]),bx,by-2,'#eef6ff',5);
+          if(!bite&&V.t%2.6<dt){fishRipple(V.bx,V.by,5,1);}
+          lx.fillStyle='#14203c';lx.fillRect(bx-2,by-3,4,5);lx.fillStyle='#e4544f';lx.fillRect(bx-1,by-2,2,2);lx.fillStyle='#fff';lx.fillRect(bx-1,by,2,1);
+          if(bite&&Math.floor(t/90)%2){const qx=bx-3,qy=by-20;lx.fillStyle='#14203c';lx.fillRect(qx-1,qy-1,8,11);lx.fillStyle='#ffd25e';lx.fillRect(qx,qy,6,9);lx.fillStyle='#14203c';lx.fillRect(qx+2,qy+1,2,5);lx.fillRect(qx+2,qy+7,2,1);}}
+        else if(V.ph==='fight'){const ex=e.x+(sd?sd*16:2),ey=e.y-(sd?6:22),gx=lerp(V.bx,ex,.6),gy=lerp(V.by,ey,.6);V.fx+=(gx-V.fx)*Math.min(1,dt*.3);V.fy+=(gy-V.fy)*Math.min(1,dt*.3);   /* the fish is dragged part of the way in, never onto them */
+          const wx=V.fx+Math.sin(t*.008)*3,wy=V.fy+Math.cos(t*.011)*1.5;fishLine(X(tip[0]),Y(tip[1]),X(wx),Y(wy),'#ffd25e',0);
+          if(V.t%.3<dt)fishRipple(wx,wy,4,.5);   /* little rings round the struggling fish */lx.fillStyle='#eef6ff';lx.fillRect(X(wx)-1+(Math.floor(t/80)%3)-1,Y(wy)-1,2,1);}}}
+    /* their catch flies out of the water, up over their head, and hangs there a moment */
+    const L=e.fland;if(L){L.t+=dt;if(L.t>1.25){e.fland=null;continue;}const q=Math.min(1,L.t/.6),fx=lerp(X(L.x0),X(e.x),q),fy=lerp(Y(L.y0),Y(e.y)-44,q)-Math.sin(q*Math.PI)*26,sh=IMG['fish/sheet'];
+      if(sh)lx.drawImage(sh,L.kind*48,0,48,32,Math.round(fx)-24,Math.round(fy)-16+(q>=1?Math.round(Math.sin(t*.01)*1):0),48,32);}}
   wlFx(dt,m.loc);drawPuffs(dt);wlCases(dt,m.loc);
   lx.fillStyle='rgba(255,236,190,.05)';lx.fillRect(0,0,cam.lw,cam.lh);
   return hits;}

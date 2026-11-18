@@ -88,7 +88,9 @@ function move(T, uid, a, o) {
     if (T.ph === 'done' || T.ph === 'idle') { fresh(T); T.ph = 'bet'; T.dl = now + BET_MS; }
     if (me.bet) bad('You have already bet.');
     me.bet = o.amt;
-    if (Object.values(T.seats).filter(s => !s.gone).every(s => s.bet > 0)) T.dl = Math.min(T.dl, now + 1200);   // everyone is in: deal soon
+    const sat = Object.values(T.seats).filter(s => !s.gone);
+    if (sat.length === 1) { deal(T); return; }   // (his call, 19 Nov) on your own at the table: no waiting, it deals at once
+    if (sat.every(s => s.bet > 0)) T.dl = Math.min(T.dl, now + 1200);   // everyone is in: deal soon
     return;
   }
   if (a === 'tick') {
