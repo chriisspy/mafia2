@@ -116,8 +116,10 @@ async function bjtRun(wid, t, fn) {
   let err; const ref = db.ref(`bjtx/${wid}/${t}`);
   const res = await ref.transaction(cur => {
     err = null; const T = BJT.norm(cur);
-    try { fn(T); T.v = (T.v | 0) + 1; T.now = Date.now(); return T; } catch (e) { err = e; return; }
+    try { fn(T); T.v = (T.v | 0) + 1; T.now = Date.now(); return T; }
+    catch (e) { err = e; return cur === null ? { _probe: 1 } : undefined; }   // (his catch: bets said 'Sit down first') the first try sees no table in the cache: guess, so the database answers with the real one
   });
+  if (res.committed && res.snapshot.child('_probe').exists()) await ref.remove();   // there really was no table: undo the guess
   if (err) { if (err instanceof BJT.Bad) bad(err.message); throw err; }
   if (!res.committed) bad('Try again.');
   const T = BJT.norm(res.snapshot.val()), P = BJT.pub(T);

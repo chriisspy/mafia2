@@ -160,7 +160,7 @@ function bjShMyTurn(){const T=BJ.sh&&BJ.sh.T;return!!(T&&T.ph==='play'&&(T.order
 function bjShTick(){const S=BJ.sh,T=S&&S.T;if(!T||!T.dl||!/^(bet|play|done)$/.test(T.ph))return;const n=Date.now();
   if(bjShNow()>=T.dl+250&&n-S.tickAt>1500){S.tickAt=n;srv('bjt',{wid:S.wid,t:S.ti,a:'tick'}).catch(()=>{});}
   if($('#bjModal').classList.contains('on'))bjShUI();}
-async function bjShCall(a,amt){const S=BJ.sh;if(!S||S.busy)return;S.busy=true;bjShUI();try{await srv('bjt',{wid:S.wid,t:S.ti,a,amt});}catch(e){$('#bjSub').textContent=e.message;sfx('nope');}if(BJ.sh===S)S.busy=false;bjShUI();}
+async function bjShCall(a,amt){const S=BJ.sh;if(!S||S.busy)return;S.busy=true;bjShUI();try{await srv('bjt',{wid:S.wid,t:S.ti,a,amt});S.err=null;}catch(e){S.err={m:e.message,t:Date.now()};sfx('nope');}if(BJ.sh===S)S.busy=false;bjShUI();}
 function bjShBet(){const amt=bjAmt();if(coins<amt){sfx('nope');return;}try{localStorage.setItem('m2_bj_stake',String(amt));}catch(e){}sfx('cas_chips');$('#bjWord').innerHTML='';bjShCall('bet',amt);}
 function bjShAct(a){if(!bjShMyTurn())return;if(a==='double'||a==='split')sfx('cas_chips');bjShCall(a);}
 /* where every card goes: the dealer along the top, the players along the bottom in stool order, each new card slides out from the dealer */
@@ -190,6 +190,7 @@ function bjShUI(){const S=BJ.sh;if(!S)return;const T=S.T,M=$('#bjModal'),me=bjSh
   const h=myTurn&&me&&me.hands&&me.hands[T.hi|0];
   document.querySelectorAll('#bjActs .btn').forEach(b=>{const a=b.dataset.a;b.disabled=!myTurn||S.busy||(a==='double'&&!(h&&(h.cs||[]).length===2&&coins>=h.bet))||(a==='split'&&!(h&&me.hands.length===1&&(h.cs||[]).length===2&&bjVal(h.cs[0].r)===bjVal(h.cs[1].r)&&coins>=h.bet));});
   const who=T&&ph==='play'&&T.seats&&T.seats[(T.order||[])[T.cur|0]];
+  if(S.err&&Date.now()-S.err.t<3500){$('#bjSub').textContent=S.err.m;}else   /* a move that did not go through says why for a few seconds */
   $('#bjSub').textContent=!me?'Sitting down...':ph==='bet'?(bet?'Dealing in '+left:'Bet now · dealing in '+left):ph==='play'?(myTurn?'Your turn · '+left:who?who.n+"'s turn":''):ph==='done'?'':(coins<amt?'You need '+amt+' coins to play.':'Bet to start a hand. Anyone sitting here can join in.');
   /* the end of a round: your result, once */
   if(T&&ph==='done'&&T.pay&&T.pay[NET.uid]&&S.shown!==T.r){S.shown=T.r;const net=T.pay[NET.uid].net|0,res=(me&&me.hands||[]).map(h=>h.res);
