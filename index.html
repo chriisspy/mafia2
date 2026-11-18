@@ -564,7 +564,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #townLeave,#gameLeave{display:none!important}
 #menuBtn{position:absolute;left:10px;top:calc(16px + env(safe-area-inset-top));z-index:23;padding:6px 7px 8px;display:flex;align-items:center;justify-content:center}
 #playersBtn{position:absolute;left:10px;top:calc(62px + env(safe-area-inset-top));z-index:23;padding:6px 7px 8px;align-items:center;justify-content:center}#playersBtn:not([style*=none]){display:flex}
-#plList{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto}.plr{display:flex;align-items:center;gap:9px;text-align:left;padding:5px 8px 7px;border:3px solid var(--wood);border-radius:6px;background:#fff;box-shadow:inset 0 -4px 0 #0002}
+#plList{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto}#plInvite{margin-top:4px;font-size:17px;padding:8px 10px 11px}.plr{display:flex;align-items:center;gap:9px;text-align:left;padding:5px 8px 7px;border:3px solid var(--wood);border-radius:6px;background:#fff;box-shadow:inset 0 -4px 0 #0002}
 .plr img{width:34px;height:34px;image-rendering:pixelated;object-fit:contain;border-radius:4px;background:#f6dfae}.plr .pt{flex:1;min-width:0}.plr b{display:block;font:700 17px 'Pixelify Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plr small{display:block;font:600 13px 'Pixelify Sans';opacity:.7}.plr.off{opacity:.55}.plr.off img{filter:grayscale(1)}   /* (his ask, 18 Nov) the player list */
 #menuModal{z-index:25;text-align:left;top:calc(64px + env(safe-area-inset-top));bottom:auto;left:10px;right:auto;width:250px;padding:12px}
@@ -1285,7 +1285,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11181923'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11181938'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -3926,9 +3926,11 @@ function plPaint(){const L=$('#plList');if(!L)return;const rows=[],here=new Set(
   if(WL.me){here.add(NET.uid);rows.push(row(face(PEOPLE[0].skin),(PEOPLE[0].n||myName)+' (you)',plDoing(WL.me.loc,NET.uid)));}
   for(const e of WL.bots){if(!e||!e.remote)continue;here.add(e.uid);rows.push(row(face((PEOPLE[e.i]||{}).skin),e.n||'Player',plDoing(e.loc,e.uid)));}
   if(NET.world&&typeof WORLD!=='undefined')for(const[u,m]of Object.entries(WORLD.members||{}))if(!here.has(u))rows.push(row(SP[m.skin]?face(m.skin):(typeof wFace==='function'?wFace(m):''),m.n||'Player','Offline',1));
-  L.innerHTML=rows.join('');}
+  const own=NET.world&&typeof WORLD!=='undefined'&&WORLD.meta&&WORLD.meta.owner===NET.uid;   /* (his ask) the owner can invite from here */
+  L.innerHTML=rows.join('')+(own?'<button class="btn red" id="plInvite">Invite</button>':'');}
 function plSync(){const b=$('#playersBtn');if(!b)return;const on=!!(NET.on&&scene===scenes.town);if((b.style.display!=='none')!==on)b.style.display=on?'':'none';if(!on)$('#playersModal').classList.remove('on');}
 $('#playersBtn').onclick=()=>{const M=$('#playersModal');if(M.classList.contains('on')){M.classList.remove('on');return;}document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));sfx('click');plPaint();M.classList.add('on');};
+$('#plList').addEventListener('click',e=>{if(!e.target.closest('#plInvite'))return;sfx('click');$('#playersModal').classList.remove('on');worldPanel();setTimeout(()=>{const i=$('#wmUser');if(i){i.scrollIntoView({block:'center'});i.focus();}},60);});   /* opens the world window at the email box */
 $('#playersX').onclick=()=>{sfx('close');$('#playersModal').classList.remove('on');};
 setInterval(()=>{plSync();if($('#playersModal').classList.contains('on'))plPaint();},1000);
 function wlDoor(ci){if(WL.fading)return;WL.fading=true;sfx('door');const xf=$('#xfade');xf.classList.add('on');

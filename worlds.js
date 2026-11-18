@@ -25,7 +25,7 @@ document.querySelector('#nameModal').insertAdjacentHTML('afterend',`<div class="
 document.querySelector('#townHud').insertAdjacentHTML('beforeend',`<div class="modal big panel" id="worldModal">
   <div class="mhead"><b id="wmName">WORLD</b><button class="btn" id="wmX"><i data-ic="cross" data-c="solo"></i></button></div>
   <div id="wmMembers"></div>
-  <div id="wmInvite"><h4>INVITE</h4><div class="wmRow"><input class="hin" id="wmEmail" type="email" inputmode="email" autocomplete="off" placeholder="friend@gmail.com"><button class="btn red" id="wmSend">Invite</button></div><div id="wmPending"></div></div>
+  <div id="wmInvite"><h4>INVITE</h4><div class="wmRow"><span class="unAt"><b>@</b><input id="wmUser" maxlength="16" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="username"></span><button class="btn red" id="wmSend">Invite</button></div><div id="wmFriends"></div><div id="wmPending"></div></div>
   <div class="small" id="wmMsg"></div>
   <button class="hlink" id="wmLeave">Leave world</button></div>`);
 document.querySelectorAll('#worldModal [data-ic]').forEach(e=>{e.outerHTML=ic(e.dataset.ic,+(e.dataset.s||2),e.dataset.c);});
@@ -38,6 +38,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .wcard .btn{font-size:15px;padding:4px 10px 7px}
 .wcard:active{transform:translateY(2px)}.wcard.inv:active{transform:none}
 #homeCreate.gone{display:none}
+#wmFriends:not(:empty){margin-top:8px}#wmFriends h4{margin-top:6px}#wmFriends .wmem img{image-rendering:pixelated;background:#f6dfae}#wmFriends .btn{font-size:14px;padding:3px 10px 6px;margin-left:auto}
 /* (his ask, 18 Nov) each world's card shows a faded picture of that world behind its name, in the middle */
 .wcard.shot{position:relative;overflow:hidden;min-height:118px;flex-direction:column;justify-content:center;gap:7px;text-align:center;isolation:isolate}
 .wcard.shot::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--shot) center 30%/cover no-repeat;image-rendering:pixelated;opacity:.5}
@@ -66,7 +67,9 @@ function worldWatch(){const u=acctUser(),uid=u?u.uid:null;if(uid===WORLD.uid)ret
   if(!uid||!NET.db)return worldHome();
   NET.db.ref('profiles/'+uid).update({n:myName,p:wPhoto(),skin:PEOPLE[0].skin}).catch(()=>{});
   const r1=NET.db.ref('userWorlds/'+uid),r2=NET.db.ref('owned/'+uid);r1.on('value',s=>{WORLD.mine=s.val()||{};worldHome();},()=>{});r2.on('value',s=>{WORLD.owned=s.val();worldHome();},()=>{});WORLD.watch.push(r1,r2);
-  if(wEmail()){const r3=NET.db.ref('invitesByEmail/'+ekey(wEmail()));r3.on('value',s=>{WORLD.inv=s.val()||{};worldHome();},()=>{});WORLD.watch.push(r3);}
+  WORLD.invE={};WORLD.invU={};const invAll=()=>{WORLD.inv={...WORLD.invE,...WORLD.invU};worldHome();};
+  if(wEmail()){const r3=NET.db.ref('invitesByEmail/'+ekey(wEmail()));r3.on('value',s=>{WORLD.invE=s.val()||{};invAll();},()=>{});WORLD.watch.push(r3);}
+  {const r4=NET.db.ref('invitesByUid/'+uid);r4.on('value',s=>{WORLD.invU=s.val()||{};invAll();},()=>{});WORLD.watch.push(r4);}   /* invited by your @username or from a friend's list */
   worldHome();}
 function worldHome(){const box=$('#homeWorlds');if(!box)return;const u=acctUser();
   const mine=Object.entries(WORLD.mine).sort((a,b)=>(b[1].own?1:0)-(a[1].own?1:0));
@@ -74,7 +77,7 @@ function worldHome(){const box=$('#homeWorlds');if(!box)return;const u=acctUser(
     +mine.map(([w,v])=>{const sh=worldShotOf(w);return`<button class="wcard shot${v.own?' mine':''}${sh?'':' map'}" data-w="${w}" style="--shot:url('${sh||(XMAS?'assets/xmas/day-big.webp':'assets/town4/day.png')}')"><span class="wt"><b>${esc(v.name||'World')}</b>${v.own?'':'<small>Member</small>'}</span><span class="wgo">Enter</span></button>`;}).join('');
   $('#homeCreate').classList.toggle('gone',!!(u&&WORLD.owned));}
 $('#homeWorlds').onclick=e=>{const c=e.target.closest('.wcard');if(!c||NET.busy)return;const w=c.dataset.w,b=e.target.closest('button[data-a]');
-  if(c.classList.contains('inv')){if(!b)return;if(b.dataset.a==='no'){sfx('click');NET.db.ref('invitesByEmail/'+ekey(wEmail())+'/'+w).remove().catch(()=>{});return;}
+  if(c.classList.contains('inv')){if(!b)return;if(b.dataset.a==='no'){sfx('click');if(wEmail())NET.db.ref('invitesByEmail/'+ekey(wEmail())+'/'+w).remove().catch(()=>{});NET.db.ref('invitesByUid/'+NET.uid+'/'+w).remove().catch(()=>{});return;}
     homeDo(()=>worldAccept(w),null,b,'Joining…');return;}
   homeDo(()=>worldEnter(w),null,c,'Opening…');};
 /* Create world: signed out, the Google window comes first */
@@ -101,7 +104,7 @@ async function worldAccept(wid){await netLoad();const u=acctUser();if(!u)throw n
   const w=(await NET.db.ref('worlds/'+wid).get()).val();if(!w||!w.meta)throw new Error('That world is gone.');
   if(!(w.members&&w.members[u.uid])){const used=w.slots||{};let s=0;while(s<10&&used[s])s++;if(s>=10)throw new Error('That world is full.');
     const up={};up['worlds/'+wid+'/slots/'+s]=u.uid;up['worlds/'+wid+'/members/'+u.uid]={n:myName,p:wPhoto(),e:wEmail(),skin:PEOPLE[0].skin,s:String(s),at:TS()};
-    up['userWorlds/'+u.uid+'/'+wid]={name:w.meta.name,own:false};up['invitesByEmail/'+ekey(wEmail())+'/'+wid]=null;
+    up['userWorlds/'+u.uid+'/'+wid]={name:w.meta.name,own:false};if(wEmail())up['invitesByEmail/'+ekey(wEmail())+'/'+wid]=null;if(WORLD.invU&&WORLD.invU[wid])up['invitesByUid/'+u.uid+'/'+wid]=null;
     await NET.db.ref().update(up);sfx('rare');}
   return worldEnter(wid);}
 async function worldEnter(wid,back){await netLoad();const u=acctUser();if(!u)throw new Error('Sign in with Google first.');
@@ -141,29 +144,44 @@ function worldPanel(){const M=$('#worldModal'),own=WORLD.meta&&WORLD.meta.owner=
   const ms=Object.entries(WORLD.members).sort((a,b)=>(+a[1].s)-(+b[1].s));
   $('#wmMembers').innerHTML=`<h4>MEMBERS ${ms.length}/10</h4>`+ms.map(([uid,m])=>`<div class="wmem"><img src="${esc(wFace(m))}" alt="" referrerpolicy="no-referrer"><span class="wn">${esc(m.n||'Player')}${uid===NET.uid?' (you)':''}<small>${uid===WORLD.meta.owner?'Owner · ':''}Cabin ${+m.s+1}</small></span>${pl[uid]?'<i class="on" title="Here now"></i>':''}${own&&uid!==NET.uid?`<button class="btn xb" data-kick="${uid}" title="Remove from world">${ic('cross',2,'solo')}</button>`:''}</div>`).join('');
   $('#wmInvite').style.display=own?'':'none';
-  const pend=Object.entries(WORLD.invites).filter(([k])=>!ms.some(([,m])=>ekey(m.e)===k));
-  $('#wmPending').innerHTML=pend.map(([k,v])=>`<div class="wmem"><span class="wn">${esc(v.e)}<small>Invited</small></span><button class="btn xb" data-unv="${k}" title="Cancel invite">${ic('cross',2,'solo')}</button></div>`).join('');
+  const pend=Object.entries(WORLD.invites).filter(([k])=>!WORLD.members[k]&&!ms.some(([,m])=>ekey(m.e)===k));
+  if(own)wmFriends(pend);
+  $('#wmPending').innerHTML=(pend.length?'<h4>INVITED</h4>':'')+pend.map(([k,v])=>`<div class="wmem"><span class="wn">${esc(v.n?(v.n+(v.un?' @'+v.un:'')):v.e)}<small>Waiting for them</small></span><button class="btn xb" data-unv="${k}" title="Cancel invite">${ic('cross',2,'solo')}</button></div>`).join('');
   const lb=$('#wmLeave');if(!lb.classList.contains('sure'))lb.textContent=own?'Delete world':'Leave world';
   M.classList.add('on');}
+/* YOUR FRIENDS, each with an Invite button (his ask): the ones not in this world and not invited yet */
+function wmFriends(pend){const box=$('#wmFriends');if(!box)return;const F=(typeof FR!=='undefined'&&FR.list)||{},inv=new Set(pend.map(([k])=>k));
+  const ids=Object.keys(F).filter(id=>!WORLD.members[id]&&!inv.has(id));
+  box.innerHTML=ids.length?'<h4>FRIENDS</h4>'+ids.map(id=>{const p=(FR.prof&&FR.prof[id])||{};const img=p.skin&&SP[p.skin]?face(p.skin):(p.p||'');
+    return`<div class="wmem"><img src="${esc(img)}" alt="" referrerpolicy="no-referrer"><span class="wn">${esc(p.n||'Friend')}${p.u?`<small>@${esc(p.u)}</small>`:''}</span><button class="btn red" data-finv="${id}">Invite</button></div>`;}).join(''):'';}
+/* send an invite to an account (by @username or from your friends) */
+async function wInviteUid(uid,n,un){const wid=NET.world;if(!wid||!WORLD.meta)return;if(WORLD.members[uid]){wmMsg('They are already in this world.',true);return;}
+  if(Object.keys(WORLD.members).length>=10){wmMsg('This world is full (10).',true);return;}
+  const up={};up['worlds/'+wid+'/invites/'+uid]={u:uid,n:n||'',un:un||'',at:TS()};up['invitesByUid/'+uid+'/'+wid]={name:WORLD.meta.name,by:myName,at:TS()};
+  await NET.db.ref().update(up);sfx('copy');wmMsg('Invite sent to '+(n||('@'+un))+'.');}
 function wmMsg(t,bad){const e=$('#wmMsg');e.textContent=t||'';e.className='small'+(bad?' bad':'');}
 $('#wmX').onclick=()=>{$('#worldModal').classList.remove('on');wmMsg('');};
-$('#wmSend').onclick=async()=>{const e=$('#wmEmail').value.trim().toLowerCase(),wid=NET.world;if(!wid)return;
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){wmMsg('That is not an email.',true);return;}
-  const k=ekey(e);if(Object.values(WORLD.members).some(m=>ekey(m.e)===k)){wmMsg('They are already in this world.',true);return;}
-  if(Object.keys(WORLD.members).length>=10){wmMsg('This world is full.',true);return;}
-  const up={};up['worlds/'+wid+'/invites/'+k]={e,at:TS()};up['invitesByEmail/'+k+'/'+wid]={name:WORLD.meta.name,by:myName,at:TS()};
-  const done=btnBusy($('#wmSend'),'…');try{await NET.db.ref().update(up);sfx('copy');$('#wmEmail').value='';wmMsg('Invite sent to '+e+'.');}catch(err){wmMsg(netWhy(err),true);}done();};
-$('#wmEmail').addEventListener('keydown',e=>{if(e.key==='Enter')$('#wmSend').click();});
+$('#wmSend').onclick=async()=>{const un=$('#wmUser').value.trim().toLowerCase().replace(/^@/,''),wid=NET.world;if(!wid)return;
+  if(un.length<4){wmMsg('Type their username.',true);return;}
+  const done=btnBusy($('#wmSend'),'…');
+  try{const uid=(await NET.db.ref('usernames/'+un).get()).val();if(!uid){wmMsg('No one has the username @'+un+'.',true);done();return;}
+    if(uid===NET.uid){wmMsg('That is you.',true);done();return;}
+    const pr=(await NET.db.ref('profiles/'+uid).get()).val()||{};await wInviteUid(uid,pr.n,un);$('#wmUser').value='';}catch(err){wmMsg(netWhy(err),true);}done();};
+$('#wmFriends').addEventListener('click',async e=>{const b=e.target.closest('[data-finv]');if(!b)return;const id=b.dataset.finv,p=(FR.prof&&FR.prof[id])||{};const done=btnBusy(b,'…');
+  try{await wInviteUid(id,p.n,p.u);}catch(err){wmMsg(netWhy(err),true);}done();});
+$('#wmUser').addEventListener('keydown',e=>{if(e.key==='Enter')$('#wmSend').click();});
+
+
 $('#worldModal').addEventListener('click',async e=>{const wid=NET.world;if(!wid)return;
   const kb=e.target.closest('[data-kick]'),ub=e.target.closest('[data-unv]');
   if(kb){if(!kb.classList.contains('sure')){kb.classList.add('sure');kb.textContent='Sure?';return;}const uid=kb.dataset.kick,m=WORLD.members[uid];if(!m)return;
-    const up={};up['worlds/'+wid+'/members/'+uid]=null;up['worlds/'+wid+'/slots/'+m.s]=null;if(m.e)up['worlds/'+wid+'/invites/'+ekey(m.e)]=null;
+    const up={};up['worlds/'+wid+'/members/'+uid]=null;up['worlds/'+wid+'/slots/'+m.s]=null;if(m.e)up['worlds/'+wid+'/invites/'+ekey(m.e)]=null;up['worlds/'+wid+'/invites/'+uid]=null;
     NET.db.ref().update(up).then(()=>sfx('close')).catch(err=>wmMsg(netWhy(err),true));return;}
-  if(ub){const k=ub.dataset.unv,up={};up['worlds/'+wid+'/invites/'+k]=null;up['invitesByEmail/'+k+'/'+wid]=null;NET.db.ref().update(up).then(()=>sfx('close')).catch(err=>wmMsg(netWhy(err),true));}});
+  if(ub){const k=ub.dataset.unv,up={};up['worlds/'+wid+'/invites/'+k]=null;if(/[,@]/.test(k))up['invitesByEmail/'+k+'/'+wid]=null;else up['invitesByUid/'+k+'/'+wid]=null;NET.db.ref().update(up).then(()=>sfx('close')).catch(err=>wmMsg(netWhy(err),true));}});
 $('#wmLeave').onclick=async()=>{const b=$('#wmLeave'),wid=NET.world,u=acctUser();if(!wid||!u)return;
   if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='Tap again to be sure';clearTimeout(b.t);b.t=setTimeout(()=>{b.classList.remove('sure');worldPanel();},3000);return;}
   b.classList.remove('sure');const own=WORLD.meta&&WORLD.meta.owner===u.uid,me=WORLD.members[u.uid]||{},up={};
-  if(own){up['worlds/'+wid]=null;up['owned/'+u.uid]=null;for(const k of Object.keys(WORLD.invites))up['invitesByEmail/'+k+'/'+wid]=null;}
+  if(own){up['worlds/'+wid]=null;up['owned/'+u.uid]=null;for(const k of Object.keys(WORLD.invites))up[(/[,@]/.test(k)?'invitesByEmail/':'invitesByUid/')+k+'/'+wid]=null;}
   else{up['worlds/'+wid+'/members/'+u.uid]=null;if(me.s!=null)up['worlds/'+wid+'/slots/'+me.s]=null;}
   up['userWorlds/'+u.uid+'/'+wid]=null;
   netLeave();try{await NET.db.ref().update(up);homeMsg(own?'World deleted.':'You left the world.');}catch(err){homeMsg(netWhy(err),true);}};

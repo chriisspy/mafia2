@@ -79,7 +79,7 @@
     },
     "worlds": {
       "$wid": {
-        ".read": "auth != null && (data.child('members').child(auth.uid).exists() || (auth.token.email != null && data.child('invites').child(auth.token.email.toLowerCase().replace('.', ',')).exists()))",
+        ".read": "auth != null && (data.child('members').child(auth.uid).exists() || (auth.token.email != null && data.child('invites').child(auth.token.email.toLowerCase().replace('.', ',')).exists()) || data.child('invites').child(auth.uid).exists())",
         ".write": "auth != null && data.child('meta').child('owner').val() === auth.uid && !newData.exists()",
         "meta": {
           ".write": "auth != null && ((!data.exists() && newData.child('owner').val() === auth.uid && newData.parent().parent().parent().child('owned').child(auth.uid).val() === $wid) || (data.child('owner').val() === auth.uid && newData.child('owner').val() === auth.uid))",
@@ -87,7 +87,7 @@
         },
         "members": {
           "$uid": {
-            ".write": "auth != null && ((auth.uid === $uid && (newData.parent().parent().child('meta').child('owner').val() === auth.uid || !newData.exists() || (auth.token.email != null && root.child('worlds').child($wid).child('invites').child(auth.token.email.toLowerCase().replace('.', ',')).exists()))) || root.child('worlds').child($wid).child('meta').child('owner').val() === auth.uid)",
+            ".write": "auth != null && ((auth.uid === $uid && (newData.parent().parent().child('meta').child('owner').val() === auth.uid || !newData.exists() || (auth.token.email != null && root.child('worlds').child($wid).child('invites').child(auth.token.email.toLowerCase().replace('.', ',')).exists()) || root.child('worlds').child($wid).child('invites').child(auth.uid).exists())) || root.child('worlds').child($wid).child('meta').child('owner').val() === auth.uid)",
             ".validate": "!newData.exists() || (newData.child('s').isString() && newData.parent().parent().child('slots').child(newData.child('s').val()).val() === $uid)"
           }
         },
@@ -156,6 +156,14 @@
           "$id": {
             ".write": "auth != null && !data.exists()"
           }
+        }
+      }
+    },
+    "invitesByUid": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$wid": {
+          ".write": "auth != null && (root.child('worlds').child($wid).child('meta').child('owner').val() === auth.uid || (auth.uid === $uid && !newData.exists()))"
         }
       }
     }
