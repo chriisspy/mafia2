@@ -38,6 +38,12 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .wcard .btn{font-size:15px;padding:4px 10px 7px}
 .wcard:active{transform:translateY(2px)}.wcard.inv:active{transform:none}
 #homeCreate.gone{display:none}
+/* (his ask, 18 Nov) each world's card shows a faded picture of that world behind its name, in the middle */
+.wcard.shot{position:relative;overflow:hidden;min-height:118px;flex-direction:column;justify-content:center;gap:7px;text-align:center;isolation:isolate}
+.wcard.shot::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--shot) center 30%/cover no-repeat;image-rendering:pixelated;opacity:.5}
+.wcard.shot.map::before{background-size:300%;background-position:50% 8%}
+.wcard.shot .wt{flex:none;max-width:70%}.wcard.shot .wt b{font-size:22px;text-shadow:0 0 6px #fff,0 0 3px #fff,0 0 2px #fff}.wcard.shot small{opacity:.85;text-shadow:0 0 4px #fff,0 0 2px #fff}
+.wcard.shot .wt{max-width:90%}.wcard.shot .wgo{padding:5px 22px 8px}
 .wcard .wgo{flex:none;padding:5px 12px 8px;border:3px solid #6b1416;border-radius:5px;background:#e4544f;color:#fff;font:700 15px "Pixelify Sans";box-shadow:inset 0 -4px 0 #a92b2c}
 #homeHud .gbtn.in{justify-content:flex-start;padding-left:10px}#homeHud .gbtn.in span{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #homeHud .gbtn.in small{flex:none;margin:0;padding:2px 7px 4px;border:2px solid #1a1430;border-radius:4px;opacity:1;font-size:12px;white-space:nowrap}
@@ -65,7 +71,7 @@ function worldWatch(){const u=acctUser(),uid=u?u.uid:null;if(uid===WORLD.uid)ret
 function worldHome(){const box=$('#homeWorlds');if(!box)return;const u=acctUser();
   const mine=Object.entries(WORLD.mine).sort((a,b)=>(b[1].own?1:0)-(a[1].own?1:0));
   box.innerHTML=Object.entries(WORLD.inv).filter(([w])=>!WORLD.mine[w]).map(([w,v])=>`<div class="wcard inv" data-w="${w}"><span class="wt"><b>${esc(v.name||'A world')}</b><small>${esc(v.by||'A friend')} invited you</small></span><button class="btn red" data-a="yes">Join</button><button class="btn" data-a="no">${ic('cross',2,'solo')}</button></div>`).join('')
-    +mine.map(([w,v])=>`<button class="wcard${v.own?' mine':''}" data-w="${w}"><span class="wt"><b>${esc(v.name||'World')}</b><small>${v.own?'Your world':'Member'}</small></span><span class="wgo">Enter</span></button>`).join('');
+    +mine.map(([w,v])=>{const sh=worldShotOf(w);return`<button class="wcard shot${v.own?' mine':''}${sh?'':' map'}" data-w="${w}" style="--shot:url('${sh||(XMAS?'assets/xmas/day-big.webp':'assets/town4/day.png')}')"><span class="wt"><b>${esc(v.name||'World')}</b>${v.own?'':'<small>Member</small>'}</span><span class="wgo">Enter</span></button>`;}).join('');
   $('#homeCreate').classList.toggle('gone',!!(u&&WORLD.owned));}
 $('#homeWorlds').onclick=e=>{const c=e.target.closest('.wcard');if(!c||NET.busy)return;const w=c.dataset.w,b=e.target.closest('button[data-a]');
   if(c.classList.contains('inv')){if(!b)return;if(b.dataset.a==='no'){sfx('click');NET.db.ref('invitesByEmail/'+ekey(wEmail())+'/'+w).remove().catch(()=>{});return;}
@@ -113,6 +119,20 @@ async function worldEnter(wid,back){await netLoad();const u=acctUser();if(!u)thr
 function worldOff(){if(WORLD.wref){WORLD.wref.off();WORLD.wref=null;}WORLD.wid=null;$('#worldModal').classList.remove('on');}
 
 /* ---- the world's own box at the top of the town, and its window ---- */
+/* THE WORLD'S PICTURE for its card on the home screen: every so often while you walk round the town, the screen is saved (small) on this phone */
+function worldShotOf(w){try{return localStorage.getItem('m2shot:'+w)||'';}catch(e){return'';}}
+function worldShot(){try{if(!(NET.on&&NET.world&&scene===scenes.town&&WL.me&&WL.me.loc<0&&!GAME.on&&!(typeof DECOR!=='undefined'&&DECOR.on)&&document.visibilityState==='visible'))return;
+  /* (his note) the whole cabin, with the cabins beside it: the town is drawn again into a wide picture round your cabin (no people, no tags), then the screen is put back */
+  const c=TOWN.cabins[NET.slot],hut=(dayImg('cabins')||[]).find(o=>o.ci===NET.slot);if(!c||!hut)return;const W0=366,H0=132,img=dayImg('ground');   /* the card's own shape */if(!img)return;
+  const sv={w:lo.width,h:lo.height,x:cam.x,y:cam.y,fx:cam.fx,fy:cam.fy,lw:cam.lw,lh:cam.lh,hi:cam.hi,img:cam.img,dm:dayMode};let url='';
+  try{lo.width=W0;lo.height=H0;lx.setTransform(1,0,0,1,0,0);lx.imageSmoothingEnabled=false;lx.globalAlpha=1;dayMode=true;
+    cam.hi=false;cam.lw=W0;cam.lh=H0;cam.fx=cam.fy=0;cam.x=Math.round(c.cx-W0/2);cam.y=Math.max(-(img.oy||0),Math.round(hut.y+cabPeak(hut)-10));
+    lx.fillStyle='#07060f';lx.fillRect(0,0,W0,H0);lx.drawImage(img,-cam.x-(img.ox||0),-cam.y);
+    drawScene([],TOWN.occ,img,[wheelObj(),...dayImg('cabins'),...bldObjs(WL.me,0),...treeObjs(WL.me,0),...(XMAS?[stallObj()]:[]),...(typeof decorObjs==='function'?decorObjs('out'):[])]);
+    const o=mk(W0,H0);o.getContext('2d').drawImage(lo,0,0);url=o.toDataURL('image/jpeg',.8);}
+  finally{lo.width=sv.w;lo.height=sv.h;Object.assign(cam,{x:sv.x,y:sv.y,fx:sv.fx,fy:sv.fy,lw:sv.lw,lh:sv.lh,hi:sv.hi,img:sv.img});dayMode=sv.dm;}
+  if(url){localStorage.setItem('m2shot:'+NET.world,url);worldHome();}}catch(e){}}
+setInterval(worldShot,15000);
 function worldPaint(){const box=$('#townCodeBox');if(!box)return;const on=!!(NET.on&&NET.world);box.classList.toggle('world',on);$('#townHud').classList.toggle('inworld',on);   /* (his call, 18 Nov) in a world the name box is in the menu, not on screen */
   box.querySelector('small').textContent=on?'WORLD':'LOBBY CODE';if(on&&!box.classList.contains('ok'))$('#townCodeT').textContent=(WORLD.meta&&WORLD.meta.name)||'';
   if($('#worldModal').classList.contains('on'))worldPanel();}

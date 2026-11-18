@@ -563,6 +563,10 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #talkSkip{position:absolute;right:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
 #townLeave,#gameLeave{display:none!important}
 #menuBtn{position:absolute;left:10px;top:calc(16px + env(safe-area-inset-top));z-index:23;padding:6px 7px 8px;display:flex;align-items:center;justify-content:center}
+#playersBtn{position:absolute;left:10px;top:calc(62px + env(safe-area-inset-top));z-index:23;padding:6px 7px 8px;align-items:center;justify-content:center}#playersBtn:not([style*=none]){display:flex}
+#plList{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto}.plr{display:flex;align-items:center;gap:9px;text-align:left;padding:5px 8px 7px;border:3px solid var(--wood);border-radius:6px;background:#fff;box-shadow:inset 0 -4px 0 #0002}
+.plr img{width:34px;height:34px;image-rendering:pixelated;object-fit:contain;border-radius:4px;background:#f6dfae}.plr .pt{flex:1;min-width:0}.plr b{display:block;font:700 17px 'Pixelify Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plr small{display:block;font:600 13px 'Pixelify Sans';opacity:.7}.plr.off{opacity:.55}.plr.off img{filter:grayscale(1)}   /* (his ask, 18 Nov) the player list */
 #menuModal{z-index:25;text-align:left;top:calc(64px + env(safe-area-inset-top));bottom:auto;left:10px;right:auto;width:250px;padding:12px}
 .mrow{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:8px;font-size:17px;padding:8px 12px 10px;text-align:left}.mrow b{font-size:14px;letter-spacing:1px;opacity:.75}.mrow.red{justify-content:center}
 #menuCode{display:flex;flex-direction:column;align-items:center;width:100%;padding:4px 10px 6px;cursor:pointer;font-family:inherit}#menuCode small{font-size:10px;letter-spacing:3px;opacity:.7}#menuCode b{font-size:30px;letter-spacing:8px;margin-right:-8px;line-height:1.1}
@@ -945,7 +949,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     </div>
 
   <button class="btn dark" id="gameLeave">Leave</button>
-  <button class="btn dark" id="menuBtn" title="Menu"><i data-ic="menu" data-c="solo"></i></button>
+  <button class="btn dark" id="menuBtn" title="Menu"><i data-ic="menu" data-c="solo"></i></button><button class="btn dark" id="playersBtn" title="Players" style="display:none"><i data-ic="players" data-c="solo"></i></button>
   <button class="btn dark" id="hideBtn" title="Hide my role outfit"></button>
   <button class="btn dark" id="spyBtn" title="Notes"><i data-ic="notes" data-c="solo"></i></button>
   <div class="modal panel" id="spyModal">
@@ -963,6 +967,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div class="small" style="margin-bottom:6px">Lab only. Tap one to watch it.</div>
     <div id="filmList"></div>
   </div>
+  <div class="modal panel" id="playersModal"><div class="mhead"><b>PLAYERS</b><button class="btn" id="playersX"><i data-ic="cross" data-c="solo"></i></button></div><div id="plList"></div></div>
   <div class="modal panel" id="menuModal">
     <div class="mhead"><b>MENU</b><button class="btn" id="menuX"><i data-ic="cross" data-c="solo"></i></button></div>
     <button class="panel" id="menuCode"><small>LOBBY CODE</small><b id="menuCodeT"></b></button>
@@ -988,7 +993,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </nav>
 </div>
 
-<script src="icons.js?v=11181640r"></script>
+<script src="icons.js?v=11181800p"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -1280,7 +1285,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11181702'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11181717'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1530,7 +1535,8 @@ function drawScene(people,occ,img,objs){
 /* the part of the screen the YOU tag may use: under the world's name box, above the bottom buttons */
 function youBand(){const c=$('#c'),r=c&&c.getBoundingClientRect(),f=v=>r&&r.height?(v-r.top)/r.height*cam.lh:0,tb=$('#tabs');
   const ti=$('#townHud .title.banner'),tt=ti&&ti.offsetParent&&+getComputedStyle(ti).opacity>.05?Math.ceil(f(ti.getBoundingClientRect().bottom))+2:0;   /* the arrow also keeps clear of the town's title */
-  return[youTop(),tb&&tb.offsetParent?Math.floor(f(tb.getBoundingClientRect().top))-2:cam.lh,Math.max(youTop(),tt)];}
+  const tp=$('#townHud .tpanel'),bars=[tb,tp,$('#lakeBar'),$('#hallBar')].filter(e=>e&&e.offsetParent&&getComputedStyle(e).display!=='none'&&e.getBoundingClientRect().height>4);   /* and above the bottom panel or bar, whichever is showing */
+  return[youTop(),bars.length?Math.floor(f(Math.min(...bars.map(e=>e.getBoundingClientRect().top))))-2:cam.lh,Math.max(youTop(),tt)];}
 /* a pixel triangle pointing along (ux, uy), tip `a` ahead of (x, y), base `b` behind, half as wide as `w` */
 function pxTri(x,y,ux,uy,a,b,w,col){const P=[[x+ux*a,y+uy*a],[x-ux*b-uy*w,y-uy*b+ux*w],[x-ux*b+uy*w,y-uy*b-ux*w]],cr=(p,q,X0,Y0)=>(q[0]-p[0])*(Y0-p[1])-(q[1]-p[1])*(X0-p[0]);
   const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);lx.fillStyle=col;
@@ -1541,10 +1547,29 @@ function youTag(o,t){let c=TOWN.cabins[o.ci],b=Math.round(Math.sin(t*.005+1)*1.5
   /* (his note) as soon as any of the cabin is on screen it is the tag, kept on screen; only when the whole cabin is gone is it the arrow */
   const cx0=X(o.x),cx1=X(o.x+o.img.width),cy0=Y(o.y+cabPeak(o)),cy1=Y(Math.max(o.base||0,(c.feet?c.feet[1]:c.top+34)+10));   /* down to its porch steps */
   if(cx1>0&&cx0<L&&cy1>2&&cy0<B){const fx=clamp(tx,1,L-15),fy0=clamp(ty,T,B-10)+b;const tx2=tx;tx=fx;lx.fillStyle='#1a1430';lx.fillRect(tx-1,fy0-1,15,9);lx.fillRect(tx+5,fy0+8,3,2);lx.fillStyle='#ffd25e';lx.fillRect(tx,fy0,13,7);lx.fillStyle='#1a1430';pxText(lx,'YOU',tx+1,fy0+1);tx=tx2;return;}
+  if(Math.hypot(WL.me.x-c.cx,WL.me.y-(c.top+40))>PL_RANGE)return;   /* too far from home: no arrow */
   const m=WL.me,px=clamp(X(m.x),8,L-8),py=clamp(Y(m.y-12),T2+8,B-8),dx=tx+6.5-px,dy=ty+4-py,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,M=7;let k=1e9;
   if(ux>1e-3)k=Math.min(k,(L-M-px)/ux);if(ux<-1e-3)k=Math.min(k,(M-px)/ux);if(uy>1e-3)k=Math.min(k,(B-M-py)/uy);if(uy<-1e-3)k=Math.min(k,(T2+M-py)/uy);
   k=Math.max(0,Math.min(k,d))+b;const ax=Math.round(px+ux*k),ay=Math.round(py+uy*k);
   pxTri(ax,ay,ux,uy,5.5,4,5.2,'#1a1430');pxTri(ax,ay,ux,uy,4,2.8,3.7,'#ffd25e');}
+/* OTHER PLAYERS OFF SCREEN (his ask, 18 Nov): a real player near you but off the screen shows on the edge as their face, their name above,
+   and a little pointer towards them. Only within PL_RANGE of you (the same range as the YOU arrow). */
+const PL_RANGE=240,HEADS={};
+function headIcon(skin){if(HEADS[skin])return HEADS[skin];const d=SP[skin]&&SP[skin].front;if(!d)return null;const src=d.frames[0][0],g0=src.getContext('2d').getImageData(0,0,d.w,d.h).data;
+  let top=0;while(top<d.h){let any=0;for(let x=0;x<d.w;x++)if(g0[(top*d.w+x)*4+3]>128){any=1;break;}if(any)break;top++;}
+  const h=Math.max(1,Math.min(d.h-top,d.eyeBot+PAD+7-top));   /* the whole head, hair to chin (drawn at half size) */let x0=d.w,x1=0;for(let y=top;y<top+h;y++)for(let x=0;x<d.w;x++)if(g0[(y*d.w+x)*4+3]>128){x0=Math.min(x0,x);x1=Math.max(x1,x);}
+  const w=Math.max(1,x1-x0+1),c=mk(w,h);c.getContext('2d').drawImage(src,x0,top,w,h,0,0,w,h);return HEADS[skin]=c;}
+function plMarks(t){if(!NET.on||!WL.me)return;const m=WL.me,[T,B,T2]=youBand(),L=cam.lw,b=Math.round(Math.sin(t*.005)*1);
+  for(const e of WL.bots){if(!e||!e.remote||e.loc!==m.loc)continue;if(Math.hypot(e.x-m.x,e.y-m.y)>PL_RANGE)continue;
+    const sx=X(e.x),sy=Y(e.y);if(sx>-6&&sx<L+6&&sy>T&&sy-24<B)continue;   /* on screen: you can see them */
+    const px=clamp(X(m.x),14,L-14),py=clamp(Y(m.y-12),T2+20,B-12),dx=sx-px,dy=sy-12-py,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;let k=1e9;
+    const mx=17,myT=T2+20,myB=B-16;if(ux>1e-3)k=Math.min(k,(L-mx-px)/ux);if(ux<-1e-3)k=Math.min(k,(mx-px)/ux);if(uy>1e-3)k=Math.min(k,(myB-py)/uy);if(uy<-1e-3)k=Math.min(k,(myT-py)/uy);
+    k=Math.max(0,Math.min(k,d));const ax=Math.round(px+ux*k),ay=Math.round(py+uy*k)+b,hd=headIcon((PEOPLE[e.i]||{}).skin);
+    pxTri(ax+ux*8,ay+uy*8,ux,uy,4,1,3.6,'#1a1430');pxTri(ax+ux*8,ay+uy*8,ux,uy,2.8,0,2.3,'#fff');   /* the pointer */
+    const hw=hd?Math.ceil(hd.width/2):10,hh=hd?Math.ceil(hd.height/2):10,bw=hw+4,bh=hh+3,bx=ax-Math.round(bw/2),by=ay-Math.round(bh/2);   /* (his note: faces were cut off and too big) the whole head at half size */
+    lx.fillStyle='#1a1430';lx.fillRect(bx-1,by-1,bw+2,bh+2);lx.fillStyle='#fff';lx.fillRect(bx,by,bw,bh);if(hd){lx.imageSmoothingEnabled=false;lx.drawImage(hd,bx+2,by+bh-hh-1,hd.width/2,hd.height/2);}
+    const nm=String(e.n||'').toUpperCase().slice(0,10),w=nm.length*4+1,nx=clamp(ax-Math.round(w/2),1,L-w-1),ny=by-10;
+    lx.fillStyle='#1a1430';lx.fillRect(nx-1,ny-1,w+2,9);lx.fillStyle='#fff';pxText(lx,nm,nx+1,ny+1);}}
 function youTop(){const c=$('#c'),b=[$('#townCodeBox'),$('#menuBtn')].find(e=>e&&e.offsetParent&&getComputedStyle(e).display!=='none');if(!b||!c)return 0;const r=c.getBoundingClientRect(),bb=b.getBoundingClientRect();return r.height?Math.ceil((bb.bottom-r.top)/r.height*cam.lh)+3:0;}
 /* the top of a cabin's roof, in rows from the top of its picture (worked out once per picture) */
 const CABPK=new WeakMap();function cabPeak(o){if(CABPK.has(o.img))return CABPK.get(o.img);const im=o.img,c=mk(im.width,im.height),g=c.getContext('2d');g.drawImage(im,0,0);const cx=Math.max(0,Math.min(im.width-1,Math.round(TOWN.cabins[o.ci].cx-o.x))),d=g.getImageData(cx,0,1,im.height).data;let y=0;while(y<im.height&&d[y*4+3]<128)y++;CABPK.set(im,y);return y;}
@@ -3891,6 +3916,21 @@ function placeName(ci){if(ci===LAKE)return'Fishing Lake';if(ci>=100){const H=hal
   if(NET.world&&typeof WORLD!=='undefined'){const e=Object.entries(WORLD.members||{}).find(([u,m])=>+m.s===ci);return!e?'Empty Cabin':e[0]===NET.uid?'Your Cabin':(e[1].n||'Player')+"'s Cabin";}
   const o=CABIN_OF.indexOf(ci);return o===0?'Your Cabin':o>0?PEOPLE[o].n+"'s Cabin":'Empty Cabin';}
 function placeShow(ci){const b=$('#townHud .title.banner');if(!b)return;$('#placeName').textContent=placeName(ci);$('#townCount').style.display=ci<0?'':'none';b.classList.remove('place');void b.offsetWidth;b.classList.add('place');}
+/* THE PLAYER LIST (his ask, 18 Nov): the person button under the menu; everyone here, and what they are doing under their name */
+function plDoing(loc,uid){if(GAME.on)return'Playing Mafia';if(loc==null||loc<0)return'In the town';if(loc===LAKE)return'Fishing at the lake';
+  if(loc>=100){const H=hallOf(loc);return H?'At '+H.name.replace(/^The /,'the '):'Somewhere';}
+  if(NET.world&&typeof WORLD!=='undefined'){const e=Object.entries(WORLD.members||{}).find(([u,m])=>+m.s===loc);if(!e)return'In an empty cabin';if(e[0]===uid)return uid===NET.uid?'In your cabin':'In their cabin';return'Visiting '+(e[1].n||'Player')+"'s cabin";}
+  const o=CABIN_OF.indexOf(loc);return o<0?'In an empty cabin':(PEOPLE[o]||{}).uid===uid||(o===0&&uid===NET.uid)?(uid===NET.uid?'In your cabin':'In their cabin'):'Visiting '+PEOPLE[o].n+"'s cabin";}
+function plPaint(){const L=$('#plList');if(!L)return;const rows=[],here=new Set();
+  const row=(img,n,doing,off)=>`<div class="plr${off?' off':''}"><img src="${esc(img||'')}" alt="" referrerpolicy="no-referrer"><span class="pt"><b>${esc(n)}</b><small>${esc(doing)}</small></span></div>`;
+  if(WL.me){here.add(NET.uid);rows.push(row(face(PEOPLE[0].skin),(PEOPLE[0].n||myName)+' (you)',plDoing(WL.me.loc,NET.uid)));}
+  for(const e of WL.bots){if(!e||!e.remote)continue;here.add(e.uid);rows.push(row(face((PEOPLE[e.i]||{}).skin),e.n||'Player',plDoing(e.loc,e.uid)));}
+  if(NET.world&&typeof WORLD!=='undefined')for(const[u,m]of Object.entries(WORLD.members||{}))if(!here.has(u))rows.push(row(SP[m.skin]?face(m.skin):(typeof wFace==='function'?wFace(m):''),m.n||'Player','Offline',1));
+  L.innerHTML=rows.join('');}
+function plSync(){const b=$('#playersBtn');if(!b)return;const on=!!(NET.on&&scene===scenes.town);if((b.style.display!=='none')!==on)b.style.display=on?'':'none';if(!on)$('#playersModal').classList.remove('on');}
+$('#playersBtn').onclick=()=>{const M=$('#playersModal');if(M.classList.contains('on')){M.classList.remove('on');return;}document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));sfx('click');plPaint();M.classList.add('on');};
+$('#playersX').onclick=()=>{sfx('close');$('#playersModal').classList.remove('on');};
+setInterval(()=>{plSync();if($('#playersModal').classList.contains('on'))plPaint();},1000);
 function wlDoor(ci){if(WL.fading)return;WL.fading=true;sfx('door');const xf=$('#xfade');xf.classList.add('on');
   setTimeout(()=>{const m=WL.me,was=m.loc;m.seat=null;m.loc=ci;m.path=[];m.todo=null;m.walk=false;WL.sel=null;wlMenu();
     {const H=ci>=100?hallOf(ci):null,on=!!H&&H.k!=='lake';$('#townHud').classList.toggle('hall',on);if(on){$('#hallLine').textContent='';paintCoins();}}
@@ -4218,7 +4258,7 @@ scenes.town={hud:'#townHud',
       hits=drawScene(people,TOWN.occ,img,[wheelObj(),...huts,...bldObjs(m,dt),...treeObjs(m,dt),...(XMAS?[stallObj()]:[]),...(window.decorObjs?decorObjs('out'):[])]);wlFx(dt,-1);drawPuffs(dt);wlCases(dt,-1);
       if(daySpin()&&!WL.wheel.busy){const fx0=X(WHEEL_AT[0])-9,fy0=Y(WHEEL_AT[1])-64+Math.round(Math.sin(t*.005)*1.5);lx.fillStyle='#1a1430';lx.fillRect(fx0-1,fy0-1,19,9);lx.fillRect(fx0+7,fy0+8,3,2);lx.fillStyle='#5fc46f';lx.fillRect(fx0,fy0,17,7);lx.fillStyle='#fff';pxText(lx,'FREE',fx0+1,fy0+1);}   /* today's free spin has not been used: a little tag over the wheel */
       if(XMAS){const fx0=X(JETTY[0]-20)-9,fy0=Y(JETTY[1])-24+Math.round(Math.sin(t*.005)*1.5);lx.fillStyle='#1a1430';lx.fillRect(fx0-1,fy0-1,19,9);lx.fillRect(fx0+7,fy0+8,3,2);lx.fillStyle='#4f9be0';lx.fillRect(fx0,fy0,17,7);lx.fillStyle='#fff';pxText(lx,'FISH',fx0+1,fy0+1);}   /* a little tag over the jetty: you can fish here */
-      if(NET.world&&NET.slot!=null&&TOWN.cabins[NET.slot]){const o=huts.find(o=>o.ci===NET.slot);if(o)youTag(o,t);}   /* (his ask, 18 Nov) YOU over your own cabin; off screen it becomes an arrow at the edge pointing home */
+      plMarks(t);if(NET.world&&NET.slot!=null&&TOWN.cabins[NET.slot]){const o=huts.find(o=>o.ci===NET.slot);if(o)youTag(o,t);}   /* (his ask, 18 Nov) YOU over your own cabin; off screen it becomes an arrow at the edge pointing home */
       lx.fillStyle='rgba(255,236,190,.06)';lx.fillRect(0,0,cam.lw,cam.lh);}
     // stars going round the head of anyone knocked flat
     for(const p of people){const k=p.e.ko,h=hits.get(p);if(!k||k.t>1.25||!h)continue;lx.fillStyle='#ffd25e';for(let i=0;i<3;i++){const a=t*.009+i*2.1;lx.fillRect(Math.round(h.cx+Math.cos(a)*8),Math.round(h.top-3+Math.sin(a)*2.5),2,2);}}
