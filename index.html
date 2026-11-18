@@ -1285,7 +1285,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11181753'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11181923'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -4388,8 +4388,8 @@ function netApply(){if(!NET.on)return;const pl=NET.players||{},mine=pl[NET.uid],
   if(!mine){NET.me.onDisconnect().remove().catch(()=>{});       // we dropped off for a moment: go back in
     NET.me.set({n:myName,skin:PEOPLE[0].skin,room:myRoom,slot:NET.slot,v:BUILD,at:NET.myAt||TS(),lr:NET.lr||null,m:WL.me&&!GAME.on?netM():{x:c0.cx,y:c0.top+40,tx:c0.cx,ty:c0.top+40,loc:-1,dir:'front',s:++NET.seq}}).catch(()=>{});return;}
   if(mine.at)NET.myAt=mine.at;   /* (16 Nov) a phone that drops for a moment comes back with the time it first joined, so the host stays the host. It used to come back as the newest player: the host's "Vote now" then did nothing and nobody else had the button. */
-  const own=NET.world&&typeof WORLD!=='undefined'&&WORLD.meta?WORLD.meta.owner:null;   /* in a world the owner is the host whenever they are there */
-  const older=(a,ua,b,ub)=>own&&(ua===own)!==(ub===own)?ua===own:(a.at||0)<(b.at||0)||((a.at||0)===(b.at||0)&&ua<ub);
+  /* THE HOST (his call, 18 Nov): whoever got here first, in a world too (the owner no longer jumps the queue); when they leave, the next to arrive takes over */
+  const older=(a,ua,b,ub)=>(a.at||0)<(b.at||0)||((a.at||0)===(b.at||0)&&ua<ub);
   {const a0=Object.entries(pl).filter(([u,p])=>p&&p.n&&p.m).sort((a,b)=>older(a[1],a[0],b[1],b[0])?-1:1);NET.host=a0.length?a0[0][0]:NET.uid;}
   if(GAME.on||!WL.me||scene!==scenes.town){gameLobbyUI();return;}
   if(!NET.world&&Object.entries(pl).some(([u,p])=>u!==NET.uid&&p.slot===mine.slot&&older(p,u,mine,NET.uid))){   /* worlds: everyone has their own cabin */NET.slot=freeSlot(pl);NET.me.update({slot:NET.slot});return;}   // two of us took one cabin: the later one moves
