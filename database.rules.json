@@ -6,6 +6,128 @@
         ".write": "auth != null && auth.uid === $uid"
       }
     },
+    "wallet": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+    "friends": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+    "freq": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+    "gifts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$id": {
+          ".write": "auth != null && auth.uid === $uid && !newData.exists()"
+        }
+      }
+    },
+    "props": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": false
+      }
+    },
+    "duels": {
+      ".read": false,
+      ".write": false
+    },
+    "profiles": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid",
+        "u": {
+          ".validate": "root.child('usernames').child(newData.val()).val() === $uid"
+        }
+      }
+    },
+    "usernames": {
+      "$name": {
+        ".read": "auth != null",
+        ".write": false
+      }
+    },
+    "owned": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && (!data.exists() || !newData.exists())"
+      }
+    },
+    "userWorlds": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "invitesByEmail": {
+      "$ek": {
+        ".read": "auth != null && auth.token.email != null && auth.token.email.toLowerCase().replace('.', ',') === $ek",
+        "$wid": {
+          ".write": "auth != null && (root.child('worlds').child($wid).child('meta').child('owner').val() === auth.uid || newData.parent().parent().parent().child('worlds').child($wid).child('meta').child('owner').val() === auth.uid || (auth.token.email != null && auth.token.email.toLowerCase().replace('.', ',') === $ek && !newData.exists()))"
+        }
+      }
+    },
+    "worlds": {
+      "$wid": {
+        ".read": "auth != null && (data.child('members').child(auth.uid).exists() || (auth.token.email != null && data.child('invites').child(auth.token.email.toLowerCase().replace('.', ',')).exists()))",
+        ".write": "auth != null && data.child('meta').child('owner').val() === auth.uid && !newData.exists()",
+        "meta": {
+          ".write": "auth != null && ((!data.exists() && newData.child('owner').val() === auth.uid && newData.parent().parent().parent().child('owned').child(auth.uid).val() === $wid) || (data.child('owner').val() === auth.uid && newData.child('owner').val() === auth.uid))",
+          ".validate": "newData.hasChildren(['name', 'owner']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 20"
+        },
+        "members": {
+          "$uid": {
+            ".write": "auth != null && ((auth.uid === $uid && (newData.parent().parent().child('meta').child('owner').val() === auth.uid || !newData.exists() || (auth.token.email != null && root.child('worlds').child($wid).child('invites').child(auth.token.email.toLowerCase().replace('.', ',')).exists()))) || root.child('worlds').child($wid).child('meta').child('owner').val() === auth.uid)",
+            ".validate": "!newData.exists() || (newData.child('s').isString() && newData.parent().parent().child('slots').child(newData.child('s').val()).val() === $uid)"
+          }
+        },
+        "slots": {
+          "$n": {
+            ".write": "auth != null && $n.matches(/^[0-9]$/) && ((!data.exists() && newData.val() === auth.uid && newData.parent().parent().child('members').child(auth.uid).exists()) || (data.val() === auth.uid && !newData.exists()) || root.child('worlds').child($wid).child('meta').child('owner').val() === auth.uid)"
+          }
+        },
+        "invites": {
+          "$ek": {
+            ".write": "auth != null && root.child('worlds').child($wid).child('meta').child('owner').val() === auth.uid"
+          }
+        },
+        "live": {
+          "players": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid && root.child('worlds').child($wid).child('members').child(auth.uid).exists()"
+            }
+          },
+          "ev": {
+            "$id": {
+              ".write": "auth != null && !data.exists() && root.child('worlds').child($wid).child('members').child(auth.uid).exists()"
+            }
+          },
+          "game": {
+            ".write": "auth != null && root.child('worlds').child($wid).child('members').child(auth.uid).exists()"
+          },
+          "act": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid"
+            }
+          },
+          "mchat": {
+            "$id": {
+              ".write": "auth != null && !data.exists() && root.child('worlds').child($wid).child('members').child(auth.uid).exists()"
+            }
+          }
+        }
+      }
+    },
     "lobbies": {
       "$code": {
         ".read": "auth != null",

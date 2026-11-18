@@ -4,3 +4,6 @@ assets/chars/
 assets/*.webp
 
 __pycache__/
+
+# the server code's installed packages
+functions/node_modules/

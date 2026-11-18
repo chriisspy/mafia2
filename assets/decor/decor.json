@@ -1,0 +1,216 @@
+[
+ {
+  "id": "water",
+  "name": "Pond",
+  "price": 40,
+  "flat": 1,
+  "code": 1
+ },
+ {
+  "id": "sprout",
+  "name": "Sprout",
+  "price": 150
+ },
+ {
+  "id": "potplant",
+  "name": "Pot plant",
+  "price": 200
+ },
+ {
+  "id": "bush",
+  "name": "Round bush",
+  "price": 250
+ },
+ {
+  "id": "flowers",
+  "name": "Flower pot",
+  "price": 250
+ },
+ {
+  "id": "rug",
+  "name": "Rug",
+  "price": 300,
+  "flat": 1
+ },
+ {
+  "id": "sign",
+  "name": "Open sign",
+  "price": 300
+ },
+ {
+  "id": "widebush",
+  "name": "Wide bush",
+  "price": 350
+ },
+ {
+  "id": "lamptable",
+  "name": "Lamp table",
+  "price": 350
+ },
+ {
+  "id": "mailbox",
+  "name": "Mailbox",
+  "price": 350,
+  "dirs": {
+   "s": 1,
+   "e": 1,
+   "n": 1,
+   "w": 1
+  }
+ },
+ {
+  "id": "pine",
+  "name": "Small pine",
+  "price": 400
+ },
+ {
+  "id": "floorlamp",
+  "name": "Floor lamp",
+  "price": 400
+ },
+ {
+  "id": "bench",
+  "name": "Bench",
+  "price": 450,
+  "dirs": {
+   "s": 1,
+   "e": 1,
+   "n": 1,
+   "w": 1
+  }
+ },
+ {
+  "id": "snowman",
+  "name": "Snowman",
+  "price": 500
+ },
+ {
+  "id": "streetlamp",
+  "name": "Street lamp",
+  "price": 600
+ },
+ {
+  "id": "wanted",
+  "name": "Wanted board",
+  "price": 600,
+  "dirs": {
+   "s": 1,
+   "e": 1,
+   "n": 1,
+   "w": 1
+  }
+ },
+ {
+  "id": "tallpine",
+  "name": "Tall pine",
+  "price": 800
+ },
+ {
+  "id": "campfire",
+  "name": "Campfire",
+  "price": 800,
+  "frames": 6
+ },
+ {
+  "id": "firebarrel",
+  "name": "Fire barrel",
+  "price": 900,
+  "frames": 6
+ },
+ {
+  "id": "poker",
+  "name": "Poker table",
+  "price": 1200
+ },
+ {
+  "id": "neon",
+  "name": "Neon sign",
+  "price": 1500,
+  "frames": 6
+ },
+ {
+  "id": "robot",
+  "name": "Robot pal",
+  "price": 2000,
+  "dirs": {
+   "s": 6,
+   "e": 6,
+   "n": 6,
+   "w": 6
+  }
+ },
+ {
+  "id": "arcade",
+  "name": "Arcade machine",
+  "price": 2500,
+  "dirs": {
+   "s": 6,
+   "e": 6,
+   "n": 1,
+   "w": 6
+  }
+ },
+ {
+  "id": "fountain",
+  "name": "Fountain",
+  "price": 3000,
+  "frames": 6
+ },
+ {
+  "id": "safe",
+  "name": "The safe",
+  "price": 3500,
+  "dirs": {
+   "s": 1,
+   "e": 1,
+   "n": 1,
+   "w": 1
+  }
+ },
+ {
+  "id": "teleporter",
+  "name": "Teleporter",
+  "price": 4000,
+  "frames": 6
+ },
+ {
+  "id": "hologram",
+  "name": "Hologram",
+  "price": 4500,
+  "frames": 6
+ },
+ {
+  "id": "chest",
+  "name": "Treasure chest",
+  "price": 5000,
+  "dirs": {
+   "s": 1,
+   "e": 1,
+   "n": 1,
+   "w": 1
+  }
+ },
+ {
+  "id": "statue",
+  "name": "Golden boss",
+  "price": 6000,
+  "dirs": {
+   "s": 1,
+   "e": 1,
+   "n": 1,
+   "w": 1
+  }
+ },
+ {
+  "id": "car",
+  "name": "Getaway car",
+  "price": 9000,
+  "dirs": {
+   "s": 1,
+   "e": 1,
+   "n": 1,
+   "w": 1
+  },
+  "def": 3
+ }
+]

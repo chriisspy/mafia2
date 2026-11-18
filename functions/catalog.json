@@ -1,0 +1,802 @@
+{
+ "made": "2026-11-18T05:41:14.996Z",
+ "skins": [
+  {
+   "id": "brownhair",
+   "rar": "common"
+  },
+  {
+   "id": "beanie",
+   "rar": "common"
+  },
+  {
+   "id": "ponytail",
+   "rar": "rare"
+  },
+  {
+   "id": "curly",
+   "rar": "common"
+  },
+  {
+   "id": "farmer",
+   "rar": "rare"
+  },
+  {
+   "id": "raincoat",
+   "rar": "rare"
+  },
+  {
+   "id": "redcap",
+   "rar": "common"
+  },
+  {
+   "id": "alfa",
+   "rar": "epic"
+  },
+  {
+   "id": "golf",
+   "rar": "epic"
+  },
+  {
+   "id": "ferrari",
+   "rar": "epic"
+  },
+  {
+   "id": "bape",
+   "rar": "epic"
+  },
+  {
+   "id": "fisher",
+   "rar": "epic"
+  },
+  {
+   "id": "matias",
+   "rar": "epic"
+  },
+  {
+   "id": "batman",
+   "rar": "legendary"
+  },
+  {
+   "id": "sheik",
+   "rar": "legendary"
+  }
+ ],
+ "rooms": [
+  {
+   "id": "r_classic",
+   "rar": "common",
+   "base": true
+  },
+  {
+   "id": "r_eggshell",
+   "rar": "common",
+   "base": false
+  },
+  {
+   "id": "r_candy",
+   "rar": "common",
+   "base": false
+  },
+  {
+   "id": "r_christmas",
+   "rar": "rare",
+   "base": false
+  },
+  {
+   "id": "r_midnight",
+   "rar": "rare",
+   "base": false
+  },
+  {
+   "id": "r_royal",
+   "rar": "epic",
+   "base": false
+  },
+  {
+   "id": "r_haunted",
+   "rar": "legendary",
+   "base": false
+  }
+ ],
+ "ckItems": [
+  {
+   "id": "ck_flames",
+   "rar": "common"
+  },
+  {
+   "id": "ck_ice",
+   "rar": "common"
+  },
+  {
+   "id": "ck_sunny",
+   "rar": "legendary"
+  },
+  {
+   "id": "ck_deepsea",
+   "rar": "common"
+  },
+  {
+   "id": "ck_wind",
+   "rar": "rare"
+  },
+  {
+   "id": "ck_acid",
+   "rar": "rare"
+  },
+  {
+   "id": "ck_sakura",
+   "rar": "rare"
+  },
+  {
+   "id": "ck_candy",
+   "rar": "rare"
+  },
+  {
+   "id": "ck_blood",
+   "rar": "epic"
+  },
+  {
+   "id": "ck_galaxy",
+   "rar": "epic"
+  },
+  {
+   "id": "ck_storm",
+   "rar": "epic"
+  },
+  {
+   "id": "ck_grave",
+   "rar": "epic"
+  },
+  {
+   "id": "ck_vapor",
+   "rar": "legendary"
+  },
+  {
+   "id": "ck_glitch",
+   "rar": "legendary"
+  }
+ ],
+ "start": [
+  "brownhair",
+  "beanie",
+  "curly",
+  "redcap",
+  "r_classic"
+ ],
+ "cases": {
+  "mafia": {
+   "price": 500,
+   "odds": {
+    "common": 0.55,
+    "rare": 0.3,
+    "epic": 0.12,
+    "legendary": 0.03
+   },
+   "pool": [
+    {
+     "id": "brownhair",
+     "rar": "common"
+    },
+    {
+     "id": "beanie",
+     "rar": "common"
+    },
+    {
+     "id": "ponytail",
+     "rar": "rare"
+    },
+    {
+     "id": "curly",
+     "rar": "common"
+    },
+    {
+     "id": "farmer",
+     "rar": "rare"
+    },
+    {
+     "id": "raincoat",
+     "rar": "rare"
+    },
+    {
+     "id": "redcap",
+     "rar": "common"
+    },
+    {
+     "id": "alfa",
+     "rar": "epic"
+    },
+    {
+     "id": "golf",
+     "rar": "epic"
+    },
+    {
+     "id": "ferrari",
+     "rar": "epic"
+    },
+    {
+     "id": "bape",
+     "rar": "epic"
+    },
+    {
+     "id": "fisher",
+     "rar": "epic"
+    },
+    {
+     "id": "matias",
+     "rar": "epic"
+    },
+    {
+     "id": "batman",
+     "rar": "legendary"
+    },
+    {
+     "id": "sheik",
+     "rar": "legendary"
+    }
+   ]
+  },
+  "cabin": {
+   "price": 1000,
+   "odds": {
+    "common": 0.5,
+    "rare": 0.32,
+    "epic": 0.13,
+    "legendary": 0.05
+   },
+   "pool": [
+    {
+     "id": "r_eggshell",
+     "rar": "common"
+    },
+    {
+     "id": "r_candy",
+     "rar": "common"
+    },
+    {
+     "id": "r_christmas",
+     "rar": "rare"
+    },
+    {
+     "id": "r_midnight",
+     "rar": "rare"
+    },
+    {
+     "id": "r_royal",
+     "rar": "epic"
+    },
+    {
+     "id": "r_haunted",
+     "rar": "legendary"
+    }
+   ]
+  },
+  "clicker": {
+   "price": 300,
+   "odds": {
+    "common": 0.5,
+    "rare": 0.32,
+    "epic": 0.13,
+    "legendary": 0.05
+   },
+   "pool": [
+    {
+     "id": "ck_flames",
+     "rar": "common"
+    },
+    {
+     "id": "ck_ice",
+     "rar": "common"
+    },
+    {
+     "id": "ck_sunny",
+     "rar": "legendary"
+    },
+    {
+     "id": "ck_deepsea",
+     "rar": "common"
+    },
+    {
+     "id": "ck_wind",
+     "rar": "rare"
+    },
+    {
+     "id": "ck_acid",
+     "rar": "rare"
+    },
+    {
+     "id": "ck_sakura",
+     "rar": "rare"
+    },
+    {
+     "id": "ck_candy",
+     "rar": "rare"
+    },
+    {
+     "id": "ck_blood",
+     "rar": "epic"
+    },
+    {
+     "id": "ck_galaxy",
+     "rar": "epic"
+    },
+    {
+     "id": "ck_storm",
+     "rar": "epic"
+    },
+    {
+     "id": "ck_grave",
+     "rar": "epic"
+    },
+    {
+     "id": "ck_vapor",
+     "rar": "legendary"
+    },
+    {
+     "id": "ck_glitch",
+     "rar": "legendary"
+    }
+   ]
+  }
+ },
+ "caseDupe": 0.4,
+ "wheel": [
+  [
+   "c",
+   50,
+   13
+  ],
+  [
+   "o",
+   "common",
+   8
+  ],
+  [
+   "c",
+   100,
+   9
+  ],
+  [
+   "c",
+   250,
+   10
+  ],
+  [
+   "o",
+   "rare",
+   6
+  ],
+  [
+   "c",
+   50,
+   13
+  ],
+  [
+   "c",
+   100,
+   9
+  ],
+  [
+   "o",
+   "epic",
+   4
+  ],
+  [
+   "c",
+   50,
+   13
+  ],
+  [
+   "c",
+   1000,
+   4
+  ],
+  [
+   "c",
+   100,
+   9
+  ],
+  [
+   "o",
+   "legendary",
+   2
+  ]
+ ],
+ "spinPrice": 300,
+ "dayCoins": 250,
+ "flipMax": 5,
+ "flipEvery": 1200000,
+ "rods": [
+  {
+   "id": "twig",
+   "price": 0,
+   "luck": 0,
+   "pay": 1,
+   "range": 0.55
+  },
+  {
+   "id": "oak",
+   "price": 400,
+   "luck": 1,
+   "pay": 1,
+   "range": 0.72
+  },
+  {
+   "id": "steel",
+   "price": 2000,
+   "luck": 2,
+   "pay": 1.5,
+   "range": 0.88
+  },
+  {
+   "id": "gold",
+   "price": 7500,
+   "luck": 3.5,
+   "pay": 2.5,
+   "range": 1
+  }
+ ],
+ "fishes": [
+  {
+   "id": "boot",
+   "rar": "junk",
+   "min": 28,
+   "max": 28,
+   "val": 2
+  },
+  {
+   "id": "can",
+   "rar": "junk",
+   "min": 12,
+   "max": 12,
+   "val": 2
+  },
+  {
+   "id": "minnow",
+   "rar": "common",
+   "min": 5,
+   "max": 12,
+   "val": 5
+  },
+  {
+   "id": "perch",
+   "rar": "common",
+   "min": 15,
+   "max": 32,
+   "val": 8
+  },
+  {
+   "id": "carp",
+   "rar": "common",
+   "min": 30,
+   "max": 62,
+   "val": 10
+  },
+  {
+   "id": "sunfish",
+   "rar": "common",
+   "min": 10,
+   "max": 24,
+   "val": 9
+  },
+  {
+   "id": "trout",
+   "rar": "rare",
+   "min": 30,
+   "max": 66,
+   "val": 26
+  },
+  {
+   "id": "pike",
+   "rar": "rare",
+   "min": 50,
+   "max": 112,
+   "val": 34
+  },
+  {
+   "id": "catfish",
+   "rar": "rare",
+   "min": 60,
+   "max": 130,
+   "val": 32
+  },
+  {
+   "id": "koi",
+   "rar": "epic",
+   "min": 40,
+   "max": 82,
+   "val": 90
+  },
+  {
+   "id": "eel",
+   "rar": "epic",
+   "min": 90,
+   "max": 160,
+   "val": 110
+  },
+  {
+   "id": "gold",
+   "rar": "legendary",
+   "min": 20,
+   "max": 40,
+   "val": 320
+  },
+  {
+   "id": "cod",
+   "rar": "legendary",
+   "min": 70,
+   "max": 120,
+   "val": 420
+  },
+  {
+   "id": "bass",
+   "rar": "common",
+   "min": 25,
+   "max": 55,
+   "val": 11
+  },
+  {
+   "id": "salmon",
+   "rar": "rare",
+   "min": 50,
+   "max": 100,
+   "val": 30
+  },
+  {
+   "id": "puffer",
+   "rar": "rare",
+   "min": 15,
+   "max": 35,
+   "val": 36
+  },
+  {
+   "id": "angler",
+   "rar": "epic",
+   "min": 30,
+   "max": 70,
+   "val": 100
+  },
+  {
+   "id": "sturgeon",
+   "rar": "epic",
+   "min": 100,
+   "max": 200,
+   "val": 120
+  },
+  {
+   "id": "blob",
+   "rar": "rare",
+   "min": 20,
+   "max": 40,
+   "val": 28
+  },
+  {
+   "id": "shark",
+   "rar": "legendary",
+   "min": 120,
+   "max": 220,
+   "val": 380
+  },
+  {
+   "id": "sleepy",
+   "rar": "epic",
+   "min": 30,
+   "max": 60,
+   "val": 95
+  },
+  {
+   "id": "clown",
+   "rar": "rare",
+   "min": 10,
+   "max": 20,
+   "val": 38
+  },
+  {
+   "id": "star",
+   "rar": "epic",
+   "min": 15,
+   "max": 30,
+   "val": 105
+  },
+  {
+   "id": "finger",
+   "rar": "common",
+   "min": 12,
+   "max": 25,
+   "val": 12
+  },
+  {
+   "id": "plug",
+   "rar": "rare",
+   "min": 60,
+   "max": 120,
+   "val": 34
+  },
+  {
+   "id": "sword",
+   "rar": "epic",
+   "min": 150,
+   "max": 280,
+   "val": 130
+  }
+ ],
+ "fishOdds": [
+  {
+   "common": 82,
+   "rare": 17,
+   "epic": 1,
+   "legendary": 0
+  },
+  {
+   "common": 64,
+   "rare": 28,
+   "epic": 7,
+   "legendary": 1
+  },
+  {
+   "common": 50,
+   "rare": 32,
+   "epic": 15,
+   "legendary": 3
+  }
+ ],
+ "fishBag": 12,
+ "baitPack": 10,
+ "baitPrice": 30,
+ "slots": [
+  {
+   "w": 8,
+   "p": 10
+  },
+  {
+   "w": 7,
+   "p": 12
+  },
+  {
+   "w": 5,
+   "p": 18
+  },
+  {
+   "w": 4,
+   "p": 25
+  },
+  {
+   "w": 3,
+   "p": 40
+  },
+  {
+   "w": 2,
+   "p": 80
+  },
+  {
+   "w": 1.5,
+   "p": 150
+  },
+  {
+   "w": 1,
+   "p": 300
+  }
+ ],
+ "decor": [
+  {
+   "id": "water",
+   "price": 40
+  },
+  {
+   "id": "sprout",
+   "price": 150
+  },
+  {
+   "id": "potplant",
+   "price": 200
+  },
+  {
+   "id": "bush",
+   "price": 250
+  },
+  {
+   "id": "flowers",
+   "price": 250
+  },
+  {
+   "id": "rug",
+   "price": 300
+  },
+  {
+   "id": "sign",
+   "price": 300
+  },
+  {
+   "id": "widebush",
+   "price": 350
+  },
+  {
+   "id": "lamptable",
+   "price": 350
+  },
+  {
+   "id": "mailbox",
+   "price": 350
+  },
+  {
+   "id": "pine",
+   "price": 400
+  },
+  {
+   "id": "floorlamp",
+   "price": 400
+  },
+  {
+   "id": "bench",
+   "price": 450
+  },
+  {
+   "id": "snowman",
+   "price": 500
+  },
+  {
+   "id": "streetlamp",
+   "price": 600
+  },
+  {
+   "id": "wanted",
+   "price": 600
+  },
+  {
+   "id": "tallpine",
+   "price": 800
+  },
+  {
+   "id": "campfire",
+   "price": 800
+  },
+  {
+   "id": "firebarrel",
+   "price": 900
+  },
+  {
+   "id": "poker",
+   "price": 1200
+  },
+  {
+   "id": "neon",
+   "price": 1500
+  },
+  {
+   "id": "robot",
+   "price": 2000
+  },
+  {
+   "id": "arcade",
+   "price": 2500
+  },
+  {
+   "id": "fountain",
+   "price": 3000
+  },
+  {
+   "id": "safe",
+   "price": 3500
+  },
+  {
+   "id": "teleporter",
+   "price": 4000
+  },
+  {
+   "id": "hologram",
+   "price": 4500
+  },
+  {
+   "id": "chest",
+   "price": 5000
+  },
+  {
+   "id": "statue",
+   "price": 6000
+  },
+  {
+   "id": "car",
+   "price": 9000
+  }
+ ]
+}

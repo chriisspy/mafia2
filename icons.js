@@ -24,6 +24,17 @@ dice:['.KKKKKKKK.','KWWWWWWWSK','KWKWWWWKSK','KWWWWWWWSK','KWWWKKWWSK','KWWWKKWW
 framer:[E,'.KKKKKKKK.','KNMMMMMMMK','KMKKMMKKMK','KMKKMMKKMK','KMMMMMMMmK','KMKMMMMKmK','.KMKKKKmK.','..KmmmmK..','...KKKK...'],
 eye:[E,E,'..KKKKKK..','.KWWWWWWK.','KWWBLKBWSK','KWWBKKBWSK','.KSWWWSSK.','..KKKKKK..',E,E],
 eyeoff:[E,'.......KR.','..KKKKKR..','.KWWWKRWK.','KWWBKRBWSK','KWWKRKBWSK','.KKRWWSSK.','.KRKKKKK..','KR........',E],
+/* the prop maker's tools (18 Nov 2026) */
+eraser:['..........','.....KKK..','....KTTTK.','...KTTTTTK','..KTTTTTK.','.KWWTTTK..','KWWWWTK...','.KWWWK....','..KKK.....','KKKKKKKKK.'],
+bucket:['....KK....','...K..K...','..KKKKKK..','.KSSSSSSK.','.KSWSSSSKB','.KSSSSSSKB','.KSSSSSsKB','..KSSSsK.B','...KKKK...','..........'],
+dropper:['.......KK.','......KssK','.....KKsK.','....KLKK..','...KLLK...','..KLLK....','.KLLK.....','.KLK......','KBK.......','.K........'],
+undo:['..........','...K......','..KK......','.KGKKKK...','KGGGGGGK..','.KGKKKGGK.','..KK..KGK.','...K..KGK.','.....KGK..','....KKK...'],
+/* turn a decoration to face another way (18 Nov 2026) */
+turn:['..........','...KKKK...','..KBBBBK.K','.KBKKKKBKK','.KBK..KBBK','.KK..KBBBK','.....KKKKK','.KBK......','.KBBKKKBK.','..KBBBBK..'],
+/* a bin: take a decoration away (18 Nov 2026) */
+bin:['...KKKK...','.KKKKKKKK.','.KSSSSSSK.','.KKKKKKKK.','..KSsSsK..','..KSsSsK..','..KSsSsK..','..KSsSsK..','..KSSSSK..','..KKKKKK..'],
+/* a pencil for Edit (18 Nov 2026) */
+pencil:['.......KK.','......KTRK','.....KRRrK','....KGGGK.','...KGGGK..','..KGGgK...','.KPpgK....','.KPpK.....','.KKK......','..........'],
 // the slot machine's reel symbols, 16 by 16, drawn by hand (18 Nov 2026)
 slot7:["................", "..KKKKKKKKKKKK..", "..KTTTTTTTTTRK..", "..KRRRRRRRRRrK..", "..KKKKKKKKRRrK..", ".........KRRrK..", "........KRRrK...", "........KRRrK...", ".......KRRrK....", ".......KRRrK....", "......KRRrK.....", "......KRRrK.....", ".....KTRRrK.....", ".....KRRrrK.....", ".....KKKKKK.....", "................"],
 slotbar:["................", "................", "................", ".KKKKKKKKKKKKKK.", ".KHHHHHHHHHHHHK.", ".KWWhhhWhhWWhhK.", ".KWhWhWhWhWhWhK.", ".KWWhhWWWhWWhhK.", ".KWhWhWhWhWhWhK.", ".KWWhhWhWhWhWhK.", ".KhhhhhhhhhhhhK.", ".KKKKKKKKKKKKKK.", "................", "................", "................", "................"],

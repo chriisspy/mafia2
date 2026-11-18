@@ -85,8 +85,8 @@ Object.assign(SFX,{
   fish_up(){[523,659,784].forEach((f,i)=>tone(f,.09,{type:'triangle',vol:.11,at:i*.07}));}});
 
 /* ---- bait and the fish book ---- */
-function fishBait(){return LAB?99:KIT.bait;}   /* the lab never runs out (his call) */
-function fishUseBait(n){if(LAB)return;KIT.bait=Math.max(0,KIT.bait-n);kitSave();}
+function fishBait(){return KIT.bait;}   /* the server keeps it (phase 2: cheat-proof coins) */
+function fishUseBait(n){}   /* the server takes the bait when the cast lands (fcast) */
 function fishSaveLog(){try{localStorage.setItem('m2_fish',JSON.stringify(FISH.log));}catch(e){}}
 function fishPic(c,i,k,dark){const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,c.width,c.height);x.drawImage(IMG['fish/sheet'],i*48,0,48,32,0,0,48*k,32*k);
   if(dark){x.globalCompositeOperation='source-in';x.fillStyle='#2a2346';x.fillRect(0,0,c.width,c.height);x.globalCompositeOperation='source-over';}}
@@ -136,7 +136,7 @@ function fishStart(){const F=FISH,m=WL.me;if(F.on||!m||m.loc!==LAKE)return;F.on=
   $('#townHud').classList.add('fishing');paintCoins();fishPh('idle');sfx('open');netMove();}
 function fishStop(){const F=FISH;if(!F.on)return;F.on=false;F.held=false;F.bob=null;F.hook=null;F.land=null;if(F.cand){F.cand.st='swim';F.cand=null;}
   $('#townHud').classList.remove('fishing');fishSay('');$('#fishModal').classList.remove('on');$('#fishBookModal').classList.remove('on');}
-function fishLose(msg){const F=FISH;if(F.cand){F.cand.st='flee';F.cand.t=0;F.cand=null;}if(F.hook){F.hook.st='flee';F.hook.t=0;F.hook=null;}F.bob=null;wlSay(msg,'bad');fishPh('idle');}
+function fishLose(msg){const F=FISH;if(F.sk!=null){F.sk=null;srv('flose').catch(()=>{});}if(F.cand){F.cand.st='flee';F.cand.t=0;F.cand=null;}if(F.hook){F.hook.st='flee';F.hook.t=0;F.hook=null;}F.bob=null;wlSay(msg,'bad');fishPh('idle');}
 
 /* ---- taps ---- */
 function fishTap(e,m,x,y){const F=FISH;
@@ -182,14 +182,15 @@ function fishTick(dt,t,m){const F=FISH;F.fr=t;F.t+=dt;F.dip=Math.max(0,F.dip-dt*
   else if(F.ph==='fly'){const k=Math.min(1,F.t/.55),B=F.bob;B.x=lerp(B.x0,B.x1,k);B.y=lerp(B.y0,B.y1,k);B.z=Math.sin(k*Math.PI)*34;
     if(k>=1){B.z=0;sfx('fish_plop');fishRipple(B.x,B.y,9,.8);fishRipple(B.x,B.y,5,.5);F.dip=1;F.lure=1+Math.random()*2.4;F.cand=null;
       for(const s of F.shad)if(s.st==='swim'&&Math.hypot(s.x-B.x,s.y-B.y)<11){s.st='flee';s.t=0;s.a=Math.atan2(s.y-B.y,s.x-B.x);}   /* land it ON a fish and it bolts */
+      F.sk=null;const z=(()=>{const d=FISH_ME[1]-B.y;return d<95?0:d<175?1:2;})();F.skAsk=srv('fcast',{z,rod:KIT.rod}).then(r=>{F.sk=r.k;}).catch(e=>{if(LAB&&/bait/i.test(e.message)){srv('lab',{what:'bait'}).catch(()=>{});}fishLose(e.message);});   /* the server decides the fish */
       fishPh('wait');}}
   else if(F.ph==='wait'){const B=F.bob;
     if(press){if(F.cand&&F.cand.st==='nib'){fishLose('You pulled too early. It swam off.');}else{if(F.cand){F.cand.st='swim';F.cand=null;}F.bob=null;fishUseBait(-1);fishPh('idle');}return;}   /* nothing was on it yet: the bait comes back */
     if(!F.cand&&F.t>F.lure){let best=null,bd=1e9;for(const s of F.shad){if(s.st!=='swim')continue;const d=Math.hypot(s.x-B.x,s.y-B.y);if(d<bd){bd=d;best=s;}}
-      if(best&&(bd<95||F.t>F.lure+2.5)){best.st='come';F.cand=best;}}
+      if(best&&F.sk!=null&&(bd<95||F.t>F.lure+2.5)){best.st='come';best.kind=F.sk;best.s=FISHES[F.sk].s;F.cand=best;}}   /* the fish that comes is the one the server picked */
     const c=F.cand;if(c&&c.st==='come'&&Math.hypot(c.x-B.x,c.y-(B.y+3))<4){c.st='nib';c.nibs=Math.floor(Math.random()*3);c.nt=.5+Math.random()*.6;c.a=-Math.PI/2;}
     if(c&&c.st==='nib'){c.nt-=dt;if(c.nt<=0){if(c.nibs-->0){F.dip=.6;sfx('fish_nib');fishRipple(B.x,B.y,5,.5);c.nt=.55+Math.random()*.7;}
-        else{if(Math.random()<.12)c.kind=Math.floor(Math.random()*2);   /* now and then it is not a fish at all */F.dip=2.2;sfx('fish_bite');fishSplash(B.x,B.y);fishRipple(B.x,B.y,10,.7);try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}fishPh('bite');}}}}
+        else{if(F.sk!=null)c.kind=F.sk;F.dip=2.2;sfx('fish_bite');fishSplash(B.x,B.y);fishRipple(B.x,B.y,10,.7);try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}fishPh('bite');}}}}
   else if(F.ph==='bite'){const c=F.cand,K=FISHES[c.kind];F.dip=Math.max(F.dip,1.2);
     if(press){c.st='hook';F.hook=c;F.cand=null;F.d=1;F.ten=.25;F.burst=0;F.nextB=1.2+Math.random()*1.5;F.bob.lx=F.bob.x;F.bob.ly=F.bob.y;sfx('fish_hook');fishPh('fight');}
     else if(F.t>K.win*fishRod().win)fishLose('Too slow. It got away.');}
@@ -204,11 +205,11 @@ function fishTick(dt,t,m){const F=FISH;F.fr=t;F.t+=dt;F.dip=Math.max(0,F.dip-dt*
     if(F.ten>=1){sfx('fish_snap');F.hook=null;s.st='flee';s.t=0;s.a=-Math.PI/2;F.bob=null;wlSay('The line snapped!','bad');fishPh('idle');}
     else if(F.d>=1.3){fishLose('It got away.');}
     else if(F.d<=0){s.gone=true;F.hook=null;fishSplash(s.x,s.y);sfx('fish_up');F.land={kind:s.kind,x0:s.x,y0:s.y,t:0};F.bob=null;F.ph='land';F.t=0;}}
-  else if(F.ph==='land'){F.land.t+=dt;if(F.land.t>=.6){const k=F.land.kind;F.land=null;F.ph='card';fishCard(k);}}
+  else if(F.ph==='land'){F.land.t+=dt;if(F.land.t>=.6&&!F.landAsk){F.landAsk=true;srv('fland').then(r=>{F.landAsk=false;F.land=null;F.sk=null;F.ph='card';fishCard(r.k,r.cm,r.g);}).catch(e=>{F.landAsk=false;F.land=null;F.sk=null;wlSay(e.message,'bad');fishPh('idle');});}}   /* the server puts it in your bag */
 }
 /* ---- what you caught ---- */
-function fishCard(i){const F=FISH,K=FISHES[i],pct=Math.random(),cm=Math.round(lerp(K.min,K.max,pct*pct*.6+pct*.4)),gain=K.rar==='junk'?K.val:Math.max(1,Math.round(K.val*(.75+.6*pct)));
-  const L=F.log[K.id]||(F.log[K.id]={n:0,best:0}),isNew=!L.n,rec=!isNew&&cm>L.best&&K.rar!=='junk';L.n++;L.best=Math.max(L.best,cm);fishSaveLog();KIT.bag.push([i,cm,gain]);kitSave();
+function fishCard(i,cm,gain){const F=FISH,K=FISHES[i];
+  const L=F.log[K.id]||(F.log[K.id]={n:0,best:0}),isNew=!L.n,rec=!isNew&&cm>L.best&&K.rar!=='junk';L.n++;L.best=Math.max(L.best,cm);fishSaveLog();
   fishPic($('#fcCv'),i,2);$('#fcName').textContent=K.name;$('#fcName').style.color=K.rar==='junk'?'':FISH_RC[K.rar];$('#fcStage').style.setProperty('--rc',FISH_RC[K.rar]);
   $('#fcTag').textContent=isNew?'NEW':rec?'RECORD':'';$('#fcTag').style.display=isNew||rec?'':'none';
   $('#fcInfo').innerHTML=`<b style="color:${FISH_RC[K.rar]}">${K.rar.toUpperCase()}</b> · ${cm} cm · <span class="wal">worth ${ic('coin',2)}${fishPay(gain)}</span>`;
@@ -294,11 +295,11 @@ function joeUI(){const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0),free=!LAB&
   $('#joeBaitN').textContent=LAB?'99':KIT.bait;$('#joeBait').disabled=!free&&coins<BAIT_PRICE;$('#joeBait').innerHTML=free?FISH_BAIT_IMG+' Take 5 on the house':FISH_BAIT_IMG+' x'+BAIT_PACK+' · '+ic('coin',2)+' '+BAIT_PRICE;$('#joeBait').dataset.free=free?'1':'';
   paintCoins();}
 $('#joeX').onclick=()=>{$('#joeModal').classList.remove('on');STALL.t=performance.now();sfx('close');};
-$('#joeSell').onclick=()=>{const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0);if(!worth)return;coins+=worth;KIT.bag=[];kitSave();saveInv();sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),200+k*140);wlSay('Sold for '+worth+' coins.','good');joeUI();};
+$('#joeSell').onclick=async()=>{const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0);if(!worth||$('#joeSell').classList.contains('busy'))return;const done=btnBusy($('#joeSell'),'…');try{await srv('fsell',{rod:KIT.rod});}catch(e){done();wlSay(e.message,'bad');return;}done();sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),200+k*140);wlSay('Sold for '+worth+' coins.','good');joeUI();};
 $('#joeRods').onclick=e=>{const b=e.target.closest('button');if(!b)return;const r=RODS.find(q=>q.id===b.dataset.r);if(!r)return;
-  if(!KIT.rods.includes(r.id)){if(coins<r.price)return;coins-=r.price;KIT.rods.push(r.id);saveInv();sfx('rare');wlSay('You bought the '+r.name+'.','good');}else sfx('click');
+  if(!KIT.rods.includes(r.id)){if(coins<r.price)return;srv('frod',{id:r.id}).then(()=>{KIT.rod=r.id;kitSave();sfx('rare');wlSay('You bought the '+r.name+'.','good');joeUI();}).catch(e=>wlSay(e.message,'bad'));return;}else sfx('click');
   KIT.rod=r.id;kitSave();joeUI();};
-$('#joeBait').onclick=()=>{if($('#joeBait').dataset.free){KIT.bait=5;}else{if(coins<BAIT_PRICE)return;coins-=BAIT_PRICE;KIT.bait+=BAIT_PACK;saveInv();}kitSave();sfx('coin');joeUI();};
+$('#joeBait').onclick=()=>{if(!$('#joeBait').dataset.free&&coins<BAIT_PRICE)return;srv('fbait').then(()=>{sfx('coin');joeUI();}).catch(e=>wlSay(e.message,'bad'));};
 /* lab only: a tab straight to the lake */
 if(LAB){const b=document.createElement('button');b.className='btn';b.textContent='Fish';b.onclick=()=>go('town',()=>setTimeout(()=>wlDoor(LAKE),450));$('#tabs').appendChild(b);}
 document.querySelectorAll('.baitIc').forEach(e=>{e.innerHTML=FISH_BAIT_IMG;});

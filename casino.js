@@ -65,31 +65,34 @@ function bjGive(cs,down){const c={...bjDraw(),down:!!down,a:0,t0:BJ.t+BJ.q*.22};
 
 /* ---- a round ---- */
 function bjAmt(){const v=Math.floor(+$('#bjAmt').value);return v>0?Math.min(v,1000000):BJ.stake;}
+/* BLACKJACK ON THE SERVER (18 Nov 2026, phase 2: cheat-proof coins). The server holds the shoe and the dealer's hole card;
+   each move (deal, hit, stand, double, split) goes there and comes back as the table: the phone only deals out the cards it
+   has not shown yet (each glides in from the shoe like before) and turns the hole card over at the end. */
 function bjDeal(){const amt=bjAmt();if(BJ.ph!=='bet'&&BJ.ph!=='done')return;if(coins<amt){sfx('nope');return;}
-  coins-=amt;saveInv();paintCoins();BJ.amt=amt;try{localStorage.setItem('m2_bj_stake',String(amt));}catch(e){}
-  BJ.d=[];BJ.hands=[{cs:[],bet:amt,done:false,dbl:false,split:false}];BJ.act=0;BJ.q=0;$('#bjWord').innerHTML='';BJ.word='';sfx('cas_chips');
-  const P=BJ.hands[0].cs;bjGive(P);bjGive(BJ.d);bjGive(P);bjGive(BJ.d,true);BJ.ph='deal';bjUI();
-  setTimeout(()=>{const up=BJ.d[0],dbj=bjVal(up.r)>=10&&bjIsBJ(BJ.d.map(c=>({...c,down:false}))),pbj=bjIsBJ(P);
-    if(dbj||pbj){bjReveal();setTimeout(()=>bjEnd(),500);return;}BJ.ph='play';bjUI();},BJ.q*220+250);}
+  try{localStorage.setItem('m2_bj_stake',String(amt));}catch(e){}BJ.amt=amt;
+  BJ.d=[];BJ.hands=[{cs:[],bet:amt,done:false,dbl:false,split:false}];BJ.act=0;BJ.q=0;$('#bjWord').innerHTML='';BJ.word='';sfx('cas_chips');BJ.ph='wait';bjUI();
+  bjSrv('deal',amt,true);}
 function bjHand(){return BJ.hands[BJ.act];}
-function bjNext(){const h=bjHand();h.done=true;const i=BJ.hands.findIndex(q=>!q.done);if(i>=0){BJ.act=i;if(BJ.hands[i].cs.length<2){BJ.q=0;bjGive(BJ.hands[i].cs);}bjUI();return;}bjDealer();}
 function bjAct(a){if(BJ.ph!=='play')return;const h=bjHand();
-  if(a==='hit'){BJ.q=0;bjGive(h.cs);const t=bjTotal(h.cs).t;bjUI();if(t>=21){BJ.ph='wait';setTimeout(()=>{BJ.ph='play';if(t>21)sfx('bj_bust');bjNext();},380);}return;}
-  if(a==='stand'){bjNext();return;}
-  if(a==='double'){if(h.cs.length!==2||coins<h.bet)return;coins-=h.bet;saveInv();paintCoins();h.bet*=2;h.dbl=true;sfx('cas_chips');BJ.q=0;bjGive(h.cs);BJ.ph='wait';bjUI();setTimeout(()=>{BJ.ph='play';if(bjTotal(h.cs).t>21)sfx('bj_bust');bjNext();},420);return;}
-  if(a==='split'){if(!bjCanSplit())return;coins-=h.bet;saveInv();paintCoins();sfx('cas_chips');const c2=h.cs.pop();const h2={cs:[c2],bet:h.bet,done:false,dbl:false,split:true};h.split=true;BJ.hands.push(h2);
-    BJ.q=0;bjGive(h.cs);bjUI();
-    if(h.cs[0].r==='A'){BJ.ph='wait';setTimeout(()=>{BJ.q=0;bjGive(h2.cs);h.done=h2.done=true;bjUI();setTimeout(()=>bjDealer(),400);},300);}   /* split Aces: one card each, then the dealer */
-    return;}}
+  if(a==='double'&&(h.cs.length!==2||coins<h.bet))return;if(a==='split'&&!bjCanSplit())return;
+  if(a==='double'||a==='split')sfx('cas_chips');BJ.ph='wait';bjUI();bjSrv(a);}
+async function bjSrv(a,amt,deal){let S;try{S=await srv('bj',{a,amt});}catch(e){BJ.ph=deal?'bet':'play';if(deal){BJ.d=[];BJ.hands=[];}$('#bjWord').innerHTML=pxWord('TRY AGAIN',4,'bad');bjUI();return;}
+  bjApply(S);}
+/* bring the table up to what the server says, dealing out only the new cards, in the order they would have come */
+function bjApply(S){BJ.q=0;
+  if(S.hands.length>BJ.hands.length&&BJ.hands.length===1){const h=BJ.hands[0],c2=h.cs.pop();h.split=true;BJ.hands.push({cs:c2?[c2]:[],bet:h.bet,done:false,dbl:false,split:true});}   /* a split: the second card moves over */
+  const give=(arr,c)=>{const x={r:c.r,su:c.su,down:!!c.down,a:0,t0:BJ.t+BJ.q*.22};BJ.q++;arr.push(x);setTimeout(()=>sfx('bj_card'),BJ.q*220-200);};
+  const deal=!BJ.d.length&&!BJ.hands[0].cs.length;
+  if(deal){const P=BJ.hands[0].cs,H=S.hands[0].cs;give(P,H[0]);give(BJ.d,S.d[0]);give(P,H[1]);give(BJ.d,S.d[1]);}   /* the deal: you, the dealer, you, the dealer (face down) */
+  S.hands.forEach((h,i)=>{const L=BJ.hands[i];L.bet=h.bet;L.dbl=h.dbl;L.split=h.split;for(let k=L.cs.length;k<h.cs.length;k++)give(L.cs,h.cs[k]);
+    if(L.cs.length>h.cs.length)L.cs.length=h.cs.length;});   /* a swapped card (drunk luck) */
+  const done=S.ph==='done',wait=BJ.q*220+120;
+  if(!done){BJ.act=S.act;BJ.hands.forEach((h,i)=>h.done=i<S.act);setTimeout(()=>{BJ.ph='play';if(bjTotal(bjHand().cs).t>21)sfx('bj_bust');bjUI();},wait);bjUI();return;}
+  /* the end: the hole card turns over, the dealer draws, then the result */
+  setTimeout(()=>{const c=BJ.d[1];if(c&&c.down){c.r=S.d[1].r;c.su=S.d[1].su;c.down=false;c.flip=BJ.t;sfx('bj_flip');}BJ.ph='dealer';bjUI();
+    let k=2;const step=()=>{if(k<S.d.length){BJ.q=0;give(BJ.d,S.d[k++]);bjUI();setTimeout(step,560);}else setTimeout(()=>bjEnd(S),350);};setTimeout(step,deal?400:520);},wait);}
 function bjCanSplit(){const h=bjHand();return BJ.hands.length===1&&h.cs.length===2&&bjVal(h.cs[0].r)===bjVal(h.cs[1].r)&&coins>=h.bet;}
-function bjReveal(){const c=BJ.d.find(c=>c.down);if(c){c.down=false;c.flip=BJ.t;sfx('bj_flip');}}
-function bjDealer(){BJ.ph='dealer';bjUI();bjReveal();const alive=BJ.hands.some(h=>bjTotal(h.cs).t<=21);
-  const step=()=>{const t=bjTotal(BJ.d).t;if(alive&&t<17){BJ.q=0;bjGive(BJ.d);bjUI();setTimeout(step,560);}else setTimeout(bjEnd,350);};setTimeout(step,520);}
-function bjEnd(){bjReveal();const dt=bjTotal(BJ.d).t,dbj=bjIsBJ(BJ.d);let back=0,net=0;const res=[];
-  for(const h of BJ.hands){const t=bjTotal(h.cs).t,pbj=!h.split&&bjIsBJ(h.cs);let r;
-    if(t>21)r='bust';else if(pbj&&!dbj)r='bj';else if(dbj&&!pbj)r='lose';else if(pbj&&dbj)r='push';else if(dt>21||t>dt)r='win';else if(t===dt)r='push';else r='lose';
-    const pay=r==='bj'?h.bet+Math.floor(h.bet*1.5):r==='win'?h.bet*2:r==='push'?h.bet:0;back+=pay;net+=pay-h.bet;h.res=r;res.push(r);}
-  coins+=back;saveInv();paintCoins();BJ.ph='done';
+function bjEnd(S){const res=S.hands.map(h=>h.res),net=S.net|0;S.hands.forEach((h,i)=>{if(BJ.hands[i])BJ.hands[i].res=h.res;});BJ.ph='done';
   const W=res.includes('bj')?'BLACKJACK':net>0?'YOU WIN':net===0&&res.some(r=>r==='push')?'PUSH':res.every(r=>r==='bust')?'BUST':'DEALER WINS';
   $('#bjWord').innerHTML=pxWord(W,W.length>8?5:6,net>0?'legendary':net===0?'sub':'bad')+(net?pxWord((net>0?'+':'-')+Math.abs(net),5,net>0?'good':'bad',.35):'');
   if(res.includes('bj'))sfx('bj_bj');else if(net>0){sfx('cas_win');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),300+k*140);}else if(net<0)sfx('nope');
@@ -107,7 +110,7 @@ $('#bjAmt').oninput=()=>bjUI();
 $('#bjDeal').onclick=()=>bjDeal();
 $('#bjActs').onclick=e=>{const b=e.target.closest('button');if(b&&!b.disabled){sfx('click');bjAct(b.dataset.a);}};
 $('#bjX').onclick=()=>{if(BJ.ph==='play'||BJ.ph==='deal'||BJ.ph==='wait'||BJ.ph==='dealer'){wlSay('Finish the hand first.');return;}bjClose();};
-function bjOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));if(BJ.ph!=='done'&&BJ.ph!=='bet')BJ.ph='bet';if(BJ.ph==='done'){BJ.ph='bet';BJ.d=[];BJ.hands=[];$('#bjWord').innerHTML='';}
+function bjOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));srv('bj',{a:'view'}).then(S=>{if(S&&S.ph==='play'&&!BJ.hands.length){BJ.d=[];BJ.hands=[{cs:[],bet:S.hands[0].bet,done:false,dbl:false,split:false}];bjApply(S);}}).catch(()=>{});if(BJ.ph!=='done'&&BJ.ph!=='bet')BJ.ph='bet';if(BJ.ph==='done'){BJ.ph='bet';BJ.d=[];BJ.hands=[];$('#bjWord').innerHTML='';}
   $('#bjModal').classList.add('on');sfx('cas_chips');bjUI();BJ.last=performance.now();cancelAnimationFrame(BJ.raf);bjFit();const loop=now=>{if(!$('#bjModal').classList.contains('on'))return;bjFrame(Math.min(.05,(now-BJ.last)/1000));BJ.last=now;BJ.raf=requestAnimationFrame(loop);};BJ.raf=requestAnimationFrame(loop);}
 function bjClose(){$('#bjModal').classList.remove('on');cancelAnimationFrame(BJ.raf);sfx('close');}
 
@@ -251,14 +254,15 @@ addEventListener('resize',()=>{if($('#slotModal').classList.contains('on'))slotF
 function slotLever(){const{ox,oy}=SLV,px=ox+121,py=oy+132,len=31;return{px,py,len,kx:px,ky:py-len*Math.cos(SLOT.th)};}
 
 /* ---- spinning ---- */
-function slotSpin(){const a=slotAmt();if(SLOT.busy)return;
+async function slotSpin(){const a=slotAmt();if(SLOT.busy||SLOT.ask)return;
   if(coins<a){SLOT.msg={s:'NEED '+a,c:'#ff7a7a',until:SLOT.t+2.2};sfx('nope');return;}
-  coins-=a;saveInv();paintCoins();SLOT.bet=a;SLOT.res=[slotPick(),slotPick(),slotPick()];SLOT.busy=true;SLOT.win=0;SLOT.end=null;SLOT.msg=null;$('#slotWord').innerHTML='';
+  SLOT.ask=true;let R;try{R=await srv('slot',{amt:a});}catch(e){SLOT.ask=false;SLOT.msg={s:'TRY AGAIN',c:'#ff7a7a',until:SLOT.t+2.2};sfx('nope');return;}SLOT.ask=false;   /* the server spins it */
+  SLOT.bet=a;SLOT.res=R.res;SLOT.srvWin=R.win|0;SLOT.busy=true;SLOT.win=0;SLOT.end=null;SLOT.msg=null;$('#slotWord').innerHTML='';
   try{localStorage.setItem('m2_slot_stake',String(a));}catch(e){}
   sfx('sl_spin');
   SLOT.reels.forEach((r,i)=>{const n=r.strip.length;let j=Math.round(r.p)+16+i*7;while(r.strip[((j%n)+n)%n]!==SLOT.res[i])j++;r.p=Math.round(r.p);r.p0=r.p;r.p1=j;r.t0=SLOT.t;r.T=.95+i*.45;r.done=false;});}
-function slotEnd(){const m=slotPays(SLOT.res),w=SLOT.bet*m;SLOT.busy=false;SLOT.win=w;SLOT.end={t:SLOT.t,m};
-  if(w){coins+=w;saveInv();paintCoins();sfx('cas_win');if(m>=80)sfx('bj_bj');SLOT.flash=m>=80?.6:.3;const{ox,oy}=SLV,J=SLOT.j;
+function slotEnd(){const m=slotPays(SLOT.res),w=SLOT.srvWin|0;SLOT.busy=false;SLOT.win=w;SLOT.end={t:SLOT.t,m};
+  if(w){sfx('cas_win');if(m>=80)sfx('bj_bj');SLOT.flash=m>=80?.6:.3;const{ox,oy}=SLV,J=SLOT.j;
     for(let k=0;k<(m>=80?70:30);k++){const a=-Math.PI*(.15+.7*Math.random()),sp=40+Math.random()*70;SLOT.parts.push({x:ox+J.hx+J.hw/2,y:oy+J.hy+J.hh-6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:1+Math.random()*.8,t:0,c:k%3});}
     for(let k=0;k<Math.min(6,2+m/40);k++)setTimeout(()=>sfx('coin'),300+k*140);
     $('#slotWord').innerHTML=pxWord(m>=150?'JACKPOT':m>=40?'BIG WIN':'YOU WIN',6,'legendary')+pxWord('+'+w,6,'good',.35);}
@@ -303,13 +307,13 @@ function slotFrame(dt){const T=SLOT;T.t+=dt;if(!slotFit())return;const cv=$('#sl
   if(T.typing&&blink){x.fillStyle='#ffd25e';x.fillRect(Math.round(lx+(lw-(bs.length*4-1))/2)+bs.length*4,ly+9,3,1);}
   let s2,c2='#fff6cf';
   if(T.msg&&T.t<T.msg.until){s2=T.msg.s;c2=T.msg.c;}
-  else if(T.busy)s2='GOOD LUCK';
+  else if(T.busy)s2='GOOD LUCK';   /* a nice touch: stays (his call) */
   else if(T.end&&T.end.m){s2='WIN '+T.win;c2=blink?'#ffd25e':'#fff2a8';}
   else if(T.end&&T.t-T.end.t<2.5){s2='NO WIN';c2='#ff7a7a';}
   else if(coins<amt){s2='NEED '+amt;c2='#ff7a7a';}
-  else{s2=blink?'PULL THE LEVER':'';}
+  else{s2=blink?'PULL THE LEVER':'';}   /* how to start the game: stays (his rule) */
   if(s2)line(s2,ly+15,c2);
-  const pay='TAP HERE FOR YOUR OWN BET   '+SLOT_SYM.slice().reverse().map(s=>'3 '+s.n+' X'+s.p).join('   ')+'   2 CHERRIES X3   ',pw=pay.length*4;
+  const pay=SLOT_SYM.slice().reverse().map(s=>'3 '+s.n+' X'+s.p).join('   ')+'   2 CHERRIES X3   ',pw=pay.length*4;
   x.save();x.beginPath();x.rect(lx+2,ly+24,lw-4,7);x.clip();x.fillStyle='#e4544f';const px0=lx+lw-Math.floor((T.t*14)%(pw+lw));pxText(x,pay,px0,ly+25);x.restore();
   /* the lever: a chrome box bolted to the cabinet's side, the arm, the red knob (it swings toward you as it comes down) */
   const L=slotLever();
@@ -351,3 +355,134 @@ function slotOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classLis
   SLOT.end=null;SLOT.msg=null;$('#slotWord').innerHTML='';SLOT.last=performance.now();cancelAnimationFrame(SLOT.raf);
   const loop=now=>{if(!$('#slotModal').classList.contains('on'))return;slotFrame(Math.min(.05,(now-SLOT.last)/1000));SLOT.last=now;SLOT.raf=requestAnimationFrame(loop);};SLOT.raf=requestAnimationFrame(loop);}
 function slotClose(){$('#slotModal').classList.remove('on');cancelAnimationFrame(SLOT.raf);$('#slotAmt').blur();sfx('close');}
+
+/* ================= KNIFE THROWING, IN THE TAVERN (18 Nov 2026) =================
+   His picks: a skill score with a moving target, 5 knives (a 1 v 1 challenge comes later). Same principles as the casino games: full
+   screen, up close, everything drawn here on one pixel grid, super simple. The Tavern's log wall and its orange and cream target (the
+   colours are taken from the Tavern's own picture); the target slides along an iron rail. TAP ANYWHERE TO THROW. The knife flies up,
+   smaller as it goes, and sticks. Bullseye 100, then 50, 25, 15, 10, the wooden rim 5; off the board it sticks in the wall (0); hit a
+   knife that is already in the board and it clanks off (0). Each knife the board goes faster; from the third it bobs and turns round.
+   Best score kept on this phone. No coins yet (my call: the 1 v 1 with bets comes later). */
+const KN={ph:'ready',left:5,score:0,best:0,k:0,a:0,dir:1,t:0,fly:null,stuck:[],wall:[],falls:[],up:0,flipT:0,raf:0,last:0,end:0,newBest:false,wallC:null,wallK:'',tgt:null};
+try{KN.best=+localStorage.getItem('m2_knife_best')||0;}catch(e){}
+const KN_R=34,KN_SPD=[1.25,1.65,2.05,2.5,3.0],KN_RINGS=[[6.5,100],[12.5,50],[18.5,25],[24.5,15],[30.5,10],[34.5,5]];
+const KNV={S:3,W:125,H:270,cx:62,ty:100,hy:220};
+const KN_PAL={K:'#1a1430',W:'#ffffff',S:'#b8c2d4',s:'#6f7b92',G:'#ffd25e',g:'#d39b2a',O:'#c58a4a',o:'#7a4a2a'};
+function knGrid(rows){const c=mk(rows[0].length,rows.length),x=c.getContext('2d');rows.forEach((r,y)=>[...r].forEach((ch,i)=>{if(ch!=='.'){x.fillStyle=KN_PAL[ch];x.fillRect(i,y,1,1);}}));return c;}
+const KN_BIG=knGrid(['....K....','...KWK...','...KWK...','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','..KSWsK..','.KKKKKKK.','KGGGGGGgK','.KKKKKKK.','..KOOoK..','..KOOoK..','..KOOoK..','..KOOoK..','..KOOoK..','..KOOoK..','..KOOoK..','..KOOoK..','..KKKKK..','...KGK...','....K....']);   /* the one in your hand: bigger, it is close to you */
+const KN_MID=knGrid(['..K..','.KWK.','.KWK.','.KWK.','.KWK.','.KWK.','.KWK.','KKKKK','KGGgK','KKKKK','.KOK.','.KOK.','.KOK.','.KGK.','..K..']);
+const KN_SM=knGrid(['.W.','.S.','.S.','.S.','GGg','.O.','.O.','.o.']);
+const KN_STUCK=knGrid(['...s...','.KKKKK.','KGGGGgK','.KKKKK.','..KOK..','..KOK..','..KoK..','..KGK..','...K...']);   /* in the board: the guard and the handle pointing at you */
+const KN_LIE=knGrid(['.....KKK..........','KKKKKGGGKKKKKKKK..','KOOOKGGgKSSSSSSWWK','KoooKGgGKsssssSSK.','KKKKKgggKKKKKKKK..','.....KKK..........']);   /* a knife lying on the bench */
+Object.assign(SFX,{
+  kn_clank(){tone(1400,.06,{type:'square',vol:.06,to:900});tone(2100,.05,{type:'triangle',vol:.05,at:.03});hiss(.05,{vol:.05,bp:5000});},
+  kn_thunk(){tone(120,.08,{type:'triangle',vol:.22,to:70});hiss(.04,{vol:.07,lp:700});},
+  kn_wall(){tone(90,.08,{type:'triangle',vol:.16,to:60});hiss(.05,{vol:.06,lp:500});}});
+
+document.querySelector('#slotModal').insertAdjacentHTML('afterend',`<div class="modal panel" id="knifeModal">
+  <div class="mhead"><b>KNIVES</b><button class="btn" id="knifeX"><i data-ic="cross" data-c="solo"></i></button></div>
+  <canvas id="knifeCv" width="125" height="270"></canvas><div id="knifeWord"></div></div>`);
+document.querySelectorAll('#knifeModal [data-ic]').forEach(e=>{e.outerHTML=ic(e.dataset.ic,+(e.dataset.s||2));});
+document.head.insertAdjacentHTML('beforeend',`<style>
+#knifeModal{position:absolute;inset:0;z-index:30;padding:0;border:0!important;border-image:none!important;border-radius:0;box-shadow:none!important;background:#3f0f21;overflow:hidden}
+#knifeModal.on{display:block}
+#knifeModal .mhead{position:absolute;left:0;right:0;top:0;z-index:3;margin:0;padding:calc(10px + env(safe-area-inset-top)) 12px 8px;text-align:left}
+#knifeModal .mhead b{color:#fff6cf!important;text-shadow:0 2px 0 #0f0b1e;font-size:24px;flex:1}
+#knifeCv{position:absolute;left:0;top:0;image-rendering:pixelated;touch-action:none}
+#knifeWord{position:absolute;left:0;right:0;pointer-events:none;z-index:2;text-align:center}
+</style>`);
+
+/* the log wall, made once per screen size */
+function knWall(W,H){const k=W+'x'+H;if(KN.wallC&&KN.wallK===k)return KN.wallC;const c=mk(W,H),x=c.getContext('2d');
+  const rows=['#3f0f21','#9d4a21','#914726','#873a23','#873a23','#7d3322','#7d3322','#7d3322','#60241f','#60241f','#581e20','#4b1328'];
+  for(let y=0;y<H;y++){x.fillStyle=rows[y%12];x.fillRect(0,y,W,1);}
+  let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+  for(let L=0;L*12<H;L++){const y0=L*12;
+    for(let i=0;i<W/6;i++){const gx=Math.floor(rnd()*W),gy=y0+3+Math.floor(rnd()*6),gl=2+Math.floor(rnd()*5);x.fillStyle=rnd()<.5?'#6a2a22':'#934526';x.fillRect(gx,gy,gl,1);}   /* the grain */
+    const seam=Math.floor(rnd()*60)+(L%2?20:50);for(let sx=seam;sx<W;sx+=74+Math.floor(rnd()*30)){x.fillStyle='#3f0f21';x.fillRect(sx,y0+1,1,11);x.fillStyle='#a75321';x.fillRect(sx+1,y0+1,1,10);}}   /* where one log ends and the next begins */
+  KN.wallC=c;KN.wallK=k;return c;}
+/* the target: the Tavern's rings, lit from the top left, with a dark edge */
+function knTarget(){if(KN.tgt)return KN.tgt;const R=KN_R,n=R*2+3,c=mk(n,n),x=c.getContext('2d'),o=R+1;
+  const pal=[['#ffd27a','#f1c06d','#d99a4c'],['#c0402a','#9d2e1b','#6e1c12'],['#f6a050','#e88d38','#b5651d'],['#b25031','#9f492d','#733329']];
+  for(let y=0;y<n;y++)for(let i=0;i<n;i++){const dx=i-o,dy=y-o,d=Math.hypot(dx,dy);if(d>R+.5)continue;
+    if(d>R-.5){x.fillStyle='#2f0726';x.fillRect(i,y,1,1);continue;}
+    const ring=d<=6.5?1:d<=12.5?0:d<=18.5?1:d<=24.5?0:d<=30.5?2:3,sh=(dx+dy)/R,v=sh<-.75?0:sh>.55?2:1;x.fillStyle=pal[ring][v];x.fillRect(i,y,1,1);}
+  return KN.tgt=c;}
+
+function knFit(){const M=$('#knifeModal'),cv=$('#knifeCv'),cw=M.clientWidth,ch=M.clientHeight;if(!cw||!ch)return false;
+  const S=Math.max(2,Math.floor(cw/112)),W=Math.ceil(cw/S),H=Math.ceil(ch/S);if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.width=W*S+'px';cv.style.height=H*S+'px';
+  Object.assign(KNV,{S,W,H,cx:Math.floor(W/2),ty:Math.max(Math.ceil(64/S)+KN_R+12,Math.round(H*.38)),hy:H-22-Math.ceil(16/S)-44});
+  $('#knifeWord').style.top=Math.max(84,(KNV.ty-KN_R-22)*S)+'px';return true;}
+addEventListener('resize',()=>{if($('#knifeModal').classList.contains('on'))knFit();});
+function knPos(){const{W,cx,ty}=KNV,A=Math.max(10,Math.min(W/2-KN_R-4,44));return{x:Math.round(cx+A*Math.sin(KN.a)),y:Math.round(ty+(KN.k>=2?Math.sin(KN.a*1.7)*(KN.k-1)*2.2:0))};}
+
+function knThrow(){if(KN.ph==='done'){if(KN.t-KN.end<.6)return;knReset();return;}if(KN.ph!=='ready'||KN.up<1)return;KN.ph='fly';KN.fly={t:0};sfx('swish');}
+function knReset(){Object.assign(KN,{ph:'ready',left:5,score:0,k:0,stuck:[],wall:[],falls:[],up:0,newBest:false,a:Math.random()*6.28,dir:Math.random()<.5?1:-1});$('#knifeWord').innerHTML='';}
+function knLand(){const{cx,ty}=KNV,p=knPos(),dx=cx-p.x,dy=ty-p.y,d=Math.hypot(dx,dy);let pts=0,word='';
+  if(d<=KN_R+.5&&KN.stuck.some(s=>Math.hypot(s.rx-dx,s.ry-dy)<4)){sfx('kn_clank');KN.falls.push({x:cx,y:ty,vx:(Math.random()<.5?-1:1)*(30+Math.random()*30),vy:-40,t:0,r:0});word='CLANK';}   /* hit a knife: it bounces off */
+  else if(d<=KN_R+.5){const dl=d;pts=(KN_RINGS.find(r=>dl<=r[0])||[0,0])[1];   /* drunk luck: the rings count a touch wider */KN.stuck.push({rx:dx,ry:dy});sfx('kn_thunk');if(pts===100){sfx('rare');word='BULLSEYE';}}
+  else{KN.wall.push({x:cx,y:ty});sfx('kn_wall');word='MISS';}
+  KN.score+=pts;KN.left--;KN.k++;KN.ph=KN.left?'ready':'done';KN.up=0;
+  const big=pts===100?'legendary':pts>=25?'good':'sub';
+  if(KN.ph==='done'){KN.end=KN.t;if(KN.score>KN.best){KN.best=KN.score;KN.newBest=true;try{localStorage.setItem('m2_knife_best',String(KN.best));}catch(e){}}
+    setTimeout(()=>{if(KN.ph!=='done')return;$('#knifeWord').innerHTML=pxWord(KN.newBest?'NEW BEST':'SCORE',5,KN.newBest?'legendary':'sub')+pxWord(String(KN.score),8,'good',.25);if(KN.newBest)sfx('cas_win');},450);}
+  $('#knifeWord').innerHTML=word==='MISS'||word==='CLANK'?pxWord(word,5,'bad'):pxWord(word?word:'+'+pts,word?5:6,big)+(word?pxWord('+'+pts,5,'good',.2):'');}
+
+function knFrame(dt){if(!knFit())return;const T=KN,{S,W,H,cx,ty,hy}=KNV,cv=$('#knifeCv'),x=cv.getContext('2d');T.t+=dt;x.imageSmoothingEnabled=false;
+  /* the board moves, faster for each knife; from the fourth it turns round now and then */
+  T.a+=T.dir*KN_SPD[Math.min(T.k,4)]*dt*(T.ph==='done'?.5:1);if(T.k>=3&&T.ph!=='done'){T.flipT-=dt;if(T.flipT<=0){T.flipT=.7+Math.random()*1.3;if(Math.random()<.5)T.dir*=-1;}}
+  if(T.ph==='fly'){T.fly.t+=dt;if(T.fly.t>=.2)knLand();}
+  T.up=Math.min(1,T.up+dt*4);
+  x.drawImage(knWall(W,H),0,0);
+  /* the iron rail the board slides on */
+  x.fillStyle='#1a1430';x.fillRect(0,ty-2,W,5);x.fillStyle='#6f7b92';x.fillRect(0,ty-1,W,3);x.fillStyle='#b8c2d4';x.fillRect(0,ty-1,W,1);
+  for(let bx=(cx%38)-19;bx<W;bx+=38){x.fillStyle='#1a1430';x.fillRect(bx-2,ty-4,5,9);x.fillStyle='#6f7b92';x.fillRect(bx-1,ty-3,3,7);x.fillStyle='#b8c2d4';x.fillRect(bx-1,ty-3,1,1);}
+  for(const k of T.wall)x.drawImage(KN_STUCK,k.x-3,k.y);   /* the misses, stuck in the wall */
+  const p=knPos(),tg=knTarget();x.globalAlpha=.45;x.fillStyle='#1b0614';for(let yy=0;yy<tg.height;yy++){const dd=Math.abs(yy-KN_R-1),hw=Math.floor(Math.sqrt(Math.max(0,(KN_R+.5)**2-dd*dd)));x.fillRect(p.x-hw+2,p.y-KN_R-1+yy+3,hw*2+1,1);}x.globalAlpha=1;   /* its shadow on the wall */
+  x.drawImage(tg,p.x-KN_R-1,p.y-KN_R-1);
+  for(const s of T.stuck)x.drawImage(KN_STUCK,p.x+s.rx-3,p.y+s.ry);   /* knives in the board ride with it */
+  /* the aim: a tiny gold mark where every knife goes */
+  if(T.ph==='ready'){x.fillStyle='#ffd25e';x.fillRect(cx-3,ty,2,1);x.fillRect(cx+2,ty,2,1);x.fillRect(cx,ty-3,1,2);x.fillRect(cx,ty+2,1,2);}
+  /* knives bouncing off */
+  T.falls=T.falls.filter(f=>(f.t+=dt)<1.4);for(const f of T.falls){f.vy+=260*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.r+=dt*14;x.save();x.translate(Math.round(f.x),Math.round(f.y));x.rotate(Math.round(f.r/(Math.PI/4))*Math.PI/4);x.drawImage(KN_MID,-2,-7);x.restore();}
+  /* the bench at the bottom, with the knives still to throw */
+  const by=H-22-Math.ceil(16/S);x.fillStyle='#1a1430';x.fillRect(0,by-1,W,H-by+1);x.fillStyle='#c58a4a';x.fillRect(0,by,W,3);x.fillStyle='#a75321';x.fillRect(0,by+3,W,H-by);x.fillStyle='#7a4a2a';for(let i=0;i<W;i+=23)x.fillRect(i,by+3,1,H-by);
+  for(let i=0;i<T.left-(T.ph==='ready'||T.ph==='fly'?1:0);i++)x.drawImage(KN_LIE,Math.round(cx-(4*18+9)/2)+i*21,by+8);
+  /* the knife in your hand, then in the air */
+  if(T.ph==='ready'){const yy=Math.round(hy+(1-T.up)*30);x.drawImage(KN_BIG,cx-4,yy);}
+  else if(T.ph==='fly'){const k=Math.min(1,T.fly.t/.2),yy=Math.round(hy+(ty-hy)*k),im=k<.4?KN_BIG:k<.75?KN_MID:KN_SM;x.drawImage(im,cx-Math.floor(im.width/2),yy);}
+  /* the score */
+  const tx=(s,y,c)=>{const w=s.length*4-1,x0=Math.round((W-w)/2);x.fillStyle='#1a1430';for(const[ox,oy]of[[1,0],[-1,0],[0,1],[0,-1],[1,1]])pxText(x,s,x0+ox,y+oy);x.fillStyle=c;pxText(x,s,x0,y);};
+  const top=Math.ceil(60/S);tx('SCORE '+T.score+'   BEST '+T.best,top,'#fff6cf');
+  const blink=(T.t%1)<.65;
+  if(T.ph==='ready'&&T.k===0&&blink)tx('TAP TO THROW',hy-10,'#ffd25e');   /* how to start / play again: stays (his rule) */
+  if(T.ph==='done'&&T.t-T.end>.9&&blink)tx('TAP TO PLAY AGAIN',hy+6,'#ffd25e');}
+
+$('#knifeCv').addEventListener('pointerdown',e=>{e.preventDefault();knThrow();});
+addEventListener('keydown',e=>{if(e.code==='Space'&&$('#knifeModal').classList.contains('on')){e.preventDefault();knThrow();}});
+$('#knifeX').onclick=()=>{if(KN.ph==='fly')return;knClose();};
+function knifeOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));$('#knifeModal').classList.add('on');sfx('cas_chips');knReset();
+  KN.last=performance.now();cancelAnimationFrame(KN.raf);const loop=now=>{if(!$('#knifeModal').classList.contains('on'))return;knFrame(Math.min(.05,(now-KN.last)/1000));KN.last=now;KN.raf=requestAnimationFrame(loop);};KN.raf=requestAnimationFrame(loop);}
+function knClose(){$('#knifeModal').classList.remove('on');cancelAnimationFrame(KN.raf);sfx('close');}
+
+/* ================= DRUNK AT THE GAMES (his ask, 18 Nov) =================
+   Had a few at the Tavern? The games sway and double the same way the room does, and the luck tips your way a little (not by much):
+   luck goes 0 -> 1 from the third beer to about the sixth.
+   Coin flip 50% -> 53%; slots: a losing spin rolls again up to 8% of the time; Blackjack: a card that would bust you is swapped up to
+   25% of the time; knives: the rings count up to 6% wider. */
+function drunkLuck(){return typeof drunkL==='function'?Math.min(1,drunkL()/4):0;}
+const DRUNK_GAMES={bjModal:['#bjStage','#bjCv'],slotModal:['#slotCv','#slotCv'],knifeModal:['#knifeCv','#knifeCv'],flipModal:['#flipMach','#flipMach','#flipStage']};   /* [the main picture to double, what sways...] */
+function drunkGames(){requestAnimationFrame(drunkGames);const L=typeof drunkL==='function'?drunkL():0,q=performance.now()/1000;
+  for(const id in DRUNK_GAMES){const M=document.getElementById(id);if(!M)continue;const[srcSel,...sway]=DRUNK_GAMES[id],src=M.querySelector(srcSel.replace('#bjStage','#bjCv'));let g=M.querySelector('canvas.drunkGhost');
+    const on=L>0&&M.classList.contains('on')&&src&&src.width;
+    if(!on){if(g)g.style.display='none';for(const s of sway){const e=M.querySelector(s);if(e&&e.dataset.dk){e.style.transform='';delete e.dataset.dk;}}continue;}
+    const S=Math.max(1,Math.round(parseFloat(src.style.width||src.clientWidth)/src.width))||1,A=.6+L*.35;   /* gentler than the room (his note): you can still play */
+    const tx=Math.round(Math.sin(q*1.1)*A)*S,ty=Math.round(Math.sin(q*.83)*A*.45)*S;
+    for(const s of new Set(sway)){const e=M.querySelector(s);if(e){e.style.transform=`translate(${tx}px,${ty}px)`;e.dataset.dk=1;}}
+    if(!g){g=document.createElement('canvas');g.className='drunkGhost';src.parentNode.insertBefore(g,src.nextSibling);}
+    if(g.parentNode!==src.parentNode)src.parentNode.insertBefore(g,src.nextSibling);
+    if(g.width!==src.width||g.height!==src.height){g.width=src.width;g.height=src.height;}
+    const cs=getComputedStyle(src);g.style.cssText=`display:block;position:absolute;left:${src.offsetLeft}px;top:${src.offsetTop}px;width:${src.offsetWidth}px;height:${src.offsetHeight}px;image-rendering:pixelated;pointer-events:none;z-index:${(parseInt(cs.zIndex)||0)+1};opacity:${Math.min(.32,.18+.035*L)}`;
+    const gx=g.getContext('2d');gx.imageSmoothingEnabled=false;gx.clearRect(0,0,g.width,g.height);gx.drawImage(src,0,0);
+    g.style.transform=`translate(${tx+Math.round(Math.sin(q*.9+1)*(1+L*.45)+1+L*.4)*S}px,${ty+Math.round(Math.cos(q*.7)*(.5+L*.2))*S}px)`;}}
+requestAnimationFrame(drunkGames);

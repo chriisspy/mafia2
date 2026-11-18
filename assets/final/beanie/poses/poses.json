@@ -343,5 +343,185 @@
   "w": 22,
   "h": 32,
   "ax": 10.5
+ },
+ "drink_right_0": {
+  "w": 22,
+  "h": 33,
+  "ax": 10.5
+ },
+ "drink_left_0": {
+  "w": 22,
+  "h": 33,
+  "ax": 11.5
+ },
+ "drink_right_1": {
+  "w": 22,
+  "h": 32,
+  "ax": 9.5
+ },
+ "drink_left_1": {
+  "w": 22,
+  "h": 32,
+  "ax": 12.5
+ },
+ "drink_right_2": {
+  "w": 24,
+  "h": 32,
+  "ax": 11.5
+ },
+ "drink_left_2": {
+  "w": 24,
+  "h": 32,
+  "ax": 12.5
+ },
+ "drink_right_3": {
+  "w": 28,
+  "h": 33,
+  "ax": 13.5
+ },
+ "drink_left_3": {
+  "w": 28,
+  "h": 33,
+  "ax": 14.5
+ },
+ "drink_right_4": {
+  "w": 27,
+  "h": 33,
+  "ax": 13.5
+ },
+ "drink_left_4": {
+  "w": 27,
+  "h": 33,
+  "ax": 13.5
+ },
+ "drink_right_5": {
+  "w": 27,
+  "h": 33,
+  "ax": 13.5
+ },
+ "drink_left_5": {
+  "w": 27,
+  "h": 33,
+  "ax": 13.5
+ },
+ "drink_right_6": {
+  "w": 27,
+  "h": 33,
+  "ax": 13.5
+ },
+ "drink_left_6": {
+  "w": 27,
+  "h": 33,
+  "ax": 13.5
+ },
+ "drink_right_7": {
+  "w": 27,
+  "h": 33,
+  "ax": 12.5
+ },
+ "drink_left_7": {
+  "w": 27,
+  "h": 33,
+  "ax": 14.5
+ },
+ "drink_right_8": {
+  "w": 22,
+  "h": 32,
+  "ax": 10.5
+ },
+ "drink_left_8": {
+  "w": 22,
+  "h": 32,
+  "ax": 11.5
+ },
+ "drinksit_right_0": {
+  "w": 22,
+  "h": 39,
+  "ax": 21.5
+ },
+ "drinksit_left_0": {
+  "w": 22,
+  "h": 39,
+  "ax": 0.5
+ },
+ "drinksit_right_1": {
+  "w": 24,
+  "h": 39,
+  "ax": 20.5
+ },
+ "drinksit_left_1": {
+  "w": 24,
+  "h": 39,
+  "ax": 3.5
+ },
+ "drinksit_right_2": {
+  "w": 27,
+  "h": 39,
+  "ax": 22.5
+ },
+ "drinksit_left_2": {
+  "w": 27,
+  "h": 39,
+  "ax": 4.5
+ },
+ "drinksit_right_3": {
+  "w": 29,
+  "h": 40,
+  "ax": 24.5
+ },
+ "drinksit_left_3": {
+  "w": 29,
+  "h": 40,
+  "ax": 4.5
+ },
+ "drinksit_right_4": {
+  "w": 28,
+  "h": 40,
+  "ax": 24.5
+ },
+ "drinksit_left_4": {
+  "w": 28,
+  "h": 40,
+  "ax": 3.5
+ },
+ "drinksit_right_5": {
+  "w": 27,
+  "h": 39,
+  "ax": 24.5
+ },
+ "drinksit_left_5": {
+  "w": 27,
+  "h": 39,
+  "ax": 2.5
+ },
+ "drinksit_right_6": {
+  "w": 28,
+  "h": 39,
+  "ax": 24.5
+ },
+ "drinksit_left_6": {
+  "w": 28,
+  "h": 39,
+  "ax": 3.5
+ },
+ "drinksit_right_7": {
+  "w": 27,
+  "h": 40,
+  "ax": 22.5
+ },
+ "drinksit_left_7": {
+  "w": 27,
+  "h": 40,
+  "ax": 4.5
+ },
+ "drinksit_right_8": {
+  "w": 25,
+  "h": 39,
+  "ax": 21.5
+ },
+ "drinksit_left_8": {
+  "w": 25,
+  "h": 39,
+  "ax": 3.5
  }
 }
