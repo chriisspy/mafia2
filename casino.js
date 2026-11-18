@@ -244,7 +244,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 
 /* ---- sizes: the reels a little above the middle, the keys on the plinth, the lever always on screen ---- */
 function slotFit(){const M=$('#slotModal'),cv=$('#slotCv'),J=SLOT.j,cw=M.clientWidth,ch=M.clientHeight;if(!J||!cw||!ch)return false;
-  const S=Math.max(1,Math.floor(cw/104)),W=Math.ceil(cw/S),H=Math.ceil(ch/S);   /* standing at the machine: 3 or 4 screen pixels per art pixel on a phone */
+  const S=Math.max(1,Math.floor(cw/Math.max(104,J.w-6))),W=Math.ceil(cw/S),H=Math.ceil(ch/S);   /* standing at the machine: 3 or 4 screen pixels per art pixel on a phone */
   if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.width=W*S+'px';cv.style.height=H*S+'px';
   const ox=Math.min(Math.round((W-J.w)/2),W-J.w),oy=Math.min(H-244-Math.ceil(16/S),Math.round(H*.44-(J.hy+J.hh/2)));   /* on a narrow phone the left edge is cut, never the lever */
   Object.assign(SLV,{S,W,H,ox,oy});
