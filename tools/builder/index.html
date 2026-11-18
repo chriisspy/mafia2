@@ -182,6 +182,7 @@ small{color:var(--dim);font-size:12px}textarea{width:100%;height:56px;resize:ver
   <div class="row"><label title="How full the brush is: lower sprays loose pixels"><span>Fill</span><input type="range" id="bDens" min="5" max="100" value="100"><i class="bv" id="vDens"></i></label></div>
   <div class="row"><label title="How strong the brush is"><span>Opacity</span><input type="range" id="bOpac" min="5" max="100" value="100"><i class="bv" id="vOpac"></i></label></div>
   <div class="row"><label title="Brush blend: mixes each stroke with what is already there and bakes it in. For a whole layer, use the blend box above the layers list."><span>Blend</span><select id="bBlend"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Lighten</option><option value="add">Add</option><option value="color">Colour</option></select></label></div>
+  <div class="row"><label title="Pixel perfect (like Aseprite): with a 1 px brush, a hand-drawn line never doubles up at its corners. The extra pixel that makes an L is taken back as you draw, so the line only touches itself diagonally."><span>Pixel perfect</span><input type="checkbox" id="bPP"><small style="color:var(--dim)">1 px brush</small></label></div>
   <div class="row"><label title="Detail: every pixel you paint comes out a little lighter or darker, a little brighter or duller than your colour, so a big area gets texture instead of one flat colour"><span>Detail</span><input type="range" id="bDet" min="0" max="100" value="0"><i class="bv" id="vDet"></i></label></div>
 </div>
 <dialog id="dlg"></dialog>
@@ -237,7 +238,7 @@ const tab=k=>document.querySelector(`.pgh [data-tab=${k}]`).click();
 function panelShow(k){tab(k);}
 
 /* ---------- state ---------- */
-const S={doc:null,tool:'pencil',zoom:1,px:0,py:0,fg:'#ffffff',bg:'#000000',brush:1,shape:'square',soft:0,dens:100,blend:'normal',opac:100,detail:0,tile:null,layer:'ground',view:'day',both:true,
+const S={doc:null,tool:'pencil',zoom:1,px:0,py:0,fg:'#ffffff',bg:'#000000',brush:1,shape:'square',soft:0,dens:100,blend:'normal',opac:100,detail:0,pp:false,tile:null,layer:'ground',view:'day',both:true,
   vis:{ground:true,block:false,props:true,ref:true,glow:true},open:{props:false,ref:false},sel:null,float:null,selProp:null,placing:null,play:null,undo:[],redo:[],clip:null};
 const DOCS={};let GAME={ox:120,doors:[],blds:[],halls:{}};
 const LIB={};   // id -> {id,c,fxo,baseo,fw,file?,dirty,fixed}
@@ -502,6 +503,12 @@ function plot(x,y,mode,n){const d=S.doc;n=n||1;const pts=brushPts(n,S.shape),sof
 function pickAt(fx,fy,x,y){const d=S.doc,c=S.layer==='ground'?(S.view==='night'&&d.night?d.night:d.day):null;let col=null;const p=S.vis.props&&propAt(fx,fy);
   if(p){const v=variant(p,S.view==='night'&&d.night),q=X2(v.c).getImageData(Math.floor(fx-p.x-v.dx),Math.floor(fy-p.y-v.dy),1,1).data;if(q[3]===255)col=hex(q[0],q[1],q[2]);}
   if(!col&&x>=0&&y>=0&&x<d.w&&y<d.h){const q=X2(c||d.day).getImageData(x,y,1,1).data;if(q[3])col=hex(q[0],q[1],q[2]);}return col;}
+/* PIXEL PERFECT (his ask, 18 Nov, like Aseprite): the stroke remembers its last pixels. When the newest pixel touches the one two steps back
+   corner to corner, the pixel in between only made an L: it gets back what was there before the stroke, so lines join by their corners. */
+function ppStep(L,x,y,mode){const n=L.length,last=L[n-1];if(last&&last[0]===x&&last[1]===y)return;
+  if(n>=2){const a=L[n-2],b=last;if(Math.abs(a[0]-x)===1&&Math.abs(a[1]-y)===1&&((b[0]===a[0]&&b[1]===y)||(b[1]===a[1]&&b[0]===x))){
+      const d=S.doc;if(b[0]>=0&&b[1]>=0&&b[0]<d.w&&b[1]<d.h)OP.tg.forEach((t,i)=>X2(t.c).putImageData(X2(OP.cl[i]).getImageData(b[0],b[1],1,1),b[0],b[1]));L.pop();}}
+  plot(x,y,mode,1);L.push([x,y]);if(L.length>8)L.shift();}
 function linePts(x0,y0,x1,y1){const pts=[];let dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,e=dx+dy;for(;;){pts.push([x0,y0]);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx;}if(e2<=dx){e+=dx;y0+=sy;}}return pts;}
 function shapePts(kind,x0,y0,x1,y1,fill){const pts=[],a=Math.min(x0,x1),b=Math.min(y0,y1),c=Math.max(x0,x1),e=Math.max(y0,y1);
   if(kind==='line')return linePts(x0,y0,x1,y1);
@@ -599,7 +606,7 @@ V.addEventListener('pointerdown',e=>{V.setPointerCapture(e.pointerId);const[fx,f
   if(tool==='wand'){if(x<0||y<0||x>=d.w||y>=d.h)return;setSel(flood(tg[0].c,x,y),e.shiftKey);return;}
   const mode=tool==='eraser'?'erase':rb?'bg':'fg';
   if(tool==='fill'){if(x<0||y<0||x>=d.w||y>=d.h)return;opBegin();applyMask(flood(tg[0].c,x,y),mode);opEnd();return;}
-  if(tool==='pencil'||tool==='eraser'){opBegin();plot(x,y,mode,S.brush);drag={k:'draw',mode,lx:x,ly:y};draw();return;}
+  if(tool==='pencil'||tool==='eraser'){opBegin();plot(x,y,mode,S.brush);drag={k:'draw',mode,lx:x,ly:y,pp:S.pp&&S.brush===1?[[x,y]]:null};draw();return;}
   if(['line','rect','ellipse'].includes(tool)){drag={k:'shape',kind:tool,mode,x0:x,y0:y};}});
 V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Math.floor(fy),d=S.doc;if(!d)return;S.hover=[x,y];
   {const r=V.getBoundingClientRect();S.mouse=[e.clientX-r.left,e.clientY-r.top];}
@@ -607,7 +614,7 @@ V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Ma
   draw();if(!drag)return;
   if(drag.k==='pan'){S.px=drag.px+e.clientX-drag.sx;S.py=drag.py+e.clientY-drag.sy;draw();}
   else if(drag.k==='asize'){if(Math.abs(e.movementX)<120)drag.dx+=e.movementX;const dx=drag.dx;if(Math.abs(dx)>3)drag.moved=true;if(drag.moved){S.brush=clamp(drag.b0+Math.round(dx/6),1,64);S.sizing=[drag.x,drag.y];ui();draw();}}
-  else if(drag.k==='draw'){for(const[a,b]of linePts(drag.lx,drag.ly,x,y))plot(a,b,drag.mode,S.brush);drag.lx=x;drag.ly=y;draw();}
+  else if(drag.k==='draw'){for(const[a,b]of linePts(drag.lx,drag.ly,x,y)){if(drag.pp)ppStep(drag.pp,a,b,drag.mode);else plot(a,b,drag.mode,S.brush);}drag.lx=x;drag.ly=y;draw();}
   else if(drag.k==='shape'){let x1=x,y1=y;if(e.shiftKey&&drag.kind!=='line'){const s=Math.max(Math.abs(x-drag.x0),Math.abs(y-drag.y0));x1=drag.x0+Math.sign(x-drag.x0)*s;y1=drag.y0+Math.sign(y-drag.y0)*s;}
     drag.pts=shapePts(drag.kind,drag.x0,drag.y0,x1,y1,$('#cFill').checked);S.prev={pts:drag.pts,col:S.layer==='block'?'#ff2a2a':drag.mode==='bg'?S.bg:S.fg};draw();}
   else if(drag.k==='marq'){const a=Math.min(drag.x0,x),b=Math.min(drag.y0,y),c=Math.max(drag.x0,x)+1,f=Math.max(drag.y0,y)+1;drag.r=[a,b,c,f];S.prev={pts:[],col:'#fff'};S.lasso=[[a,b],[c,b],[c,f],[a,f],[a,b]];draw();}
@@ -673,7 +680,7 @@ function buildPal(){const d=S.doc,c=d.day,p=X2(c).getImageData(0,0,c.width,c.hei
   const top=[...cnt.entries()].sort((a,b)=>b[1]-a[1]).slice(0,96).map(e=>e[0]).sort((a,b)=>{const l=k=>((k>>16)&255)*.3+((k>>8)&255)*.59+(k&255)*.11;return l(a)-l(b);});
   $('#pal').innerHTML=top.map(k=>{const h='#'+k.toString(16).padStart(6,'0');return`<span class="sw" style="background:${h}" data-c="${h}"></span>`;}).join('');}
 $('#pal').addEventListener('mousedown',e=>{const c=e.target.dataset.c;if(!c)return;if(e.button===2)S.bg=c;else{S.fg=c;S.tile=null;}ui();});$('#pal').addEventListener('contextmenu',e=>e.preventDefault());
-function ui(){const d=S.doc;if(!d)return;$('#cfg').style.background=S.fg;$('#cbg').style.background=S.bg;$('#pick').value=S.fg;$('#pick2').value=S.bg;if(document.activeElement!==$('#hexTx'))$('#hexTx').value=S.fg;$('#brush').value=S.brush;$('#brushR').value=S.brush;$('#bShape').value=S.shape;$('#bSoft').value=S.soft;$('#bDens').value=S.dens;$('#bBlend').value=S.blend;$('#bOpac').value=S.opac;$('#bDet').value=S.detail;
+function ui(){const d=S.doc;if(!d)return;$('#cfg').style.background=S.fg;$('#cbg').style.background=S.bg;$('#pick').value=S.fg;$('#pick2').value=S.bg;if(document.activeElement!==$('#hexTx'))$('#hexTx').value=S.fg;$('#brush').value=S.brush;$('#brushR').value=S.brush;$('#bShape').value=S.shape;$('#bSoft').value=S.soft;$('#bDens').value=S.dens;$('#bBlend').value=S.blend;$('#bOpac').value=S.opac;$('#bDet').value=S.detail;$('#bPP').checked=S.pp;
   $('#vSoft').textContent=S.soft;$('#vDens').textContent=S.dens;$('#vOpac').textContent=S.opac;$('#vDet').textContent=S.detail;
   $('#tiles').innerHTML=TILES.map((T,i)=>`<div class="tl ${S.tile===T?'on':''}" data-ti="${i}" title="${T.w}×${T.h}${T.vs.length>1?', '+T.vs.length+' looks':''}. Click to paint with it, click again to stop." style="background-image:url(${T.vs[0].url})">${T.vs.length>1?'<b>'+T.vs.length+'</b>':''}</div>`).join('');
   $('#bDay').classList.toggle('on',S.view==='day');$('#bNight').classList.toggle('on',S.view==='night');$('#bNight').disabled=!d.night;$('#cBoth').disabled=!d.night;$('#cBoth').checked=S.both;
@@ -738,7 +745,7 @@ $('#hexTx').onchange=e=>{let v=e.target.value.trim();if(!v.startsWith('#'))v='#'
 function brushPop(on,x,y){const b=$('#brushPop');if(!on){b.classList.remove('on');return;}ui();b.classList.add('on');const w=b.offsetWidth,h=b.offsetHeight;b.style.left=clamp(x+8,4,innerWidth-w-4)+'px';b.style.top=clamp(y-20,52,innerHeight-h-30)+'px';}
 addEventListener('pointerdown',e=>{if($('#brushPop').classList.contains('on')&&!e.target.closest('#brushPop'))brushPop(false);},true);
 $('#brushR').oninput=e=>{S.brush=+e.target.value;ui();draw();};
-$('#bDet').oninput=e=>{S.detail=+e.target.value;ui();};
+$('#bDet').oninput=e=>{S.detail=+e.target.value;ui();};$('#bPP').onchange=e=>{S.pp=e.target.checked;};
 $('#bBlend').onchange=e=>{S.blend=e.target.value;};
 $('#layBlend').onchange=e=>{for(const l of picked()){l.bm=e.target.value;}S.doc.dirty=true;ui();};$('#layOp').oninput=e=>{for(const l of picked())l.op=+e.target.value;S.doc.dirty=true;draw();};$('#layOp').onchange=()=>ui();$('#bOpac').oninput=e=>{S.opac=+e.target.value;ui();};
 $('#bLayAdd').onclick=()=>{const d=S.doc;commitFloat();let n=1;while(d.layers.some(l=>l.name==='Layer '+n))n++;const l={id:'l'+Date.now().toString(36),name:'Layer '+n,vis:true,op:100,fx:newFx(),c:mk(d.w,d.h)};d.layers.push(l);S.layer='L:'+l.id;d.dirty=true;if(S.tool==='move'||S.tool==='hand')setTool('pencil');ui();};
