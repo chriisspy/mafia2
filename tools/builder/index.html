@@ -576,6 +576,15 @@ V.addEventListener('pointerdown',e=>{V.setPointerCapture(e.pointerId);const[fx,f
     if(!col&&x>=0&&y>=0&&x<d.w&&y<d.h){const q=X2(c||d.day).getImageData(x,y,1,1).data;if(q[3])col=hex(q[0],q[1],q[2]);}if(col){if(rb)S.bg=col;else S.fg=col;ui();}return;}
   if(S.layer==='glow'&&d.glows){const sg=S.selGlow,near=Math.max(3,5/S.zoom);if(sg&&d.glows.includes(sg)&&Math.abs(Math.hypot(fx-sg.x,fy-sg.y)-sg.r)<near){opBegin();drag={k:'glowr',g:sg};return;}
     const g=[...d.glows].reverse().map(q=>[q,Math.hypot(fx-q.x,fy-q.y)]).filter(q=>q[1]<Math.max(near*1.5,Math.min(q[0].r*.45,q[0].t==='square'?6:14))).sort((a,b)=>a[1]-b[1])[0];S.selGlow=g?g[0]:null;if(g){opBegin();drag={k:'glow',g:g[0],ox:fx-g[0].x,oy:fy-g[0].y};}ui();return;}
+  /* CLICK A THING TO PICK IT (his ask, 18 Nov: "i shouldnt need to be in the layer group for it to select"), like Photoshop's Move tool with
+     auto-select: with the Move tool (V), a click on a prop, a building, the stall or a cabin picks it and starts dragging it, whatever layer you are on.
+     Whichever is in FRONT wins (the lower its foot on the map). A click on nothing does what the Move tool always did. */
+  if(S.tool==='move'&&!S.float&&!S.sel&&(d.kind==='town'||d.kind==='room')){const hit=[];
+    {const p=propAt(fx,fy);if(p)hit.push(['props',pBase(p)]);}
+    if(d.kind==='town'&&S.vis.ref){const solid=(img,lx,ly)=>{lx=Math.floor(lx);ly=Math.floor(ly);if(lx<0||ly<0||lx>=img.width||ly>=img.height)return false;img.cv=img.cv||toC(img);return X2(img.cv).getImageData(lx,ly,1,1).data[3]>40;};
+      for(const b of d.blds||[])if(!b.hid&&solid(b.img,fx-b.x-d.ox,fy-b.y))hit.push(['ref',b.y+b.h]);
+      for(const c of d.cab||[])if(!c.hid&&solid(c.img,fx-(c.cx-68+d.ox),fy-(c.top-90)))hit.push(['ref',c.top+31]);}
+    if(hit.length){hit.sort((a,b)=>b[1]-a[1]);S.layer=hit[0][0];S.open[S.layer]=true;}}
   if(S.layer==='props'||S.layer==='ref'){if(S.layer==='ref'){const b=[...d.blds].reverse().find(b=>fx>=b.x+d.ox&&fx<b.x+d.ox+b.w&&fy>=b.y&&fy<b.y+b.h);S.selBld=b||null;S.selCab=null;if(b){opBegin();drag={k:'bld',b,ox:fx-b.x,oy:fy-b.y};}
       else{const c=[...d.cab].sort((a,b)=>b.top-a.top).find(c=>{const lx=Math.floor(fx-(c.cx-68+d.ox)),ly=Math.floor(fy-(c.top-90));if(lx<0||ly<0||lx>=c.img.width||ly>=c.img.height)return false;c.cv=c.cv||toC(c.img);return X2(c.cv).getImageData(lx,ly,1,1).data[3]>40;});
         if(c){S.selCab=c;opBegin();drag={k:'cab',c,ox:fx-c.cx,oy:fy-c.top};}}draw();return;}
