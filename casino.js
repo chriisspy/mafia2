@@ -1,0 +1,353 @@
+/* ================= THE CASINO'S GAMES (18 Nov 2026) =================
+   BLACKJACK at the two green tables (his picks: solo against the dealer first, a shared table later; you choose what to put up like the coin
+   flip, 100 / 500 / 1000 / 2500 or your own number, no daily limit; the payouts are blackjack's own).
+   Rules, the usual ones: six decks, the dealer stands on every 17 and peeks for blackjack when he shows an Ace or a ten. A win pays 1 to 1,
+   a blackjack 3 to 2, a draw gives your bet back. You can double on your first two cards (one more card, then you stand) and split a pair
+   once (split Aces get one card each, and 21 after a split is not a blackjack). The bet leaves your wallet when the cards are dealt.
+   Everything is drawn here in code: the felt, the cards, the dealer (the Mafia outfit, in a casino), so it stays on the game's pixel grid. */
+const BJ={ph:'bet',shoe:[],hands:[],act:0,d:[],stake:500,amt:500,cards:[],t:0,word:'',raf:0,last:0,busy:false};
+try{const v=+localStorage.getItem('m2_bj_stake');if(v>0)BJ.stake=v;}catch(e){}
+Object.assign(SFX,{
+  bj_card(){hiss(.05,{vol:.09,bp:3200});tone(240,.03,{type:'triangle',vol:.05,at:.02,to:160});},
+  bj_flip(){hiss(.035,{vol:.08,bp:4200});hiss(.03,{vol:.05,bp:2200,at:.05});},
+  bj_bust(){tone(220,.12,{type:'square',vol:.07,to:110});tone(150,.2,{type:'square',vol:.06,at:.1,to:70});},
+  bj_bj(){[659,784,988,1319].forEach((f,i)=>tone(f,.12,{type:'square',vol:.07,at:i*.08}));}});
+
+/* ---- the window ---- */
+document.querySelector('#flipModal').insertAdjacentHTML('afterend',`<div class="modal panel" id="bjModal">
+  <div class="mhead"><b>BLACKJACK</b><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><button class="btn" id="bjX"><i data-ic="cross" data-c="solo"></i></button></div>
+  <div id="bjStage"><canvas id="bjCv" width="152" height="128"></canvas><div id="bjWord"></div></div>
+  <div id="bjCtl"><div class="stakes" id="bjStakes"><button data-a="100">100</button><button data-a="500">500</button><button data-a="1000">1000</button><button data-a="2500">2500</button><input id="bjAmt" type="number" inputmode="numeric" min="1" max="1000000" placeholder="Other"></div>
+  <div class="frow" id="bjActs"><button class="btn" data-a="hit"><i data-ic="bjhit" data-s="3"></i>Hit</button><button class="btn" data-a="stand"><i data-ic="hand" data-s="3"></i>Stand</button><button class="btn" data-a="double"><i data-ic="bjdouble" data-s="3"></i>Double</button><button class="btn" data-a="split"><i data-ic="bjsplit" data-s="3"></i>Split</button></div>
+  <button class="btn red wide" id="bjDeal">Deal</button>
+  <div class="small" id="bjSub"></div></div></div>`);
+document.head.insertAdjacentHTML('beforeend',`<style>
+/* FULL SCREEN (his call, 18 Nov): the table scene fills the whole screen; the coins and the X float on top, the bets and the buttons over the carpet */
+#bjModal{position:absolute;inset:0;z-index:30;padding:0;border:0!important;border-image:none!important;border-radius:0;box-shadow:none!important;background:#10301f;text-align:center}
+#bjModal.on{display:block}
+#bjModal .mhead{position:absolute;left:0;right:0;top:0;z-index:2;margin:0;padding:calc(10px + env(safe-area-inset-top)) 12px 8px;text-align:left;background:linear-gradient(#0f0b1ecc,#0f0b1e00)}
+#bjModal .mhead b{color:#fff6cf!important;text-shadow:0 2px 0 #0f0b1e;font-size:24px}#bjModal .mhead .wal{color:#fff6cf;text-shadow:0 2px 0 #0f0b1e}
+#bjStage{position:absolute;inset:0;overflow:hidden;background:#10301f}
+#bjCv{position:absolute;left:0;top:0;image-rendering:pixelated}
+#bjWord{position:absolute;left:0;right:0;top:40%;pointer-events:none}
+#bjCtl{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2}
+#bjModal #bjSub{color:#fff6cf;opacity:.85;text-shadow:0 1px 0 #0f0b1e}
+#bjActs{display:none;margin:0 0 8px}#bjActs .btn{flex:1;font-size:15px;padding:6px 2px 9px;justify-content:center;flex-direction:column;gap:3px}#bjActs .btn:disabled{opacity:.45}
+#bjModal.play #bjActs{display:flex}#bjModal.play #bjStakes,#bjModal.play #bjDeal{display:none}
+#bjDeal{font-size:20px;padding:9px 8px 12px}#bjSub{margin-top:8px;min-height:15px}
+</style>`);
+document.querySelectorAll('#bjModal [data-ic]').forEach(e=>{e.outerHTML=ic(e.dataset.ic,+(e.dataset.s||2));});
+
+/* ---- the cards ---- */
+const BJ_SUIT={h:['.#.#.','#####','#####','.###.','..#..'],d:['..#..','.###.','#####','.###.','..#..'],c:['..#..','.###.','#####','#.#.#','..#..'],s:['..#..','.###.','#####','#####','.#.#.']};
+const BJ_RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const bjRed=s=>s==='h'||s==='d';
+function bjShoe(){const s=[];for(let k=0;k<6;k++)for(const su of'hdcs')for(const r of BJ_RANKS)s.push({r,su});for(let i=s.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]];}BJ.shoe=s;}
+function bjDraw(){if(BJ.shoe.length<78)bjShoe();return BJ.shoe.pop();}
+const bjVal=r=>r==='A'?11:['J','Q','K','10'].includes(r)?10:+r;
+function bjTotal(cs){let t=0,a=0;for(const c of cs){if(c.down)continue;t+=bjVal(c.r);if(c.r==='A')a++;}while(t>21&&a){t-=10;a--;}return{t,soft:a>0};}
+const bjIsBJ=cs=>cs.length===2&&bjTotal(cs).t===21;
+/* one card picture, made once and kept: 15 x 21, cream face, navy edge, the rank top left and a big suit in the middle */
+const BJC={};
+function bjCard(c){const k=c.down?'back':c.r+c.su;if(BJC[k])return BJC[k];const cv=mk(15,21),x=cv.getContext('2d');
+  x.fillStyle='#1a1430';x.fillRect(1,0,13,21);x.fillRect(0,1,15,19);
+  if(c.down){x.fillStyle='#b52b3a';x.fillRect(1,1,13,19);x.fillStyle='#e0b04a';x.fillRect(2,2,11,1);x.fillRect(2,18,11,1);x.fillRect(2,2,1,17);x.fillRect(12,2,1,17);
+    x.fillStyle='#d9505c';for(let yy=4;yy<17;yy++)for(let xx=4;xx<11;xx++)if((xx+yy)%3===0)x.fillRect(xx,yy,1,1);return BJC[k]=cv;}
+  x.fillStyle='#fff6e6';x.fillRect(1,1,13,19);x.fillStyle='#e9dcc2';x.fillRect(1,19,13,1);
+  const col=bjRed(c.su)?'#cf2f3c':'#1a1430';x.fillStyle=col;pxText(x,c.r==='10'?'10':c.r,2,2);
+  const g=BJ_SUIT[c.su];for(let yy=0;yy<5;yy++)for(let xx=0;xx<5;xx++)if(g[yy][xx]==='#')x.fillRect(3+xx*2,9+yy*2,2,2);
+  return BJC[k]=cv;}
+
+/* ---- where every card sits; each card glides there from the shoe ---- */
+function bjLay(){const W=152,out=[];const row=(cs,y,cx)=>{const w=15+(cs.length-1)*11;cs.forEach((c,i)=>{c.tx=Math.round(cx-w/2+i*11);c.ty=y;out.push(c);});};
+  row(BJ.d,47,W/2);const n=BJ.hands.length;BJ.hands.forEach((h,i)=>row(h.cs,72,n===1?W/2:i===0?W*.3:W*.7));return out;}
+function bjGive(cs,down){const c={...bjDraw(),down:!!down,a:0,t0:BJ.t+BJ.q*.22};BJ.q++;cs.push(c);setTimeout(()=>sfx('bj_card'),BJ.q*220-200);return c;}
+
+/* ---- a round ---- */
+function bjAmt(){const v=Math.floor(+$('#bjAmt').value);return v>0?Math.min(v,1000000):BJ.stake;}
+function bjDeal(){const amt=bjAmt();if(BJ.ph!=='bet'&&BJ.ph!=='done')return;if(coins<amt){sfx('nope');return;}
+  coins-=amt;saveInv();paintCoins();BJ.amt=amt;try{localStorage.setItem('m2_bj_stake',String(amt));}catch(e){}
+  BJ.d=[];BJ.hands=[{cs:[],bet:amt,done:false,dbl:false,split:false}];BJ.act=0;BJ.q=0;$('#bjWord').innerHTML='';BJ.word='';sfx('cas_chips');
+  const P=BJ.hands[0].cs;bjGive(P);bjGive(BJ.d);bjGive(P);bjGive(BJ.d,true);BJ.ph='deal';bjUI();
+  setTimeout(()=>{const up=BJ.d[0],dbj=bjVal(up.r)>=10&&bjIsBJ(BJ.d.map(c=>({...c,down:false}))),pbj=bjIsBJ(P);
+    if(dbj||pbj){bjReveal();setTimeout(()=>bjEnd(),500);return;}BJ.ph='play';bjUI();},BJ.q*220+250);}
+function bjHand(){return BJ.hands[BJ.act];}
+function bjNext(){const h=bjHand();h.done=true;const i=BJ.hands.findIndex(q=>!q.done);if(i>=0){BJ.act=i;if(BJ.hands[i].cs.length<2){BJ.q=0;bjGive(BJ.hands[i].cs);}bjUI();return;}bjDealer();}
+function bjAct(a){if(BJ.ph!=='play')return;const h=bjHand();
+  if(a==='hit'){BJ.q=0;bjGive(h.cs);const t=bjTotal(h.cs).t;bjUI();if(t>=21){BJ.ph='wait';setTimeout(()=>{BJ.ph='play';if(t>21)sfx('bj_bust');bjNext();},380);}return;}
+  if(a==='stand'){bjNext();return;}
+  if(a==='double'){if(h.cs.length!==2||coins<h.bet)return;coins-=h.bet;saveInv();paintCoins();h.bet*=2;h.dbl=true;sfx('cas_chips');BJ.q=0;bjGive(h.cs);BJ.ph='wait';bjUI();setTimeout(()=>{BJ.ph='play';if(bjTotal(h.cs).t>21)sfx('bj_bust');bjNext();},420);return;}
+  if(a==='split'){if(!bjCanSplit())return;coins-=h.bet;saveInv();paintCoins();sfx('cas_chips');const c2=h.cs.pop();const h2={cs:[c2],bet:h.bet,done:false,dbl:false,split:true};h.split=true;BJ.hands.push(h2);
+    BJ.q=0;bjGive(h.cs);bjUI();
+    if(h.cs[0].r==='A'){BJ.ph='wait';setTimeout(()=>{BJ.q=0;bjGive(h2.cs);h.done=h2.done=true;bjUI();setTimeout(()=>bjDealer(),400);},300);}   /* split Aces: one card each, then the dealer */
+    return;}}
+function bjCanSplit(){const h=bjHand();return BJ.hands.length===1&&h.cs.length===2&&bjVal(h.cs[0].r)===bjVal(h.cs[1].r)&&coins>=h.bet;}
+function bjReveal(){const c=BJ.d.find(c=>c.down);if(c){c.down=false;c.flip=BJ.t;sfx('bj_flip');}}
+function bjDealer(){BJ.ph='dealer';bjUI();bjReveal();const alive=BJ.hands.some(h=>bjTotal(h.cs).t<=21);
+  const step=()=>{const t=bjTotal(BJ.d).t;if(alive&&t<17){BJ.q=0;bjGive(BJ.d);bjUI();setTimeout(step,560);}else setTimeout(bjEnd,350);};setTimeout(step,520);}
+function bjEnd(){bjReveal();const dt=bjTotal(BJ.d).t,dbj=bjIsBJ(BJ.d);let back=0,net=0;const res=[];
+  for(const h of BJ.hands){const t=bjTotal(h.cs).t,pbj=!h.split&&bjIsBJ(h.cs);let r;
+    if(t>21)r='bust';else if(pbj&&!dbj)r='bj';else if(dbj&&!pbj)r='lose';else if(pbj&&dbj)r='push';else if(dt>21||t>dt)r='win';else if(t===dt)r='push';else r='lose';
+    const pay=r==='bj'?h.bet+Math.floor(h.bet*1.5):r==='win'?h.bet*2:r==='push'?h.bet:0;back+=pay;net+=pay-h.bet;h.res=r;res.push(r);}
+  coins+=back;saveInv();paintCoins();BJ.ph='done';
+  const W=res.includes('bj')?'BLACKJACK':net>0?'YOU WIN':net===0&&res.some(r=>r==='push')?'PUSH':res.every(r=>r==='bust')?'BUST':'DEALER WINS';
+  $('#bjWord').innerHTML=pxWord(W,W.length>8?5:6,net>0?'legendary':net===0?'sub':'bad')+(net?pxWord((net>0?'+':'-')+Math.abs(net),5,net>0?'good':'bad',.35):'');
+  if(res.includes('bj'))sfx('bj_bj');else if(net>0){sfx('cas_win');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),300+k*140);}else if(net<0)sfx('nope');
+  bjUI();}
+
+/* ---- buttons ---- */
+function bjUI(){const M=$('#bjModal'),play=BJ.ph==='play'||BJ.ph==='wait'||BJ.ph==='deal'||BJ.ph==='dealer';M.classList.toggle('play',play);paintCoins();
+  const own=Math.floor(+$('#bjAmt').value)>0;$('#bjAmt').classList.toggle('sel',own);document.querySelectorAll('#bjStakes button').forEach(b=>b.classList.toggle('sel',!own&&+b.dataset.a===BJ.stake));
+  const amt=bjAmt(),h=bjHand(),go=BJ.ph==='play';$('#bjDeal').innerHTML=(BJ.ph==='done'?'Deal again':'Deal')+' · '+ic('coin',2)+' '+amt;$('#bjDeal').disabled=coins<amt;
+  document.querySelectorAll('#bjActs .btn').forEach(b=>{const a=b.dataset.a;b.disabled=!go||(a==='double'&&!(h&&h.cs.length===2&&coins>=h.bet))||(a==='split'&&!(h&&bjCanSplit()));});
+  const tot=h?bjTotal(h.cs):null;
+  $('#bjSub').textContent=BJ.ph==='bet'?(coins<amt?'You need '+amt+' coins to play.':'Blackjack pays 3 to 2. The dealer stands on 17.'):BJ.ph==='done'?'':BJ.hands.length>1?'Hand '+(BJ.act+1)+' of 2 · '+(h.bet)+' coins':(h&&h.dbl?'Doubled: '+h.bet+' coins':'');}
+$('#bjStakes').onclick=e=>{const b=e.target.closest('button');if(!b||BJ.ph==='play')return;BJ.stake=+b.dataset.a;$('#bjAmt').value='';sfx('click');bjUI();};
+$('#bjAmt').oninput=()=>bjUI();
+$('#bjDeal').onclick=()=>bjDeal();
+$('#bjActs').onclick=e=>{const b=e.target.closest('button');if(b&&!b.disabled){sfx('click');bjAct(b.dataset.a);}};
+$('#bjX').onclick=()=>{if(BJ.ph==='play'||BJ.ph==='deal'||BJ.ph==='wait'||BJ.ph==='dealer'){wlSay('Finish the hand first.');return;}bjClose();};
+function bjOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));if(BJ.ph!=='done'&&BJ.ph!=='bet')BJ.ph='bet';if(BJ.ph==='done'){BJ.ph='bet';BJ.d=[];BJ.hands=[];$('#bjWord').innerHTML='';}
+  $('#bjModal').classList.add('on');sfx('cas_chips');bjUI();BJ.last=performance.now();cancelAnimationFrame(BJ.raf);bjFit();const loop=now=>{if(!$('#bjModal').classList.contains('on'))return;bjFrame(Math.min(.05,(now-BJ.last)/1000));BJ.last=now;BJ.raf=requestAnimationFrame(loop);};BJ.raf=requestAnimationFrame(loop);}
+function bjClose(){$('#bjModal').classList.remove('on');cancelAnimationFrame(BJ.raf);sfx('close');}
+
+/* ---- the picture ----
+   THE TABLE IN 3D (his note, 18 Nov: "make it look more like a 3d pixel art table ... and have the dealer behind the table"). Layers, back to
+   front: the Casino's back wall (assets/casino/bj-wall.png, PixelLab), the dealer (the Mafia outfit, breathing and blinking), the table
+   (assets/casino/bj-table.png, PixelLab, its far edge in front of his waist), then the cards on the felt, dealt from his hands. */
+load('bj/wall','assets/casino/bj-wall.png').catch(()=>{});load('bj/room','assets/casino/bj-room.png').catch(()=>{});load('bj/table','assets/casino/bj-table.png').catch(()=>{});
+const BJ_TY=28,BJ_FROM=[69,30];
+const BJV={S:2,W:152,H:128,ox:0,oy:0,scene:null};
+function bjFit(){const st=$('#bjStage'),cv=$('#bjCv'),cw=st.clientWidth,ch=st.clientHeight;if(!cw||!ch)return;const S=Math.max(1,Math.floor(cw/120)),   /* zoomed in (his call): on a phone the table is a little wider than the screen, its empty ends cut off */
+    W=Math.ceil(cw/S),H=Math.ceil(ch/S);
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.width=W*S+'px';cv.style.height=H*S+'px';
+  const top=Math.ceil(56/S);if(BJ.ph==='bet'||BJ.ph==='done'||!BJV.botPx)BJV.botPx=Math.max(BJV.botPx||0,$('#bjCtl').offsetHeight+18);const bot=Math.ceil(BJV.botPx/S);BJV.S=S;BJV.W=W;BJV.H=H;BJV.ox=Math.round((W-152)/2);BJV.oy=Math.max(top,top+Math.round((H-top-bot-128)/2));   /* the game in the middle of the screen, the buttons below (his call) */
+  $('#bjWord').style.top=((BJV.oy+44)*S)+'px';}
+addEventListener('resize',()=>{if($('#bjModal').classList.contains('on'))bjFit();});
+function bjFrame(dt){BJ.t+=dt;bjFit();if(!BJV.scene)BJV.scene=mk(152,128);const cv=BJV.scene,x=cv.getContext('2d'),W=152,H=128;x.imageSmoothingEnabled=false;
+  x.clearRect(0,0,W,H);
+  const D=SP.mafia&&SP.mafia.front;if(D){const ms=BJ.t*1000,o=BREATH[Math.floor((ms%2600)/200)],b=(ms%4300)<130?1:0,fr=D.frames[o][b];x.drawImage(fr,Math.round(W/2-D.w/2),BJ_TY+8-D.h+4);   /* stood behind the table: it hides him from the waist down */}
+  if(IMG['bj/table'])x.drawImage(IMG['bj/table'],0,BJ_TY);
+  for(const c of bjLay()){const k=clamp((BJ.t-c.t0)/.28,0,1),e=1-Math.pow(1-k,3);if(k<=0)continue;const cx=lerp(BJ_FROM[0],c.tx,e),cy=lerp(BJ_FROM[1],c.ty,e);
+    x.globalAlpha=.35;x.fillStyle='#04140a';x.fillRect(Math.round(cx)+1,Math.round(cy)+2,15,21);x.globalAlpha=1;   /* a little shadow under each card */
+    let im=bjCard(c);if(c.flip!=null){const f=clamp((BJ.t-c.flip)/.22,0,1),w=Math.max(1,Math.round(15*Math.abs(1-2*f)));if(f<.5)im=bjCard({down:true});x.drawImage(im,0,0,15,21,Math.round(cx+(15-w)/2),Math.round(cy),w,21);if(f>=1)c.flip=null;}
+    else x.drawImage(im,Math.round(cx),Math.round(cy));}
+  const tag=(str,cx,y,col)=>{const w=str.length*4+3;x.fillStyle='#0f0b1e';x.fillRect(Math.round(cx-w/2),y,w,9);x.fillStyle=col;pxText(x,str,Math.round(cx-w/2)+2,y+2);};
+  if(BJ.d.length){const T=bjTotal(BJ.d),r=BJ.d[BJ.d.length-1];tag(String(T.t),(r.tx||W/2)+15+8,53,'#fff6cf');}   /* the dealer's total sits beside his cards */
+  BJ.hands.forEach((h,i)=>{const T=bjTotal(h.cs),cx=BJ.hands.length===1?W/2:i===0?W*.3:W*.7,on=BJ.hands.length>1&&i===BJ.act&&BJ.ph==='play';
+    const s=T.t>21?'BUST':(T.soft&&T.t<21&&BJ.ph!=='done'?(T.t-10)+'/'+T.t:String(T.t));if(h.cs.length)tag(s,cx,95,h.res==='bust'||T.t>21?'#ff7a7a':on?'#ffd25e':'#fff6cf');
+    if(on){x.fillStyle='#ffd25e';x.fillRect(Math.round(cx)-1,106,3,2);}});
+  bjRoom(cv);}
+/* the room round the table on the full screen: the wall carries on to the sides (mirrored), the dark wall above, the casino's red carpet below */
+/* THE ROOM (his call, 18 Nov: "make it full screen"): a tall Christmas casino room made for the phone's shape (assets/casino/bj-room.png, PixelLab,
+   200 x 400: chandelier, garland round a glowing card sign, wood panels, red carpet). It is lined up so the table's far edge sits against the
+   wood panels; above it the ceiling's colour carries on, below it the carpet does (mirrored), and it is centred left to right. */
+function bjRoom(scene){const c=$('#bjCv'),x=c.getContext('2d'),{W,H,ox,oy}=BJV,room=IMG['bj/room'];x.imageSmoothingEnabled=false;
+  x.fillStyle='#120c0c';x.fillRect(0,0,W,H);
+  if(room){const rx=Math.round((W-room.width)/2),ry=oy+123-290;   /* the table's feet on the room's floor */x.drawImage(room,rx,ry);
+    if(ry>0)x.drawImage(room,0,0,room.width,1,rx,0,room.width,ry);
+    for(let y=ry+room.height,k=0;y<H;y+=40,k++){x.save();x.translate(0,y+(k%2?0:40));x.scale(1,k%2?1:-1);x.drawImage(room,0,room.height-40,room.width,40,rx,0,room.width,40);x.restore();}
+    if(rx>0){x.drawImage(room,0,0,1,room.height,0,ry,rx,room.height);x.drawImage(room,room.width-1,0,1,room.height,rx+room.width,ry,W-rx-room.width,room.height);}}
+  x.globalAlpha=.32;x.fillStyle='#05030a';x.fillRect(ox+4,oy+120,144,5);x.globalAlpha=1;   /* the table's shadow on the carpet */
+  x.drawImage(scene,ox,oy);}
+/* ================= THE COIN FLIP MACHINE, UP CLOSE (his call, 18 Nov) =================
+   The front of the machine fills the screen at a whole number of screen pixels per art pixel; its screen is a hole (see-through pixels in
+   flip-machine.png), and the coin's own canvas (#flipCv, at the same pixel size) sits behind it, centred in the hole. */
+const FM={j:null};load('fm/mach','assets/casino/flip-machine.png').catch(()=>{});fetch('assets/casino/flip-machine.json?v='+BUILD).then(r=>r.json()).then(j=>{FM.j=j;flipFit();}).catch(()=>{});
+function flipFit(){const M=$('#flipModal'),J=FM.j,im=IMG['fm/mach'];if(!J||!im||!M.classList.contains('on'))return;const cw=M.clientWidth,ch=M.clientHeight;if(!cw)return;
+  const S=Math.max(1,Math.floor(cw/92)),W=Math.ceil(cw/S),H=Math.ceil(ch/S),ox=Math.round((W-J.w)/2),oy=Math.round(H*.47-(J.hy+J.hh*.62)),c=$('#flipMach');   /* standing right at the machine (his call): about 4 screen pixels per art pixel, the screen a little above the middle, the cabinet's edges and sign cut off */
+  if(c.width!==W||c.height!==H){c.width=W;c.height=H;}c.style.width=W*S+'px';c.style.height=H*S+'px';c.style.left='0';c.style.top='0';
+  const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,W,H);x.fillStyle='#0e0b1a';x.fillRect(0,0,W,Math.max(0,oy));x.fillRect(0,oy+J.h,W,H);x.drawImage(im,ox,oy);
+  const st=$('#flipStage');st.style.left=(ox+J.hx)*S+'px';st.style.top=(oy+J.hy)*S+'px';st.style.width=J.hw*S+'px';st.style.height=J.hh*S+'px';
+  const fc=$('#flipCv');fc.style.width=fc.width*S+'px';fc.style.height=fc.height*S+'px';fc.style.left=Math.round((J.hw-fc.width)/2)*S+'px';fc.style.top=Math.round((J.hh-fc.height)/2)*S+'px';}
+{const _fs=flipShow;flipShow=function(){_fs.apply(this,arguments);flipFit();requestAnimationFrame(flipFit);};}
+addEventListener('resize',()=>flipFit());
+
+/* PIXEL-ART ARCADE BUTTONS (his note, 18 Nov: "PIXEL ART for the buttons please. make them pixelated circle buttons"). Each is drawn here on an
+   18 x 20 grid and shown 4x like the machine: a round cap with a navy outline, a light rim top left, a darker side under it (the button's
+   height), a white glint; pressed = the cap sits 2 px lower; picked = a gold ring of light round it. */
+function arcBtn(c0,cl,cd,cs,pressed,lit){const W=22,H=24,cv=mk(W,H),x=cv.getContext('2d'),cx=10.5,R=8,dy=pressed?2:0;
+  const disc=(cy,r,fn)=>{for(let y=0;y<H;y++)for(let i=0;i<W;i++){const d=Math.hypot(i-cx,(y-cy)*1.08);if(d<=r+.35){const c=fn(i-cx,y-cy,d);if(c){x.fillStyle=c;x.fillRect(i,y,1,1);}}}};
+  if(lit){const up=h=>'#'+[1,3,5].map(i=>Math.min(255,Math.round(parseInt(h.slice(i,i+2),16)*1.18+18)).toString(16).padStart(2,'0')).join('');c0=up(c0);cd=up(cd);}   /* picked: pressed in and a little brighter (his call) */
+  disc(13,R+1,(dx,dy_,d)=>d>R?'#1a1430':cs);                 /* the side (its height) */
+  disc(10+dy,R+1,(dx,dy_,d)=>d>R?'#1a1430':d>R-1.6&&dx+dy_<-2?cl:d>R-1.6?cd:dx+dy_<-6?cl:c0);   /* the cap */
+  x.fillStyle='#ffffff';x.fillRect(Math.round(cx-4),7+dy,2,1);x.fillRect(Math.round(cx-5),8+dy,1,1);   /* the glint */
+  return cv.toDataURL();}
+const ARC={h:{c0:'#e4544f',cl:'#ff9a8f',cd:'#a92b2c',cs:'#6b1416'},t:{c0:'#4a7bd0',cl:'#9fd0ff',cd:'#2b4a8a',cs:'#14254a'}};
+for(const k in ARC){const A=ARC[k];A.up=arcBtn(A.c0,A.cl,A.cd,A.cs,false,false);A.dn=arcBtn(A.c0,A.cl,A.cd,A.cs,true,false);A.lit=arcBtn(A.c0,A.cl,A.cd,A.cs,true,true);A.litdn=arcBtn(A.c0,A.cl,A.cd,A.cs,true,true);}
+document.head.insertAdjacentHTML('beforeend',`<style>
+#flipModal .fside .ab{width:88px;height:96px;border:0!important;border-radius:0;outline:0!important;box-shadow:none!important;background-color:transparent!important;background-position:center!important;background-size:88px 96px!important;background-repeat:no-repeat!important;image-rendering:pixelated;display:block;padding:0;transition:none;position:relative}
+#flipModal .fside .ab img{position:absolute;left:24px}
+#flipModal .fside[data-s=h] .ab img{top:18px}#flipModal .fside[data-s=t] .ab img{top:20px}   /* each icon's middle on the cap's middle (the hat's grid has an empty top row) */
+#flipModal .fside[data-s=h] .ab{background-image:url(${ARC.h.up})}#flipModal .fside[data-s=t] .ab{background-image:url(${ARC.t.up})}
+#flipModal .fside[data-s=h].sel .ab{background-image:url(${ARC.h.lit})}#flipModal .fside[data-s=t].sel .ab{background-image:url(${ARC.t.lit})}
+#flipModal .fside[data-s=h]:active .ab{background-image:url(${ARC.h.dn})}#flipModal .fside[data-s=t]:active .ab{background-image:url(${ARC.t.dn})}
+#flipModal .fside.sel .ab img,#flipModal .fside:active .ab img{transform:translateY(8px)}
+#flipModal .fside:active .ab{transform:none}
+#flipModal .fside .ab img{filter:none}
+/* the bet keys and Flip as pixel keys: square, with the corners stepped off like pixel art */
+#flipModal .stakes button,#flipModal .stakes input,#flipModal #flipGo{border-radius:0!important;clip-path:polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px),0 4px,4px 4px)}
+</style>`);
+/* Heads and Tails as round arcade buttons, just the hat or the sword on them (his ask, 18 Nov) */
+document.querySelectorAll('#flipSides .fside').forEach(b=>{const h=b.dataset.s==='h';b.innerHTML=`<span class="ab">${ic(h?'tophat':'knife',4)}</span>${h?'Heads':'Tails'}`;});
+
+/* ================= THE SLOT MACHINES, UP CLOSE (18 Nov 2026) =================
+   His ask: "the same principles as the coin flip. machine frame, custom UI/buttons. make it so the lever is actually pullable, and the
+   amount to put in is the custom UI". So: the machine's front (assets/casino/slot-machine.png, PixelLab; its screen is see-through and its
+   painted lever was wiped off) fills the screen at a whole number of screen pixels per art pixel, and EVERYTHING else is drawn here on the
+   same pixel grid, on one canvas: the three reels behind the glass, the lever on the right (grab the red knob and pull it down; a tap pulls
+   it for you; Space works on a computer), the LED window under the reels (your bet, what happened, the pay table running along the bottom;
+   tap it to type your own bet) and four pixel bet keys on the plinth (100, 500, 1K, 2.5K). No daily limit, like Blackjack.
+   PAYS (for one bet): three cherries 10, lemons 12, bells 18, bars 25, coins 40, knives 80, hats 150, sevens 300; any two cherries 3.
+   Each reel lands on its own (weights below), which gives back about 93 coins in every 100 put in, and something pays about 1 spin in 5. */
+const SLOT_SYM=[{n:'CHERRIES',ic:'slotcherry',w:8,p:10},{n:'LEMONS',ic:'slotlemon',w:7,p:12},{n:'BELLS',ic:'slotbell',w:5,p:18},{n:'BARS',ic:'slotbar',w:4,p:25},
+  {n:'COINS',ic:'coinbig',w:3,p:40},{n:'KNIVES',ic:'slotknife',w:2,p:80},{n:'HATS',ic:'slothat',w:1.5,p:150},{n:'SEVENS',ic:'slot7',w:1,p:300}];
+const SLOT_TW=SLOT_SYM.reduce((a,s)=>a+s.w,0),SLOT_KEYS=[[100,'100'],[500,'500'],[1000,'1K'],[2500,'2.5K']];
+const SLOT={stake:500,own:0,busy:false,t:0,last:0,raf:0,res:null,bet:0,win:0,end:null,msg:null,th:0,thv:0,drag:null,auto:false,fired:false,parts:[],flash:0,press:null,typing:false,keys:[],sym:null,shade:null,j:null};
+try{const v=+localStorage.getItem('m2_slot_stake');if(v>0)SLOT.stake=v;}catch(e){}
+const SLV={S:3,W:130,H:260,ox:0,oy:0};
+CK_FONT['?']=CK_FONT['?']||[6,1,2,0,2];CK_FONT[':']=CK_FONT[':']||[0,2,0,2,0];
+Object.assign(SFX,{
+  sl_pull(){tone(140,.09,{type:'triangle',vol:.2,to:70});hiss(.05,{vol:.08,lp:900,at:.02});},
+  sl_spin(){for(let i=0;i<24;i++)tone(600+((i*53)%6)*45,.02,{type:'square',vol:.028,at:.06+i*.068});},
+  sl_stop(){tone(210,.05,{type:'square',vol:.07,to:120});hiss(.03,{vol:.06,bp:2500});},
+  sl_key(){tone(520,.03,{type:'square',vol:.05});hiss(.02,{vol:.04,bp:3000});}});
+function slotStrip(){const a=[];[[0,5],[1,4],[2,3],[3,3],[4,2],[5,1],[6,1],[7,1]].forEach(([i,n])=>{for(let k=0;k<n;k++)a.push(i);});
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+SLOT.reels=[0,1,2].map(()=>({strip:slotStrip(),p:Math.floor(Math.random()*20),v:0,done:true}));
+function slotPick(){let r=Math.random()*SLOT_TW;for(let i=0;i<SLOT_SYM.length;i++){r-=SLOT_SYM[i].w;if(r<0)return i;}return 0;}
+function slotPays(r){if(r[0]===r[1]&&r[1]===r[2])return SLOT_SYM[r[0]].p;return r.filter(i=>i===0).length===2?3:0;}
+function slotAmt(){return SLOT.own>0?SLOT.own:SLOT.stake;}
+function slotSyms(){if(SLOT.sym)return SLOT.sym;if(!window.M2_ICONS||!window.M2_PAL)return null;
+  SLOT.sym=SLOT_SYM.map(s=>{const g=M2_ICONS[s.ic],c=mk(16,16),x=c.getContext('2d');g.forEach((row,y)=>[...row].forEach((ch,i)=>{if(ch!=='.'){x.fillStyle=M2_PAL[ch]||'#f0f';x.fillRect(i,y,1,1);}}));return c;});
+  return SLOT.sym;}
+load('sl/mach','assets/casino/slot-machine.png').catch(()=>{});fetch('assets/casino/slot-machine.json?v='+BUILD).then(r=>r.json()).then(j=>{SLOT.j=j;}).catch(()=>{});
+
+/* ---- the window: a title, the wallet and a cross on top; the rest is the canvas ---- */
+document.querySelector('#bjModal').insertAdjacentHTML('afterend',`<div class="modal panel" id="slotModal">
+  <div class="mhead"><b>SLOTS</b><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><button class="btn" id="slotX"><i data-ic="cross" data-c="solo"></i></button></div>
+  <canvas id="slotCv" width="130" height="260"></canvas><div id="slotWord"></div>
+  <input id="slotAmt" type="number" inputmode="numeric" min="1" max="1000000" aria-label="Your own bet"></div>`);
+document.querySelectorAll('#slotModal [data-ic]').forEach(e=>{e.outerHTML=ic(e.dataset.ic,+(e.dataset.s||2));});
+document.head.insertAdjacentHTML('beforeend',`<style>
+#slotModal{position:absolute;inset:0;z-index:30;padding:0;border:0!important;border-image:none!important;border-radius:0;box-shadow:none!important;background:#350524;text-align:center;overflow:hidden}
+#slotModal.on{display:block}
+#slotModal .mhead{position:absolute;left:0;right:0;top:0;z-index:3;margin:0;padding:calc(10px + env(safe-area-inset-top)) 12px 8px;text-align:left}
+#slotModal .mhead b{color:#fff6cf!important;text-shadow:0 2px 0 #0f0b1e;font-size:24px}#slotModal .mhead .wal{color:#fff6cf;text-shadow:0 2px 0 #0f0b1e}
+#slotCv{position:absolute;left:0;top:0;image-rendering:pixelated;touch-action:none;cursor:default}
+#slotWord{position:absolute;left:0;right:0;pointer-events:none;z-index:2}
+#slotAmt{position:absolute;z-index:2;opacity:0;border:0;padding:0;margin:0;font-size:16px;background:none;color:transparent;caret-color:transparent;cursor:pointer}
+</style>`);
+
+/* ---- sizes: the reels a little above the middle, the keys on the plinth, the lever always on screen ---- */
+function slotFit(){const M=$('#slotModal'),cv=$('#slotCv'),J=SLOT.j,cw=M.clientWidth,ch=M.clientHeight;if(!J||!cw||!ch)return false;
+  const S=Math.max(1,Math.floor(cw/104)),W=Math.ceil(cw/S),H=Math.ceil(ch/S);   /* standing at the machine: 3 or 4 screen pixels per art pixel on a phone */
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.width=W*S+'px';cv.style.height=H*S+'px';
+  const ox=Math.min(Math.round((W-J.w)/2),W-J.w),oy=Math.min(H-244-Math.ceil(16/S),Math.round(H*.44-(J.hy+J.hh/2)));   /* on a narrow phone the left edge is cut, never the lever */
+  Object.assign(SLV,{S,W,H,ox,oy});
+  const a=$('#slotAmt');a.style.left=(ox+J.lx)*S+'px';a.style.top=(oy+J.ly)*S+'px';a.style.width=J.lw*S+'px';a.style.height=J.lh*S+'px';
+  $('#slotWord').style.top=Math.max(52,(oy+J.hy-50)*S)+'px';return true;}   /* the win words over the 7 sign, so the reels that won stay in view */
+addEventListener('resize',()=>{if($('#slotModal').classList.contains('on'))slotFit();});
+function slotLever(){const{ox,oy}=SLV,px=ox+121,py=oy+132,len=31;return{px,py,len,kx:px,ky:py-len*Math.cos(SLOT.th)};}
+
+/* ---- spinning ---- */
+function slotSpin(){const a=slotAmt();if(SLOT.busy)return;
+  if(coins<a){SLOT.msg={s:'NEED '+a,c:'#ff7a7a',until:SLOT.t+2.2};sfx('nope');return;}
+  coins-=a;saveInv();paintCoins();SLOT.bet=a;SLOT.res=[slotPick(),slotPick(),slotPick()];SLOT.busy=true;SLOT.win=0;SLOT.end=null;SLOT.msg=null;$('#slotWord').innerHTML='';
+  try{localStorage.setItem('m2_slot_stake',String(a));}catch(e){}
+  sfx('sl_spin');
+  SLOT.reels.forEach((r,i)=>{const n=r.strip.length;let j=Math.round(r.p)+16+i*7;while(r.strip[((j%n)+n)%n]!==SLOT.res[i])j++;r.p=Math.round(r.p);r.p0=r.p;r.p1=j;r.t0=SLOT.t;r.T=.95+i*.45;r.done=false;});}
+function slotEnd(){const m=slotPays(SLOT.res),w=SLOT.bet*m;SLOT.busy=false;SLOT.win=w;SLOT.end={t:SLOT.t,m};
+  if(w){coins+=w;saveInv();paintCoins();sfx('cas_win');if(m>=80)sfx('bj_bj');SLOT.flash=m>=80?.6:.3;const{ox,oy}=SLV,J=SLOT.j;
+    for(let k=0;k<(m>=80?70:30);k++){const a=-Math.PI*(.15+.7*Math.random()),sp=40+Math.random()*70;SLOT.parts.push({x:ox+J.hx+J.hw/2,y:oy+J.hy+J.hh-6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:1+Math.random()*.8,t:0,c:k%3});}
+    for(let k=0;k<Math.min(6,2+m/40);k++)setTimeout(()=>sfx('coin'),300+k*140);
+    $('#slotWord').innerHTML=pxWord(m>=150?'JACKPOT':m>=40?'BIG WIN':'YOU WIN',6,'legendary')+pxWord('+'+w,6,'good',.35);}
+  else sfx('nope');}
+function slotPull(){if(SLOT.busy||SLOT.drag||SLOT.auto||SLOT.th>.1)return;SLOT.auto=true;}
+function slotFire(){if(SLOT.fired)return;SLOT.fired=true;sfx('sl_pull');slotSpin();}
+
+/* ---- the picture ---- */
+function slotRR(x,X,y,w,h,c){x.fillStyle=c;x.fillRect(X+1,y,w-2,h);x.fillRect(X,y+1,w,h-2);}
+function slotFrame(dt){const T=SLOT;T.t+=dt;if(!slotFit())return;const cv=$('#slotCv'),x=cv.getContext('2d'),{W,H,ox,oy}=SLV,J=T.j,im=IMG['sl/mach'],sym=slotSyms();x.imageSmoothingEnabled=false;
+  /* the lever: held, pulled for you, or springing back */
+  if(T.auto){T.th=Math.min(Math.PI,T.th+dt*11);if(T.th>=Math.PI){slotFire();T.auto=false;}}
+  else if(!T.drag){T.thv+=(-110*T.th-13*T.thv)*dt;T.th+=T.thv*dt;if(T.th<0){T.th=0;T.thv=-T.thv*.25;}}
+  if(T.th<.3&&!T.drag&&!T.auto)T.fired=false;
+  /* the reels */
+  for(const r of T.reels){const p0=r.p;if(!r.done){const u=(T.t-r.t0)/r.T;if(u>=1){r.p=r.p1%r.strip.length;r.done=true;sfx('sl_stop');if(T.reels.every(q=>q.done))slotEnd();}
+      else{const s=.55,e=1+(s+1)*Math.pow(u-1,3)+s*Math.pow(u-1,2);r.p=r.p0+(r.p1-r.p0)*e;}}
+    r.v=r.done?0:(r.p-p0)/Math.max(dt,.001);}
+  x.fillStyle='#350524';x.fillRect(0,0,W,H);
+  if(!J||!im||!sym)return;
+  const hx=ox+J.hx,hy=oy+J.hy,mid=hy+20;
+  x.fillStyle='#1a1430';x.fillRect(hx,hy,J.hw,J.hh);
+  x.save();x.beginPath();x.rect(hx,hy,J.hw,J.hh);x.clip();
+  const won=T.end&&T.end.m?T.end.m===3?[0,1,2].filter(i=>T.res[i]===0):[0,1,2]:[];
+  T.reels.forEach((r,i)=>{const rx=hx+1+i*26,n=r.strip.length;
+    x.fillStyle='#fff6df';x.fillRect(rx,hy,24,J.hh);x.fillStyle='#e9c88a';x.fillRect(rx,hy,1,J.hh);x.fillRect(rx+23,hy,1,J.hh);
+    x.fillStyle='#e4544f';x.fillRect(rx,mid+9,24,1);   /* the pay line */
+    const f=Math.floor(r.p),fast=Math.abs(r.v)>14;
+    for(let j=f-2;j<=f+3;j++){const y=Math.round(mid+(r.p-j)*20)+2,im2=sym[r.strip[((j%n)+n)%n]];
+      if(fast){x.globalAlpha=.3;x.drawImage(im2,rx+4,y-6);x.drawImage(im2,rx+4,y+6);x.globalAlpha=.75;}x.drawImage(im2,rx+4,y);x.globalAlpha=1;}
+    if(won.includes(i)&&r.done&&((T.t-T.end.t)%.5)<.32){x.strokeStyle='#ffd25e';x.lineWidth=1;x.strokeRect(rx+1.5,mid+.5,21,19);x.strokeStyle='#d39b2a';x.strokeRect(rx+2.5,mid+1.5,19,17);}});
+  if(!T.shade){T.shade=mk(J.hw,J.hh);const s=T.shade.getContext('2d');for(let yy=0;yy<J.hh;yy++){s.fillStyle=`rgba(26,20,48,${(Math.pow(Math.abs(yy+.5-J.hh/2)/(J.hh/2),2)*.62).toFixed(3)})`;s.fillRect(0,yy,J.hw,1);}}
+  x.drawImage(T.shade,hx,hy);   /* the drums curve away at the top and the bottom */
+  x.restore();
+  /* the machine, its screen see-through */
+  x.drawImage(im,ox,oy);
+  if(T.flash>0){x.globalCompositeOperation='lighter';x.globalAlpha=Math.min(1,T.flash)*.5*(Math.sin(T.t*30)>0?1:.4);x.drawImage(im,ox,oy);x.globalAlpha=1;x.globalCompositeOperation='source-over';T.flash=Math.max(0,T.flash-dt*.5);}
+  /* the LED window: your bet, then what happened, then the pay table running along */
+  const lx=ox+J.lx,ly=oy+J.ly,lw=J.lw,blink=(T.t%1)<.6;
+  const line=(s,y,c)=>{x.fillStyle=c;pxText(x,s,Math.round(lx+(lw-(s.length*4-1))/2),y);};
+  const amt=slotAmt(),bs='BET '+amt;line(bs,ly+5,'#ffd25e');
+  if(T.typing&&blink){x.fillStyle='#ffd25e';x.fillRect(Math.round(lx+(lw-(bs.length*4-1))/2)+bs.length*4,ly+9,3,1);}
+  let s2,c2='#fff6cf';
+  if(T.msg&&T.t<T.msg.until){s2=T.msg.s;c2=T.msg.c;}
+  else if(T.busy)s2='GOOD LUCK';
+  else if(T.end&&T.end.m){s2='WIN '+T.win;c2=blink?'#ffd25e':'#fff2a8';}
+  else if(T.end&&T.t-T.end.t<2.5){s2='NO WIN';c2='#ff7a7a';}
+  else if(coins<amt){s2='NEED '+amt;c2='#ff7a7a';}
+  else{s2=blink?'PULL THE LEVER':'';}
+  if(s2)line(s2,ly+15,c2);
+  const pay='TAP HERE FOR YOUR OWN BET   '+SLOT_SYM.slice().reverse().map(s=>'3 '+s.n+' X'+s.p).join('   ')+'   2 CHERRIES X3   ',pw=pay.length*4;
+  x.save();x.beginPath();x.rect(lx+2,ly+24,lw-4,7);x.clip();x.fillStyle='#e4544f';const px0=lx+lw-Math.floor((T.t*14)%(pw+lw));pxText(x,pay,px0,ly+25);x.restore();
+  /* the lever: a chrome box bolted to the cabinet's side, the arm, the red knob (it swings toward you as it comes down) */
+  const L=slotLever();
+  slotRR(x,L.px-6,L.py-8,13,17,'#1a1430');slotRR(x,L.px-5,L.py-7,11,15,'#b8c2d4');x.fillStyle='#6f7b92';x.fillRect(L.px-5,L.py+4,11,3);x.fillRect(L.px+4,L.py-6,2,11);
+  x.fillStyle='#ffffff';x.fillRect(L.px-4,L.py-6,4,1);x.fillRect(L.px-4,L.py-5,1,2);x.fillStyle='#1a1430';x.fillRect(L.px-3,L.py-3,1,1);x.fillRect(L.px+2,L.py-3,1,1);x.fillRect(L.px-3,L.py+2,1,1);x.fillRect(L.px+2,L.py+2,1,1);
+  const ky=Math.round(L.ky),top=Math.min(ky,L.py),bot=Math.max(ky,L.py);x.fillStyle='#1a1430';x.fillRect(L.px-2,top,5,bot-top+1);x.fillStyle='#ffffff';x.fillRect(L.px-1,top,1,bot-top+1);x.fillStyle='#b8c2d4';x.fillRect(L.px,top,1,bot-top+1);x.fillStyle='#6f7b92';x.fillRect(L.px+1,top,1,bot-top+1);
+  x.fillStyle='#1a1430';x.fillRect(L.px-3,L.py-2,7,5);x.fillStyle='#6f7b92';x.fillRect(L.px-2,L.py-1,5,3);x.fillStyle='#b8c2d4';x.fillRect(L.px-2,L.py-1,4,1);   /* the hub the arm turns on */
+  const kr=5+Math.round(1.8*Math.sin(T.th));
+  for(let yy=-kr-1;yy<=kr+1;yy++)for(let xx=-kr-1;xx<=kr+1;xx++){const d=Math.hypot(xx,yy);if(d>kr+.45)continue;x.fillStyle=d>kr-.6?'#1a1430':xx+yy<-kr*.6?'#ff9a8f':xx+yy>kr*.5?'#a92b2c':'#e4544f';x.fillRect(L.px+xx,ky+yy,1,1);}
+  x.fillStyle='#ffffff';x.fillRect(L.px-Math.round(kr*.5),ky-Math.round(kr*.5),1,1);
+  if(!T.busy&&T.th<.05&&!T.drag&&blink){const ay=ky+kr+3+Math.round(Math.sin(T.t*6));x.fillStyle='#1a1430';x.fillRect(L.px-3,ay-1,7,4);x.fillStyle='#ffd25e';x.fillRect(L.px-2,ay,5,1);x.fillRect(L.px-1,ay+1,3,1);x.fillRect(L.px,ay+2,1,1);}   /* a little arrow: pull me */
+  /* the bet keys on the plinth */
+  const kw=Math.min(22,Math.floor((W-8-9)/4)),kt=4*kw+9,kx0=clamp(Math.round(ox+J.w/2-kt/2),2,W-2-kt),ky0=oy+227;T.keys=[];
+  SLOT_KEYS.forEach(([v,lab],i)=>{const X=kx0+i*(kw+3),sel=!T.own&&T.stake===v,d=sel||T.press===v?2:0;T.keys.push({x:X,y:ky0,w:kw,h:16,a:v});
+    if(T.busy)x.globalAlpha=.6;
+    slotRR(x,X,ky0+d,kw,16-d,'#1a1430');slotRR(x,X+1,ky0+1+d,kw-2,10,sel?'#ffd25e':'#fff6df');x.fillStyle=sel?'#d39b2a':'#c9a46a';x.fillRect(X+1,ky0+11+d,kw-2,4-d);
+    x.fillStyle=sel?'#fff2a8':'#ffffff';x.fillRect(X+2,ky0+1+d,kw-4,1);x.fillStyle='#1a1430';pxText(x,lab,Math.round(X+(kw-(lab.length*4-1))/2),ky0+4+d);x.globalAlpha=1;});
+  /* coins flying out on a win */
+  T.parts=T.parts.filter(p=>(p.t+=dt)<p.l);for(const p of T.parts){p.vy+=140*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;x.fillStyle=['#ffd25e','#fff2a8','#d39b2a'][p.c];x.fillRect(Math.round(p.x),Math.round(p.y),2,2);}}
+
+/* ---- touch: the keys, the lever ---- */
+function slotPt(e){const r=$('#slotCv').getBoundingClientRect();return{x:(e.clientX-r.left)/SLV.S,y:(e.clientY-r.top)/SLV.S};}
+$('#slotCv').addEventListener('pointerdown',e=>{const T=SLOT,p=slotPt(e);
+  const k=T.keys.find(k=>p.x>=k.x-1&&p.x<k.x+k.w+1&&p.y>=k.y-2&&p.y<k.y+k.h+2);
+  if(k){if(T.busy)return;T.stake=k.a;T.own=0;$('#slotAmt').value='';$('#slotAmt').blur();T.press=k.a;T.msg=null;sfx('sl_key');return;}
+  const L=slotLever();if(T.busy||T.auto)return;
+  if(Math.hypot(p.x-L.kx,p.y-L.ky)<11||(Math.abs(p.x-L.px)<9&&p.y>L.ky-8&&p.y<L.py+L.len+8)){T.drag={y0:p.y,ky0:L.ky,moved:false};T.thv=0;try{$('#slotCv').setPointerCapture(e.pointerId);}catch(_){}}});
+$('#slotCv').addEventListener('pointermove',e=>{const T=SLOT;if(!T.drag)return;const p=slotPt(e),L=slotLever(),dy=p.y-T.drag.y0;if(Math.abs(dy)>2)T.drag.moved=true;
+  T.th=Math.acos(clamp((L.py-(T.drag.ky0+dy))/L.len,-1,1));if(T.th>2.55&&!T.busy)slotFire();});
+const slotUp=()=>{const T=SLOT;T.press=null;if(!T.drag)return;const g=T.drag;T.drag=null;if(!g.moved&&T.th<.2)slotPull();};
+$('#slotCv').addEventListener('pointerup',slotUp);$('#slotCv').addEventListener('pointercancel',slotUp);
+$('#slotAmt').addEventListener('focus',()=>{if(SLOT.busy){$('#slotAmt').blur();return;}SLOT.typing=true;sfx('sl_key');});
+$('#slotAmt').addEventListener('blur',()=>{SLOT.typing=false;});
+$('#slotAmt').addEventListener('input',()=>{const v=Math.floor(+$('#slotAmt').value);SLOT.own=v>0?Math.min(v,1000000):0;SLOT.msg=null;});
+$('#slotAmt').addEventListener('keydown',e=>{if(e.key==='Enter')$('#slotAmt').blur();});
+addEventListener('keydown',e=>{if(e.code==='Space'&&$('#slotModal').classList.contains('on')&&document.activeElement!==$('#slotAmt')){e.preventDefault();slotPull();}});
+$('#slotX').onclick=()=>{if(SLOT.busy){wlSay('Wait for the reels to stop.');return;}slotClose();};
+function slotOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));$('#slotModal').classList.add('on');paintCoins();sfx('cas_coin');
+  SLOT.end=null;SLOT.msg=null;$('#slotWord').innerHTML='';SLOT.last=performance.now();cancelAnimationFrame(SLOT.raf);
+  const loop=now=>{if(!$('#slotModal').classList.contains('on'))return;slotFrame(Math.min(.05,(now-SLOT.last)/1000));SLOT.last=now;SLOT.raf=requestAnimationFrame(loop);};SLOT.raf=requestAnimationFrame(loop);}
+function slotClose(){$('#slotModal').classList.remove('on');cancelAnimationFrame(SLOT.raf);$('#slotAmt').blur();sfx('close');}

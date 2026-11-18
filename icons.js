@@ -8,6 +8,12 @@ const PAL={K:'#1a1430',W:'#ffffff',P:'#f6dfae',p:'#e9c88a',R:'#e4544f',r:'#a92b2
 // Drawn on a 10 by 10 grid. At button size one icon pixel is 2px, the same as the game's own pixels.
 const GRID=10,E='..........';
 const ICONS={
+/* the Mafia's top hat as a silhouette (18 Nov, his ask: "look more like the silhouette of our mafia hat"): tall crown, red band, wide brim, like the Mafia outfit */
+tophat:[E,'..KKKKKK..','..KhhhhK..','..KhHhhK..','..KhhhhK..','..KRRRRK..','..KrrrrK..','KKKKKKKKKK','KhhhhhhhhK','.KKKKKKKK.'],
+/* Blackjack's buttons (18 Nov, drawn by hand on his note: the PixelLab ones "suck, make new simple ones yourself") */
+bjhit:['.KKKKKK...','.KWWWWK...','.KWRRWK...','.KWRRWK...','.KWWWWK...','.KWWWWKKK.','.KWWWKKEKK','.KWWWKEEEK','.KKKKKKEKK','......KKK.'],
+bjdouble:['......KKK.','.....KRRRK','.....KrWrK','.....KRRRK','.KKK.KrWrK','KBBBKKRRRK','KbWbKKrWrK','KBBBKKRRRK','KbWbKKrWrK','.KKK..KKK.'],
+bjsplit:['KKKK..KKKK','KWWK..KWWK','KWRK..KWRK','KWWK..KWWK','KWWK..KWWK','KKKK..KKKK',E,'.K......K.','KKKK..KKKK','.K......K.'],
 mafia:[E,'...KKKK...','..KIHHhK..','..KHHHhK..','..KTRRrK..','.KKhhhhKK.','KIHHHHHHhK','KhhhhhhhhK','.KKKKKKKK.',E],
 doctor:[E,'...KKKK...','...KFEK...','.KKKEEKKK.','.KFEEEEeK.','.KEEEEeeK.','.KKKEeKKK.','...KeeK...','...KKKK...',E],
 civilian:['....KK....','...KTRK...','..KTRRRK..','.KRRRRRrK.','KKKKKKKKKK','.KPPPPPpK.','.KPLLPopK.','.KPLLPopK.','.KKKKKKKK.',E],
@@ -18,6 +24,14 @@ dice:['.KKKKKKKK.','KWWWWWWWSK','KWKWWWWKSK','KWWWWWWWSK','KWWWKKWWSK','KWWWKKWW
 framer:[E,'.KKKKKKKK.','KNMMMMMMMK','KMKKMMKKMK','KMKKMMKKMK','KMMMMMMMmK','KMKMMMMKmK','.KMKKKKmK.','..KmmmmK..','...KKKK...'],
 eye:[E,E,'..KKKKKK..','.KWWWWWWK.','KWWBLKBWSK','KWWBKKBWSK','.KSWWWSSK.','..KKKKKK..',E,E],
 eyeoff:[E,'.......KR.','..KKKKKR..','.KWWWKRWK.','KWWBKRBWSK','KWWKRKBWSK','.KKRWWSSK.','.KRKKKKK..','KR........',E],
+// the slot machine's reel symbols, 16 by 16, drawn by hand (18 Nov 2026)
+slot7:["................", "..KKKKKKKKKKKK..", "..KTTTTTTTTTRK..", "..KRRRRRRRRRrK..", "..KKKKKKKKRRrK..", ".........KRRrK..", "........KRRrK...", "........KRRrK...", ".......KRRrK....", ".......KRRrK....", "......KRRrK.....", "......KRRrK.....", ".....KTRRrK.....", ".....KRRrrK.....", ".....KKKKKK.....", "................"],
+slotbar:["................", "................", "................", ".KKKKKKKKKKKKKK.", ".KHHHHHHHHHHHHK.", ".KWWhhhWhhWWhhK.", ".KWhWhWhWhWhWhK.", ".KWWhhWWWhWWhhK.", ".KWhWhWhWhWhWhK.", ".KWWhhWhWhWhWhK.", ".KhhhhhhhhhhhhK.", ".KKKKKKKKKKKKKK.", "................", "................", "................", "................"],
+slotbell:[".......KK.......", "......KGGK......", ".....KKYGKK.....", "....KYYGGGgK....", "...KYGGGGGGgK...", "...KYGGGGGGgK...", "...KYGGGGGGgK...", "..KYGGGGGGGGgK..", "..KYGGGGGGGGgK..", ".KYGGGGGGGGGGgK.", ".KGGGGGGGGGGggK.", "KKKKKKKKKKKKKKKK", "KgggggggggggggaK", ".KKKKKKKKKKKKKK.", "......KggK......", ".......KK......."],
+slotlemon:["................", "................", "......KKKK......", "....KKYYGGKK....", "...KYYGGGGGgK...", "..KYGGGGGGGGgK..", ".KGYGGGGGGGGGgK.", "KGGGGGGGGGGGGggK", "KgGGGGGGGGGGGggK", ".KgGGGGGGGGGGgK.", "..KgGGGGGGGggK..", "...KggGGGgggK...", "....KKggggKK....", "......KKKK......", "................", "................"],
+slothat:["................", "................", "....KKKKKKKK....", "....KHHhhhhK....", "....KHhhhhhK....", "....KHhhhhhK....", "....KHhhhhhK....", "....KHhhhhhK....", "....KRRRRRRK....", "....KrrrrrrK....", ".KKKKKKKKKKKKKK.", "KHHhhhhhhhhhhhhK", "KhhhhhhhhhhhhhhK", ".KKKKKKKKKKKKKK.", "................", "................"],
+slotknife:[".......KK.......", "......KSWK......", "......KSWK......", "......KSWK......", "......KSWK......", "......KSWK......", "......KSWK......", "......KSWK......", "...KKKKSWKKKK...", "...KggggggggK...", "...KKKKooKKKK...", "......KooK......", "......KooK......", "......KooK......", "......KGGK......", ".......KK......."],
+slotcherry:["..........KKK...", "..........EEEK..", ".........eEEEEK.", "........e.eKKK..", "........e.e.....", ".......e...e....", ".......e...e....", "......e...KKKK..", "....KKKK.KRRRRK.", "...KWRRRKRWRRRRK", "..KRRRRRKRRRRRrK", "..KRRRRRKRRRRrrK", "..KRRRRrKKRRrrKK", "...KRRrrKKKrrKK.", "....KKKK..KKKK..", "................"],
 // 16 by 16, the size of the Shop's stall and the Collection's shirt: the lobby's Coin flip and Daily buttons (16 Nov). coinbig is the wallet's coin (same chunky ring, glint and sheen) on a rounder outline, his call.
 coinbig:['................','.....KKKKKK.....','....KGGGYYYK....','...KGGGGGGGYK...','..KGGAAAAAAGYK..','..KGAAAAAAAaYK..','.KGGAAGGYYAaGGK.','.KGGAAGGGYAaGGK.','.KGGAAGGGGAaGGK.','.KGGAAGGGGAaGGK.','..KYAAAAAAAaGK..','..KYGaaaaaaGGK..','...KYGGGGGGGK...','....KYYYGGGK....','.....KKKKKK.....','................'],
 giftbig:['................','....KK....KK....','...KGGK..KGGK...','...KGYGKKGGgK...','....KKGGGGKK....','.KKKKKKGGKKKKKK.','KTRRRRRGYRRRRRrK','KRRRRRRGGRRRRRrK','KKKKKKKGGKKKKKKK','.KTRRRRGYRRRRrK.','.KRRRRRGGRRRRrK.','.KRRRRRGGRRRRrK.','.KRRRRRGGRRRrrK.','.KrrrrrggrrrrrK.','.KKKKKKKKKKKKKK.','................'],
@@ -79,5 +93,5 @@ function url(name){
 window.ic=function(name,scale,cls){const s=Math.max(2,scale||2);if(!ICONS[name])return'';
   const n=ICONS[name].length,px=n>GRID?Math.max(1,s-1):s;   // a 16-grid icon at scale 3 is 32px (2px pixels), beside 30px for the 10-grid ones
   return `<img class="ic${cls?' '+cls:''}" src="${url(name)}" width="${n*px}" height="${n*px}" alt="">`;};
-window.M2_ICONS=ICONS;
+window.M2_ICONS=ICONS;window.M2_PAL=PAL;
 })();
