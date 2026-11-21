@@ -151,7 +151,7 @@ addEventListener('keyup',e=>{if(e.code==='Space')FISH.held=false;});
 
 /* ---- one step of the game ---- */
 const fishLook=()=>PEOPLE[0].skin;   /* the outfit you are drawn in at the lake is your own (wlDraw), never a role costume: with looksLike(0) the outfit could change the moment you cast (21 Nov) */
-const fishUp=()=>STACK[fishLook()]?13:0;   /* a 3D outfit (the UFO) has no rod pictures: it keeps its own look and the rod is drawn in front of it, held up at the rim */
+const fishUp=()=>(STACK[fishLook()]||{}).rod||0;   /* a 3D outfit (the UFO) has no rod pictures: it keeps its own look and the rod is drawn in front of it, held up at the rim */
 const fishSide=()=>FISH.face==='right'?1:FISH.face==='left'?-1:0;
 function fishTip(m){const F=FISH,c=fishCell(),sd=fishSide(),B=c!=null&&F.rods[fishLook()][KIT.rod+(sd?'-side':'')];if(B)return[m.x+(sd<0?-1:1)*B[c][0],m.y+B[c][1]];
   const up=fishUp();if(sd)return F.ph==='charge'?[m.x+sd*(16-24*F.pow),m.y-31+4*F.pow-up]:[m.x+sd*16,m.y-30-up];

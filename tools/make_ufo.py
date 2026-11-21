@@ -13,7 +13,7 @@ The front of the saucer (the alien's face) points DOWN (+y) in every slice.
 import json, math, os, sys
 from PIL import Image
 
-OUT = 0.7                     # how big it is next to the first build (31 wide, 23 tall): he asked for smaller twice
+OUT = 0.63                    # how big it is next to the first build (31 wide, 23 tall): he asked for smaller three times
 S, N, SQUASH = round(31 * OUT), 23, 0.55
 C = (S - 1) / 2
 NAVY = (1, 3, 46, 255)
@@ -109,10 +109,11 @@ def eyes(sl, phase):
     skin = {c + (255,) for c in SKIN}
     n, size = len(sl), len(sl[0]); c = (size - 1) / 2
     head = [z for z in range(n) if sum(px in skin for row in sl[z] for px in row) > 12]
-    top = max(head); zs = [top - 4, top - 3, top - 2]
+    head = sorted(z for z in head if z > n // 2)                         # the head only (the hull has no skin, but be safe)
+    mid = len(head) // 2; zs = [head[max(0, mid - 1)], head[mid], head[min(len(head) - 1, mid + 1)]]   # the middle of the head, however many slices it has left
     for i, z in enumerate(zs):
         for sx in (-1, 1):
-            for d in ((1.5, 2.5), (1.5, 2.5, 3.5), (2.5, 3.5))[i]:          # slanted: wider at the top
+            for d in ((1.5, 2.5), (1.5, 2.5, 3.5), (2.5, 3.5))[i]:          # HIS PICK (21 Nov, from a picture he sent back): big slanted eyes that reach the edge of the head
                 x = int(round(c + sx * d))
                 for y in range(size - 1, 0, -1):
                     if sl[z][y][x] in skin:
@@ -120,6 +121,14 @@ def eyes(sl, phase):
                             if sl[z][y - k][x] in skin:
                                 sl[z][y - k][x] = EYE if phase < 2 else SKIN[0] + (255,)
                         break
+
+    # his note: front on, the eyes were not dark navy. The glass of the dome sat over them (the slices above land on the eye rows) and
+    # washed them pale blue. So the dome has no glass in front of the face: from the eyes up, the front of the shell is left open.
+    for z in range(zs[0], n):
+        for y in range(int(c) + 1, size):
+            for x in range(size):
+                if abs(x - c) <= 4.6 and sl[z][y][x] in (GLASS, GLINT):
+                    sl[z][y][x] = None
 
 
 def to_img(sl):

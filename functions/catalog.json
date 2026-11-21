@@ -1,5 +1,5 @@
 {
- "made": "2026-11-21T07:55:19.240Z",
+ "made": "2026-11-21T08:57:05.954Z",
  "skins": [
   {
    "id": "brownhair",
@@ -63,6 +63,10 @@
   },
   {
    "id": "ufo",
+   "rar": "ultra"
+  },
+  {
+   "id": "godfather",
    "rar": "ultra"
   }
  ],
@@ -241,6 +245,10 @@
     },
     {
      "id": "ufo",
+     "rar": "ultra"
+    },
+    {
+     "id": "godfather",
      "rar": "ultra"
     }
    ]
