@@ -15,7 +15,7 @@ const C = require('./catalog.json');
 const ADMINS = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2']);
 const GIFT_NOW = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2', 'XAnbqovmaFUIHDkziEIyPO6Yg5m2']);   // his accounts (@mafia, @chrispy) can send coins on day one (his call, 18 Nov)   // his Google account: the lab's test buttons only work for him
 const MIGRATE_MAX = 20000;
-const DEV_REQUIRED = false;                                    // false while old copies of the game are still out there (they do not say which phone they are); true after the push
+const DEV_REQUIRED = true;                                     // every copy of the game says which phone it is since build 11211426; one that does not is an old copy or a script
 const FISH_DAY = 10000;                                        // the most coins Fisherman Joe pays one player in a day
 const PROP_PRICE = 7500, PROP_MAX = 48;                       // the prop maker (phase 5): what a drawing costs, and its biggest side                                    // coins carried over from a phone, once, at most
 
