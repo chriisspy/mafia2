@@ -12,7 +12,7 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 const db = admin.database();
 const C = require('./catalog.json');
-const ADMINS = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2']);
+const ADMINS = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2', 'XAnbqovmaFUIHDkziEIyPO6Yg5m2']);   // his two accounts: @mafia (the lab account) and @chrispy (21 Nov: the lab buttons on the live site did nothing for him as @chrispy)
 const GIFT_NOW = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2', 'XAnbqovmaFUIHDkziEIyPO6Yg5m2']);   // his accounts (@mafia, @chrispy) can send coins on day one (his call, 18 Nov)   // his Google account: the lab's test buttons only work for him
 const MIGRATE_MAX = 20000;
 const DEV_REQUIRED = true;                                     // every copy of the game says which phone it is since build 11211426; one that does not is an old copy or a script
