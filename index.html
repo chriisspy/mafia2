@@ -1303,7 +1303,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11211957'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11211959'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1497,7 +1497,7 @@ function drawStack(c){const D=STACK[c.name],now=performance.now(),nk=c.name+(c.p
   const w=im.width,h=im.height,bx=fx-(w>>1),by=Math.round(fy-h+(D.px===1?2:4)-hov-(c.lift||0))+(D.ground?Math.round(D.s*D.squash*(D.px===1?.5:1)):0);   /* a car's spot is the middle of it, not its front bumper */
   /* THE SHADOW (21 Nov, his notes: too squashed, and make it react): a rounder oval at the saucer's own angle (half as tall as wide, was a quarter);
      it breathes with the hover (smaller and fainter as it bobs up), trails a little behind and stretches the way it flies, and shrinks when it rises to abduct */
-  if(!c.noShadow){const q=v=>Math.round(v*2)/2,vx=st.vx||0,vy=st.vy||0,k=(1-rise*.3)*(1-bob*.06),rx=q(Math.max(4,w*.33*k+Math.min(4,Math.abs(vx)*.035))),ry=q(Math.max(2,w*.17*k+Math.min(2.5,Math.abs(vy)*.025)));
+  if(!c.noShadow){const q=v=>Math.round(v*2)/2,vx=D.ground?0:st.vx||0,vy=D.ground?0:st.vy||0,   /* only something in the AIR has a shadow that trails behind it; on the ground (the Godfather, his car) it stays right under them (his note) */k=(1-rise*.3)*(1-bob*.06),rx=q(Math.max(4,w*.33*k+Math.min(4,Math.abs(vx)*.035))),ry=q(Math.max(2,w*.17*k+Math.min(2.5,Math.abs(vy)*.025)));
     shadow(fx-Math.round(clamp(vx*.045,-4,4)),fy-Math.round(clamp(vy*.035,-3,3)),rx,ry,(.36-rise*.12-bob*.03)*al);}
   if(c.beam>0)stackBeam(fx,fy,by+h-14,c.beam*al,c.t);
   lx.globalAlpha=al;lx.drawImage(im,bx,by);lx.globalAlpha=1;
@@ -4192,9 +4192,10 @@ function carEngine(){const m=WL.me,c=SND.ctx,on=!!(m&&m.car&&SND.on&&c&&scene===
   E.g.gain.setTargetAtTime(cut?.01:m.walk?.045+k*.04+G*.004:.026,t,cut?.02:.07);}
 function carOff(){const m=WL.me;if(m&&m.car){m.car=0;m.rev=0;m.drift=false;}carEngine();}
 function carBtn(){const b=$('#carBtn');if(!b)return;const m=WL.me,show=!!(m&&scene===scenes.town&&canCar(m)&&m.loc<0&&!m.ab&&!m.ko&&!m.seat);
-  if(b.dataset.s!==String(show)+(m&&m.car?1:0)){b.dataset.s=String(show)+(m&&m.car?1:0);b.style.display=show?'':'none';b.classList.toggle('sel',!!(m&&m.car));}}
-$('#phone').insertAdjacentHTML('beforeend','<button class="btn dark" id="carBtn" title="Car" style="display:none;position:absolute;right:10px;top:46%;z-index:12;width:56px;height:56px;padding:0 0 3px;align-items:center;justify-content:center"></button>');
-$('#carBtn').innerHTML=ic('car',3);$('#carBtn').onclick=e=>{e.stopPropagation();const m=WL.me;if(m)carToggle(m,!m.car);carBtn();};
+  if(b.dataset.s!==String(show)+(m&&m.car?1:0)){b.dataset.s=String(show)+(m&&m.car?1:0);b.style.display=show?'flex':'none';b.style.boxShadow=m&&m.car?'inset 0 -6px 0 #1b1532,inset 0 3px 0 #3d3466,0 0 0 3px #ffd25e,0 4px 0 #0009':'inset 0 -6px 0 #1b1532,inset 0 3px 0 #3d3466,0 4px 0 #0009';}   /* a gold ring while you are in the car */
+  const j=$('#joy');if(show&&j&&(carBtn.n=(carBtn.n||0)+1)%20===1){const jb=parseFloat(getComputedStyle(j).bottom);if(jb===jb)b.style.bottom=Math.round(jb+(j.offsetHeight-76)/2)+'px';}}   /* level with the middle of the joystick, wherever the panel puts it */
+$('#phone').insertAdjacentHTML('beforeend','<button class="btn dark" id="carBtn" title="Car" style="display:none;position:absolute;right:14px;bottom:246px;z-index:8;width:76px;height:76px;padding:0;border-radius:50%;align-items:center;justify-content:center;background:#2a2346;border:3px solid #0f0b1e;box-shadow:inset 0 -6px 0 #1b1532,inset 0 3px 0 #3d3466,0 4px 0 #0009"></button>');   /* (his note, 21 Nov) a round button straight across from the joystick, with a picture of the real car on it */
+$('#carBtn').innerHTML='<img src="assets/final/car/right.png?v='+av('assets/final/car/right.png')+'" alt="" style="width:62px;image-rendering:pixelated;pointer-events:none;margin-top:-4px">';$('#carBtn').onclick=e=>{e.stopPropagation();const m=WL.me;if(m)carToggle(m,!m.car);carBtn();};
 function wlDraw(e,t){const o={e,name:PEOPLE[e.i].skin,dir:e.dir,x:e.x,y:e.y,t,phase:e.phase,walk:e.walk};if(e.car&&e.loc<0){o.name='car';o.ang=e.ca;o.x+=e.cox||0;o.y+=e.coy||0;}   /* in his car */
   if(e.ko){const k=e.ko.t;o.walk=false;if(k<1.25){o.pose='dead';o.lift=k<.32?Math.sin(Math.PI*k/.32)*(e.ko.fly?26:7):0;}else{o.lift=Math.sin(Math.PI*(k-1.25)/.25)*5;o.dir='front';}}
   else if(e.seat){const a=e.seat,s=wlSeat(a.k,e),k=clamp(a.t/s.dur,0,1),q=ease(a.out?1-k:k);o.walk=false;
