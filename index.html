@@ -1303,7 +1303,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11211840'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11211844'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2157,9 +2157,12 @@ const WIN_FX={
   rare:     {ray:.3, ray2:0,  flash:.25,sh:3, burst:46, rain:0,  spark:.6, glow:30,glint:.7,delay:.15,pop:.5, word:4},
   epic:     {ray:.5, ray2:.2, flash:.55,sh:7, burst:100,rain:.5, spark:1.1,glow:46,glint:1, delay:.5, pop:.6, word:5},
   legendary:{ray:.75,ray2:.4, flash:.95,sh:13,burst:210,rain:1.3,spark:2,  glow:70,glint:1, delay:1.1,pop:.75,word:6},
-  ultra:    {ray:.9, ray2:.55,flash:1,  sh:16,burst:280,rain:1.6,spark:2.6,glow:90,glint:1, delay:1.1,pop:.75,word:6}};
+  ultra:    {ray:1,  ray2:.7, flash:1,  sh:22,burst:440,rain:2.6,spark:4,  glow:120,glint:1,delay:1.8,pop:.75,word:6}};   /* MYTHIC (21 Nov, his ask: even crazier): a longer build-up, and showWin adds shock rings, warp streaks, fireworks, aftershocks and colours that keep changing */
 const WIN={on:false,parts:[],timer:0,item:null};
-function showWin(item,dupe,back){sparkleStop();if(item.rar==='epic'||item.rar==='legendary'||item.rar==='ultra')winSound(item.rar==='ultra'?'legendary':item.rar,WIN_FX[item.rar].delay);else sfx(item.rar==='common'?'prize':'rare');   /* common and rare keep the sounds he already likes */const el=$('#winFx'),fx=WIN_FX[item.rar],col=RAR_COL[item.rar],src=item.art||item.ck?null:SP[item.id].front.frames[0][0];
+/* the Mythic win's own sound on top of the Legendary one: a theremin climbing through the build-up and diving after, two more booms for the aftershocks, two more runs of bells */
+function mythSound(d){if(!SND.on||!sndCtx())return;tone(160,d,{type:'sine',to:1500,vib:[11,70],vol:.1});tone(1500,1.4,{type:'sine',to:300,vib:[14,90],vol:.09,at:d});
+  tone(60,1.2,{type:'sine',vol:.5,to:26,at:d+.5});tone(60,1.2,{type:'sine',vol:.45,to:26,at:d+1.05});arp([1047,1319,1568,2093,2637,3136],.07,{vol:.1,at:d+1.2});arp([784,1047,1319,1568,2093],.07,{vol:.09,at:d+1.9});}
+function showWin(item,dupe,back){sparkleStop();if(item.rar==='epic'||item.rar==='legendary'||item.rar==='ultra')winSound(item.rar==='ultra'?'legendary':item.rar,WIN_FX[item.rar].delay);else sfx(item.rar==='common'?'prize':'rare');   /* common and rare keep the sounds he already likes */if(item.rar==='ultra')mythSound(WIN_FX.ultra.delay);const el=$('#winFx'),fx=WIN_FX[item.rar],col=RAR_COL[item.rar],src=item.art||item.ck?null:SP[item.id].front.frames[0][0];
   WIN.item=item;WIN.on=true;WIN.parts=[];el.classList.remove('on','shake');void el.offsetWidth;
   for(const[k,v]of Object.entries({rc:col,ray:fx.ray,ray2:fx.ray2,flash:fx.flash,sh:fx.sh+'px',glow:fx.glow+'px',glint:fx.glint,delay:fx.delay+'s',pop:fx.pop+'s'}))el.style.setProperty('--'+k,v);
   const im=$('#winImg');if(item.art||item.ck){im.src=thumb(item);im.style.width='152px';im.style.height='152px';}else{im.src=src.toDataURL();im.style.width=src.width*4+'px';im.style.height=src.height*4+'px';}
@@ -2173,17 +2176,28 @@ function showWin(item,dupe,back){sparkleStop();if(item.rar==='epic'||item.rar===
   const cvs=$('#winCv'),W=Math.ceil(el.clientWidth/3),H=Math.ceil(el.clientHeight/3),g=cvs.getContext('2d');cvs.width=W;cvs.height=H;
   const cx=W/2,cy=H*.44,pal=item.rar==='ultra'?['#7dffd0','#ffffff','#c58bff','#6fb5ff','#ffcf4a']:item.rar==='legendary'?['#ffd45a','#fff2a8','#ffffff','#ff9b4a','#ffcf4a']:item.rar==='epic'?[col,'#ffffff','#ff9bd0','#9fd8ff']:[col,'#ffffff'];
   const pc=()=>pal[Math.floor(Math.random()*pal.length)];let age=0,fired=false;
+  const mad=item.rar==='ultra',rings=[],ringT=[0,.22,.44,1.05,1.3],shT=[.5,1.05];let fwT=.3,hue=-1;   /* Mythic only */
   clearInterval(WIN.timer);WIN.timer=setInterval(()=>{const dt=.033;age+=dt;const P=WIN.parts;
     if(age<fx.delay){ // the wait before a big reveal: sparks get pulled in to the middle
-      for(let i=0;i<3;i++){const a=Math.random()*6.28,d=60+Math.random()*50;P.push({x:cx+Math.cos(a)*d,y:cy+Math.sin(a)*d,vx:-Math.cos(a)*d/fx.delay*.9,vy:-Math.sin(a)*d/fx.delay*.9,g:0,l:fx.delay-age,c:pc(),s:1});}}
+      for(let i=0;i<(mad?10:3);i++){const a=Math.random()*6.28,d=60+Math.random()*(mad?90:50);P.push({x:cx+Math.cos(a)*d,y:cy+Math.sin(a)*d,vx:-Math.cos(a)*d/fx.delay*.9,vy:-Math.sin(a)*d/fx.delay*.9,g:0,l:fx.delay-age,c:pc(),s:1});}}
     else{if(!fired){fired=true;if(fx.sh)el.classList.add('shake');
         for(let i=0;i<fx.burst;i++){const a=Math.random()*6.28,v=30+Math.random()*(60+fx.burst*.5);P.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-30,g:90,l:.8+Math.random()*1.4,c:pc(),s:Math.random()<.3?2:1});}}
       if(Math.random()<fx.rain)for(let i=0;i<Math.ceil(fx.rain);i++)P.push({x:Math.random()*W,y:-2,vx:(Math.random()-.5)*14,vy:26+Math.random()*30,g:8,l:5,c:pc(),s:Math.random()<.4?2:1});
       if(Math.random()<fx.spark){const a=Math.random()*6.28,d=34+Math.random()*24;P.push({x:cx+Math.cos(a)*d,y:cy+Math.sin(a)*d*1.2,vx:0,vy:-6,g:0,l:.7,c:'#ffffff',s:1,tw:1});}}
+    if(mad&&fired){const a2=age-fx.delay;
+      while(ringT.length&&a2>=ringT[0]){ringT.shift();rings.push({r:4,l:1});}                                                       /* shock rings */
+      while(shT.length&&a2>=shT[0]){shT.shift();el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');
+        for(let i=0;i<160;i++){const a=Math.random()*6.28,v=40+Math.random()*190;P.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-20,g:80,l:.7+Math.random()*1.2,c:pc(),s:Math.random()<.3?2:1});}}   /* aftershocks: it goes off twice more */
+      for(let i=0;i<5;i++){const a=Math.random()*6.28,v=150+Math.random()*150;P.push({x:cx+Math.cos(a)*10,y:cy+Math.sin(a)*10,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:0,l:.75,c:pc(),s:1,st:1});}   /* warp streaks flying out */
+      fwT-=dt;if(fwT<=0){fwT=.4+Math.random()*.3;const fx0=W*(.12+Math.random()*.76),fy0=H*(.08+Math.random()*.55),c0=pc();sfx('tick');
+        for(let i=0;i<46;i++){const a=Math.random()*6.28,v=20+Math.random()*72;P.push({x:fx0,y:fy0,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:60,l:.6+Math.random()*.8,c:Math.random()<.7?c0:'#ffffff',s:Math.random()<.3?2:1});}}   /* fireworks all round */
+      const h=Math.floor(age/.13);if(h!==hue){hue=h;el.style.setProperty('--rc',pal[h%pal.length]);}}                                 /* the rays and the glow keep changing colour */
     g.clearRect(0,0,W,H);
+    for(let i=rings.length-1;i>=0;i--){const R=rings[i];R.r+=dt*200;R.l-=dt*.8;if(R.l<=0){rings.splice(i,1);continue;}g.globalAlpha=R.l;g.fillStyle=pal[i%pal.length];const n=Math.ceil(R.r*4);
+      for(let k=0;k<n;k++){const a=k/n*6.283;g.fillRect(Math.round(cx+Math.cos(a)*R.r),Math.round(cy+Math.sin(a)*R.r*.9),2,2);}}
     for(let i=P.length-1;i>=0;i--){const q=P[i];q.l-=dt;if(q.l<=0||q.y>H+4){P.splice(i,1);continue;}q.vy+=q.g*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;
       g.globalAlpha=Math.min(1,q.l*2.5);g.fillStyle=q.c;const x=Math.round(q.x),y=Math.round(q.y);
-      if(q.tw){g.fillRect(x,y-1,1,3);g.fillRect(x-1,y,3,1);}else g.fillRect(x,y,q.s,q.s);}
+      if(q.tw){g.fillRect(x,y-1,1,3);g.fillRect(x-1,y,3,1);}else if(q.st){for(let k=0;k<5;k++)g.fillRect(Math.round(q.x-q.vx*k*.012),Math.round(q.y-q.vy*k*.012),1,1);}else g.fillRect(x,y,q.s,q.s);}
     g.globalAlpha=1;},33);}
 function closeWin(){if(!WIN.on)return;WIN.on=false;SND.caseLive=false;clearInterval(WIN.timer);$('#winFx').classList.remove('on','shake');paintShop();}
 $('#winFx').onclick=closeWin;
