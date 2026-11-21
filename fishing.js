@@ -150,14 +150,16 @@ addEventListener('keydown',e=>{if(e.code==='Space'&&FISH.on&&!e.repeat&&!documen
 addEventListener('keyup',e=>{if(e.code==='Space')FISH.held=false;});
 
 /* ---- one step of the game ---- */
+const fishLook=()=>PEOPLE[0].skin;   /* the outfit you are drawn in at the lake is your own (wlDraw), never a role costume: with looksLike(0) the outfit could change the moment you cast (21 Nov) */
+const fishUp=()=>STACK[fishLook()]?13:0;   /* a 3D outfit (the UFO) has no rod pictures: it keeps its own look and the rod is drawn in front of it, held up at the rim */
 const fishSide=()=>FISH.face==='right'?1:FISH.face==='left'?-1:0;
-function fishTip(m){const F=FISH,c=fishCell(),sd=fishSide(),B=c!=null&&F.rods[looksLike(0)][KIT.rod+(sd?'-side':'')];if(B)return[m.x+(sd<0?-1:1)*B[c][0],m.y+B[c][1]];
-  if(sd)return F.ph==='charge'?[m.x+sd*(16-24*F.pow),m.y-31+4*F.pow]:[m.x+sd*16,m.y-30];
-  if(F.ph==='charge')return[m.x+11-22*F.pow,m.y-34+5*F.pow];if(F.ph==='fight'&&F.held)return[m.x-7+Math.round(Math.sin(F.fr*.02)*1),m.y-37];return[m.x+11,m.y-34];}
+function fishTip(m){const F=FISH,c=fishCell(),sd=fishSide(),B=c!=null&&F.rods[fishLook()][KIT.rod+(sd?'-side':'')];if(B)return[m.x+(sd<0?-1:1)*B[c][0],m.y+B[c][1]];
+  const up=fishUp();if(sd)return F.ph==='charge'?[m.x+sd*(16-24*F.pow),m.y-31+4*F.pow-up]:[m.x+sd*16,m.y-30-up];
+  if(F.ph==='charge')return[m.x+11-22*F.pow,m.y-34+5*F.pow-up];if(F.ph==='fight'&&F.held)return[m.x-7+Math.round(Math.sin(F.fr*.02)*1),m.y-37-up];return[m.x+11,m.y-34-up];}
 /* which of this outfit's 9 fishing pictures to show (PixelLab's cast: 0 standing with the rod, 1-6 the swing back, 7-8 the throw; 8 = holding the line out).
    null = no pictures for this outfit (yet): it gets a rod drawn here. */
-function fishKey(){return'rod/'+looksLike(0)+'/'+KIT.rod+(fishSide()?'-side':'');}
-function fishCell(){const F=FISH,n=looksLike(0),v=fishSide()?'-side':'',k=fishKey();if(!F.rods[n]||!F.rods[n][KIT.rod+v])return null;
+function fishKey(){return'rod/'+fishLook()+'/'+KIT.rod+(fishSide()?'-side':'');}
+function fishCell(){const F=FISH,n=fishLook(),v=fishSide()?'-side':'',k=fishKey();if(!F.rods[n]||!F.rods[n][KIT.rod+v])return null;
   if(!IMG[k]){if(!F.rodAsk[k]){F.rodAsk[k]=1;load(k,`assets/fishing/rods/${n}-${KIT.rod}${v}.png`).catch(()=>{});}return null;}   /* each outfit has one sheet per rod and view (the rod in the hand is the rod you own): fetched the first time it is needed */
   if(F.ph==='charge')return 1+Math.min(5,Math.floor(F.pow*6));if(F.ph==='fly')return F.t<.25?7:8;
   if(F.ph==='fight')return F.held?7+(Math.floor(F.fr/150)%2):8;if(F.ph==='idle'||F.ph==='card')return 0;return 8;}
@@ -252,7 +254,7 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
   if(me&&F.on){const c=fishCell(),tip=fishTip(m),px=XP(m.x),py=YP(m.y);
     if(c!=null){shadow(px,py,6,2,.28);const sh=IMG[fishKey()];if(fishSide()<0){lx.save();lx.translate(px,0);lx.scale(-1,1);lx.drawImage(sh,c*64,0,64,64,-32,py-56,64,64);lx.restore();}else lx.drawImage(sh,c*64,0,64,64,px-32,py-56,64,64);
       if(KIT.rod==='gold'&&Math.floor(t/110)%7===0){lx.fillStyle='#fffbe0';lx.fillRect(X(tip[0])+(Math.floor(t/770)%3)-1,Y(tip[1])-1+(Math.floor(t/770)%2),1,1);}   /* the Golden Rod glints */hits.set(me,{cx:px,top:py-36});}
-    else{const h=drawChar({...me,dir:F.face||'back',walk:false}),hx=fishSide()?m.x+fishSide()*5:m.x+8;if(h)hits.set(me,h);fishLine(X(hx),Y(m.y-9),X(tip[0]),Y(tip[1]),'#3a2413');fishLine(X(hx)+1,Y(m.y-9),X(tip[0])+1,Y(tip[1]),{twig:'#a36a35',oak:'#ba6c32',steel:'#96acd0',gold:'#eeb632'}[KIT.rod]||'#a36a35');}
+    else{const h=drawChar({...me,dir:F.face||'back',walk:false}),hx=fishSide()?m.x+fishSide()*5:m.x+8;const ry=m.y-9-fishUp();if(h)hits.set(me,h);fishLine(X(hx),Y(ry),X(tip[0]),Y(tip[1]),'#3a2413');fishLine(X(hx)+1,Y(ry),X(tip[0])+1,Y(tip[1]),{twig:'#a36a35',oak:'#ba6c32',steel:'#96acd0',gold:'#eeb632'}[KIT.rod]||'#a36a35');}
     /* the line, the float, the fish on the end of it */
     if(B&&F.ph!=='fight'){const dip=Math.round(Math.min(2,F.dip)),bx=X(B.x),by=Y(B.y-B.z)+(F.ph==='fly'?0:dip+Math.round(Math.sin(t*.004)*.6));
       fishLine(X(tip[0]),Y(tip[1]),bx,by-2,'#eef6ff',F.ph==='fly'?0:5);

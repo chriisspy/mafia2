@@ -1,5 +1,5 @@
 {
- "made": "2026-11-18T05:41:14.996Z",
+ "made": "2026-11-21T07:40:51.145Z",
  "skins": [
   {
    "id": "brownhair",
@@ -60,6 +60,10 @@
   {
    "id": "sheik",
    "rar": "legendary"
+  },
+  {
+   "id": "ufo",
+   "rar": "ultra"
   }
  ],
  "rooms": [
@@ -168,10 +172,11 @@
   "mafia": {
    "price": 500,
    "odds": {
-    "common": 0.55,
+    "common": 0.545,
     "rare": 0.3,
     "epic": 0.12,
-    "legendary": 0.03
+    "legendary": 0.03,
+    "ultra": 0.005
    },
    "pool": [
     {
@@ -233,6 +238,10 @@
     {
      "id": "sheik",
      "rar": "legendary"
+    },
+    {
+     "id": "ufo",
+     "rar": "ultra"
     }
    ]
   },

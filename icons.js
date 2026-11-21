@@ -9,6 +9,8 @@ const PAL={K:'#1a1430',W:'#ffffff',P:'#f6dfae',p:'#e9c88a',R:'#e4544f',r:'#a92b2
 const GRID=10,E='..........';
 const ICONS={
 /* the Mafia's top hat as a silhouette (18 Nov, his ask: "look more like the silhouette of our mafia hat"): tall crown, red band, wide brim, like the Mafia outfit */
+/* the UFO's abduct button (21 Nov) */
+ufo:[E,'...KKKK...','..KLEELK..','.KKLEELKK.','KSSSSSSSSK','KsGsNsGsNK','.KKKKKKKK.','..L.LL.L..','.L..LL..L.',E],
 tophat:[E,'..KKKKKK..','..KhhhhK..','..KhHhhK..','..KhhhhK..','..KRRRRK..','..KrrrrK..','KKKKKKKKKK','KhhhhhhhhK','.KKKKKKKK.'],
 /* Blackjack's buttons (18 Nov, drawn by hand on his note: the PixelLab ones "suck, make new simple ones yourself") */
 bjhit:['.KKKKKK...','.KWWWWK...','.KWRRWK...','.KWRRWK...','.KWWWWK...','.KWWWWKKK.','.KWWWKKEKK','.KWWWKEEEK','.KKKKKKEKK','......KKK.'],
