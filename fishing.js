@@ -333,7 +333,7 @@ function joeUI(){const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0),free=!LAB&
   $('#joeBaitN').textContent=LAB?'99':KIT.bait;$('#joeBait').disabled=!free&&coins<BAIT_PRICE;$('#joeBait').innerHTML=free?FISH_BAIT_IMG+' Take 5 on the house':FISH_BAIT_IMG+' x'+BAIT_PACK+' · '+ic('coin',2)+' '+BAIT_PRICE;$('#joeBait').dataset.free=free?'1':'';
   paintCoins();}
 $('#joeX').onclick=()=>{$('#joeModal').classList.remove('on');STALL.t=performance.now();sfx('close');};
-$('#joeSell').onclick=async()=>{const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0);if(!worth||$('#joeSell').classList.contains('busy'))return;const done=btnBusy($('#joeSell'),'…');try{await srv('fsell',{rod:KIT.rod});}catch(e){done();wlSay(e.message,'bad');return;}done();sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),200+k*140);wlSay('Sold for '+worth+' coins.','good');joeUI();};
+$('#joeSell').onclick=async()=>{const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0);if(!worth||$('#joeSell').classList.contains('busy'))return;const done=btnBusy($('#joeSell'),'…');let got=worth;try{const r=await srv('fsell',{rod:KIT.rod});if(r&&r.got>=0)got=r.got;}catch(e){done();wlSay(e.message,'bad');return;}done();sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),200+k*140);wlSay('Sold for '+got+' coins.','good');joeUI();};
 $('#joeRods').onclick=e=>{const b=e.target.closest('button');if(!b)return;const r=RODS.find(q=>q.id===b.dataset.r);if(!r)return;
   if(!KIT.rods.includes(r.id)){if(coins<r.price)return;srv('frod',{id:r.id}).then(()=>{KIT.rod=r.id;kitSave();sfx('rare');wlSay('You bought the '+r.name+'.','good');joeUI();}).catch(e=>wlSay(e.message,'bad'));return;}else sfx('click');
   KIT.rod=r.id;kitSave();joeUI();};

@@ -15,6 +15,7 @@ const C = require('./catalog.json');
 const ADMINS = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2']);
 const GIFT_NOW = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2', 'XAnbqovmaFUIHDkziEIyPO6Yg5m2']);   // his accounts (@mafia, @chrispy) can send coins on day one (his call, 18 Nov)   // his Google account: the lab's test buttons only work for him
 const MIGRATE_MAX = 20000;
+const FISH_DAY = 10000;                                        // the most coins Fisherman Joe pays one player in a day
 const PROP_PRICE = 7500, PROP_MAX = 48;                       // the prop maker (phase 5): what a drawing costs, and its biggest side                                    // coins carried over from a phone, once, at most
 
 const bad = m => { throw new HttpsError('failed-precondition', m); };
@@ -57,6 +58,8 @@ async function tx(uid, fn) {
   if (!res.committed) bad('Try again.');
   return out;
 }
+// THE TRIPWIRE (21 Nov, after a friend ran a script): things no real phone ever sends are written to flags/{uid} (nobody can read it but him)
+const flag = (uid, why) => db.ref('flags/' + uid).push({ why: String(why).slice(0, 120), t: Date.now() }).catch(() => {});
 const bet = v => { const n = Math.floor(+v); if (!(n > 0) || n > 1000000) bad('Bad amount.'); return n; };
 
 /* ---- blackjack: six decks, the dealer stands on 17 and peeks on an Ace or a ten; 1:1, blackjack 3:2; double the first two; split once ---- */
@@ -150,7 +153,11 @@ const OPS = {
   // first time on the server: what this phone had comes over once (capped). Afterwards it just answers with the wallet.
   async init(uid, d) {
     const ref = db.ref('wallet/' + uid);
-    await ref.transaction(cur => cur ? undefined : fresh(d && d.claim));
+    // (21 Nov) the phone's old coins and outfits are no longer carried over: a script could claim 20,000 coins and every item.
+    // Everyone who played before the server kept the wallet has had three days to come over.
+    const had = (await ref.child('ts').get()).exists();
+    await ref.transaction(cur => cur ? undefined : fresh(null));
+    const c = d && d.claim; if (!had && c && (+c.coins > 5000 || (Array.isArray(c.owned) && c.owned.length > 12))) await flag(uid, 'init claim ' + (+c.coins | 0) + ' coins, ' + (Array.isArray(c.owned) ? c.owned.length : 0) + ' items');
     return {};
   },
   beer: (uid) => tx(uid, w => { spend(w, 5); w.dr = { b: Math.min(10, beers(w) + 1), t: Date.now() }; return {}; }),
@@ -199,17 +206,23 @@ const OPS = {
     const k = pick(C.fishes.map((f, i) => i).filter(i => C.fishes[i].rar === rar));
     K.pend = { k, t: Date.now() }; return { k };
   }),
+  // a real catch (wait for the bite, hook it, reel it in) never takes under about 4.5 s, even with the Golden Rod: sooner is a script
   fland: (uid) => tx(uid, w => {
     const K = w.kit, p = K.pend; if (!p) bad('Nothing on the line.');
-    if (Date.now() - p.t < 2500) bad('Too quick.'); if (K.bag.length >= C.fishBag) bad('Your bag is full.');
+    if (Date.now() - p.t < 3500) bad('Too quick.'); if (K.bag.length >= C.fishBag) bad('Your bag is full.');
     const F = C.fishes[p.k], pct = Math.random(), cm = Math.round(F.min + (F.max - F.min) * (pct * pct * .6 + pct * .4)), g = F.rar === 'junk' ? F.val : Math.max(1, Math.round(F.val * (.75 + .6 * pct)));
     K.bag.push([p.k, cm, g]); K.pend = null; return { k: p.k, cm, g };
-  }),
+  }).catch(async e => { if (e && e.message === 'Too quick.') await flag(uid, 'fish landed too fast'); throw e; }),
   flose: (uid) => tx(uid, w => { w.kit.pend = null; return {}; }),
   fsell: (uid, d) => tx(uid, w => {
     const K = w.kit, rod = C.rods.find(r => r.id === d.rod && K.rods[r.id]) || C.rods[0];
-    const got = K.bag.reduce((a, b) => a + Math.round(b[2] * rod.pay), 0); if (!got) bad('Nothing to sell.');
-    w.c += got; K.bag = []; return { got };
+    if (!K.bag.length) bad('Nothing to sell.');
+    // (21 Nov, his call) Joe buys FISH_DAY coins of fish a day at most, so a script cannot farm the lake; fish that do not fit stay in the bag for tomorrow
+    const k = dayKey(); if (w.day.fd !== k) { w.day.fd = k; w.day.f = 0; }
+    let got = 0; const keep = [];
+    for (const b of K.bag) { const v = Math.round(b[2] * rod.pay); if ((w.day.f || 0) + got + v <= FISH_DAY) got += v; else keep.push(b); }
+    if (!got) bad('Joe has bought enough fish for today. Come back tomorrow.');
+    w.day.f = (w.day.f || 0) + got; w.c += got; K.bag = keep; return { got, kept: keep.length };
   }),
   frod: (uid, d) => tx(uid, w => { const r = C.rods.find(x => x.id === d.id); if (!r) bad('No such rod.'); if (w.kit.rods[r.id]) return {}; spend(w, r.price); w.kit.rods[r.id] = 1; return {}; }),
   fbait: (uid) => tx(uid, w => {
@@ -222,6 +235,7 @@ const OPS = {
   ckend: (uid, d) => tx(uid, w => {
     if (!w.ck || !w.ck.t) return { pay: 0 };
     const secs = (Date.now() - w.ck.t) / 1000, score = Math.max(0, d.score | 0), claim = score + Math.max(0, d.coins | 0);
+    if (claim > secs * 4 + 15) { w.sus = (w.sus || 0) + 1; w.susT = Date.now(); }   // more points than any real run makes in that time: a made-up score (counted, so he can see who)
     let pay = Math.min(claim, Math.floor(secs * 2.5)); if (score >= 50 && secs >= 40) pay += 500;
     const k = dayKey(); if (w.day.ckd !== k) { w.day.ckd = k; w.day.ck = 0; }
     pay = Math.max(0, Math.min(pay, 5000 - (w.day.ck || 0))); w.day.ck += pay; w.c += pay; w.ck = null; return { pay };
