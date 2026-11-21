@@ -1,5 +1,5 @@
 {
- "made": "2026-11-21T07:40:51.145Z",
+ "made": "2026-11-21T07:55:19.240Z",
  "skins": [
   {
    "id": "brownhair",
@@ -172,9 +172,9 @@
   "mafia": {
    "price": 500,
    "odds": {
-    "common": 0.545,
+    "common": 0.515,
     "rare": 0.3,
-    "epic": 0.12,
+    "epic": 0.15,
     "legendary": 0.03,
     "ultra": 0.005
    },

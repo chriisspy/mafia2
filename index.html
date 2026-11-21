@@ -1296,14 +1296,14 @@ const SKINS=[
   {id:'raincoat',name:'Cat Raincoat',rar:'rare'},{id:'redcap',name:'Red Cap',rar:'common'},
   {id:'alfa',name:'Alfa Marcus',rar:'epic'},{id:'golf',name:'Golf Chrispy',rar:'epic'},{id:'ferrari',name:'Ferrari Anthony',rar:'epic'},{id:'bape',name:'Bape Michael',rar:'epic'},{id:'fisher',name:'Fisherman Jarrad',rar:'epic'},{id:'matias',name:'Bird Whisperer Matias',rar:'epic'},
   // very rare: only from the Mafia case (his call, 10 Nov)
-  {id:'batman',name:'Batman',rar:'legendary',locked:true,from:'Mafia Case'},{id:'sheik',name:'Sheik Osama',rar:'legendary'},{id:'ufo',name:'Alien UFO',rar:'ultra'}];   /* ultra = Ultra Legendary (21 Nov): the sprite-stacked UFO */
+  {id:'batman',name:'Batman',rar:'legendary',locked:true,from:'Mafia Case'},{id:'sheik',name:'Sheik Osama',rar:'legendary'},{id:'ufo',name:'Alien',rar:'ultra'}];   /* ultra = Ultra Legendary (21 Nov): the sprite-stacked UFO */
 function rarName(r){return r==='ultra'?'MYTHIC':r.toUpperCase();}   /* the top rarity is shown as MYTHIC (his pick, 21 Nov); its key in the data stays 'ultra' */
 {const RO=['common','rare','epic','legendary','ultra'];SKINS.sort((a,b)=>RO.indexOf(a.rar)-RO.indexOf(b.rar));} // always listed Common, Rare, Epic, Legendary (lobby arrows, Collection, Shop)
 SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11211844'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11211855'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1473,20 +1473,28 @@ function stackFrame(name,row,ai,tint){const k=name+row+'|'+ai+'|'+(tint||'');if(
   if(tint){const[col,al]=tint.split('|');x.globalCompositeOperation='source-atop';x.globalAlpha=+al;x.fillStyle=col;x.fillRect(0,0,W,H);x.globalAlpha=1;x.globalCompositeOperation='source-over';}
   const c2=mk(W*2,H*2),x2=c2.getContext('2d');x2.imageSmoothingEnabled=false;x2.drawImage(c,0,0,W*2,H*2);   /* doubled: the cast's own pixels are 2 by 2, and so is their navy line */
   return STK.fr[k]=c2;}
-function stackBeam(fx,fy,top,k,t){const n=fy-top;if(n<2)return;
-  for(let i=0;i<=n;i++){const q=i/n,hw=Math.round(7+q*15),y=top+i;lx.fillStyle=`rgba(140,255,225,${(.27+.1*Math.sin(t*.012-i*.9))*k})`;lx.fillRect(fx-hw,y,hw*2+1,1);
+/* THE BEAM (21 Nov, his note: match the angle too): a cone seen from the game's own angle. It lands on the ground as an OVAL pool of light (half as tall as it is wide,
+   like the shadow and the saucer), not a flat line: the sides run down to the middle of the oval and its front edge curves round below. A ring of light pulses on the ground. */
+function stackBeam(fx,fy,top,k,t){const n=fy-top;if(n<2)return;const RX=21,RY=10,hwAt=y=>y<=fy?7+(y-top)/n*(RX-7):RX*Math.sqrt(Math.max(0,1-((y-fy)/RY)**2));
+  for(let y=top;y<=fy+RY;y++){const hw=Math.round(hwAt(y));if(hw<1)continue;lx.fillStyle=`rgba(140,255,225,${(.27+.1*Math.sin(t*.012-(y-top)*.9))*k})`;lx.fillRect(fx-hw,y,hw*2+1,1);
     lx.fillStyle=`rgba(230,255,250,${.13*k})`;lx.fillRect(fx-(hw>>1),y,(hw>>1)*2+1,1);}
-  lx.fillStyle=`rgba(190,255,235,${.5*k})`;lx.fillRect(fx-20,fy,41,1);lx.fillRect(fx-16,fy+1,33,1);}
+  const p=.5+.5*Math.sin(t*.008);lx.fillStyle=`rgba(200,255,240,${(.35+.3*p)*k})`;   /* the ring where it lands: the whole oval, back edge too */
+  for(let i=0;i<72;i++){const a=i/72*6.283;lx.fillRect(Math.round(fx+Math.cos(a)*RX),Math.round(fy+Math.sin(a)*RY),1,1);}
+  lx.fillStyle=`rgba(230,255,250,${.16*k})`;for(let y=-RY+3;y<=RY-3;y++){const hw=Math.round((RX-6)*Math.sqrt(1-(y/(RY-3))**2));lx.fillRect(fx-hw,fy+y,hw*2+1,1);}}   /* a brighter pool in the middle */
 function drawStack(c){const D=STACK[c.name],now=performance.now(),nk=c.name+(c.phase||0);let st=c.e?STK.st.get(c.e):STK.named[nk];
   if(!st){st={a:null,x:c.x,y:c.y,t:now};if(c.e)STK.st.set(c.e,st);else STK.named[nk]=st;}
   const dead=c.pose==='dead',dx=c.x-st.x,dy=c.y-st.y,mv=Math.hypot(dx,dy),dt=Math.min(.1,(now-st.t)/1000);st.x=c.x;st.y=c.y;st.t=now;
+  if(dt>0&&dt<.1&&mv<12){const f=Math.min(1,dt*7);st.vx=(st.vx||0)+(dx/dt-(st.vx||0))*f;st.vy=(st.vy||0)+(dy/dt-(st.vy||0))*f;}else{st.vx=st.vy=0;}   /* how fast it is really going, smoothed: the shadow reacts to it */
   const v={front:[0,1],back:[0,-1],right:[1,0],left:[-1,0]}[c.dir]||[0,1];
   const ta=(c.walk&&mv>.05&&mv<12?Math.atan2(dy,dx):Math.atan2(v[1],v[0]))-Math.PI/2;   /* walking: the way they really move (any angle); standing: the way they face */
   if(st.a==null||dt>=.1)st.a=ta;else st.a+=(((ta-st.a)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI)*Math.min(1,dt*9);
   const ai=((Math.round(st.a/(Math.PI*2)*48)%48)+48)%48,im=stackFrame(c.name,dead?2:Math.floor(c.t/320)%2,ai,c.tint);if(!im)return null;
-  const al=c.alpha??1,fx=XP(c.x),fy=YP(c.y),rise=c.rise||0,hov=dead?0:D.hover+Math.sin(c.t*.004+(c.phase||0))*2+rise*40;
+  const al=c.alpha??1,fx=XP(c.x),fy=YP(c.y),rise=c.rise||0,bob=dead?0:Math.sin(c.t*.004+(c.phase||0)),hov=dead?0:D.hover+bob*2+rise*40;
   const w=im.width,h=im.height,bx=fx-(w>>1),by=Math.round(fy-h+4-hov-(c.lift||0));
-  if(!c.noShadow)shadow(fx,fy,Math.max(4,w*(.4-rise*.12)),Math.max(2,w*.1),(.35-rise*.13)*al);
+  /* THE SHADOW (21 Nov, his notes: too squashed, and make it react): a rounder oval at the saucer's own angle (half as tall as wide, was a quarter);
+     it breathes with the hover (smaller and fainter as it bobs up), trails a little behind and stretches the way it flies, and shrinks when it rises to abduct */
+  if(!c.noShadow){const q=v=>Math.round(v*2)/2,vx=st.vx||0,vy=st.vy||0,k=(1-rise*.3)*(1-bob*.06),rx=q(Math.max(4,w*.33*k+Math.min(4,Math.abs(vx)*.035))),ry=q(Math.max(2,w*.17*k+Math.min(2.5,Math.abs(vy)*.025)));
+    shadow(fx-Math.round(clamp(vx*.045,-4,4)),fy-Math.round(clamp(vy*.035,-3,3)),rx,ry,(.36-rise*.12-bob*.03)*al);}
   if(c.beam>0)stackBeam(fx,fy,by+h-14,c.beam*al,c.t);
   lx.globalAlpha=al;lx.drawImage(im,bx,by);lx.globalAlpha=1;
   return{top:by,cx:fx,box:[bx,by,bx+w,by+h]};}
@@ -1639,7 +1647,7 @@ function face(name,dead){const key=name+(dead?'|x':'');if(FACES[key])return FACE
     src=c;}
   const crop=Math.min(d.h,d.eyeBot+6);let top=0;const id=src.getContext('2d').getImageData(0,0,d.w,crop).data;
   outer:for(let y=0;y<crop;y++)for(let x=0;x<d.w;x++)if(id[(y*d.w+x)*4+3]){top=y;break outer;}
-  const hh=crop-top,sz=Math.max(d.w,hh),k=4,c=mk(sz*k,sz*k),x=c.getContext('2d');x.imageSmoothingEnabled=false;
+  const hh=FLY[name]?Math.min(d.h-top,d.w):crop-top,sz=Math.max(d.w,hh),k=4,c=mk(sz*k,sz*k)   /* the Sheik and the Alien are wide (carpet, saucer): the old crop stopped just under the eyes and cut their faces off at the bottom of the picture, with empty space above. They get a full square from the top of the head (his note, 21 Nov) */,x=c.getContext('2d');x.imageSmoothingEnabled=false;
   x.drawImage(src,0,top,d.w,hh,Math.floor((sz-d.w)/2)*k,(sz-hh)*k,d.w*k,hh*k);return FACES[key]=c.toDataURL();}
 // a polyline you can walk along
 class Poly{constructor(pts){this.pts=pts;this.segs=[];this.len=0;for(let i=1;i<pts.length;i++){const l=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);this.segs.push(l);this.len+=l;}}
@@ -2014,7 +2022,7 @@ $('#skinNext').onclick=()=>{skinIdx=(skinIdx+1)%SKINS.length;if(OWNED.has(SKINS[
    Lab only: these coins and unlocks live on this phone (m2_coins / m2_owned / m2_skin). The real game will use the
    main app's coins. A case costs CASE.price; a double pays CASE.dupe of that back (same rule as the main app's cases). */
 const RAR_COL={common:'#7bc96f',rare:'#6fb5ff',epic:'#c58bff',legendary:'#ffcf4a',ultra:'#7dffd0'};
-const CASE_DEF={mafia:{price:500,odds:{common:.545,rare:.3,epic:.12,legendary:.03,ultra:.005},pool:()=>SKINS,sheet:'caseSheet'},
+const CASE_DEF={mafia:{price:500,odds:{common:.515,rare:.3,epic:.15,legendary:.03,ultra:.005},pool:()=>SKINS,sheet:'caseSheet'},
   cabin:{price:1000,odds:{common:.5,rare:.32,epic:.13,legendary:.05},pool:()=>ROOMS.filter(r=>!r.base),sheet:'cabinOpen'},
   clicker:{price:300,odds:{common:.5,rare:.32,epic:.13,legendary:.05},pool:()=>CK_ITEMS,sheet:'clickerOpen'}};   /* neon green, PixelLab state of the Mafia case (tools/clicker_case_sheet.py) */
 /* CASE.kind is the case being opened; price, odds and pool read from it */
@@ -2374,7 +2382,7 @@ scenes.cabin={
       if(CAB.state!==CAB.prevSt){if(['bed','chair','arm'].includes(CAB.state)){CAB.relax=false;CAB.held=0;}CAB.prevSt=CAB.state;}
       const seated=['bed','chair','arm'].includes(CAB.state);if(seated){if(!J){CAB.held=0;CAB.relax=true;}else if(CAB.relax){CAB.held=(CAB.held||0)+dt;}}   /* sat down or asleep: let go of the stick first; then a push gets you up (a 0.3 s hold to wake from bed) */
       if(J&&(!seated||(CAB.relax&&CAB.held>=(CAB.state==='bed'?.3:0)))){if(CAB.state==='bed'){const s=bedIn();CAB.state='stand';CAB.x=s[0];CAB.y=s[1];CAB.dir='front';CAB.bedArm=false;CAB.held=0;}   /* you wake up, still under the quilt */
-        if(CAB.state==='stand'){CAB.tgt=null;CAB.path=null;CAB.after=null;const[nx,ny]=joyStep(CAB.x,CAB.y,J,62*Math.min(1,.35+J.m)*dt,(x,y)=>canStand(x,y,true)&&y<=193),moved=Math.hypot(nx-CAB.x,ny-CAB.y)>.01;
+        if(CAB.state==='stand'){CAB.tgt=null;CAB.path=null;CAB.after=null;const[nx,ny]=joyStep(CAB.x,CAB.y,J,cabSpd()*Math.min(1,.35+J.m)*dt,(x,y)=>canStand(x,y,true)&&y<=193),moved=Math.hypot(nx-CAB.x,ny-CAB.y)>.01;
           CAB.x=nx;CAB.y=ny;CAB.dir=dirFrom(J.x,J.y);CAB.walk=moved;CAB.joy=true;if(moved)footstep(CAB,dt,'wood');
           const s=bedIn(),d=Math.hypot(CAB.x-s[0],CAB.y-s[1]);if(d>18)CAB.bedArm=true;
           if(WALK_SIT&&inR(ARMZ,CAB.x+J.x*6,CAB.y+J.y*6)){CAB.walk=false;animTo([CAB.x,CAB.y],AR.sit,.35,{dir:'left',lift:4,sortY:195,cover:k=>k>.6?['armchair',AR.front]:null,end:()=>{CAB.state='arm';sfx('sit');}});}   /* walked into the armchair: sit */
@@ -2383,7 +2391,7 @@ scenes.cabin={
         else if(CAB.state!=='anim'&&CAB.state!=='bed')getUp();}
       else if(CAB.joy){CAB.joy=false;if(!CAB.tgt)CAB.walk=false;}}
     // walking
-    if(CAB.state==='stand'&&CAB.tgt){const dx=CAB.tgt[0]-CAB.x,dy=CAB.tgt[1]-CAB.y,dd=Math.hypot(dx,dy),sp=62*dt;
+    if(CAB.state==='stand'&&CAB.tgt){const dx=CAB.tgt[0]-CAB.x,dy=CAB.tgt[1]-CAB.y,dd=Math.hypot(dx,dy),sp=cabSpd()*dt;
       if(dd<=sp){CAB.x=CAB.tgt[0];CAB.y=CAB.tgt[1];CAB.tgt=(CAB.path&&CAB.path.shift())||null;
         if(!CAB.tgt){CAB.walk=false;const a=CAB.after;CAB.after=null;if(a)a();}}
       else{CAB.x+=dx/dd*sp;CAB.y+=dy/dd*sp;CAB.dir=dirFrom(dx,dy);CAB.walk=true;footstep(CAB,dt,'wood');}}
@@ -4062,7 +4070,7 @@ function wlStep(e,dt){if(abStep(e,dt))return;   /* hanging in a UFO's beam: they
     else if(a.k==='dance'){if(Math.floor(a.t/.4)!==Math.floor((a.t-dt)/.4))WL.fx.push({k:'note',x:e.x+(Math.random()-.5)*14,y:e.y-30,t:0,loc:e.loc});if(a.t>2.6)e.act=null;}
     else if(a.k==='wave'){if(!a.hit){a.hit=true;WL.fx.push({k:'heart',x:e.x,y:e.y-32,t:0,loc:e.loc});}if(a.t>.9)e.act=null;}
     return;}
-  if(e.path.length){const p=e.path[0],dx=p[0]-e.x,dy=p[1]-e.y,dd=Math.hypot(dx,dy),sp=(e.i===0||e.remote?76:56)*dt;
+  if(e.path.length){const p=e.path[0],dx=p[0]-e.x,dy=p[1]-e.y,dd=Math.hypot(dx,dy),sp=wlSpd(e)*dt;
     if(dd<=sp){e.x=p[0];e.y=p[1];e.path.shift();if(!e.path.length){e.walk=false;const td=e.todo;e.todo=null;if(td)td();}}
     else{e.x+=dx/dd*sp;e.y+=dy/dd*sp;e.dir=dirFrom(dx,dy);e.walk=true;if(e===WL.me)footstep(e,dt,e.loc<0?groundAt(e.x,e.y):e.loc>=100?hallOf(e.loc).step:'wood');}}
   else e.walk=false;}
@@ -4091,6 +4099,8 @@ function wlSeatOff(e){if(!e.seat)return;const s=wlSeat(e.seat.k,e);e.x=s.stand[0
    held.ab = {by, k (0..1 how far up), out, life}; holder.abTg = who they hold. Every phone moves the held player itself
    (ev 'abd' / 'abdx'), so nothing about them is sent while they hang there; when they land their own phone says where.
    My limits (not his): 10 seconds a go, so nobody is stuck in the air, and not while they sit or are knocked down. */
+/* WALKING SPEED (21 Nov, his call): everyone a touch quicker (76 -> 81; bots 56 -> 60; your cabin at night 62 -> 66), and the Alien a little quicker again (88; 71 in the cabin) */
+const wlSpd=e=>isUfo(e)?88:e.i===0||e.remote?81:60,cabSpd=()=>STACK[PEOPLE[0].skin]?71:66;
 const isUfo=e=>!!(e&&PEOPLE[e.i]&&STACK[PEOPLE[e.i].skin]);
 function abSet(h,tg){if(!h||!tg||h===tg||!isUfo(h)||h.ab||h.abTg||tg.ab||tg.abTg||tg.ko||tg.seat||h.ko||tg.loc!==h.loc||h.loc>=0)return false;
   tg.ab={by:h,k:0,out:false,life:0};h.abTg=tg;tg.path=[];tg.todo=null;tg.walk=false;tg.act=null;if(tg===WL.me){WL.sel=null;wlMenu();}if(h===WL.me||tg===WL.me)sfx('abduct');return true;}
@@ -4344,7 +4354,7 @@ scenes.town={hud:'#townHud',
       const asleep=sk==='bed';if(sk){if(!J){m.held=0;m.relax=true;}else if(m.relax)m.held=(m.held||0)+dt;}   /* sat down or asleep: let go first; then a push gets you up (0.3 s hold to wake) */
       if(J&&!m.ko&&!WL.fading&&(!sk||(m.relax&&m.held>=(asleep?.3:0)))){if(asleep&&m.seat.t>=wlSeat('bed',m).dur){const s=wlSeat('bed',m).sit;m.seat=null;m.x=s[0];m.y=s[1];m.dir='front';m.bedArm=false;m.held=0;}   /* wake up under the quilt */
         if(m.seat)wlUp(m);else if(!m.act||m.act.k!=='punch'){m.path=[];m.todo=null;m.act=null;WL.sel=null;wlMenu();
-          const[nx,ny]=joyStep(m.x,m.y,J,76*Math.min(1,.35+J.m)*dt,(x,y)=>m.loc===LAKE&&isUfo(m)?(x>=10&&x<hallOf(LAKE).w-10&&y>=34&&y<hallOf(LAKE).h-4):m.loc>=100?hallOk(m.loc,x,y):m.loc>=0?canStand(x,y,true):isUfo(m)?flyOk(x,y):townOk(x,y)),moved=Math.hypot(nx-m.x,ny-m.y)>.01;
+          const[nx,ny]=joyStep(m.x,m.y,J,wlSpd(m)*Math.min(1,.35+J.m)*dt,(x,y)=>m.loc===LAKE&&isUfo(m)?(x>=10&&x<hallOf(LAKE).w-10&&y>=34&&y<hallOf(LAKE).h-4):m.loc>=100?hallOk(m.loc,x,y):m.loc>=0?canStand(x,y,true):isUfo(m)?flyOk(x,y):townOk(x,y)),moved=Math.hypot(nx-m.x,ny-m.y)>.01;
           m.x=nx;m.y=ny;m.dir=dirFrom(J.x,J.y);m.walk=moved;if(moved)footstep(m,dt,m.loc<0?groundAt(m.x,m.y):m.loc>=100?hallOf(m.loc).step:'wood');const inCab=m.loc>=0&&m.loc<100;
           if(WALK_SIT&&inCab&&inR(CHAIRZ,m.x+J.x*6,m.y+J.y*6)&&!seatTaken(m,'chair')){wlSit(m,'chair');}   /* walked into the chair: sit */
           else if(WALK_SIT&&inCab&&inR(ARMZ,m.x+J.x*6,m.y+J.y*6)&&!seatTaken(m,'arm')){wlSit(m,'arm');}   /* or the armchair */
