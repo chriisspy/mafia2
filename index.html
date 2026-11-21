@@ -39,6 +39,8 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 .hud.on{display:block}
 .hud .panel,.hud .btn,.hud .chip,.hud .sheet{pointer-events:auto}
 #xfade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .22s;z-index:30}
+#devShade{position:absolute;inset:0;background:#0b0818e6;display:none;z-index:58}#devShade.on{display:block}
+#devModal{top:50%;bottom:auto!important;transform:translateY(-50%);z-index:59}#devModal b{display:block;font-size:20px;margin:8px 0 12px}#devMsg:empty{display:none}#devMsg{color:#c0392b;margin-bottom:8px}
 #xfade.on{opacity:1}
 #buildTag{position:absolute;left:6px;top:calc(4px + env(safe-area-inset-top));font:500 9px "Pixelify Sans",monospace;color:#fff;opacity:.4;z-index:8;pointer-events:none;letter-spacing:1px}
 #fxL{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated;opacity:0;transition:opacity 1.2s ease;z-index:2}
@@ -622,6 +624,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <canvas id="fxL"></canvas>
   <div id="buildTag"></div>
   <div id="xfade"></div>
+  <div id="devShade"></div><div class="modal panel" id="devModal"><h3>This account is on another device</h3><b id="devName"></b><div class="small bad" id="devMsg"></div><div class="row"><button class="btn" id="devOut">Sign out</button><button class="btn red" id="devHere">Use it here</button></div></div>
   <div id="hauntFx"></div>
   <div id="clk">
     <button class="btn" id="clkX" title="Close"><i data-ic="cross" data-c="solo"></i></button>
@@ -1295,7 +1298,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11211417'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11211426'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -4371,9 +4374,27 @@ function netLoad(){if(NET.ready)return NET.ready;
    changes the wallet; the phone then plays the animation for what came back. The first time, this phone's old coins and
    outfits come over once (capped by the server). */
 async function srv(op,d){await netLoad();if(!NET.fn)NET.fn=NET.app.functions('asia-southeast1').httpsCallable('act');
-  try{return(await NET.fn({op,...(d||{})})).data||{};}catch(e){const m=String(e&&e.message||'');throw new Error(/internal|network|deadline|unavailable/i.test(m)||!m?'No connection. Try again.':m);}}
+  try{return(await NET.fn({op,dev:DEV.id,devName:DEV.name,...(d||{})})).data||{};}catch(e){const m=String(e&&e.message||'');throw new Error(/internal|network|deadline|unavailable/i.test(m)||!m?'No connection. Try again.':m);}}
+/* ================= ONE DEVICE PER ACCOUNT (21 Nov 2026, his call, against scripts farming one account on many phones) =================
+   This browser has its own id (kept in its storage). The server gives the account to the first device that plays and refuses
+   every other one (functions/index.js, `act`); device/{uid} = {id, name, at} says which. A refused device shows #devModal:
+   move the account here (the other device is then shut out) or sign out. Social shows the device and a Remove button. */
+const DEV=(()=>{const nm=(location.search.match(/[?&]p=(\w+)/)||[])[1]||'',k='m2_dev'+nm;let id='';try{id=localStorage.getItem(k)||'';}catch(e){}
+  if(!/^[A-Za-z0-9_-]{8,40}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{localStorage.setItem(k,id);}catch(e){}}
+  const ua=navigator.userAgent,what=/iPhone/.test(ua)?'iPhone':/iPad/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1)?'iPad':/Android/.test(ua)?(/Mobile/.test(ua)?'Android phone':'Android tablet'):/Windows/.test(ua)?'Windows PC':/Macintosh/.test(ua)?'Mac':/CrOS/.test(ua)?'Chromebook':/Linux/.test(ua)?'Linux PC':'Device';
+  const br=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Firefox|FxiOS/.test(ua)?'Firefox':/CriOS|Chrome\//.test(ua)?'Chrome':/Safari/.test(ua)?'Safari':'';
+  return{id,name:what+(br?' ('+br+')':''),cur:null,ref:null,uid:null};})();
+const devBlocked=()=>!!(DEV.cur&&DEV.cur.id&&DEV.cur.id!==DEV.id);
+function devWatch(){const uid=NET.uid;if(!uid||DEV.uid===uid)return;if(DEV.ref)DEV.ref.off();DEV.uid=uid;DEV.cur=null;devPaint();DEV.ref=NET.db.ref('device/'+uid);
+  DEV.ref.on('value',s=>{if(NET.uid!==uid)return;DEV.cur=s.val();devPaint();},()=>{});}
+function devPaint(){const on=devBlocked();$('#devShade').classList.toggle('on',on);$('#devModal').classList.toggle('on',on);
+  if(on){$('#devName').textContent=DEV.cur.name||'Another device';$('#devOut').style.display=acctUser()?'':'none';$('#devMsg').textContent='';}
+  if(typeof frPaint==='function')frPaint();}
+async function devSignOut(){const a=NET.auth;if(!a)return;if(NET.on&&!devBlocked())netLeave();try{await a.signOut();NET.uid=(await a.signInAnonymously()).user.uid;localStorage.removeItem('m2_acct');}catch(e){}acctUI();devWatch();}
+$('#devHere').onclick=async()=>{const done=btnBusy($('#devHere'),'…');try{await srv('devMove');sfx('rare');}catch(e){$('#devMsg').textContent=e.message;}done();};
+$('#devOut').onclick=async()=>{const done=btnBusy($('#devOut'),'…');await devSignOut();done();};
 const WALLET={uid:null,ref:null,ok:false,day:{},fl:{}};
-function walletWatch(){const uid=NET.uid;if(!uid||WALLET.uid===uid)return;if(WALLET.ref)WALLET.ref.off();WALLET.uid=uid;WALLET.ok=false;
+function walletWatch(){devWatch();const uid=NET.uid;if(!uid||WALLET.uid===uid)return;if(WALLET.ref)WALLET.ref.off();WALLET.uid=uid;WALLET.ok=false;
   srv('init',{claim:{coins,owned:[...OWNED],kit:{rods:(typeof KIT!=='undefined'?KIT.rods:['twig']),bait:(typeof KIT!=='undefined'?KIT.bait:10)}}}).catch(()=>{}).then(()=>{
     WALLET.ref=NET.db.ref('wallet/'+uid);WALLET.ref.on('value',s=>{const w=s.val();if(!w||w.probe||NET.uid!==uid)return;walletApply(w);},()=>{});});}
 function walletApply(w){WALLET.ok=true;coins=w.c|0;

@@ -15,6 +15,7 @@ const C = require('./catalog.json');
 const ADMINS = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2']);
 const GIFT_NOW = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2', 'XAnbqovmaFUIHDkziEIyPO6Yg5m2']);   // his accounts (@mafia, @chrispy) can send coins on day one (his call, 18 Nov)   // his Google account: the lab's test buttons only work for him
 const MIGRATE_MAX = 20000;
+const DEV_REQUIRED = false;                                    // false while old copies of the game are still out there (they do not say which phone they are); true after the push
 const FISH_DAY = 10000;                                        // the most coins Fisherman Joe pays one player in a day
 const PROP_PRICE = 7500, PROP_MAX = 48;                       // the prop maker (phase 5): what a drawing costs, and its biggest side                                    // coins carried over from a phone, once, at most
 
@@ -341,6 +342,10 @@ const OPS = {
     await db.ref('props/' + uid + '/' + id).set({ png, w, h, wall: !!d.wall, sh: d.sh !== false, at: Date.now() });
     return { id: key };
   },
+  // ONE DEVICE PER ACCOUNT (21 Nov, his call): device/{uid} = {id, name, at}, written only here. The first phone to play gets the
+  // account; any other phone is refused by `act` below until it moves the account over (devMove), which shuts the old one out.
+  devMove: async (uid, d) => { await db.ref('device/' + uid).set({ id: d._dev, name: d._devName, at: Date.now() }); return {}; },
+  devOff: async (uid, d) => { await db.ref('device/' + uid).remove(); return {}; },   // only the assigned phone gets this far
   // the lab's test buttons: his account only
   lab: (uid, d) => { if (!ADMINS.has(uid)) bad('Not allowed.'); return tx(uid, w => {
     if (d.what === 'coins') w.c += 500;
@@ -353,6 +358,13 @@ const OPS = {
 exports.act = onCall({ region: 'asia-southeast1', maxInstances: 10 }, async req => {
   const uid = req.auth && req.auth.uid; if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
   const d = req.data || {}, f = OPS[d.op]; if (!f) throw new HttpsError('invalid-argument', 'Unknown action.');
+  // which phone is asking: the account answers to one phone at a time
+  d._dev = /^[A-Za-z0-9_-]{8,40}$/.test(String(d.dev || '')) ? String(d.dev) : ''; d._devName = String(d.devName || 'A device').replace(/[^A-Za-z0-9_ .()-]/g, '').slice(0, 40) || 'A device';
+  const dref = db.ref('device/' + uid), cur = (await dref.get()).val();
+  if (d.op === 'devMove') { if (!d._dev) throw new HttpsError('failed-precondition', 'Update the game first.'); }
+  else if (cur && cur.id) { if (cur.id !== d._dev) throw new HttpsError('failed-precondition', 'This account is on another device.'); }
+  else if (d._dev) { const r = await dref.transaction(c => c && c.id && c.id !== d._dev ? undefined : (c && c.id ? c : { id: d._dev, name: d._devName, at: Date.now() })); if (!r.committed) throw new HttpsError('failed-precondition', 'This account is on another device.'); }
+  else if (DEV_REQUIRED) throw new HttpsError('failed-precondition', 'Update the game first.');
   if (d.op !== 'init') { const has = (await db.ref('wallet/' + uid + '/ts').get()).exists(); if (!has) await OPS.init(uid, {}); }
   d._google = !!(req.auth.token && req.auth.token.firebase && req.auth.token.firebase.sign_in_provider === 'google.com');
   const r = await f(uid, d) || {};

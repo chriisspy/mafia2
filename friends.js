@@ -5,15 +5,15 @@
    Database (written only by the server, functions/index.js): friends/{uid}/{friend} true, freq/{uid}/{from} {n, p, skin},
    gifts/{uid}/{id} {from, n, amt} (the phone deletes a gift once it has shown it). Names and pictures: profiles/{uid}. */
 const FR={uid:null,refs:[],list:{},req:{},prof:{},to:null,stake:500};
-document.querySelector('#homeFlip').insertAdjacentHTML('afterend',`<button class="btn dark lob" id="homeFriends"><i data-ic="heart" data-s="3" data-c="solo"></i>Friends<em class="frDot"></em></button>`);
-document.querySelector('#menuHow').insertAdjacentHTML('beforebegin',`<button class="btn mrow" id="menuFriends">Friends<em class="frDot"></em></button>`);
+document.querySelector('#homeFlip').insertAdjacentHTML('afterend',`<button class="btn dark lob" id="homeFriends"><i data-ic="heart" data-s="3" data-c="solo"></i>Social<em class="frDot"></em></button>`);
+document.querySelector('#menuHow').insertAdjacentHTML('beforebegin',`<button class="btn mrow" id="menuFriends">Social<em class="frDot"></em></button>`);
 document.querySelector('#menuModal').insertAdjacentHTML('afterend',`<div class="modal big panel" id="friendsModal">
-  <div class="mhead"><b>FRIENDS</b><button class="btn" id="frX"><i data-ic="cross" data-c="solo"></i></button></div>
+  <div class="mhead"><b>SOCIAL</b><button class="btn" id="frX"><i data-ic="cross" data-c="solo"></i></button></div>
   <button class="gbtn" id="frSign" style="display:none"><i data-ic="google" data-c="solo"></i><span>Sign in with Google</span></button>
   <div id="frMe"></div>
   <div id="frAddBox"><h4>ADD A FRIEND</h4><div class="wmRow"><span class="unAt"><b>@</b><input id="frUser" maxlength="16" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="username"></span><button class="btn red" id="frAdd">Add</button></div></div>
   <div class="small" id="frMsg"></div>
-  <div id="frReq"></div><div id="frList"></div></div>
+  <div id="frReq"></div><div id="frList"></div><div id="frDev"></div></div>
 <div class="modal panel" id="unameModal"><h3>Create a username</h3><div class="small">Friends add you with it.</div>
   <span class="unAt big"><b>@</b><input id="unIn" maxlength="16" autocomplete="off" autocapitalize="none" spellcheck="false"></span>
   <div class="small bad" id="unMsg"></div><div class="row"><button class="btn" id="unX" style="display:none">Back</button><button class="btn red wide" id="unOk">Create</button></div></div>
@@ -53,6 +53,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .frMeCard{display:flex;align-items:center;gap:8px;padding:6px 10px 8px;border:3px solid var(--wood);border-radius:5px;background:#fff7}
 .frMeCard small{display:block;font-size:10px;letter-spacing:2px;opacity:.65}.frMeCard b{font-size:19px}.frMeCard span{flex:1;min-width:0}
 .frNone{padding:8px 0;opacity:.6;font-size:14px}
+#frDev:empty{display:none}#frDev .btn.sure{border-color:#6b1416;color:#b3261e}
 #frAddBox .wmRow .btn,#wmInvite .wmRow .btn{height:40px;padding:0 14px 4px;flex:none}
 </style>`);
 
@@ -74,7 +75,9 @@ function frPaint(){const n=Object.keys(FR.req).length;document.querySelectorAll(
   $('#frSign').style.display=signed?'none':'';$('#frAddBox').style.display=signed?'':'none';
   $('#frReq').innerHTML=n?'<h4>REQUESTS</h4>'+Object.entries(FR.req).map(([id,r])=>`<div class="frow"><img src="${esc(frFace(r))}" alt="" referrerpolicy="no-referrer"><span class="fn">${esc(r.n||'Player')}${r.u?`<small>@${esc(r.u)}</small>`:''}</span><button class="btn red" data-yes="${id}">Accept</button><button class="btn xb" data-no="${id}" title="Decline">${ic('cross',2,'solo')}</button></div>`).join(''):'';
   const fl=Object.keys(FR.list);
-  $('#frList').innerHTML=signed?`<h4>FRIENDS ${fl.length}</h4>`+fl.map(id=>{const p=FR.prof[id]||{n:'…'};return`<div class="frow"><img src="${esc(frFace(p))}" alt="" referrerpolicy="no-referrer"><span class="fn">${esc(p.n||'Player')}${p.u?`<small>@${esc(p.u)}</small>`:''}</span><button class="btn go" data-gift="${id}">${ic('coin',2)}Send coins</button><button class="btn xb" data-rm="${id}" title="Remove friend">${ic('cross',2,'solo')}</button></div>`;}).join('')+(fl.length?'':'<div class="frNone">No friends yet.</div>'):'';}
+  $('#frList').innerHTML=signed?`<h4>FRIENDS ${fl.length}</h4>`+fl.map(id=>{const p=FR.prof[id]||{n:'…'};return`<div class="frow"><img src="${esc(frFace(p))}" alt="" referrerpolicy="no-referrer"><span class="fn">${esc(p.n||'Player')}${p.u?`<small>@${esc(p.u)}</small>`:''}</span><button class="btn go" data-gift="${id}">${ic('coin',2)}Send coins</button><button class="btn xb" data-rm="${id}" title="Remove friend">${ic('cross',2,'solo')}</button></div>`;}).join('')+(fl.length?'':'<div class="frNone">No friends yet.</div>'):'';
+  /* THE DEVICE this account is assigned to (21 Nov, his ask): its name, and Remove (signs this device out, so another one can take the account) */
+  const dv=typeof DEV!=='undefined'&&DEV.cur&&DEV.cur.id?DEV.cur:null;$('#frDev').innerHTML=dv?`<h4>DEVICE</h4><div class="frow"><span class="fn">${esc(dv.name||'A device')}<small>${dv.id===DEV.id?'This device':'Another device'}</small></span>${signed&&dv.id===DEV.id?'<button class="btn" data-devoff="1">Remove</button>':''}</div>`:'';}
 /* the username pop-up: right after the Google sign-in, until there is one */
 function unAsk(rename){if($('#unameModal').classList.contains('on'))return;$('#unIn').value=rename?FR.me:String(myName||'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,16);$('#unMsg').textContent='';
   $('#unameModal h3').textContent=rename?'Change your username':'Create a username';$('#unOk').textContent=rename?'Save':'Create';$('#unX').style.display=rename?'':'none';$('#unameModal').classList.add('on');setTimeout(()=>$('#unIn').focus(),50);}
@@ -94,6 +97,8 @@ $('#homeFriends').onclick=()=>{sfx('click');frOpen();};
 $('#menuFriends').onclick=()=>{sfx('click');frOpen();};
 $('#friendsModal').addEventListener('click',e=>{if(e.target.closest('#frMeEdit'))unAsk(true);});
 $('#frX').onclick=()=>$('#friendsModal').classList.remove('on');
+$('#friendsModal').addEventListener('click',async e=>{const b=e.target.closest('[data-devoff]');if(!b)return;if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='Remove?';return;}
+  const done=btnBusy(b,'…');try{await srv('devOff');}catch(err){done();frMsg(err.message,true);return;}sfx('close');$('#friendsModal').classList.remove('on');await devSignOut();if(typeof homeMsg==='function')homeMsg('Signed out.');});
 $('#frSign').onclick=async()=>{await $('#homeAcct').onclick();frWatch();frPaint();};
 $('#frAdd').onclick=async()=>{const e=unClean($('#frUser').value);if(!e)return;const done=btnBusy($('#frAdd'),'…');
   try{const r=await srv('friendAsk',{user:e});$('#frUser').value='';frMsg(r.friends?'You are friends now.':'Request sent.');sfx('copy');}catch(err){frMsg(err.message,true);}done();};
