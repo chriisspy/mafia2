@@ -11,6 +11,8 @@ const ICONS={
 /* the Mafia's top hat as a silhouette (18 Nov, his ask: "look more like the silhouette of our mafia hat"): tall crown, red band, wide brim, like the Mafia outfit */
 /* the UFO's abduct button (21 Nov) */
 /* the Getaway Car's lift button (21 Nov) */
+/* the Godfather's car button: a steering wheel, wooden rim, chrome spokes (21 Nov) */
+steer:['..KKKKKK..','.KOOOOOOK.','KOOKKKKOOK','KOK....KOK','KOSSSSSSOK','KOKKSSKKOK','KOK.SS.KOK','KOOKSSKOOK','.KOOOOOOK.','..KKKKKK..'],
 car:[E,'..KKKKK...','.KLLKLLK..','.KLLKLLK..','KKKKKKKKKK','KhhhhhhhGK','KhhhhhhhhK','KKSKKKKSKK','.KSK..KSK.',E],
 ufo:[E,'...KKKK...','..KLEELK..','.KKLEELKK.','KSSSSSSSSK','KsGsNsGsNK','.KKKKKKKK.','..L.LL.L..','.L..LL..L.',E],
 tophat:[E,'..KKKKKK..','..KhhhhK..','..KhHhhK..','..KhhhhK..','..KRRRRK..','..KrrrrK..','KKKKKKKKKK','KhhhhhhhhK','.KKKKKKKK.'],

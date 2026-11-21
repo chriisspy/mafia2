@@ -126,7 +126,13 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #fishRodBtn::before{content:'';position:absolute;inset:0;background:var(--pb) 0 0/100% 100%;image-rendering:pixelated;opacity:.72}
 #fishRodBtn img{position:relative;width:48px;height:48px;image-rendering:pixelated}
 #fishRodBtn.on{display:flex}#fishRodBtn:active:not(:disabled){transform:scale(.94)}
-#fishRodBtn:disabled{cursor:default}#fishRodBtn:disabled::before{filter:grayscale(1);opacity:.45}#fishRodBtn:disabled img{filter:grayscale(1);opacity:.4}#punchBtn.hit{animation:pbHit .22s ease-out}@keyframes pbHit{0%{transform:scale(.86)}100%{transform:scale(1)}}
+#fishRodBtn:disabled{cursor:default}
+/* THE GODFATHER'S CAR BUTTON (21 Nov, his call: the same style as the fishing button): the same pixel disc (--pb), the same size, the same press; a picture of the car on it. Solid while you are in the car. Its height is set to the joystick's (carBtn). */
+#carBtn{position:absolute;right:22px;bottom:240px;width:84px;height:84px;z-index:8;display:none;align-items:center;justify-content:center;border:0;padding:0;background:none;touch-action:none;pointer-events:auto;cursor:pointer}
+#carBtn::before{content:'';position:absolute;inset:0;background:var(--pb) 0 0/100% 100%;image-rendering:pixelated;opacity:.72}
+#carBtn.sel::before{opacity:1}
+#carBtn img{position:relative;image-rendering:pixelated}
+#carBtn:active{transform:scale(.94)}#fishRodBtn:disabled::before{filter:grayscale(1);opacity:.45}#fishRodBtn:disabled img{filter:grayscale(1);opacity:.4}#punchBtn.hit{animation:pbHit .22s ease-out}@keyframes pbHit{0%{transform:scale(.86)}100%{transform:scale(1)}}
 #joy i{position:absolute;left:35px;top:35px;width:60px;height:60px;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
 #turnPhone{display:none;position:fixed;inset:0;z-index:9999;background:#140c24;color:#f6dfae;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
 #turnPhone b{font-size:22px}#turnPhone small{font-size:13px;opacity:.7}
@@ -1007,7 +1013,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </nav>
 </div>
 
-<script src="icons.js?v=11212000"></script>
+<script src="icons.js?v=11212031"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -1303,7 +1309,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11211959'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11212019'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2218,7 +2224,7 @@ $('#winEquip').onclick=e=>{e.stopPropagation();const it=WIN.item;if(it.ck)ckUse(
 $('#winAgain').onclick=e=>{e.stopPropagation();closeWin();openCase();};
 $('#shopBtn').onclick=openShop;$('#collBtn').onclick=openColl;$('#shopX').onclick=()=>$('#shopModal').classList.remove('on');$('#collX').onclick=()=>$('#collModal').classList.remove('on');
 // test only: unlock every outfit on this phone, or lock them again (back to the four common ones)
-$('#collAll').onclick=()=>{const all=[...SKINS,...ROOMS,...CK_ITEMS].every(s=>OWNED.has(s.id));
+$('#collAll').onclick=()=>{const all=[...SKINS,...ROOMS,...CK_ITEMS].every(s=>OWNED.has(s.id));if(LABLOCAL){labOwn(!all);sfx(all?'close':'rare');openColl();return;}   /* the local test lab: done here, no server */
   srv('lab',{what:all?'lock':'unlock'}).then(()=>setTimeout(openColl,300)).catch(e=>toast(e.message));};   /* his account only, on the server */
 $('#caseOpen').onclick=()=>openCase('mafia');$('#cabOpen').onclick=()=>openCase('cabin');$('#ckOpenCase').onclick=()=>openCase('clicker');$('#coinTest').onclick=()=>{srv('lab',{what:'coins'}).catch(e=>toast(e.message));};
 const pk=$('#peekBtn');
@@ -4191,11 +4197,11 @@ function carEngine(){const m=WL.me,c=SND.ctx,on=!!(m&&m.car&&SND.on&&c&&scene===
   E.o.frequency.setTargetAtTime(hz,t,cut?.02:.05);E.o2.frequency.setTargetAtTime(hz/2,t,cut?.02:.05);E.f.frequency.setTargetAtTime(280+k*820+G*70,t,.07);
   E.g.gain.setTargetAtTime(cut?.01:m.walk?.045+k*.04+G*.004:.026,t,cut?.02:.07);}
 function carOff(){const m=WL.me;if(m&&m.car){m.car=0;m.rev=0;m.drift=false;}carEngine();}
-function carBtn(){const b=$('#carBtn');if(!b)return;const m=WL.me,show=!!(m&&scene===scenes.town&&canCar(m)&&m.loc<0&&!m.ab&&!m.ko&&!m.seat);
-  if(b.dataset.s!==String(show)+(m&&m.car?1:0)){b.dataset.s=String(show)+(m&&m.car?1:0);b.style.display=show?'flex':'none';b.style.boxShadow=m&&m.car?'inset 0 -6px 0 #1b1532,inset 0 3px 0 #3d3466,0 0 0 3px #ffd25e,0 4px 0 #0009':'inset 0 -6px 0 #1b1532,inset 0 3px 0 #3d3466,0 4px 0 #0009';}   /* a gold ring while you are in the car */
-  const j=$('#joy');if(show&&j&&(carBtn.n=(carBtn.n||0)+1)%20===1){const jb=parseFloat(getComputedStyle(j).bottom);if(jb===jb)b.style.bottom=Math.round(jb+(j.offsetHeight-76)/2)+'px';}}   /* level with the middle of the joystick, wherever the panel puts it */
-$('#phone').insertAdjacentHTML('beforeend','<button class="btn dark" id="carBtn" title="Car" style="display:none;position:absolute;right:14px;bottom:246px;z-index:8;width:76px;height:76px;padding:0;border-radius:50%;align-items:center;justify-content:center;background:#2a2346;border:3px solid #0f0b1e;box-shadow:inset 0 -6px 0 #1b1532,inset 0 3px 0 #3d3466,0 4px 0 #0009"></button>');   /* (his note, 21 Nov) a round button straight across from the joystick, with a picture of the real car on it */
-$('#carBtn').innerHTML='<img src="assets/final/car/right.png?v='+av('assets/final/car/right.png')+'" alt="" style="width:62px;image-rendering:pixelated;pointer-events:none;margin-top:-4px">';$('#carBtn').onclick=e=>{e.stopPropagation();const m=WL.me;if(m)carToggle(m,!m.car);carBtn();};
+function carBtn(){const b=$('#carBtn');if(!b)return;if(!b.dataset.pb){const v=$('#punchBtn').style.getPropertyValue('--pb');if(v){b.style.setProperty('--pb',v);b.dataset.pb=1;}}   /* the same pixel disc as the punch and fishing buttons (the fishing button borrows it the same way) */const m=WL.me,show=!!(m&&scene===scenes.town&&canCar(m)&&m.loc<0&&!m.ab&&!m.ko&&!m.seat);
+  if(b.dataset.s!==String(show)+(m&&m.car?1:0)){b.dataset.s=String(show)+(m&&m.car?1:0);b.style.display=show?'flex':'none';b.classList.toggle('sel',!!(m&&m.car));}   /* a gold ring while you are in the car */
+  const j=$('#joy');if(show&&j&&(carBtn.n=(carBtn.n||0)+1)%20===1){const jb=parseFloat(getComputedStyle(j).bottom);if(jb===jb)b.style.bottom=Math.round(jb+(j.offsetHeight-84)/2)+'px';}}   /* level with the middle of the joystick, wherever the panel puts it */
+$('#phone').insertAdjacentHTML('beforeend','<button id="carBtn" title="Car"></button>');   /* (his note, 21 Nov) a round button straight across from the joystick, with a picture of the real car on it */
+$('#carBtn').innerHTML=ic('steer',5,'solo');   /* a pixel steering wheel (his call, 21 Nov), the same size as the fist on the punch button */$('#carBtn').onclick=e=>{e.stopPropagation();const m=WL.me;if(m)carToggle(m,!m.car);carBtn();};
 function wlDraw(e,t){const o={e,name:PEOPLE[e.i].skin,dir:e.dir,x:e.x,y:e.y,t,phase:e.phase,walk:e.walk};if(e.car&&e.loc<0){o.name='car';o.ang=e.ca;o.x+=e.cox||0;o.y+=e.coy||0;}   /* in his car */
   if(e.ko){const k=e.ko.t;o.walk=false;if(k<1.25){o.pose='dead';o.lift=k<.32?Math.sin(Math.PI*k/.32)*(e.ko.fly?26:7):0;}else{o.lift=Math.sin(Math.PI*(k-1.25)/.25)*5;o.dir='front';}}
   else if(e.seat){const a=e.seat,s=wlSeat(a.k,e),k=clamp(a.t/s.dur,0,1),q=ease(a.out?1-k:k);o.walk=false;
@@ -4519,6 +4525,14 @@ cv.addEventListener('pointerdown',e=>{if(scene!==scenes.town||WL.fading||documen
    and cheap. The host is whoever joined first (worked out on each phone, nothing to hand over when they leave).
    The rules for the database are in database.rules.json (he pastes them into the Firebase console). */
 const LAB=/[?&]lab\b/.test(location.search);
+/* THE TEST LAB ON THIS COMPUTER (21 Nov, his ask): "Unlock all (test)" in the Collection has to work in the local preview too. The server only unlocks for his own
+   account, and the preview is signed in as nobody. So on localhost with ?lab, the unlock is kept HERE (LABOWN, in this browser's storage) and the wallet coming back
+   from the server does not take those outfits off again. It is only for looking: nothing is written to the server, and it never happens on the real site. */
+const LABLOCAL=LAB&&/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname),LABOWN=new Set();
+if(LABLOCAL)try{for(const id of JSON.parse(localStorage.getItem('m2lab_own')||'[]'))LABOWN.add(id);}catch(e){}
+function labOwn(on){LABOWN.clear();if(on)for(const it of[...SKINS,...ROOMS,...CK_ITEMS]){LABOWN.add(it.id);OWNED.add(it.id);}
+  else{for(const it of[...SKINS,...ROOMS,...CK_ITEMS])if(!(WALLET.own&&WALLET.own[it.id])&&!(it.rar==='common'&&it.id!=='ufo')&&!it.base)OWNED.delete(it.id);if(!OWNED.has(PEOPLE[0].skin)){const k=SKINS.find(q=>OWNED.has(q.id));if(k){PEOPLE[0].skin=k.id;skinIdx=SKINS.indexOf(k);}}if(!OWNED.has(myRoom))myRoom='r_classic';}
+  try{localStorage.setItem('m2lab_own',JSON.stringify([...LABOWN]));}catch(e){}try{paintSkin();}catch(e){}}
 $('#phone').classList.toggle('game',!LAB);$('#phone').classList.toggle('xmas',XMAS);if(!LAB){raining=false;}
 const FB_CFG={apiKey:"AIzaSyBu06T2Qv-jF3pFx4yjFRai9LZNKLs0gig",authDomain:"mafia2-c0146.firebaseapp.com",databaseURL:"https://mafia2-c0146-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"mafia2-c0146",storageBucket:"mafia2-c0146.firebasestorage.app",messagingSenderId:"543181147659",appId:"1:543181147659:web:62e1ab78df78aec579810e"};
 const NET={on:false,code:null,uid:null,db:null,ref:null,me:null,slot:0,host:null,players:null,ents:new Map(),off:0,ready:null,busy:false,sig:null,seq:0,t0:0};
@@ -4573,7 +4587,7 @@ function walletWatch(){devWatch();const uid=NET.uid;if(!uid||WALLET.uid===uid)re
   srv('init',{claim:{coins,owned:[...OWNED],kit:{rods:(typeof KIT!=='undefined'?KIT.rods:['twig']),bait:(typeof KIT!=='undefined'?KIT.bait:10)}}}).catch(()=>{}).then(()=>{
     WALLET.ref=NET.db.ref('wallet/'+uid);WALLET.ref.on('value',s=>{const w=s.val();if(!w||w.probe||NET.uid!==uid)return;walletApply(w);},()=>{});});}
 function walletApply(w){WALLET.ok=true;coins=w.c|0;
-  for(const id of[...OWNED])if(!(w.own&&w.own[id]))OWNED.delete(id);for(const id of Object.keys(w.own||{}))OWNED.add(id);
+  WALLET.own=w.own||{};for(const id of[...OWNED])if(!(w.own&&w.own[id])&&!LABOWN.has(id))OWNED.delete(id);for(const id of Object.keys(w.own||{}))OWNED.add(id);for(const id of LABOWN)OWNED.add(id);   /* (the local test lab keeps what it unlocked) */
   if(!OWNED.has(PEOPLE[0].skin)){const s=SKINS.find(k=>OWNED.has(k.id));if(s){PEOPLE[0].skin=s.id;skinIdx=SKINS.indexOf(s);}}if(!OWNED.has(myRoom))myRoom='r_classic';
   if(typeof KIT!=='undefined'){const k=w.kit||{};KIT.rods=Object.keys(k.rods||{twig:1});if(!KIT.rods.includes(KIT.rod))KIT.rod='twig';KIT.bait=k.bait|0;KIT.bag=k.bag||[];if(typeof kitSave==='function')kitSave();}
   WALLET.day=w.day||{};WALLET.fl=w.fl||{};WALLET.dec=w.dec||{};if(typeof DECOR!=='undefined'&&DECOR.on)decorTray();
