@@ -99,7 +99,7 @@ function bjEnd(S){const res=S.hands.map(h=>h.res),net=S.net|0;brag('bj',{n:net})
   bjUI();}
 
 /* ---- buttons ---- */
-function bjUI(){const M=$('#bjModal'),play=BJ.ph==='play'||BJ.ph==='wait'||BJ.ph==='deal'||BJ.ph==='dealer';M.classList.toggle('play',play);paintCoins();
+function bjUI(){const M=$('#bjModal'),play=BJ.ph==='play'||BJ.ph==='wait'||BJ.ph==='deal'||BJ.ph==='dealer';M.classList.toggle('play',play);M.classList.toggle('done',BJ.ph==='done');M.classList.remove('placed');paintCoins();
   const own=Math.floor(+$('#bjAmt').value)>0;$('#bjAmt').classList.toggle('sel',own);document.querySelectorAll('#bjStakes button').forEach(b=>b.classList.toggle('sel',!own&&+b.dataset.a===BJ.stake));
   const amt=bjAmt(),h=bjHand(),go=BJ.ph==='play';$('#bjDeal').innerHTML=(BJ.ph==='done'?'Deal again':'Deal')+' · '+ic('coin',2)+' '+amt;$('#bjDeal').disabled=coins<amt;
   document.querySelectorAll('#bjActs .btn').forEach(b=>{const a=b.dataset.a;b.disabled=!go||(a==='double'&&!(h&&h.cs.length===2&&coins>=h.bet))||(a==='split'&&!(h&&bjCanSplit()));});
@@ -123,11 +123,11 @@ const BJ_TY=28,BJ_FROM=[69,30];
 const BJV={S:2,W:152,H:128,ox:0,oy:0,scene:null};
 /* SIDEWAYS (24 Nov): the four games zoom by the screen's SHORT side when the phone is held sideways, so each still fits its height */
 const landW=(cw,ch)=>LAND?Math.min(cw,ch):cw;
-function bjFit(){const st=$('#bjStage'),cv=$('#bjCv'),cw=st.clientWidth,ch=st.clientHeight;if(!cw||!ch)return;const ctl=LAND?$('#bjCtl').offsetWidth+24:0,S=Math.max(1,Math.floor(LAND?Math.min((cw-ctl)/120,(ch-40)/128):cw/120)),   /* sideways: the buttons are a column on the right, the table sits in the open part and fits the height */
+function bjFit(){const st=$('#bjStage'),cv=$('#bjCv'),cw=st.clientWidth,ch=st.clientHeight;if(!cw||!ch)return;const S=Math.max(1,Math.floor(LAND?Math.min(cw/190,ch/96):cw/120)),   /* sideways (his mockup, 24 Nov): the half-moon table big, in the middle, filling the height; the bets sit on the felt, the moves in the two bottom corners */
       /* zoomed in (his call): on a phone the table is a little wider than the screen, its empty ends cut off */
     W=Math.ceil(cw/S),H=Math.ceil(ch/S);
   if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.width=W*S+'px';cv.style.height=H*S+'px';
-  const top=Math.ceil((LAND?40:56)/S);if(BJ.ph==='bet'||BJ.ph==='done'||!BJV.botPx)BJV.botPx=Math.max(BJV.botPx||0,$('#bjCtl').offsetHeight+18);const bot=LAND?0:Math.ceil(BJV.botPx/S);BJV.S=S;BJV.W=W;BJV.H=H;BJV.ox=Math.round((W-ctl/S-152)/2);BJV.oy=Math.max(top,top+Math.round((H-top-bot-128)/2));   /* the game in the middle of the screen, the buttons below (his call) */
+  const top=Math.ceil((LAND?40:56)/S);if(BJ.ph==='bet'||BJ.ph==='done'||!BJV.botPx)BJV.botPx=Math.max(BJV.botPx||0,$('#bjCtl').offsetHeight+18);const bot=LAND?0:Math.ceil(BJV.botPx/S);BJV.S=S;BJV.W=W;BJV.H=H;BJV.ox=Math.round((W-152)/2);BJV.oy=LAND?Math.round(H/2-77):Math.max(top,top+Math.round((H-top-bot-128)/2));   /* the game in the middle of the screen, the buttons below (his call) */
   $('#bjWord').style.top=((BJV.oy+44)*S)+'px';}
 addEventListener('resize',()=>{if($('#bjModal').classList.contains('on'))bjFit();});
 function bjFrame(dt){BJ.t+=dt;bjFit();if(!BJV.scene)BJV.scene=mk(152,128);const cv=BJV.scene,x=cv.getContext('2d'),W=152,H=128;x.imageSmoothingEnabled=false;
@@ -187,7 +187,7 @@ function bjShTags(x,tag,W){const T=BJ.sh.T;if(!T)return;const d=T.d||[];
     if(st.u===cur&&Math.floor(BJ.t*3)%2===0){x.fillStyle='#ffd25e';x.fillRect(Math.round(cx)-1,117,3,2);}});}
 /* the buttons and the words under the table */
 function bjShUI(){const S=BJ.sh;if(!S)return;const T=S.T,M=$('#bjModal'),me=bjShMe(),ph=T?T.ph:'idle',left=T&&T.dl?Math.max(0,Math.ceil((T.dl-bjShNow())/1000)):0,inRound=!!(T&&(T.order||[]).includes(NET.uid)),myTurn=bjShMyTurn();
-  const playing=ph==='play'&&inRound;M.classList.toggle('play',playing);M.classList.toggle('watch',ph==='play'&&!inRound);paintCoins();
+  const playing=ph==='play'&&inRound;M.classList.toggle('play',playing);M.classList.toggle('watch',ph==='play'&&!inRound);M.classList.toggle('done',ph==='done');M.classList.toggle('placed',!!(ph==='bet'&&me&&me.bet));paintCoins();
   const own=Math.floor(+$('#bjAmt').value)>0;$('#bjAmt').classList.toggle('sel',own);document.querySelectorAll('#bjStakes button').forEach(b=>b.classList.toggle('sel',!own&&+b.dataset.a===BJ.stake));
   const amt=bjAmt(),bet=ph==='bet'&&me&&me.bet;$('#bjDeal').innerHTML=bet?'Bet placed · '+ic('coin',2)+' '+me.bet:'Bet · '+ic('coin',2)+' '+amt;$('#bjDeal').disabled=!!bet||S.busy||coins<amt||!me;
   const h=myTurn&&me&&me.hands&&me.hands[T.hi|0];
@@ -304,11 +304,14 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 
 /* ---- sizes: the reels a little above the middle, the keys on the plinth, the lever always on screen ---- */
 function slotFit(){const M=$('#slotModal'),cv=$('#slotCv'),J=SLOT.j,cw=M.clientWidth,ch=M.clientHeight;if(!J||!cw||!ch)return false;
-  const S=Math.max(1,Math.floor(LAND?Math.min(cw/Math.max(104,J.w-6),ch/170):cw/Math.max(104,J.w-6))),W=Math.ceil(cw/S),H=Math.ceil(ch/S);   /* standing at the machine: 3 or 4 screen pixels per art pixel on a phone */
+  const S=LAND?Math.max(2,Math.floor(Math.min(ch/88,cw/205))):Math.max(1,Math.floor(cw/Math.max(104,J.w-6))),W=Math.ceil(cw/S),H=Math.ceil(ch/S);   /* standing at the machine: 3 or 4 screen pixels per art pixel on a phone */
   if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.width=W*S+'px';cv.style.height=H*S+'px';
-  const ox=Math.min(Math.round((W-J.w)/2),W-J.w),oy=LAND?H-244-Math.ceil(8/S):Math.min(H-244-Math.ceil(16/S),Math.round(H*.44-(J.hy+J.hh/2)));   /* sideways: the reels down to the bet keys fill the height */   /* on a narrow phone the left edge is cut, never the lever */
-  Object.assign(SLV,{S,W,H,ox,oy});
-  const a=$('#slotAmt');a.style.left=(ox+J.lx)*S+'px';a.style.top=(oy+J.ly)*S+'px';a.style.width=J.lw*S+'px';a.style.height=J.lh*S+'px';
+  const ox=LAND?13-J.hx:Math.min(Math.round((W-J.w)/2),W-J.w),oy=LAND?Math.round(H/2-(J.hy+J.hh/2)):Math.min(H-244-Math.ceil(16/S),Math.round(H*.44-(J.hy+J.hh/2)));   /* sideways (his mockup, 24 Nov): the machine big on the left, cut by the screen's edges, the reels in the middle of the height */   /* on a narrow phone the left edge is cut, never the lever */
+  let lx=ox+J.lx,ly=oy+J.ly,kw=0,kx0=0,ky0=0;
+  if(LAND){const sr=(parseFloat(getComputedStyle(M.querySelector('.mhead')).paddingRight)||12)-12,p0=ox+J.w+5,p1=W-Math.ceil(sr/S)-3,pc=(p0+p1)/2;   /* on the right: the LED panel, the bet keys under it */
+    lx=Math.round(pc-J.lw/2);ly=Math.round(H*.24);kw=Math.max(15,Math.min(22,Math.floor((p1-p0-9)/4)));kx0=Math.round(pc-(4*kw+9)/2);ky0=Math.max(ly+J.lh+12,Math.round(H*.68));}
+  Object.assign(SLV,{S,W,H,ox,oy,lx,ly,kw,kx0,ky0});$('#slotWord').style.right=LAND?Math.max(0,W-(ox+J.w))*S+'px':'';
+  const a=$('#slotAmt');a.style.left=lx*S+'px';a.style.top=ly*S+'px';a.style.width=J.lw*S+'px';a.style.height=J.lh*S+'px';
   $('#slotWord').style.top=Math.max(52,(oy+J.hy-50)*S)+'px';return true;}   /* the win words over the 7 sign, so the reels that won stay in view */
 addEventListener('resize',()=>{if($('#slotModal').classList.contains('on'))slotFit();});
 function slotLever(){const{ox,oy}=SLV,px=ox+121,py=oy+132,len=31;return{px,py,len,kx:px,ky:py-len*Math.cos(SLOT.th)};}
@@ -361,7 +364,8 @@ function slotFrame(dt){const T=SLOT;T.t+=dt;if(!slotFit())return;const cv=$('#sl
   x.drawImage(im,ox,oy);
   if(T.flash>0){x.globalCompositeOperation='lighter';x.globalAlpha=Math.min(1,T.flash)*.5*(Math.sin(T.t*30)>0?1:.4);x.drawImage(im,ox,oy);x.globalAlpha=1;x.globalCompositeOperation='source-over';T.flash=Math.max(0,T.flash-dt*.5);}
   /* the LED window: your bet, then what happened, then the pay table running along */
-  const lx=ox+J.lx,ly=oy+J.ly,lw=J.lw,blink=(T.t%1)<.6;
+  const lx=SLV.lx,ly=SLV.ly,lw=J.lw,blink=(T.t%1)<.6;
+  if(LAND){const fx=lx-7,fy=ly-7,fw=lw+14,fh=J.lh+14;slotRR(x,fx,fy,fw,fh,'#1a0a14');slotRR(x,fx+1,fy+1,fw-2,fh-2,'#4a0f24');slotRR(x,fx+4,fy+4,fw-8,fh-8,'#e4544f');x.fillStyle='#ffd25e';x.fillRect(fx+5,fy+4,3,1);x.fillRect(fx+fw-8,fy+4,3,1);x.fillRect(fx+5,fy+fh-5,3,1);x.fillRect(fx+fw-8,fy+fh-5,3,1);x.fillStyle='#0b0612';x.fillRect(fx+5,fy+5,fw-10,fh-10);}   /* the LED panel in its own frame */
   const line=(s,y,c)=>{x.fillStyle=c;pxText(x,s,Math.round(lx+(lw-(s.length*4-1))/2),y);};
   const amt=slotAmt(),bs='BET '+amt;line(bs,ly+5,'#ffd25e');
   if(T.typing&&blink){x.fillStyle='#ffd25e';x.fillRect(Math.round(lx+(lw-(bs.length*4-1))/2)+bs.length*4,ly+9,3,1);}
@@ -374,7 +378,8 @@ function slotFrame(dt){const T=SLOT;T.t+=dt;if(!slotFit())return;const cv=$('#sl
   else{s2=blink?'PULL THE LEVER':'';}   /* how to start the game: stays (his rule) */
   if(s2)line(s2,ly+15,c2);
   const pay=SLOT_SYM.slice().reverse().map(s=>'3 '+s.n+' X'+s.p).join('   ')+'   2 CHERRIES X3   ',pw=pay.length*4;
-  x.save();x.beginPath();x.rect(lx+2,ly+24,lw-4,7);x.clip();x.fillStyle='#e4544f';const px0=lx+lw-Math.floor((T.t*14)%(pw+lw));pxText(x,pay,px0,ly+25);x.restore();
+  if(LAND){const ps=SLOT_SYM.slice().reverse().map(s=>'3 '+s.n+' X'+s.p).concat('2 CHERRIES X3').filter(q=>q.length*4-1<=lw-4),q=ps[Math.floor(T.t/1.8)%ps.length];x.fillStyle='#e4544f';pxText(x,q,Math.round(lx+(lw-(q.length*4-1))/2),ly+25);}   /* sideways (his catch, 24 Nov): one whole pay line at a time, never a line cut in half */
+  else{x.save();x.beginPath();x.rect(lx+2,ly+24,lw-4,7);x.clip();x.fillStyle='#e4544f';const px0=lx+lw-Math.floor((T.t*14)%(pw+lw));pxText(x,pay,px0,ly+25);x.restore();}
   /* the lever: a chrome box bolted to the cabinet's side, the arm, the red knob (it swings toward you as it comes down) */
   const L=slotLever();
   slotRR(x,L.px-6,L.py-8,13,17,'#1a1430');slotRR(x,L.px-5,L.py-7,11,15,'#b8c2d4');x.fillStyle='#6f7b92';x.fillRect(L.px-5,L.py+4,11,3);x.fillRect(L.px+4,L.py-6,2,11);
@@ -386,7 +391,7 @@ function slotFrame(dt){const T=SLOT;T.t+=dt;if(!slotFit())return;const cv=$('#sl
   x.fillStyle='#ffffff';x.fillRect(L.px-Math.round(kr*.5),ky-Math.round(kr*.5),1,1);
   if(!T.busy&&T.th<.05&&!T.drag&&blink){const ay=ky+kr+3+Math.round(Math.sin(T.t*6));x.fillStyle='#1a1430';x.fillRect(L.px-3,ay-1,7,4);x.fillStyle='#ffd25e';x.fillRect(L.px-2,ay,5,1);x.fillRect(L.px-1,ay+1,3,1);x.fillRect(L.px,ay+2,1,1);}   /* a little arrow: pull me */
   /* the bet keys on the plinth */
-  const kw=Math.min(22,Math.floor((W-8-9)/4)),kt=4*kw+9,kx0=clamp(Math.round(ox+J.w/2-kt/2),2,W-2-kt),ky0=oy+227;T.keys=[];
+  const kw=LAND?SLV.kw:Math.min(22,Math.floor((W-8-9)/4)),kt=4*kw+9,kx0=LAND?SLV.kx0:clamp(Math.round(ox+J.w/2-kt/2),2,W-2-kt),ky0=LAND?SLV.ky0:oy+227;T.keys=[];
   SLOT_KEYS.forEach(([v,lab],i)=>{const X=kx0+i*(kw+3),sel=!T.own&&T.stake===v,d=sel||T.press===v?2:0;T.keys.push({x:X,y:ky0,w:kw,h:16,a:v});
     if(T.busy)x.globalAlpha=.6;
     slotRR(x,X,ky0+d,kw,16-d,'#1a1430');slotRR(x,X+1,ky0+1+d,kw-2,10,sel?'#ffd25e':'#fff6df');x.fillStyle=sel?'#d39b2a':'#c9a46a';x.fillRect(X+1,ky0+11+d,kw-2,4-d);

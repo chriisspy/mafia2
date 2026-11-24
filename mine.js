@@ -592,3 +592,53 @@ SFX.quench = () => { hiss(.9, {vol: .1, hp: 2500}); hiss(.4, {vol: .08, bp: 1200
   const st = document.createElement('style'); st.textContent = '#smithModal .btn.wide{display:flex;width:100%;justify-content:center;align-items:center;gap:6px;font-size:17px;padding:8px 8px 11px;margin-top:6px}#smithModal .btn:disabled,#pickModal .btn:disabled{opacity:.5}#smithModal .mhead{gap:8px}#smithModal .mhead b{font-size:19px}#smithModal .mhead .wal{font-size:15px}#pickModal .jimg{width:48px;height:48px;margin:0}#smithModal,#pickModal{bottom:auto}'; document.head.appendChild(st);
   $('#smeltYes').onclick = smeltGo; $('#cryYes').onclick = cryGo; $('#smithX').onclick = () => $('#smithModal').classList.remove('on'); $('#pickX').onclick = () => $('#pickModal').classList.remove('on');
 })();
+
+/* ---------- THE PICKAXE BUTTON (24 Nov 2026, his ask): "a button exactly like the fishing button across from the joystick that is a
+   pickaxe to mine whatever the character is looking at when pressed". The same see-through pixel disc as #fishRodBtn (its CSS is copied
+   rule for rule, landscape spot included), shown in the mine whenever the joystick is; grey when nothing diggable is in front of you. ---------- */
+const PICK_ICON = pxIcon([
+  '....KKKKKKK.....',
+  '..KKSSSSSSSKK...',
+  '.KSSWWSSSSSSSK..',
+  'KSSKKKKKKKKSSSK.',
+  'KSK....KWK..KSK.',
+  'KK.....KbK...KK.',
+  '.......KbK......',
+  '.......KbK......',
+  '.......KbK......',
+  '.......KbK......',
+  '.......KbK......',
+  '.......KbK......',
+  '.......KbK......',
+  '.......KBK......',
+  '.......KBK......',
+  '........K.......'], {K: '#1a1430', S: '#b8c2d4', W: '#eef2fa', b: '#a8723a', B: '#7a4a2a'});
+(() => {
+  const b = document.createElement('button'); b.id = 'pickBtn'; b.title = 'Mine';
+  const c = mk(48, 48), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(PICK_ICON, 0, 0, 48, 48);
+  b.innerHTML = `<img src="${c.toDataURL()}" alt="Mine">`; $('#fishRodBtn').after(b);
+  const st = document.createElement('style');
+  st.textContent = '#pickBtn{position:absolute;right:22px;bottom:143px;width:84px;height:84px;z-index:8;display:none;align-items:center;justify-content:center;border:0;padding:0;background:none;touch-action:none;pointer-events:auto;cursor:pointer}'
+    + '#pickBtn::before{content:"";position:absolute;inset:0;background:var(--pb) 0 0/100% 100%;image-rendering:pixelated;opacity:.72}'
+    + '#pickBtn img{position:relative;width:48px;height:48px;image-rendering:pixelated}#pickBtn.on{display:flex}#pickBtn:active:not(:disabled){transform:scale(.94)}'
+    + '#pickBtn:disabled{cursor:default}#pickBtn:disabled::before{filter:grayscale(1);opacity:.45}#pickBtn:disabled img{filter:grayscale(1);opacity:.4}'
+    + '#phone.land #pickBtn{right:var(--abR,calc(22px + var(--sr)));bottom:var(--abB,calc(var(--lb) + 14px))!important}';
+  document.head.appendChild(st);
+  b.onclick = () => { const T = pickTarget(); if (!T) return; sfx('click'); digStart(T); };
+})();
+// what you are looking at: the cell in front of you, the way you face (the same cell the joystick digs when you push into it)
+function pickTarget() {
+  const m = WL.me; if (!m || m.loc !== MINE || MN.busy || DIG.on || m.walk) return null;
+  const d = {right: [1, 0], left: [-1, 0], back: [0, -1], front: [0, 1]}[m.dir] || [0, 1];
+  return tgtOf(Math.floor((m.x + d[0] * 12) / CS), Math.floor((m.y - 3 + d[1] * 10) / CS));
+}
+function pickBtnTick() {
+  const b = $('#pickBtn'), m = WL.me; if (!b) return;
+  const show = !!m && m.loc === MINE && scene === scenes.town && $('#joy').classList.contains('on') && !document.querySelector('.modal.on');
+  if (show) { if (!b.style.getPropertyValue('--pb')) { const v = $('#punchBtn').style.getPropertyValue('--pb'); if (v) b.style.setProperty('--pb', v); }
+    b.style.bottom = (parseFloat($('#joy').style.bottom) + 23) + 'px';   // level with the joystick, like the fishing rod button
+    const can = !!pickTarget() || !!DIG.on; if (b.disabled === can) b.disabled = !can; }
+  if (b.classList.contains('on') !== show) b.classList.toggle('on', show);
+}
+{ const fr = scenes.town.frame; scenes.town.frame = function (dt, t) { const r = fr.call(this, dt, t); pickBtnTick(); return r; }; }
+setInterval(() => { const b = $('#pickBtn'); if (b && scene !== scenes.town) b.classList.remove('on'); }, 400);   // never left showing outside the walking scene
