@@ -709,16 +709,16 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #phone.land #townHud.tmini .tbtn img{margin:0!important}
 #phone.land #townHud.tmini #townStart{width:auto;padding:6px 12px 9px;font-size:16px;margin:0}
 #phone.land #townHud.tmini #townFold{position:static}
-/* (24 Nov, his ask) THE COIN COUNTER sits TOP LEFT next to the menu button (it looked odd under the joystick upright and in the middle sideways),
+/* (24 Nov, his ask) THE COIN COUNTER sits TOP RIGHT (it looked odd under the joystick upright and in the middle sideways),
    and the mine's LEVEL line sits TOP MIDDLE. In a place the bottom bar is only the joystick's floor now. */
 #townHud.hall .bottom{position:static}
 #townHud.hall #hallBar{padding:0}
-#townHud.hall #hallBar .lrow,#lakeCoins{position:absolute;left:calc(60px + env(safe-area-inset-left));top:calc(16px + env(safe-area-inset-top));z-index:22;gap:6px}
+#townHud.hall #hallBar .lrow,#lakeCoins{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(16px + env(safe-area-inset-top));z-index:22;gap:6px;justify-content:flex-end}   /* (his correction) top RIGHT */
 #townHud.hall #hallBar .lrow .lchip,#lakeCoins .lchip{height:36px;font-size:17px}
 #townHud.hall #hallLine{position:absolute;left:0;right:0;top:calc(64px + env(safe-area-inset-top));margin:0;text-align:center!important;font-size:21px!important;pointer-events:none;z-index:21}
 #townHud.hall #hallLine:empty{display:none}
 #lakeCoins{display:none}#townHud.lake #lakeCoins{display:flex}
-#phone.land #townHud.hall #hallBar .lrow,#phone.land #lakeCoins{left:calc(60px + var(--sl));top:10px}
+#phone.land #townHud.hall #hallBar .lrow,#phone.land #lakeCoins{right:calc(10px + var(--sr));top:10px}
 #phone.land #townHud.hall #hallLine{top:16px}
 /*END-LAND-CSS*/
 </style>
@@ -1410,7 +1410,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11242600'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11242700'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
