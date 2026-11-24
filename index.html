@@ -698,6 +698,28 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #phone.land #propModal .mhead{grid-column:1/3}#phone.land #pmStage{grid-column:1;grid-row:2/span 9;align-self:stretch;min-height:0}#phone.land #propModal>:not(.mhead):not(#pmStage){grid-column:2}
 #phone.land #townHud.lake .bottom{width:min(400px,56%)}#phone.land #lakeBar .lrow{flex-wrap:wrap;justify-content:flex-end;row-gap:6px}#phone.land #fishLine,#phone.land #hallLine{font-size:18px;margin-bottom:6px;text-align:right}
 #phone.land.xmas #homeHud .hpanel+.hpanel{margin-top:13px}#phone.land:not(.game) .bottom{max-height:calc(100% - var(--lb) - 40px)}
+/* (24 Nov, his ask) sideways the town panel folds into small buttons: Shop, Collection, Daily, Coin flip as icons, and one button to open the whole panel */
+#townFold{display:none}#phone.land #townFold{display:flex;align-items:center;justify-content:center;position:absolute;top:6px;right:6px;width:40px;height:40px;padding:0 0 3px;z-index:2}
+#phone.land #townHud.tmini .bottom{width:auto;padding:0 0 4px;overflow:visible}
+#phone.land #townHud.tmini .tpanel{background:none!important;border:0!important;border-image:none!important;box-shadow:none!important;padding:46px 0 0!important;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+#phone.land #townHud.tmini .tpanel::before,#phone.land #townHud.tmini .tpanel::after{display:none!important}
+#phone.land #townHud.tmini .thead,#phone.land #townHud.tmini #townRoles,#phone.land #townHud.tmini #townMaf,#phone.land #townHud.tmini #townDev{display:none!important}
+#phone.land #townHud.tmini .tpanel .row{display:flex;flex-direction:column;gap:8px!important;margin:0!important;align-items:flex-end}
+#phone.land #townHud.tmini .tbtn{width:52px;height:52px;padding:0!important;font-size:0!important;gap:0;justify-content:center;position:relative;flex:none}
+#phone.land #townHud.tmini .tbtn img{margin:0!important}
+#phone.land #townHud.tmini #townStart{width:auto;padding:6px 12px 9px;font-size:16px;margin:0}
+#phone.land #townHud.tmini #townFold{position:static}
+/* (24 Nov, his ask) THE COIN COUNTER sits TOP LEFT next to the menu button (it looked odd under the joystick upright and in the middle sideways),
+   and the mine's LEVEL line sits TOP MIDDLE. In a place the bottom bar is only the joystick's floor now. */
+#townHud.hall .bottom{position:static}
+#townHud.hall #hallBar{padding:0}
+#townHud.hall #hallBar .lrow,#lakeCoins{position:absolute;left:calc(60px + env(safe-area-inset-left));top:calc(16px + env(safe-area-inset-top));z-index:22;gap:6px}
+#townHud.hall #hallBar .lrow .lchip,#lakeCoins .lchip{height:36px;font-size:17px}
+#townHud.hall #hallLine{position:absolute;left:0;right:0;top:calc(64px + env(safe-area-inset-top));margin:0;text-align:center!important;font-size:21px!important;pointer-events:none;z-index:21}
+#townHud.hall #hallLine:empty{display:none}
+#lakeCoins{display:none}#townHud.lake #lakeCoins{display:flex}
+#phone.land #townHud.hall #hallBar .lrow,#phone.land #lakeCoins{left:calc(60px + var(--sl));top:10px}
+#phone.land #townHud.hall #hallLine{top:16px}
 /*END-LAND-CSS*/
 </style>
 </head>
@@ -811,6 +833,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <div id="fishLine"></div>
       <div class="lrow"><span class="lchip"><span class="baitIc"></span><span id="fishBaitN">0</span></span><span class="lchip"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><span class="lgap"></span><button class="btn dark" id="fishBookBtn">Fish book</button><button class="btn red" id="fishStopBtn">Stop</button></div>
     </div><div id="hallBar"><div id="hallLine"></div><div class="lrow"><span class="lchip"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span></div></div><div class="panel tpanel">
+      <button class="tfold" id="townFold" title="Menu"></button>
       <div class="thead"><div class="tt"><b id="townLine">Waiting for the host</b><div class="small" id="townSub"></div></div></div>
       <div id="townRoles"><button class="rtog" data-r="d"><i data-ic="detective" data-c="solo"></i>Detective</button><button class="rtog" data-r="b"><i data-ic="bodyguard" data-c="solo"></i>Bodyguard</button><button class="rtog" data-r="j"><i data-ic="jester" data-c="solo"></i>Jester</button><button class="rtog" data-r="f"><i data-ic="framer" data-c="solo"></i>Framer</button><button class="rtog rand" data-r="r"><i data-ic="dice" data-c="solo"></i>Random</button></div>
       <div id="townMaf"><span class="mlbl"><i data-ic="mafia" data-c="solo"></i>MAFIA</span><button class="btn" id="mafMinus">-</button><b id="mafN">1</b><button class="btn" id="mafPlus">+</button><small id="mafMax"></small></div>
@@ -1387,7 +1410,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11242500'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11242600'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1431,8 +1454,10 @@ function view(img,cx,cy,viewW,o={}){
   const iw=img.width,ih=img.height;
   const iox=img.ox||0;let x=iw<=lw?(iw-lw)/2-iox:clamp(cx-lw/2,-iox,iw-iox-lw);
   // loose: the camera may run a little past the bottom of the map, so the lowest cabins are not hidden under the subtitles
-  if(LAND&&o.padR&&iw<=lw){const cw=W/DPR,rw=iw*S/DPR,over=(cw+rw)/2-(cw-o.padR-6);if(over>0)x+=Math.max(0,Math.min(over,(cw-rw)/2-4))*DPR/S;}   /* sideways, the night cabin: in the middle of the screen, nudged left only as far as it must to clear the open night panel */
-  if(LAND&&LANDPAD&&iw>lw)x=clamp(cx-lw/2+LANDPAD*DPR/S/2,-iox,iw-iox-lw);   /* sideways, a tall panel on the right: lean the camera so you stay in the open part */
+  {const nt=performance.now(),nd=Math.min(.1,Math.max(0,(nt-(NUDGE.t||nt))/1000));NUDGE.t=nt;const k=Math.min(1,nd*7);   /* (24 Nov, his ask: "exactly like portrait") sideways the room glides aside while a panel is open and glides back to the middle when it closes */
+    const tp=LAND&&!TMINI&&$('#townHud .tpanel'),menuOpen=!!(tp&&tp.offsetParent),padT=LAND?(o.padR!=null?o.padR:(menuOpen||LANDPAD>120?LANDCOL:0)):0,leanT=LAND?LANDPAD:0;NUDGE.r+=(padT-NUDGE.r)*k;NUDGE.p+=(leanT-NUDGE.p)*k;if(Math.abs(padT-NUDGE.r)<.5)NUDGE.r=padT;if(Math.abs(leanT-NUDGE.p)<.5)NUDGE.p=leanT;
+    if(LAND&&NUDGE.r>0&&iw<=lw){const cw=W/DPR,rw=iw*S/DPR,over=(cw+rw)/2-(cw-NUDGE.r-6);if(over>0)x+=Math.max(0,Math.min(over,(cw-rw)/2-4))*DPR/S;}   /* a room: in the middle of the screen, nudged left only as far as it must to clear the open panel */
+    if(LAND&&NUDGE.p>0&&iw>lw)x=clamp(cx-lw/2+NUDGE.p*DPR/S/2,-iox,iw-iox-lw);}   /* a map: lean the camera so you stay in the open part */
   let y=ih<=lh?(o.topCss!=null&&!LAND?-o.topCss*DPR/S:(ih-lh)/2):clamp(cy-lh/2,0,ih-lh*(o.loose===true?.74:(LAND?1:o.loose)||1));   /* loose can be a number: how far down the screen the map must reach */
   if(hi){x=Math.round(x*S)/S;y=Math.round(y*S)/S;}   /* the camera on a whole screen pixel */
   cam.x=Math.floor(x);cam.y=Math.floor(y);cam.fx=x-cam.x;cam.fy=y-cam.y; // whole pixels for drawing; the leftover fraction is slid in present()
@@ -2627,7 +2652,15 @@ function joyPlace(){floatXTick();const el=$('#joy'),ok=[scenes.town,scenes.cabin
   const pb=$('#punchBtn'),ps=show&&scene===scenes.ghost;if(ps)pb.style.bottom=(parseFloat(el.style.bottom)+23)+'px';if(pb.classList.contains('on')!==ps)pb.classList.toggle('on',ps);landBtns();}
 /* SIDEWAYS (24 Nov): the round buttons sit bottom right. If the panel column on the right is short they sit just above it; if it is tall, beside it.
    LANDPAD = how much of the right of the screen a tall column covers (the camera leans left by half of it, so you are not walking under the panel). */
-let LANDPAD=0,LANDCOL=0;
+let LANDPAD=0,LANDCOL=0;const NUDGE={r:0,p:0,t:0};
+/* THE TOWN PANEL, FOLDED (24 Nov, his ask "make the panel collapse into small buttons"): sideways it starts folded; the top button opens and folds it */
+let TMINI=true;try{TMINI=localStorage.getItem('m2_tmini')!=='0';}catch(e){}
+function townFoldPaint(){const h=$('#townHud'),b=$('#townFold');if(!h||!b)return;h.classList.toggle('tmini',TMINI);b.innerHTML=ic(TMINI?'menu':'right',2,'solo');b.title=TMINI?'Open the menu':'Fold the menu';}
+document.addEventListener('click',e=>{if(!e.target.closest('#townFold'))return;TMINI=!TMINI;try{localStorage.setItem('m2_tmini',TMINI?'1':'0');}catch(_){}sfx('click');townFoldPaint();});
+setTimeout(townFoldPaint,0);
+/* the lake's coin chip, moved to the top left (24 Nov, his ask) */
+setTimeout(()=>{const h=$('#townHud'),chip=$('#lakeBar .lrow .lchip i[data-ic],#lakeBar .lrow .lchip img')?.closest('.lchip');if(!h||$('#lakeCoins'))return;const box=document.createElement('div');box.id='lakeCoins';box.className='lrow';h.appendChild(box);
+  const c=[...document.querySelectorAll('#lakeBar .lrow .lchip')].find(e=>e.querySelector('.coinN'));if(c)box.appendChild(c);},0);
 function landBtns(){const ph=$('#phone');let R='',B='',pad=0,col=0;
   if(LAND){const pr=ph.getBoundingClientRect(),hud=scene&&scene.hud&&$(scene.hud);let top=pr.bottom,left=pr.right,any=false;
     if(hud)for(const e of hud.querySelectorAll('.bottom>*,#sheet')){if(!e.offsetParent)continue;const r=e.getBoundingClientRect();if(r.height<5||r.width<5)continue;any=true;top=Math.min(top,r.top);left=Math.min(left,r.left);}

@@ -511,7 +511,7 @@ RH.frame = (m, people, dt, t, H, img) => {
   // the camera: on foot it follows you like anywhere else; in the car it pulls right back, looks up the road the faster you go, and shakes on a bump
   const want = RK.drive ? 375 : 190; RK.vw += (want - RK.vw) * Math.min(1, dt * 3.2); if (Math.abs(RK.vw - want) < 2) RK.vw = want;
   const la = RK.drive ? Math.min(125, (C.v || 0) * .36) : 0; RK.lookx += (Math.cos(C.tv) * la - RK.lookx) * Math.min(1, dt * 2.4); RK.looky += (Math.sin(C.tv) * la - RK.looky) * Math.min(1, dt * 2.4);
-  const tp = $('#townHud #hallBar'), r = tp && tp.getBoundingClientRect(), cr = cv.getBoundingClientRect(), loose = r && r.height ? clamp((r.top - cr.top + 6) / cr.height, .6, 1) : .8;
+  const tp = $('#townHud #hallBar'), r = tp && tp.getBoundingClientRect(), cr = cv.getBoundingClientRect(), loose = 1;   /* (24 Nov) the bottom of the track is the bottom of the screen, like the South and the lake */
   RK.countUp = (RK.countUp || 0) + ((RK.mode === 'count' ? Math.max(0, (C.y - (R_GANTRY.y + 20)) - cam.lh * .42) : 0) - (RK.countUp || 0)) * Math.min(1, dt * 3);   // on the grid the camera lifts so you can see the lights
   const shx = RK.shake > 0 ? Math.round(Math.sin(t * .11) * 5 * RK.shake) : 0, shy = RK.shake > 0 ? Math.round(Math.cos(t * .13) * 4 * RK.shake) : 0;
   const fx = (RK.drive ? C.x + (C.cox || 0) + RK.lookx : m.x) + shx, fy = (RK.drive ? C.y + (C.coy || 0) + RK.looky + (LAND ? 0 : 10) : m.y + (LAND ? 2 : 24)) + shy - (RK.countUp || 0);

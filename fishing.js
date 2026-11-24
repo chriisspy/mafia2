@@ -237,7 +237,7 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
     if(show)b.style.bottom=(parseFloat($('#joy').style.bottom)+23)+'px';if(b.classList.contains('on')!==show)b.classList.toggle('on',show);}   /* the rod button is grey wherever you cannot fish from */
   const lhE=Hh()/Math.max(1,Math.round(VW()/190)),B=F.bob,foc=F.on?(B?[(m.x*2+B.x)/3,(m.y+B.y)/2+lhE*.02]:[m.x,m.y-lhE*.2]):[m.x,m.y-lhE*.08];
   F.cx+=(foc[0]-F.cx)*Math.min(1,dt*3);F.cy+=(foc[1]-F.cy)*Math.min(1,dt*3);
-  view(img,F.cx,F.cy,190,{hi:true,void:'#dfeefc',loose:.8});
+  view(img,F.cx,F.cy,190,{hi:true,void:'#dfeefc'});   /* (24 Nov, his ask) never past the bottom of the lake picture */
   /* the ripple: PixelLab's loop, each frame melting into the next so it never ticks */
   const Wj=F.wj,wim=IMG['fish/water'];if(Wj&&wim){const fr=t/300,a=Math.floor(fr)%Wj.n,b=(a+1)%Wj.n,k=fr%1,dx=Wj.x-cam.x,dy=Wj.y-cam.y;
     lx.drawImage(wim,a*Wj.w,0,Wj.w,Wj.h,dx,dy,Wj.w,Wj.h);lx.globalAlpha=k;lx.drawImage(wim,b*Wj.w,0,Wj.w,Wj.h,dx,dy,Wj.w,Wj.h);lx.globalAlpha=1;}
