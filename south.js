@@ -133,7 +133,7 @@ function propFoot(q) { const im = propImg(q); if (!im) return null; const cx = q
 function stallAfter(i, x, y) { if (window.marketStallDraw) marketStallDraw(i, x, y); }
 SH.frame = (m, people, dt, t, H, img) => {
   const tp = $('#townHud #hallBar'), r = tp && tp.getBoundingClientRect(), cr = cv.getBoundingClientRect();
-  view(img, m.x, m.y + 24, 190, {loose: r && r.height ? clamp((r.top - cr.top + 6) / cr.height, .6, 1) : .8, hi: true});
+  view(img, m.x, m.y + (LAND ? 2 : 24), 190, {loose: r && r.height ? clamp((r.top - cr.top + 6) / cr.height, .6, 1) : .8, hi: true});
   if (WL.sel && WL.sel.loc === m.loc) { const q = Math.floor(t / 200) % 2; lx.strokeStyle = q ? '#ffd25e' : '#fff2a8'; lx.lineWidth = 1; lx.beginPath(); lx.ellipse(X(WL.sel.x) + .5, Y(WL.sel.y) + .5, 9 + q, 3 + q * .5, 0, 0, 7); lx.stroke(); }
   const hits = drawScene(people, null, img, southObjs(m, dt)); wlFx(dt, m.loc); drawPuffs(dt); wlCases(dt, m.loc);
   // a tag over the road out to the race track, like the FISH tag over the jetty

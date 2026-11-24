@@ -42,7 +42,7 @@ $('#pmPal').innerHTML=PM_COLS.map(c=>`<button data-c="${c}" style="background:${
 function pmNew(w,h){const old=PM.px,ow=PM.w,oh=PM.h,px=new Array(w*h).fill(null);   /* a new size keeps the drawing, held by the middle of its bottom edge */
   if(old){const dx=Math.floor((w-ow)/2),dy=h-oh;for(let y=0;y<oh;y++)for(let x=0;x<ow;x++){const nx=x+dx,ny=y+dy;if(nx>=0&&ny>=0&&nx<w&&ny<h)px[ny*w+nx]=old[y*ow+x];}}
   PM.w=w;PM.h=h;PM.px=px;$('#pmW').textContent=w;$('#pmH').textContent=h;pmDraw();}
-function pmDraw(){const cv=$('#pmCv'),st=$('#pmStage'),k=Math.max(3,Math.floor(Math.min((st.clientWidth-12)/PM.w,Math.max(160,innerHeight*.36)/PM.h)));PM.k=k;
+function pmDraw(){const cv=$('#pmCv'),st=$('#pmStage'),k=Math.max(3,Math.floor(Math.min((st.clientWidth-12)/PM.w,(LAND?Math.max(140,innerHeight-74):Math.max(160,innerHeight*.36))/PM.h)));PM.k=k;
   cv.width=PM.w*k;cv.height=PM.h*k;const x=cv.getContext('2d');
   for(let y=0;y<PM.h;y++)for(let i=0;i<PM.w;i++){const c=PM.px[y*PM.w+i];x.fillStyle=c||((i+y)%2?'#3a3358':'#2c2647');x.fillRect(i*k,y*k,k,k);}   /* the checks are the see-through part */
   if(PM.mode==='cos'){const man=IMG['man/'+PM.view];if(man){x.imageSmoothingEnabled=false;x.globalAlpha=.5;x.drawImage(man,0,0,PM.w*k,PM.h*k);x.globalAlpha=1;}   /* the mannequin shows through where you have not drawn */

@@ -33,7 +33,7 @@ html,body{height:100%;background:#05040c;overflow:hidden;touch-action:manipulati
 @font-face{font-family:"Pixelify Sans";font-weight:700;font-display:block;src:url(assets/fonts/fix-700.ttf) format("truetype");unicode-range:U+32,U+43,U+48,U+5A}
 body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:none;font-feature-settings:"liga" 0,"clig" 0;color:#fff;display:flex;align-items:center;justify-content:center}
 #phone{position:relative;width:100vw;height:100dvh;overflow:hidden;background:#07060f;user-select:none}
-@media (min-width:520px){#phone{width:390px;height:844px;border-radius:36px;box-shadow:0 0 0 10px #191626,0 30px 80px #000}}
+@media (min-width:520px) and (min-height:521px),(min-width:520px) and (orientation:portrait){#phone{width:390px;height:844px;border-radius:36px;box-shadow:0 0 0 10px #191626,0 30px 80px #000}}
 #c{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;touch-action:none}
 .hud{position:absolute;inset:0;pointer-events:none;display:none}
 .hud.on{display:block}
@@ -134,9 +134,6 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #carBtn img{position:relative;image-rendering:pixelated}
 #carBtn:active{transform:scale(.94)}#fishRodBtn:disabled::before{filter:grayscale(1);opacity:.45}#fishRodBtn:disabled img{filter:grayscale(1);opacity:.4}#punchBtn.hit{animation:pbHit .22s ease-out}@keyframes pbHit{0%{transform:scale(.86)}100%{transform:scale(1)}}
 #joy i{position:absolute;left:35px;top:35px;width:60px;height:60px;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
-#turnPhone{display:none;position:fixed;inset:0;z-index:9999;background:#140c24;color:#f6dfae;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
-#turnPhone b{font-size:22px}#turnPhone small{font-size:13px;opacity:.7}
-@media (orientation:landscape) and (max-height:520px) and (pointer:coarse){#turnPhone{display:flex}}
 #labFilms{white-space:nowrap;flex:none}
 #filmList .fh{font-size:11px;letter-spacing:2px;opacity:.7;margin:10px 0 4px}#filmList .fr{display:flex;align-items:center;gap:5px;margin-top:5px}
 #filmList .fr b{flex:1;font-size:15px;min-width:0}#filmList .fr .btn{font-size:12px;padding:3px 7px 5px}#filmList .fr .btn.one{flex:none;min-width:86px}
@@ -623,6 +620,74 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .rtog{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font:600 13px "Pixelify Sans";padding:5px 2px 7px;border-radius:5px;border:3px solid var(--wood);background:#fff6;color:var(--text);cursor:pointer;opacity:.45}
 .rtog.sel{opacity:1;background:#fff;box-shadow:inset 0 -3px 0 #0002}.rtog:disabled{cursor:default}
 .spy{margin-top:8px}.spy .note{display:flex;align-items:center;gap:8px;justify-content:center;font-size:15px;padding:2px 0}.spy .note img{width:26px;height:26px;image-rendering:pixelated}.spy .note b{color:#b3261e}.spy .note.ok b{color:#2f7a45}
+/*LAND-CSS*/
+/* ---------- LANDSCAPE (24 Nov, his ask: "playable in landscape") ----------
+   A phone held sideways is wide and short. #phone wears .land (set in resize()); nothing here touches the upright layout.
+   The bottom panels move to a column on the RIGHT, the stick sits bottom left, the round buttons bottom right (placed by landBtns()),
+   the pop-up panels sit in the middle and scroll inside the screen's height, and everything keeps clear of the notch (--sl / --sr). */
+#phone.land{--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);--lb:calc(8px + env(safe-area-inset-bottom,0px));--colw:min(300px,40%)}
+#phone.land:not(.game){--lb:50px}   /* the lab's tab bar */
+#phone.land .bottom{left:auto;right:var(--sr);bottom:calc(var(--lb) - 6px)!important;width:calc(var(--colw) + 26px);max-height:calc(100% - var(--lb) + 4px);overflow-y:auto;overflow-x:hidden;padding:20px 13px 6px;scrollbar-width:none;pointer-events:none}
+#phone.land .bottom::-webkit-scrollbar{display:none}
+#phone.land .bottom>*{pointer-events:auto}
+#phone.land #tabs{overflow-x:auto;padding:6px calc(10px + var(--sr)) 6px calc(10px + var(--sl));scrollbar-width:none}#phone.land #tabs .btn{font-size:12px;padding:5px 6px}
+#phone.land #buildTag{left:calc(6px + var(--sl))}
+#phone.land #menuBtn,#phone.land #chatBtn{left:calc(10px + var(--sl))}#phone.land #menuBtn{top:10px}#phone.land #chatBtn{top:56px}
+#phone.land #chatBox{left:calc(58px + var(--sl));right:auto;width:min(380px,60%);top:10px}#phone.land #chatLog{max-height:96px}
+#phone.land #top{right:calc(10px + var(--sr));top:8px}
+#phone.land #menuModal{left:calc(10px + var(--sl));top:54px;max-height:calc(100% - 62px);overflow-y:auto}
+#phone.land #spyModal{left:calc(58px + var(--sl));right:auto;width:min(420px,60%);top:10px;max-height:calc(100% - 20px);overflow-y:auto}
+/* the round sticks and buttons */
+#phone.land #joy{left:calc(20px + var(--sl));bottom:calc(var(--lb) + 8px)!important}
+#phone.land #punchBtn,#phone.land #fishRodBtn{right:var(--abR,calc(22px + var(--sr)));bottom:var(--abB,calc(var(--lb) + 14px))!important}
+#phone.land #carBtn,#phone.land #raceBtn{right:calc(var(--abR,calc(22px + var(--sr))) + 94px);bottom:var(--abB,calc(var(--lb) + 14px))!important}
+/* the titles at the top: smaller, and tucked up */
+#phone.land #voteHud .banner,#phone.land #talkHud .banner,#phone.land #ghostHud .banner,#phone.land #townHud .banner,#phone.land #limboHud .banner,#phone.land #overHud .banner{top:10px!important}
+#phone.land #talkHud .banner{font-size:28px}#phone.land #overHud .banner{font-size:34px}
+#phone.land #cabinHud .timer{top:8px}
+#phone.land #townCodeBox{z-index:8;top:6px;padding:2px 14px 4px}#phone.land #townCodeBox b{font-size:24px;line-height:1}#phone.land #townHud.net .banner{top:62px!important}
+#phone.land #specChip{top:60px}
+#phone.land #townToast{top:22%}#phone.land #duelAsk{top:54px;left:0;right:0;margin:0 auto;width:min(380px,60%)}
+#phone.land #mini{top:10px;right:auto;left:calc(58px + var(--sl));width:84px;height:112px}
+#phone.land #talkSkip,#phone.land #introSkip{right:calc(10px + var(--sr));top:10px}
+#phone.land #watchHud .skip{right:calc(10px + var(--sr));bottom:var(--lb)}
+#phone.land .tag{left:calc(12px + var(--sl))}
+#phone.land #dawnHud .sun{right:calc(12px + var(--sr));top:12px}
+#phone.land #nightOne b{font-size:46px}
+#phone.land .cap{bottom:calc(var(--lb) + 14px)}#phone.land .cap span{font-size:19px;padding:6px 12px;max-width:min(560px,100%)}
+#phone.land .verdict{top:30%}
+#phone.land .toast{top:12%}
+#phone.land #bigMsg{top:22%}
+/* the welcome screen: the sign on the left, the panels on the right */
+#phone.land #homeHud .logo,#phone.land #lobbyHud .logo{top:26px;right:calc(var(--colw) + 26px + var(--sr));left:var(--sl)}
+/* the pop-up panels: in the middle, never taller than the screen (the full-screen ones stay full screen) */
+#phone.land .modal:not(#propModal):not(#flipModal):not(#bjModal):not(#slotModal):not(#knifeModal):not(#menuModal):not(#spyModal){left:var(--sl);right:var(--sr);top:0;bottom:0!important;margin:auto;transform:none;width:min(440px,calc(100% - 28px - var(--sl) - var(--sr)));height:fit-content;max-height:calc(100% - 20px);overflow-y:auto;padding-top:12px;padding-bottom:12px}
+#phone.land .modal.big:not(#propModal):not(#flipModal):not(#bjModal):not(#slotModal):not(#knifeModal):not(#menuModal):not(#spyModal){width:min(660px,calc(100% - 28px - var(--sl) - var(--sr)))}
+#phone.land #howX{top:14px;right:calc(50% - min(330px,50% - 14px) + 6px)}
+#phone.land #sheet{left:auto;right:calc(8px + var(--sr));bottom:var(--lb);width:var(--colw);max-height:calc(100% - var(--lb) - 12px);overflow-y:auto}
+#phone.land #clk{display:none;grid-template-columns:auto 150px;grid-auto-rows:min-content;align-content:center;justify-content:center;gap:6px 14px;padding:8px calc(14px + var(--sr)) 8px calc(14px + var(--sl))}
+#phone.land #clk.on{display:grid}#phone.land #clk .clkStage{grid-column:1;grid-row:1/span 6;align-self:center}#phone.land #clk>:not(.clkStage):not(#clkX){grid-column:2;min-width:0}
+#phone.land #clk .clkTop{font-size:15px;padding-right:40px}#phone.land .clkThemes{flex-wrap:wrap}
+#phone.land #clkX{top:10px!important;right:calc(10px + var(--sr))}
+/* the mechanic: the car on the left, the parts on the right */
+#phone.land #raceEd{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);grid-template-rows:auto auto minmax(0,1fr) auto;gap:0 12px;padding:8px calc(10px + var(--sr)) 8px calc(10px + var(--sl))}
+#phone.land #raceEd.on{display:grid}#phone.land #raceEd .reHead{grid-column:1/3;grid-row:1}#phone.land #reStage{grid-column:1;grid-row:2/4;min-height:0}#phone.land #reStats{grid-column:1;grid-row:4;margin-bottom:0}
+#phone.land #reTabs{grid-column:2;grid-row:2;margin-top:6px}#phone.land #reList{grid-column:2;grid-row:3/5;height:auto;min-height:0}
+#phone.land #dawnHud .panel{left:var(--sl);right:var(--sr);top:0;bottom:0;margin:auto;transform:none;width:min(440px,calc(100% - 28px));height:fit-content;max-height:calc(100% - 20px);overflow-y:auto;padding:10px 14px}
+#phone.land #dawnHud .dport{width:84px;height:84px;margin-top:6px}#phone.land #dawnHud h2{font-size:26px}#phone.land #dawnHud .story{font-size:14px;padding:6px 10px}
+#phone.land #lobbyHud .panel .row{flex-wrap:wrap}
+/* the casino games: the buttons in a column on the right, the table or machine in the open part (bjFit, flipFit) */
+#phone.land #bjCtl,#phone.land #flipCtl{left:auto;right:calc(12px + var(--sr));width:min(290px,40%);bottom:auto;top:50%;transform:translateY(-46%)}
+#phone.land #bjWord{right:calc(min(290px,40%) + 24px)}
+#phone.land #bjModal .mhead,#phone.land #flipModal .mhead,#phone.land #slotModal .mhead,#phone.land #knifeModal .mhead{padding:8px calc(12px + var(--sr)) 6px calc(12px + var(--sl))}
+#phone.land #flipModal #flipSides{gap:24px;margin-bottom:8px}#phone.land #flipModal .fside .ab{width:64px;height:64px}
+#phone.land #bjModal,#phone.land #flipModal,#phone.land #slotModal,#phone.land #knifeModal,#phone.land #propModal{bottom:0}
+/* the maker: the drawing on the left, the tools on the right */
+#phone.land #propModal.on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:min-content;align-content:start;gap:6px 12px;padding:8px calc(12px + var(--sr)) 8px calc(12px + var(--sl))}
+#phone.land #propModal .mhead{grid-column:1/3}#phone.land #pmStage{grid-column:1;grid-row:2/span 9;align-self:stretch;min-height:0}#phone.land #propModal>:not(.mhead):not(#pmStage){grid-column:2}
+#phone.land #townHud.lake .bottom{width:min(400px,56%)}#phone.land #lakeBar .lrow{flex-wrap:wrap;justify-content:flex-end;row-gap:6px}#phone.land #fishLine,#phone.land #hallLine{font-size:18px;margin-bottom:6px;text-align:right}
+#phone.land.xmas #homeHud .hpanel+.hpanel{margin-top:13px}#phone.land:not(.game) .bottom{max-height:calc(100% - var(--lb) - 40px)}
+/*END-LAND-CSS*/
 </style>
 </head>
 <body>
@@ -980,7 +1045,6 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   <div id="joy"><i></i></div>
   <button id="punchBtn" title="Punch"></button><button id="fishRodBtn" title="Fish here"><img src="assets/fishing/rod-icon.png" alt="Fish"></button>
   <button class="btn" id="floatX" title="Close"><i data-ic="cross" data-c="solo"></i></button>
-  <div id="turnPhone"><i data-ic="phone" data-s="5" data-c="solo"></i><b>Turn your phone upright</b><small>MAFIA plays in portrait</small></div>
   <div class="modal big panel" id="filmModal">
     <div class="mhead"><b>NIGHT FILMS</b><button class="btn" id="filmX"><i data-ic="cross" data-c="solo"></i></button></div>
     <div class="small" style="margin-bottom:6px">Lab only. Tap one to watch it.</div>
@@ -1284,9 +1348,12 @@ function sndUI(){const h=$('#homeSnd'),c=$('#caseSnd');if(h)h.innerHTML=ic(SND.o
   requestAnimationFrame(tick);
 })();
 const loading=on=>document.getElementById('loader').classList.toggle('off',!on);
-let W=0,H=0,DPR=1;
-function resize(){const r=cv.getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);W=cv.width=Math.round(r.width*DPR);H=cv.height=Math.round(r.height*DPR);}
+let W=0,H=0,DPR=1,LAND=false;   /* LAND = a phone held sideways (24 Nov): a wide, short screen; #phone wears .land */
+const LANDQ=matchMedia('(orientation:landscape) and (max-height:520px)');
+const VW=()=>LAND?Math.min(W,H):W;   /* what the zoom is measured against: the screen's width, or its SHORT side when the phone is sideways (the art pixels stay the size they are upright) */
+function resize(){LAND=LANDQ.matches;document.getElementById('phone').classList.toggle('land',LAND);const r=cv.getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);W=cv.width=Math.round(r.width*DPR);H=cv.height=Math.round(r.height*DPR);}
 addEventListener('resize',resize);
+try{LANDQ.addEventListener('change',()=>{resize();dispatchEvent(new Event('resize'));});}catch(e){}addEventListener('orientationchange',()=>setTimeout(()=>dispatchEvent(new Event('resize')),300));   /* turning the phone: measure again once the browser has settled (the games' own fit listeners hear it too) */
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
 const ease=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -1309,7 +1376,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11242100'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11242200'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1340,7 +1407,8 @@ const lo=mk(1,1), lx=lo.getContext('2d');
 const lc=mk(1,1), lcx=lc.getContext('2d'); // light layer (kept inside the room)
 let S=1;const cam={x:0,y:0,img:null,lw:1,lh:1,void:'#07060f'};
 function view(img,cx,cy,viewW,o={}){
-  S=o.s||Math.max(1,o.fit?Math.floor(W/viewW):Math.round(W/viewW));let lw=Math.ceil(W/S)+1,lh=Math.ceil(H/S)+1; // o.s = an exact zoom (may be a fraction while it glides); +1 = room to slide by part of a pixel
+  {const b=VW();S=o.s||Math.max(1,o.fit?Math.floor(Math.min(b/viewW,LAND&&o.topCss!=null?(H+2)/img.height:1e9)):Math.round(b/viewW));}   /* sideways, a whole ROOM (fit + topCss) must also fit the screen's height */if(LAND&&o.s&&o.topCss==null&&img.width*S<W)S=W/img.width;   /* sideways, the films: never narrower than the screen (no black bars at the sides) */
+  let lw=Math.ceil(W/S)+1,lh=Math.ceil(H/S)+1; // o.s = an exact zoom (may be a fraction while it glides); +1 = room to slide by part of a pixel
   /* SMOOTH FOLLOW (o.hi, 13 Nov): the scene is drawn straight at the screen's own sharpness (every art pixel is still a clean S x S block),
      so the camera AND the people can sit on screen pixels, not whole art pixels: the ground glides and whoever the camera follows stays
      rock steady. Before, one of the two always had to jump a whole art pixel at a time (shimmer on the character, or a juddery ground). */
@@ -1351,8 +1419,10 @@ function view(img,cx,cy,viewW,o={}){
   cam.img=img;cam.lw=lw;cam.lh=lh;cam.void=o.void||'#07060f';
   const iw=img.width,ih=img.height;
   const iox=img.ox||0;let x=iw<=lw?(iw-lw)/2-iox:clamp(cx-lw/2,-iox,iw-iox-lw);
+  if(LAND&&LANDCOL&&iw<=lw){const cw=W/DPR,rw=iw*S/DPR;if((cw+rw)/2>cw-LANDCOL-6)x+=Math.max(0,Math.min(LANDCOL/2,(cw-rw)/2-8))*DPR/S;}   /* sideways: a room that would sit under the panel column moves into the open part */
   // loose: the camera may run a little past the bottom of the map, so the lowest cabins are not hidden under the subtitles
-  let y=ih<=lh?(o.topCss!=null?-o.topCss*DPR/S:(ih-lh)/2):clamp(cy-lh/2,0,ih-lh*(o.loose===true?.74:o.loose||1));   /* loose can be a number: how far down the screen the map must reach */
+  if(LAND&&LANDPAD&&iw>lw)x=clamp(cx-lw/2+LANDPAD*DPR/S/2,-iox,iw-iox-lw);   /* sideways, a tall panel on the right: lean the camera so you stay in the open part */
+  let y=ih<=lh?(o.topCss!=null&&!LAND?-o.topCss*DPR/S:(ih-lh)/2):clamp(cy-lh/2,0,ih-lh*(o.loose===true?.74:(LAND?1:o.loose)||1));   /* loose can be a number: how far down the screen the map must reach */
   if(hi){x=Math.round(x*S)/S;y=Math.round(y*S)/S;}   /* the camera on a whole screen pixel */
   cam.x=Math.floor(x);cam.y=Math.floor(y);cam.fx=x-cam.x;cam.fy=y-cam.y; // whole pixels for drawing; the leftover fraction is slid in present()
   lx.setTransform(hi?S:1,0,0,hi?S:1,0,0);lx.imageSmoothingEnabled=false;lx.globalAlpha=1;lx.globalCompositeOperation='source-over';
@@ -1608,7 +1678,7 @@ function drawScene(people,occ,img,objs){
 /* the part of the screen the YOU tag may use: under the world's name box, above the bottom buttons */
 function youBand(){const c=$('#c'),r=c&&c.getBoundingClientRect(),f=v=>r&&r.height?(v-r.top)/r.height*cam.lh:0,tb=$('#tabs');
   const ti=$('#townHud .title.banner'),tt=ti&&ti.offsetParent&&+getComputedStyle(ti).opacity>.05?Math.ceil(f(ti.getBoundingClientRect().bottom))+2:0;   /* the arrow also keeps clear of the town's title */
-  const tp=$('#townHud .tpanel'),bars=[tb,tp,$('#lakeBar'),$('#hallBar')].filter(e=>e&&e.offsetParent&&getComputedStyle(e).display!=='none'&&e.getBoundingClientRect().height>4);   /* and above the bottom panel or bar, whichever is showing */
+  const tp=$('#townHud .tpanel'),bars=(LAND?[tb]:[tb,tp,$('#lakeBar'),$('#hallBar')]).filter(e=>e&&e.offsetParent&&getComputedStyle(e).display!=='none'&&e.getBoundingClientRect().height>4);   /* and above the bottom panel or bar, whichever is showing */
   return[youTop(),bars.length?Math.floor(f(Math.min(...bars.map(e=>e.getBoundingClientRect().top))))-2:cam.lh,Math.max(youTop(),tt)];}
 /* a pixel triangle pointing along (ux, uy), tip `a` ahead of (x, y), base `b` behind, half as wide as `w` */
 function pxTri(x,y,ux,uy,a,b,w,col){const P=[[x+ux*a,y+uy*a],[x-ux*b-uy*w,y-uy*b+ux*w],[x-ux*b+uy*w,y-uy*b-ux*w]],cr=(p,q,X0,Y0)=>(q[0]-p[0])*(Y0-p[1])-(q[1]-p[1])*(X0-p[0]);
@@ -2384,9 +2454,9 @@ scenes.cabin={
   frame(dt,t){
     // zoomed in (room as wide as the screen) while the night panel is folded; when it opens the room glides up
     // and shrinks to sit above it, and glides back when it closes. Whole-number zoom at rest = clean pixels.
-    const sh=$('#sheet'),open=!sh.classList.contains('collapsed'),Sin=Math.max(1,Math.floor(W/186));
+    const sh=$('#sheet'),open=!sh.classList.contains('collapsed'),Sin=Math.max(1,Math.floor(LAND?Math.min(W/186,(H+2)/IMG.room.height):W/186));
     const topIn=80,topOut=62,avail=(sh.getBoundingClientRect().top-cv.getBoundingClientRect().top-topOut-6)*DPR;
-    const Sout=open?clamp(Math.floor(avail/242),1,Sin):Sin;if(open)CAB.sOut=Sout;
+    const Sout=open&&!LAND?clamp(Math.floor(avail/242),1,Sin):Sin;if(open)CAB.sOut=Sout;
     CAB.zk=CAB.zk??(open?1:0);CAB.zk+=((open?1:0)-CAB.zk)*Math.min(1,dt*7);if(Math.abs((open?1:0)-CAB.zk)<.012)CAB.zk=open?1:0;
     useRoom(roomOf(0));view(IMG.room,97,121,186,{s:lerp(Sin,CAB.sOut??Sin,CAB.zk),topCss:lerp(topIn,topOut,CAB.zk),void:ROOM_VOID});
     rain(dt,ROOM.windows.map(w=>[X(w[0]),Y(w[1]),w[2],w[3]]));
@@ -2519,9 +2589,17 @@ document.addEventListener('scroll',floatXTick,{capture:true,passive:true});
 function joyPlace(){floatXTick();const el=$('#joy'),ok=[scenes.town,scenes.cabin,scenes.ghost].includes(scene)&&!FISH.on&&!document.querySelector('.modal.on')&&!$('#clk').classList.contains('on');
   let show=false;if(ok){const hud=$(scene.hud),ph=$('#phone').getBoundingClientRect();let top=ph.bottom;
     for(const e of hud.querySelectorAll('.panel,#lakeBar,#hallBar')){if(!e.offsetParent||e.classList.contains('modal')||e.classList.contains('toast'))continue;const r=e.getBoundingClientRect();if(r.bottom>ph.bottom-260&&r.top<top)top=r.top;}
-    const b=ph.bottom-top+22;show=top-ph.top>330;if(show)el.style.bottom=b+'px';}
+    const b=ph.bottom-top+22;show=LAND||top-ph.top>330;if(show&&!LAND)el.style.bottom=b+'px';}
   if(el.classList.contains('on')!==show)el.classList.toggle('on',show);if(!show&&JOY.on){JOY.on=false;JOY.m=0;}
-  const pb=$('#punchBtn'),ps=show&&scene===scenes.ghost;if(ps)pb.style.bottom=(parseFloat(el.style.bottom)+23)+'px';if(pb.classList.contains('on')!==ps)pb.classList.toggle('on',ps);}
+  const pb=$('#punchBtn'),ps=show&&scene===scenes.ghost;if(ps)pb.style.bottom=(parseFloat(el.style.bottom)+23)+'px';if(pb.classList.contains('on')!==ps)pb.classList.toggle('on',ps);landBtns();}
+/* SIDEWAYS (24 Nov): the round buttons sit bottom right. If the panel column on the right is short they sit just above it; if it is tall, beside it.
+   LANDPAD = how much of the right of the screen a tall column covers (the camera leans left by half of it, so you are not walking under the panel). */
+let LANDPAD=0,LANDCOL=0;
+function landBtns(){const ph=$('#phone');let R='',B='',pad=0,col=0;
+  if(LAND){const pr=ph.getBoundingClientRect(),hud=scene&&scene.hud&&$(scene.hud);let top=pr.bottom,left=pr.right,any=false;
+    if(hud)for(const e of hud.querySelectorAll('.bottom>*,#sheet')){if(!e.offsetParent)continue;const r=e.getBoundingClientRect();if(r.height<5||r.width<5)continue;any=true;top=Math.min(top,r.top);left=Math.min(left,r.left);}
+    if(any){if(top-pr.top>=150)B=Math.round(pr.bottom-top+14)+'px';else R=Math.round(pr.right-left+14)+'px';if(top-pr.top<pr.height*.45)pad=pr.right-left;col=pr.right-left;}}
+  LANDPAD=pad;LANDCOL=col;const k=R+'|'+B;if(landBtns.k!==k){landBtns.k=k;R?ph.style.setProperty('--abR',R):ph.style.removeProperty('--abR');B?ph.style.setProperty('--abB',B):ph.style.removeProperty('--abB');}}
 /* THE PUNCH BUTTON (16 Nov, his ask): for spectators only. A ghost punches the ghost next to it, or the living player
    whose cabin it is in. The living never see the ghosts, but they see a puff come off them and feel a little bump. */
 const PUNCH={at:0};
@@ -3378,7 +3456,7 @@ const CK={raf:0,best:0};
 const CK_MEDALS=[[100,'PLATINUM'],[50,'GOLD'],[25,'SILVER'],[10,'BRONZE']];
 // Everything below follows the original's numbers, scaled to this 132 x 200 pixel screen (s = 200 / 380):
 // gravity 1350, flap -380, towers 52 wide, ball radius 11, the same difficulty curve, orbs, boost, warp and coins.
-const CKW=132;let CKH=200;const CKS=200/380,CK_PW=Math.round(52*CKS),CK_R=11*CKS,CK_BX=Math.round(CKW*.28);
+let CKW=132,CKH=200;const CKS=200/380,CK_PW=Math.round(52*CKS),CK_R=11*CKS,CK_BX=Math.round(CKW*.28);
 const CK_FONT={A:[2,5,7,5,5],B:[6,5,6,5,6],C:[3,4,4,4,3],D:[6,5,5,5,6],E:[7,4,6,4,7],F:[7,4,6,4,4],G:[3,4,5,5,3],H:[5,5,7,5,5],I:[7,2,2,2,7],J:[1,1,1,5,2],K:[5,5,6,5,5],L:[4,4,4,4,7],M:[5,7,7,5,5],N:[6,5,5,5,5],O:[2,5,5,5,2],P:[6,5,6,4,4],Q:[2,5,5,6,3],R:[6,5,6,5,5],S:[3,4,2,1,6],T:[7,2,2,2,2],U:[5,5,5,5,7],V:[5,5,5,5,2],W:[5,5,7,7,5],X:[5,5,2,5,5],Y:[5,5,2,2,2],Z:[7,1,2,4,7],
   0:[7,5,5,5,7],1:[2,6,2,2,7],2:[7,1,7,4,7],3:[7,1,3,1,7],4:[5,5,7,1,1],5:[7,4,7,1,7],6:[7,4,7,5,7],7:[7,1,1,1,1],8:[7,5,7,5,7],9:[7,5,7,1,7],'+':[0,2,7,2,0],'!':[2,2,2,0,2],'x':[0,5,2,5,0],'.':[0,0,0,0,2],'-':[0,0,7,0,0]};
 // sky = 4 bands top to bottom; tw = tower [outline, body, light edge, dark edge, cap, cap when you pass]; trail / air = the effects
@@ -3493,8 +3571,9 @@ function ckReset(){Object.assign(CK,{y:CKH*.45,v:0,sq:0,pipes:[],orbs:[],fx:[],f
    then the stage is scaled up to fill all the room the score line and the theme chips leave. */
 function ckFit(){const box=$('#clk'),st=box.querySelector('.clkStage'),c=$('#clkC'),cs=getComputedStyle(box);
   const others=[...box.children].filter(e=>e!==st&&e.id!=='clkX'&&e.offsetParent).reduce((a,e)=>a+e.getBoundingClientRect().height,0)+6*([...box.children].length-2);
-  const W=box.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-6,H=box.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-others-6;if(W<50||H<50)return;
-  CKH=Math.round(clamp(CKW*H/W,200,360));if(c.height!==CKH)c.height=CKH;const k=Math.min(W/CKW,H/CKH);st.style.width=Math.floor(CKW*k)+'px';st.style.height=Math.floor(CKH*k)+'px';}
+  const W=box.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-6-(LAND?164:0),H=box.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-(LAND?0:others)-6;if(W<50||H<50)return;
+  if(LAND){CKH=200;CKW=Math.round(clamp(CKH*W/H,132,340));}else{CKW=132;CKH=Math.round(clamp(CKW*H/W,200,360));}   /* sideways: a WIDE game beside its words (24 Nov) */
+  if(c.width!==CKW)c.width=CKW;if(c.height!==CKH)c.height=CKH;const k=Math.min(W/CKW,H/CKH);st.style.width=Math.floor(CKW*k)+'px';st.style.height=Math.floor(CKH*k)+'px';}
 addEventListener('resize',()=>{if($('#clk').classList.contains('on')&&CK.state!=='play')ckFit();});
 function ckOpen(){$('#clk').classList.add('on');ckFit();ckReset();try{CK.best=+(localStorage.getItem('cg_clicker_best')||0);CK.theme=localStorage.getItem('m2_ck_theme')||'classic';}catch(e){}if(!CK_THEMES[CK.theme]||!ckOwned(CK.theme))CK.theme='classic';ckThemeUI();$('#clkBest').textContent=CK.best;$('#clk').classList.add('on');CK.last=performance.now();cancelAnimationFrame(CK.raf);CK.raf=requestAnimationFrame(ckLoop);}
 function ckClose(){$('#clk').classList.remove('on');cancelAnimationFrame(CK.raf);
@@ -4481,7 +4560,7 @@ scenes.town={hud:'#townHud',
       wlFx(dt,m.loc);drawPuffs(dt);wlCases(dt,m.loc);
       const fl=.5+.5*noise(t*1.7,2),RL=roomLights(fl,0);if(people.some(p=>p.e.seat&&p.e.seat.k==='chair'))RL.push([159,138,26,'120,220,255',.35,5]);lights(RL,t,ROOM_MASK);
     }else{dayMode=true;const img=dayImg('ground');{const tp=$('#townHud .tpanel'),r=tp&&tp.getBoundingClientRect(),cr=cv.getBoundingClientRect();   /* the map's bottom edge stops at the bottom panel: no black strip above it (his catch, 13 Nov) */
-        view(img,m.x+sh,m.y+24,190,{loose:r&&r.height?clamp((r.top-cr.top+6)/cr.height,.6,1):.8,hi:true});}   /* smooth follow: the ground glides and you stay steady (13 Nov) */
+        view(img,m.x+sh,m.y+(LAND?2:24),190,{loose:r&&r.height?clamp((r.top-cr.top+6)/cr.height,.6,1):.8,hi:true});}   /* smooth follow: the ground glides and you stay steady (13 Nov) */
       const hid=isUfo(m)?-1:behindCabin(m.x,m.y);WL.cabA=WL.cabA||TOWN.cabins.map(()=>1);
       const huts=dayImg('cabins').map(o=>{const a=WL.cabA[o.ci]=clamp(WL.cabA[o.ci]+(o.ci===hid?-1:1)*dt*4,.4,1);return a<1?{...o,alpha:a}:o;});
       if(WL.sel&&WL.sel.loc===m.loc){const q=Math.floor(t/200)%2;lx.strokeStyle=q?'#ffd25e':'#fff2a8';lx.lineWidth=1;lx.beginPath();lx.ellipse(X(WL.sel.x)+.5,Y(WL.sel.y)+.5,9+q,3+q*.5,0,0,7);lx.stroke();}
@@ -5106,17 +5185,17 @@ const INTRO_DRAW={
       else{if(i<6)faces[i]=i;iOnce('on'+i,()=>sfx('join'));}});
     if(k>tGo-.5)iOnce('shut',()=>sfx('door'));
     engine(k<2.4?.8:k<tGo?.34:.95,k<2.4?lerp(.55,.1,k/2.4):k<tGo?0:lerp(.15,1,ramp(k,tGo,len)));
-    view(IMG['intro/stop'],lerp(214,246,ease(ramp(k,0,len))),372,252,{s:W/252});
+    view(IMG['intro/stop'],lerp(214,246,ease(ramp(k,0,len))),372,252,{s:VW()/252});
     drawScene(P,null,null,[introBus(bx,BY,{faces,bounce:k<2.2||k>tGo})]);return{};},
-  road(k,len,dt,t){const bx=lerp(30,1020,k/len),by=464-BUS.h;engine(.8,.78);view(IMG['intro/road'],bx+BUS.w/2,400,252,{s:W/252});
+  road(k,len,dt,t){const bx=lerp(30,1020,k/len),by=464-BUS.h;engine(.8,.78);view(IMG['intro/road'],bx+BUS.w/2,400,252,{s:VW()/252});
     drawScene([],null,null,[introBus(bx,by,{faces:introFaces(),bounce:true})]);return{};},
-  forest(k,len,dt,t){const bx=lerp(20,400,k/len),by=456-BUS.h,vw=lerp(252,232,ease(k/len));engine(.8,.7);view(IMG['intro/forest'],bx+BUS.w/2+10,400,vw,{s:W/vw});
+  forest(k,len,dt,t){const bx=lerp(20,400,k/len),by=456-BUS.h,vw=lerp(252,232,ease(k/len));engine(.8,.7);view(IMG['intro/forest'],bx+BUS.w/2+10,400,vw,{s:VW()/vw});
     drawScene([],null,null,[introBus(bx,by,{faces:introFaces(),bounce:true,sleep:true})]);busLights(bx,by,t);
     if(k>2&&k<3.5&&(k<2.5||k>2.75)){const ex=Math.round(bx+BUS.w+52),ey=by-30;px(ex,ey,2,2,'#ff3c3c');px(ex+6,ey,2,2,'#ff3c3c');}   /* something in the trees: it looks, it blinks, it is gone */
     return{};},
   /* the close-up (v4, his call): a quick zoom, a couple of seconds of everyone asleep (all but one, whose eyes are open),
      and that is all. The bang that starts the next shot wakes them. */
-  inside(k,len,dt,t){const bx=lerp(400,460,k/len),by=456-BUS.h,z=ease(ramp(k,0,.8)),vw=lerp(232,118,z);engine(lerp(.8,.5,z),.7);view(IMG['intro/forest'],lerp(bx+BUS.w/2+10,bx+92,z),lerp(400,by+24,z),vw,{s:W/vw});
+  inside(k,len,dt,t){const bx=lerp(400,460,k/len),by=456-BUS.h,z=ease(ramp(k,0,.8)),vw=lerp(232,118,z);engine(lerp(.8,.5,z),.7);view(IMG['intro/forest'],lerp(bx+BUS.w/2+10,bx+92,z),lerp(400,by+24,z),vw,{s:VW()/vw});
     drawScene([],null,null,[introBus(bx,by,{faces:introFaces(),bounce:true,sleep:true})]);
     const texts=[];introFaces().forEach(s=>{if(s!==INTRO.awake&&Math.floor(k*1.6+s*.55)%2)texts.push(['z',bx+(BUS.win[s][0]+BUS.win[s][1])/2+11,by+BUS.gy+2,'#cfd8ff']);});return{texts};},
   /* CLUNK: still in the close-up. Every eye snaps open and a big "!" slams onto the screen with an alarm. Then the
@@ -5128,7 +5207,7 @@ const INTRO_DRAW={
     const e1=ease(ramp(k,B+1.2,B+2.2)),e2=ease(ramp(k,B+3.1,B+4.2)),e3=ease(ramp(k,5.2,len));   /* 1: back to the exhaust. 2: right out. 3: a slow push in on the dead coach */
     const vw=lerp(lerp(lerp(118,176,e1),252,e2),216,e3);let cx=lerp(lerp(bx+92,bx+46,e1),bx+BUS.w/2+10,e2),cy=lerp(lerp(by+24,by+44,e1),400,e2);
     if(I.shake>0){cx+=(Math.random()-.5)*I.shake;cy+=(Math.random()-.5)*I.shake;I.shake=Math.max(0,I.shake-dt*15);}
-    view(IMG['intro/forest'],cx,cy,vw,{s:W/vw});
+    view(IMG['intro/forest'],cx,cy,vw,{s:VW()/vw});
     drawScene([],null,null,[introBus(bx,by,{faces:introFaces(),bounce:moving,sleep:k<B,jolt:k>B&&k<B+.25?-3:0})]);   /* every eye snaps open, every head jerks up */
     if(k>B)introSmoke(bx+4,by+60,k-B);if(on)busLights(bx,by,t);
     if(k>B&&k<B+1.15){const a=Math.min(1,(k-B)/.12),u=Math.max(2,Math.round(cam.lw/40)),pop=k-B<.12?1.5:k-B<.2?.9:1,w=Math.round(u*2*pop),h=Math.round(u*6.4*pop),x0=Math.round(cam.lw/2-w/2),y0=Math.round(cam.lh*.07);   /* THE BIG "!" : solid, chunky, yellow on navy */
@@ -5142,13 +5221,13 @@ const INTRO_DRAW={
       else{const dir=see?'right':Math.floor((kk+i*.7)*.7)%2?'left':'right';P.push({name:nm,dir,x:tx,y:ty,t:t+i*130,tint:NIGHT_TINT});
         if(see&&i===0)texts.push(['!',tx+7,ty-36,'#ffd25e']);else if(!see&&i%3===0&&Math.floor(kk*.9+i)%2)texts.push(['?',tx+7,ty-36,'#f6dfae']);}});
     if(!sh&&k>.5)iOnce('odoor',()=>sfx('door'));engine(0,0);
-    view(IMG['intro/forest'],lerp(bx+150,bx+BUS.w+44,ease(ramp(k,0,len))),400,252,{s:W/252});
+    view(IMG['intro/forest'],lerp(bx+150,bx+BUS.w+44,ease(ramp(k,0,len))),400,252,{s:VW()/252});
     drawScene(P,null,null,[introBus(bx,by,{})]);introSmoke(bx+4,by+60,kk);return{texts};},
   town(k,len,dt,t){const sh=INTRO.mode==='short',cast=introCast(),P=cast.map((nm,i)=>({name:nm,dir:'back',walk:sh||k>.9,x:150+((i%5)-(Math.min(cast.length,5)-1)/2)*10,y:512+Math.floor(i/5)*10-Math.max(0,k-(sh?0:.9))*9,t:t+i*130,tint:NIGHT_TINT}));engineOff();
-    view(IMG['intro/town'],150,lerp(452,150,ease(sh?ramp(k,.4,len-.2):ramp(k,1.3,len-1.3))),150,{s:W/150});drawScene(P,null,null,[]);return{};},   /* a held breath on the dark road, a slow climb, and a long look at the town */
+    view(IMG['intro/town'],150,lerp(452,150,ease(sh?ramp(k,.4,len-.2):ramp(k,1.3,len-1.3))),150,{s:VW()/150});drawScene(P,null,null,[]);return{};},   /* a held breath on the dark road, a slow climb, and a long look at the town */
   settle(k,len,dt,t){const cast=introCast(),P=[],doors=[],tIn=len-1.7;
     {const c0=TOWN.cabins[CABIN_OF[0]],e=ease(ramp(k,.8,tIn+.2));let fx=280,fy=372;if(c0){const d0=c0.route.len*(1-Math.min(1,k/tIn)),a0=c0.route.at(Math.max(0,d0));fx=lerp(280,a0.x,e);fy=lerp(372,a0.y-18,e);}   /* everyone fans out from the square; the camera goes with YOU to your own door */
-      const vw=lerp(232,172,e);view(IMG.town,fx,fy,vw,{loose:true,s:W/vw});}
+      const vw=lerp(232,172,e);view(IMG.town,fx,fy,vw,{loose:true,s:VW()/vw});}
     lx.fillStyle='rgba(6,8,30,.38)';lx.fillRect(0,0,cam.lw,cam.lh);
     cast.forEach((nm,i)=>{const ci=CABIN_OF[i],c=TOWN.cabins[ci];if(!c)return;const rt=c.route,d=rt.len*(1-k/tIn);
       if(d>0){const a=rt.at(d);P.push({name:nm,x:a.x,y:a.y,dir:dirFrom(-a.dx,-a.dy),walk:true,t:t+i*130,tint:NIGHT_TINT});}
@@ -5200,7 +5279,7 @@ function hrSpawn(ln,x){const k=ln.pick[Math.floor(Math.random()*ln.pick.length)]
   ln.gap0=ln.gap[0]+Math.floor(Math.random()*Math.random()*(ln.gap[1]-ln.gap[0]));return o;}
 function hrDraw(dt,t){view(HR.blank||(HR.blank=mk(1,1)),0,0,260);const L=cam.lw,H=cam.lh;lx.imageSmoothingEnabled=false;
   /* where the road goes: the runners' feet a little above the first panel */
-  const cr=$('#c').getBoundingClientRect(),pb=$('#homeHud .bottom'),pr=pb&&pb.getBoundingClientRect(),feet=Math.round(pr&&cr.height?(pr.top-cr.top)/cr.height*H-22:H*.55);
+  const cr=$('#c').getBoundingClientRect(),pb=$('#homeHud .bottom'),pr=pb&&pb.getBoundingClientRect(),feet=Math.round(LAND?H*.86:pr&&cr.height?(pr.top-cr.top)/cr.height*H-22:H*.55);
   const road=feet-(HR.feetIn||30),hillsB=road+14,hillsT=hillsB-(hrOk(HR.im.hills)?HR.im.hills.height:77),mtsT=hillsT-34;
   /* the sky: dusk-blue at the top to warm gold at the mountains */
   const g=lx.createLinearGradient(0,0,0,mtsT+40);if(HRX){g.addColorStop(0,'#232b5c');g.addColorStop(.6,'#5b5f9f');g.addColorStop(1,'#b8acd8');}else{g.addColorStop(0,'#5d6fc4');g.addColorStop(.55,'#c99ac0');g.addColorStop(1,'#ffd3a1');}   /* Christmas: a snowy evening */lx.fillStyle=g;lx.fillRect(0,0,L,H);
@@ -5316,7 +5395,7 @@ $('#filmList').insertAdjacentHTML('afterbegin','<div class="fh">THE INTRO</div><
 $('#filmList').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.i){$('#filmModal').classList.remove('on');if(b.dataset.i==='n1'){CAB.keep=false;go('cabin',()=>nightOne(1));return;}INTRO.mode=b.dataset.i;introLoad().then(()=>{if(INTRO.ok)go('intro');});return;}if(b.dataset.w){$('#filmModal').classList.remove('on');const it=SKINS.find(s=>s.rar===b.dataset.w);showWin(it,true,0);$('#winAgain').style.display='none';$('#winEquip').style.display='none';return;}playFilm(b.dataset.k,b.dataset.e);};
 $('#labFilms').onclick=()=>{document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));$('#filmModal').classList.add('on');};$('#filmX').onclick=()=>$('#filmModal').classList.remove('on');
 /* portrait only: where the browser allows it (full screen, or the home-screen app), hold the screen upright */
-addEventListener('pointerdown',()=>{try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('portrait').catch(()=>{});}catch(e){}},{once:true,capture:true,passive:true});
+addEventListener('pointerdown',()=>{try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}},{once:true,capture:true,passive:true});
 /* lab only: 500 coins into this phone's wallet (it is the same wallet the real game uses on this browser) */
 $('#labCoins').onclick=()=>{srv('lab',{what:'coins'}).then(()=>{sfx('coin');toast(ic('coin')+' +500 coins.');}).catch(e=>toast(e.message));};
 $('#rainBtn').onclick=()=>{raining=!raining;$('#rainBtn').innerHTML=raining?ic('rain')+'Rain':ic('moon')+'Clear';};

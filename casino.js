@@ -121,10 +121,13 @@ function bjClose(){$('#bjModal').classList.remove('on');cancelAnimationFrame(BJ.
 load('bj/wall','assets/casino/bj-wall.png').catch(()=>{});load('bj/room','assets/casino/bj-room.png').catch(()=>{});load('bj/table','assets/casino/bj-table.png').catch(()=>{});
 const BJ_TY=28,BJ_FROM=[69,30];
 const BJV={S:2,W:152,H:128,ox:0,oy:0,scene:null};
-function bjFit(){const st=$('#bjStage'),cv=$('#bjCv'),cw=st.clientWidth,ch=st.clientHeight;if(!cw||!ch)return;const S=Math.max(1,Math.floor(cw/120)),   /* zoomed in (his call): on a phone the table is a little wider than the screen, its empty ends cut off */
+/* SIDEWAYS (24 Nov): the four games zoom by the screen's SHORT side when the phone is held sideways, so each still fits its height */
+const landW=(cw,ch)=>LAND?Math.min(cw,ch):cw;
+function bjFit(){const st=$('#bjStage'),cv=$('#bjCv'),cw=st.clientWidth,ch=st.clientHeight;if(!cw||!ch)return;const ctl=LAND?$('#bjCtl').offsetWidth+24:0,S=Math.max(1,Math.floor(LAND?Math.min((cw-ctl)/120,(ch-40)/128):cw/120)),   /* sideways: the buttons are a column on the right, the table sits in the open part and fits the height */
+      /* zoomed in (his call): on a phone the table is a little wider than the screen, its empty ends cut off */
     W=Math.ceil(cw/S),H=Math.ceil(ch/S);
   if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.width=W*S+'px';cv.style.height=H*S+'px';
-  const top=Math.ceil(56/S);if(BJ.ph==='bet'||BJ.ph==='done'||!BJV.botPx)BJV.botPx=Math.max(BJV.botPx||0,$('#bjCtl').offsetHeight+18);const bot=Math.ceil(BJV.botPx/S);BJV.S=S;BJV.W=W;BJV.H=H;BJV.ox=Math.round((W-152)/2);BJV.oy=Math.max(top,top+Math.round((H-top-bot-128)/2));   /* the game in the middle of the screen, the buttons below (his call) */
+  const top=Math.ceil((LAND?40:56)/S);if(BJ.ph==='bet'||BJ.ph==='done'||!BJV.botPx)BJV.botPx=Math.max(BJV.botPx||0,$('#bjCtl').offsetHeight+18);const bot=LAND?0:Math.ceil(BJV.botPx/S);BJV.S=S;BJV.W=W;BJV.H=H;BJV.ox=Math.round((W-ctl/S-152)/2);BJV.oy=Math.max(top,top+Math.round((H-top-bot-128)/2));   /* the game in the middle of the screen, the buttons below (his call) */
   $('#bjWord').style.top=((BJV.oy+44)*S)+'px';}
 addEventListener('resize',()=>{if($('#bjModal').classList.contains('on'))bjFit();});
 function bjFrame(dt){BJ.t+=dt;bjFit();if(!BJV.scene)BJV.scene=mk(152,128);const cv=BJV.scene,x=cv.getContext('2d'),W=152,H=128;x.imageSmoothingEnabled=false;
@@ -215,7 +218,7 @@ function bjRoom(scene){const c=$('#bjCv'),x=c.getContext('2d'),{W,H,ox,oy}=BJV,r
    flip-machine.png), and the coin's own canvas (#flipCv, at the same pixel size) sits behind it, centred in the hole. */
 const FM={j:null};load('fm/mach','assets/casino/flip-machine.png').catch(()=>{});fetch('assets/casino/flip-machine.json?v='+BUILD).then(r=>r.json()).then(j=>{FM.j=j;flipFit();}).catch(()=>{});
 function flipFit(){const M=$('#flipModal'),J=FM.j,im=IMG['fm/mach'];if(!J||!im||!M.classList.contains('on'))return;const cw=M.clientWidth,ch=M.clientHeight;if(!cw)return;
-  const S=Math.max(1,Math.floor(cw/92)),W=Math.ceil(cw/S),H=Math.ceil(ch/S),ox=Math.round((W-J.w)/2),oy=Math.round(H*.47-(J.hy+J.hh*.62)),c=$('#flipMach');   /* standing right at the machine (his call): about 4 screen pixels per art pixel, the screen a little above the middle, the cabinet's edges and sign cut off */
+  const ctl=LAND?$('#flipCtl').offsetWidth+24:0,S=Math.max(1,Math.floor(LAND?Math.min((cw-ctl)/92,ch/118):cw/92)),W=Math.ceil(cw/S),H=Math.ceil(ch/S),ox=Math.round((W-ctl/S-J.w)/2),oy=LAND?Math.round((H+44/S)/2-(J.hy+J.hh/2)):Math.round(H*.47-(J.hy+J.hh*.62)),c=$('#flipMach');   /* sideways: the machine in the open part, its screen in the middle, the buttons in a column on the right */   /* standing right at the machine (his call): about 4 screen pixels per art pixel, the screen a little above the middle, the cabinet's edges and sign cut off */
   if(c.width!==W||c.height!==H){c.width=W;c.height=H;}c.style.width=W*S+'px';c.style.height=H*S+'px';c.style.left='0';c.style.top='0';
   const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,W,H);x.fillStyle='#0e0b1a';x.fillRect(0,0,W,Math.max(0,oy));x.fillRect(0,oy+J.h,W,H);x.drawImage(im,ox,oy);
   const st=$('#flipStage');st.style.left=(ox+J.hx)*S+'px';st.style.top=(oy+J.hy)*S+'px';st.style.width=J.hw*S+'px';st.style.height=J.hh*S+'px';
@@ -301,9 +304,9 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 
 /* ---- sizes: the reels a little above the middle, the keys on the plinth, the lever always on screen ---- */
 function slotFit(){const M=$('#slotModal'),cv=$('#slotCv'),J=SLOT.j,cw=M.clientWidth,ch=M.clientHeight;if(!J||!cw||!ch)return false;
-  const S=Math.max(1,Math.floor(cw/Math.max(104,J.w-6))),W=Math.ceil(cw/S),H=Math.ceil(ch/S);   /* standing at the machine: 3 or 4 screen pixels per art pixel on a phone */
+  const S=Math.max(1,Math.floor(LAND?Math.min(cw/Math.max(104,J.w-6),ch/170):cw/Math.max(104,J.w-6))),W=Math.ceil(cw/S),H=Math.ceil(ch/S);   /* standing at the machine: 3 or 4 screen pixels per art pixel on a phone */
   if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.width=W*S+'px';cv.style.height=H*S+'px';
-  const ox=Math.min(Math.round((W-J.w)/2),W-J.w),oy=Math.min(H-244-Math.ceil(16/S),Math.round(H*.44-(J.hy+J.hh/2)));   /* on a narrow phone the left edge is cut, never the lever */
+  const ox=Math.min(Math.round((W-J.w)/2),W-J.w),oy=LAND?H-244-Math.ceil(8/S):Math.min(H-244-Math.ceil(16/S),Math.round(H*.44-(J.hy+J.hh/2)));   /* sideways: the reels down to the bet keys fill the height */   /* on a narrow phone the left edge is cut, never the lever */
   Object.assign(SLV,{S,W,H,ox,oy});
   const a=$('#slotAmt');a.style.left=(ox+J.lx)*S+'px';a.style.top=(oy+J.ly)*S+'px';a.style.width=J.lw*S+'px';a.style.height=J.lh*S+'px';
   $('#slotWord').style.top=Math.max(52,(oy+J.hy-50)*S)+'px';return true;}   /* the win words over the 7 sign, so the reels that won stay in view */
@@ -467,7 +470,7 @@ function knTarget(){if(KN.tgt)return KN.tgt;const R=KN_R,n=R*2+3,c=mk(n,n),x=c.g
   return KN.tgt=c;}
 
 function knFit(){const M=$('#knifeModal'),cv=$('#knifeCv'),cw=M.clientWidth,ch=M.clientHeight;if(!cw||!ch)return false;
-  const S=Math.max(2,Math.floor(cw/112)),W=Math.ceil(cw/S),H=Math.ceil(ch/S);if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.width=W*S+'px';cv.style.height=H*S+'px';
+  const S=Math.max(2,Math.floor(landW(cw,ch)/112)),W=Math.ceil(cw/S),H=Math.ceil(ch/S);if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.width=W*S+'px';cv.style.height=H*S+'px';
   Object.assign(KNV,{S,W,H,cx:Math.floor(W/2),ty:Math.max(Math.ceil(64/S)+KN_R+12,Math.round(H*.38)),hy:H-22-Math.ceil(16/S)-44});
   $('#knifeWord').style.top=Math.max(84,(KNV.ty-KN_R-22)*S)+'px';return true;}
 addEventListener('resize',()=>{if($('#knifeModal').classList.contains('on'))knFit();});

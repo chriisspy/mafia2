@@ -514,8 +514,8 @@ RH.frame = (m, people, dt, t, H, img) => {
   const tp = $('#townHud #hallBar'), r = tp && tp.getBoundingClientRect(), cr = cv.getBoundingClientRect(), loose = r && r.height ? clamp((r.top - cr.top + 6) / cr.height, .6, 1) : .8;
   RK.countUp = (RK.countUp || 0) + ((RK.mode === 'count' ? Math.max(0, (C.y - (R_GANTRY.y + 20)) - cam.lh * .42) : 0) - (RK.countUp || 0)) * Math.min(1, dt * 3);   // on the grid the camera lifts so you can see the lights
   const shx = RK.shake > 0 ? Math.round(Math.sin(t * .11) * 5 * RK.shake) : 0, shy = RK.shake > 0 ? Math.round(Math.cos(t * .13) * 4 * RK.shake) : 0;
-  const fx = (RK.drive ? C.x + (C.cox || 0) + RK.lookx : m.x) + shx, fy = (RK.drive ? C.y + (C.coy || 0) + RK.looky + 10 : m.y + 24) + shy - (RK.countUp || 0);
-  if (RK.vw === want) view(img, fx, fy, want, {loose, hi: true}); else view(img, fx, fy, RK.vw, {loose, s: W / RK.vw});
+  const fx = (RK.drive ? C.x + (C.cox || 0) + RK.lookx : m.x) + shx, fy = (RK.drive ? C.y + (C.coy || 0) + RK.looky + (LAND ? 0 : 10) : m.y + (LAND ? 2 : 24)) + shy - (RK.countUp || 0);
+  if (RK.vw === want) view(img, fx, fy, want, {loose, hi: true}); else view(img, fx, fy, RK.vw, {loose, s: VW() / RK.vw});
   if (CARFX.marks.length) carMarks();
   if (RK.mode === 'free' && RK.drive) { const q = Math.floor(t / 400) % 2; lx.fillStyle = q ? 'rgba(255,210,94,.55)' : 'rgba(255,242,168,.55)';   // the grid, lit up: stop here to race
     for (const g of R_GRIDS) { const bx = X(g[0] - 20), by = Y(g[1] - 30); lx.fillRect(bx, by, 40, 2); lx.fillRect(bx, by, 2, 20); lx.fillRect(bx + 38, by, 2, 20); } }

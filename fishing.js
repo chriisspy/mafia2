@@ -235,7 +235,7 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
   {const can=!!fishFace(m)&&!m.walk,b=$('#fishRodBtn'),show=!F.on&&$('#joy').classList.contains('on');if(b.disabled===can)b.disabled=!can;
     if(!F.pbSet){const v=$('#punchBtn').style.getPropertyValue('--pb');if(v){b.style.setProperty('--pb',v);F.pbSet=1;}}
     if(show)b.style.bottom=(parseFloat($('#joy').style.bottom)+23)+'px';if(b.classList.contains('on')!==show)b.classList.toggle('on',show);}   /* the rod button is grey wherever you cannot fish from */
-  const lhE=Hh()/Math.max(1,Math.round(W/190)),B=F.bob,foc=F.on?(B?[(m.x*2+B.x)/3,(m.y+B.y)/2+lhE*.02]:[m.x,m.y-lhE*.2]):[m.x,m.y-lhE*.08];
+  const lhE=Hh()/Math.max(1,Math.round(VW()/190)),B=F.bob,foc=F.on?(B?[(m.x*2+B.x)/3,(m.y+B.y)/2+lhE*.02]:[m.x,m.y-lhE*.2]):[m.x,m.y-lhE*.08];
   F.cx+=(foc[0]-F.cx)*Math.min(1,dt*3);F.cy+=(foc[1]-F.cy)*Math.min(1,dt*3);
   view(img,F.cx,F.cy,190,{hi:true,void:'#dfeefc',loose:.8});
   /* the ripple: PixelLab's loop, each frame melting into the next so it never ticks */
