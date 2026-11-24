@@ -41,11 +41,12 @@ const R_LINE = {y: 936, x0: 1873, x1: 1997};                           // the st
 const R_GRIDS = [990, 1042, 1095, 1148, 1200].map((y, i) => [i % 2 ? 1962 : 1906, y + 25]);   // the painted grid boxes, front first
 const R_GRIDZONE = [1878, 950, 1992, 1300];                            // stop in here and you can start a race
 const R_APRON = [160, 1124, 300, 1200];                                // stop in front of the garage door and the Mechanic comes over
+const R_GATE = {x: 668, y0: 1198, y1: 1302, wall: 944};                           // (round 5) the boom gate across the road from the paddock to the track: drive up to it to pick Start race / Practice
 const R_LAPS = 3;
 // trackside props: [picture, x, y of its top left]. Each is its own picture (tools/make_race.py props), 2px flat shadow under it.
 const R_PROPS = [['board-tyre', 1473, 60], ['board-cup', 1653, 60], ['board-cup', 673, 448], ['board-tyre', 873, 448], ['board-tyre', 1473, 1522], ['board-cup', 1653, 1522],
   ['floodlight', 2043, 192], ['floodlight', 1543, 582], ['floodlight', 99, 462], ['floodlight', 1143, 1382], ['floodlight', 1783, 1232], ['flag', 1832, 906],
-  ['flag', 2004, 906], ['flag', 622, 1137], ['hay', 417, 664], ['hay', 463, 670], ['hay', 1157, 1280], ['podium', 1717, 1039]];
+  ['flag', 2004, 906], ['flag', 622, 1137], ['podium', 1717, 1039]];
 // the middle of the road in the order you drive it, read off the painted road every 34 pixels (the old plan, re-centred on the new ground)
 const R_CTRL = [[1934, 844], [1934, 810], [1934, 776], [1934, 742], [1934, 708], [1934, 674], [1934, 640], [1934, 606], [1934, 572], [1934, 538], [1934, 504], [1932, 470], [1927, 436],
   [1923, 403], [1927, 369], [1928, 335], [1920, 302], [1904, 272], [1880, 248], [1851, 231], [1819, 219], [1785, 213], [1752, 209], [1718, 208], [1684, 207], [1650, 207],
@@ -160,6 +161,7 @@ function raceMasks() {
   rect(R_GAR.x + 3, R_GAR.y + 60, R_GAR.x + 203, R_GAR.y + 150);                              // the garage's walls
   rect(R_PITS.x + 3, R_PITS.y + 50, R_PITS.x + 222, R_PITS.y + 122);                          // the pit garages
   rect(R_GANTRY.x, R_GANTRY.y + 134, R_GANTRY.x + 26, R_GANTRY.y + 150); rect(R_GANTRY.x + 172, R_GANTRY.y + 134, R_GANTRY.x + 198, R_GANTRY.y + 150);   // the gantry's two feet
+  rect(0, R_GATE.wall, R_GATE.x + 2, R_GATE.wall + 5); rect(R_GATE.x - 2, R_GATE.wall, R_GATE.x + 2, R_GATE.y0 + 4); rect(R_GATE.x - 2, R_GATE.y1 - 4, R_GATE.x + 2, RHT);   // the paddock's fence line: the only way through to the track is the gate
   rect(R_MECH[0] - 7, R_MECH[1] - 5, R_MECH[0] + 8, R_MECH[1] + 2);                           // the Mechanic himself
   for (const [k, px, py] of R_PROPS) { const p = IMG['race/' + k]; if (p) rect(px + Math.round(p.width * .2), py + p.height - 9, px + Math.round(p.width * .8), py + p.height - 2); }
   STACK.tyres = {s: (RK.tj && RK.tj.s) || 29, n: (RK.tj && RK.tj.n) || 10, squash: .55, hover: 0, ground: 1, keep: 1};
@@ -195,25 +197,39 @@ function raceBarriers() {
 /* ROUND 4 (his notes, 24 Nov): "when you drive up to the gate to enter the track there is two options. 'Start race' or 'Practice' with teleports
    them to the starting grid" + "lets just make it so the players cant get out of their cars on the tracks". So the gate asks, and either way you
    arrive IN your car on the grid. Practice = the track to yourself with the lap clock. You leave by driving back out along the road in. */
-window.raceOpen = () => { if (!(IMG['hall/race'] && IMG['hallw/race'])) { wlSay('The race track is still loading.'); return; } if (!WL.fading) $('#raceGate').classList.add('on'); };
-function raceGo(kind) { $('#raceGate').classList.remove('on'); if (WL.fading) return; RK.want = kind; sfx('click'); wlDoor(RACE); }
+/* ROUND 5 (his note): "when i said going up to the fence to select what they want to do, i meant adding a fence where ive shown in the second
+   image and then they get prompted with the selections". So the South's road just brings you in (in your car, on the road by the paddock), and a
+   real BOOM GATE stands across the road to the track: drive up to it and it asks. From the track side it is open, so you can always come back. */
+window.raceOpen = () => { if (!(IMG['hall/race'] && IMG['hallw/race'])) { wlSay('The race track is still loading.'); return; } wlDoor(RACE); };
+function raceGo(kind) { $('#raceGate').classList.remove('on'); const m = WL.me; if (WL.fading || !m || m.loc !== RACE || !RK.drive || RK.mode !== 'free') return; sfx('click'); carPoof(RK.car.x, RK.car.y, 8); raceSeat(kind); }
+/* the gate's two pictures, drawn here (flat, straight on): two posts and a red and white boom across the road; open = the boom swung back along the verge */
+function raceGatePics() {
+  if (RK.gate) return RK.gate; const H = R_GATE.y1 - R_GATE.y0, mkp = open => { const w = open ? 100 : 14, c = mk(w, H + 14), x = c.getContext('2d'), O = '#1a1430';
+    const post = y => { x.fillStyle = O; x.fillRect(0, y, 12, 14); x.fillStyle = '#8a8fa6'; x.fillRect(1, y + 1, 10, 12); x.fillStyle = '#c9cede'; x.fillRect(1, y + 1, 10, 4); x.fillStyle = '#ffd25e'; x.fillRect(3, y + 7, 6, 3); };
+    const boom = (bx, by, bw, bh) => { x.fillStyle = O; x.fillRect(bx, by, bw, bh); const along = bh > bw, n = along ? bh - 2 : bw - 2; for (let i = 0; i < n; i++) { x.fillStyle = Math.floor(i / 8) % 2 ? '#f4f4fa' : '#d8443c'; if (along) x.fillRect(bx + 1, by + 1 + i, bw - 2, 1); else x.fillRect(bx + 1 + i, by + 1, 1, bh - 2); } };
+    post(H - 2); if (open) boom(8, 3, H + 2, 6); else boom(3, 8, 6, H - 6); post(0);
+    const d = x.getImageData(0, 0, w, H + 14), q = d.data;   // his prop shadow: two flat rows under whatever touches the ground
+    for (let cx = 0; cx < w; cx++) { let low = -1; for (let cy = H + 11; cy >= 0; cy--) if (q[(cy * w + cx) * 4 + 3]) { low = cy; break; } if (low >= H + 6) for (const k of [1, 2]) { const i = ((low + k) * w + cx) * 4; if (low + k < H + 14 && !q[i + 3]) { q[i] = 18; q[i + 1] = 28; q[i + 2] = 58; q[i + 3] = 96; } } }
+    x.putImageData(d, 0, 0); return c; };
+  return RK.gate = {shut: mkp(false), open: mkp(true)};
+}
 (() => {
   const d = document.createElement('div'); d.id = 'raceGate'; d.innerHTML = `<button class="btn red" id="rgRace">Start race</button><button class="btn" id="rgPrac">Practice</button>`;
   $('#phone').appendChild(d); d.addEventListener('pointerdown', e => e.stopPropagation());
   $('#rgRace').onclick = () => raceGo('race'); $('#rgPrac').onclick = () => raceGo('prac');
-  const st = document.createElement('style'); st.textContent = `#raceGate{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);z-index:25;display:none;flex-direction:column;gap:10px;width:min(240px,74%);background:#f6dfae;color:#1a1430;border:4px solid #5a3420;border-radius:6px;box-shadow:inset 0 -6px 0 #e9c88a,0 5px 0 #0008;padding:14px 14px 18px;font-family:"Pixelify Sans",system-ui,sans-serif}
+  const st = document.createElement('style'); st.textContent = `#raceGate{position:absolute;left:50%;top:27%;transform:translate(-50%,-50%);z-index:25;display:none;flex-direction:column;gap:10px;width:min(240px,74%);background:#f6dfae;color:#1a1430;border:4px solid #5a3420;border-radius:6px;box-shadow:inset 0 -6px 0 #e9c88a,0 5px 0 #0008;padding:14px 14px 18px;font-family:"Pixelify Sans",system-ui,sans-serif}
 #raceGate.on{display:flex}#raceGate .btn{font-size:18px;padding:9px 8px 11px;text-align:center}`; document.head.appendChild(st);
 })();
 /* into the car on the front of the grid: every way onto the track comes through here */
-function raceSeat(kind) {
-  const C = RK.car, m = WL.me, g = R_GRIDS[0]; RK.gar = null; raceFree(); RK.drive = true;
-  C.x = g[0]; C.y = g[1]; C.tv = C.ca = -Math.PI / 2; C.rev = 0; C.slip = 0; C.kx = C.ky = 0; C.v = 0; C.boost = 0; C.dT = 0; C.cox = C.coy = 0; CARFX.marks.length = 0;
+function raceSeat(kind) {   // 'road' = just in from the South, on the road by the paddock; 'prac' / 'race' = on the grid
+  const C = RK.car, m = WL.me, g = kind === 'road' ? [70, (R_OUT.y0 + R_OUT.y1) / 2] : R_GRIDS[0]; RK.gar = null; raceFree(); RK.drive = true;
+  C.x = g[0]; C.y = g[1]; C.tv = C.ca = kind === 'road' ? 0 : -Math.PI / 2; C.rev = 0; C.slip = 0; C.kx = C.ky = 0; C.v = 0; C.boost = 0; C.dT = 0; C.cox = C.coy = 0; CARFX.marks.length = 0;
   if (m) { m.path = []; m.todo = null; m.walk = false; m.x = C.x; m.y = C.y; }
   let bi = 0, bd = 1e12; RD.forEach((p, i) => { const dd = (p.x - C.x) ** 2 + (p.y - C.y) ** 2; if (dd < bd) { bd = dd; bi = i; } }); RK.pi = bi; RK.prel = rdRel(RD[bi].s);
   if (kind === 'race') raceStart();
 }
 { const f = SH.from; SH.from = was => was === RACE ? [S_RACE.x - 16, (S_RACE.y0 + S_RACE.y1) / 2, 'left'] : (f ? f(was) : null); }   // back in the South: on the road you left by
-RH.enter = () => { $('#hallLine').textContent = ''; RK.vw = 375; raceSeat(RK.want || 'prac'); RK.want = null; if (typeof goldChip === 'function') goldChip(); raceChip(); };
+RH.enter = () => { $('#hallLine').textContent = ''; RK.vw = 375; raceSeat('road'); if (typeof goldChip === 'function') goldChip(); raceChip(); };
 const raceNear = (m, p, r) => Math.hypot(m.x - p[0], m.y - p[1]) < r;
 RH.joy = (m, J) => {
   if (J.x < -.5 && m.x < R_OUT.x && m.y > R_OUT.y0 && m.y < R_OUT.y1) { wlDoor(SOUTH); return true; }
@@ -327,19 +343,22 @@ function raceCarStep(dt, t) {
   for (const b of RK.bars) if (b.sh > 0) b.sh -= dt;
   if (RK.shake > 0) RK.shake = Math.max(0, RK.shake - dt * 1.8);
 }
-/* THE ENGINE: his town car's (four gears, each one sits lower than the last, a tiny clutch cut at each change). A bigger engine
-   sits deeper; a louder exhaust opens the filter. No tyre screech, ever (his call). */
+/* THE ENGINE: his town car's (four gears, each one sits lower than the last). A bigger engine sits deeper; a louder exhaust opens the filter.
+   No tyre screech, ever (his call). ROUND 5 (his note): "make the down shifting be consistent and have no pauses in audio, make the car sound go
+   for longer before shifting" -> a gear lasts 3.4 s (was 1.9); the sound never cuts at a change (the pitch glides to the next gear, the volume
+   stays up); and it comes DOWN the gears one at a time, always the same way: as the car slows (off the throttle, braking, or after a bump). */
 function raceEngine() {
   const m = WL.me, c = SND.ctx, C = RK.car, on = !!(m && RK.drive && !RK.ed.on && SND.on && c && scene === scenes.town && m.loc === RACE); let E = RK.eng;
   if (!on) { if (E) { try { E.g.gain.setTargetAtTime(0, E.c.currentTime, .05); E.o.stop(E.c.currentTime + .35); E.o2.stop(E.c.currentTime + .35); } catch (x) {} RK.eng = null; } return; }
   if (!E) { const o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), f = c.createBiquadFilter(); o.type = 'sawtooth'; o2.type = 'square'; f.type = 'lowpass'; f.frequency.value = 400; g.gain.value = 0;
     o.connect(f); o2.connect(f); f.connect(g); g.connect(SND.out); o.start(); o2.start(); E = RK.eng = {o, o2, g, f, c, gear: 0, cut: 0}; }
   const t = c.currentTime, dE = Math.min(.1, t - (E.lt || t)); E.lt = t; const gas = C.gas && RK.mode !== 'count';
-  E.p = clamp((E.p || 0) + (gas ? dE / 1.9 : -dE * 1.6), 0, 4); if (gas && (C.tr || 0) > 1.8 && t > (E.ds || 0) && E.p > .5) { E.p = Math.max(.12, Math.floor(Math.min(E.p, 3.999)) - 1 + .12); E.ds = t + 1.3; }
-  const G = Math.min(3, Math.floor(E.p)), k = E.p >= 4 ? 1 : E.p - G; if (E.gear !== G) { E.gear = G; E.cut = t + .12; }
-  const cut = t < E.cut, deep = [1, .94, .86, .78][RSET.engine] || 1, open = RSET.exhaust * 90 + (C.boost > 0 ? 500 : 0), chug = Math.sin(performance.now() * .045) * (3 - k * 2), hz = ([78, 70, 62, 56][G] + k * [82, 66, 54, 44][G]) * deep * (C.boost > 0 ? 1.12 : 1) + chug;
-  E.o.frequency.setTargetAtTime(hz, t, cut ? .02 : .05); E.o2.frequency.setTargetAtTime(hz / 2, t, cut ? .02 : .05); E.f.frequency.setTargetAtTime(300 + k * 900 + G * 80 + open, t, .07);
-  E.g.gain.setTargetAtTime(cut ? .01 : gas ? .05 + k * .045 + G * .004 + RSET.exhaust * .004 : .028, t, cut ? .02 : .07);
+  const top = 1.2 + 2.8 * clamp((C.v || 0) / ((RK.stat && RK.stat.vmax) || 330), 0, 1);   // the highest gear this speed holds
+  E.p = clamp((E.p || 0) + (E.p > top ? -dE * 1.25 : gas ? dE / 3.4 : -dE * .8), 0, 4);
+  const G = Math.min(3, Math.floor(E.p)), k = E.p >= 4 ? 1 : E.p - G; E.gear = G;
+  const deep = [1, .94, .86, .78][RSET.engine] || 1, open = RSET.exhaust * 90 + (C.boost > 0 ? 500 : 0), chug = Math.sin(performance.now() * .045) * (3 - k * 2), hz = ([78, 70, 62, 56][G] + k * [82, 66, 54, 44][G]) * deep * (C.boost > 0 ? 1.12 : 1) + chug;
+  E.o.frequency.setTargetAtTime(hz, t, .06); E.o2.frequency.setTargetAtTime(hz / 2, t, .06); E.f.frequency.setTargetAtTime(300 + k * 900 + G * 80 + open, t, .07);
+  E.g.gain.setTargetAtTime(gas ? .05 + k * .045 + G * .004 + RSET.exhaust * .004 : .028 + k * .012, t, .08);
 }
 
 /* ---------- THE OTHER CARS: they drive the middle line (RD), each in a lane of its own ----------
@@ -462,6 +481,7 @@ function raceObjs(m, dt, t) {
   const g = IMG['race/garage']; if (g && seen(R_GAR.x, R_GAR.y, g.width, g.height)) out.push(fade({img: g, x: R_GAR.x, y: R_GAR.y, base: R_GAR.y + g.height - 4}, R_GAR, 'a'));
   const pt = IMG['race/pits']; if (pt && seen(R_PITS.x, R_PITS.y, pt.width, pt.height)) out.push(fade({img: pt, x: R_PITS.x, y: R_PITS.y, base: R_PITS.y + pt.height - 4}, R_PITS, 'a'));
   const ga = IMG['race/gantry']; if (ga && seen(R_GANTRY.x, R_GANTRY.y, ga.width, ga.height)) out.push({img: ga, x: R_GANTRY.x, y: R_GANTRY.y, base: R_GANTRY.y + ga.height - 4, after: () => raceGantryLights(t)});
+  { const P = raceGatePics(), im = RK.gw === false ? P.open : P.shut, gx = R_GATE.x - 6, gy = R_GATE.y0 - 8; if (seen(gx, gy, im.width, im.height)) out.push({img: im, x: gx, y: gy, base: R_GATE.y1 + 4}); }
   for (const [k, px, py] of R_PROPS) { const im = IMG['race/' + k]; if (im && seen(px, py, im.width, im.height)) out.push({img: im, x: px, y: py, base: py + im.height - 3}); }
   for (const b of RK.bars) { const im = stackFrame('tyres', 0, b.ai); if (!im) continue;   // a barrier's picture is its whole stack of slices
     const bx = Math.round(b.x) - (im.width >> 1), by = Math.round(b.y) - im.height + 4 + Math.round(STACK.tyres.s * .55); if (!seen(bx - 2, by, im.width + 4, im.height)) continue;
@@ -483,6 +503,9 @@ RH.frame = (m, people, dt, t, H, img) => {
   if (!RK.drive && !RK.ed.on && !WL.fading && !m.ko && Math.hypot(m.x - C.x, m.y - C.y - 6) < 34) raceIn();   // (round 4: "walking up to your car gets you in the car")
   { const door = Math.abs(C.x - R_BAY[0]) < 38 && C.y > R_BAY[1] && C.y < R_BAY[1] + 46; if (RK.gar) RK.garOk = false; else if (!door) RK.garOk = true; else if (RK.garOk && Math.sin(C.tv) < -.45) raceGarIn(); }   // nose up to the open bay: in you go
   if (RK.gar) raceGarStep(dt); else raceCarStep(dt, t); raceTick(dt, t);
+  { const G = R_GATE, gp = $('#raceGate'), lane = C.y > G.y0 - 12 && C.y < G.y1 + 12, west = RK.gw = C.y < G.wall ? false : C.x < G.x - 44 ? true : C.x > G.x + 10 ? false : RK.gw;   // which side of the gate you are on
+    if (RK.drive && west && lane && C.x > G.x - 42) { C.x = G.x - 42; C.rev = Math.min(C.rev, .05); C.boost = 0; if (RK.mode === 'free' && !WL.fading && !gp.classList.contains('on')) { gp.classList.add('on'); sfx('open'); } }   // the boom is solid from this side
+    else if (gp.classList.contains('on') && (!west || C.x < G.x - 60 || !lane)) gp.classList.remove('on'); }
   if (RK.drive && RK.mode === 'free' && !RK.gar && !WL.fading && C.x < R_OUT.x + 40 && C.y > R_OUT.y0 - 8 && C.y < R_OUT.y1 + 8 && Math.cos(C.tv) < -.3) wlDoor(SOUTH);   // out along the road you came in by
   if (RK.drive) { m.x = C.x; m.y = C.y; m.walk = false; m.path = []; if (NET.on && (C.v || 0) > 1) netMove(); }   // (online, the others see you where the car is; they do not see the car itself yet)
   // the camera: on foot it follows you like anywhere else; in the car it pulls right back, looks up the road the faster you go, and shakes on a bump
@@ -607,7 +630,7 @@ function raceEdDraw(dt, t) {
 }
 
 /* ---------- every frame, in any place ---------- */
-{ const fr = scenes.town.frame; scenes.town.frame = function (dt, t) { const m = WL.me; { const g = $('#raceGate'); if (g.classList.contains('on') && (!m || m.loc !== SOUTH || WL.fading || m.x < S_RACE.x - 40)) g.classList.remove('on'); }   // walk away from the gate and its two buttons go
+{ const fr = scenes.town.frame; scenes.town.frame = function (dt, t) { const m = WL.me; { const g = $('#raceGate'); if (g.classList.contains('on') && (!m || m.loc !== RACE || WL.fading || !RK.drive)) g.classList.remove('on'); }   // the gate's two buttons only show at the gate
   if ((RK.drive || RK.ai.length) && (!m || m.loc !== RACE)) { RK.drive = false; raceFree(); } if (RK.ed.on && (!m || m.loc !== RACE)) raceEdClose();
     const r = fr.call(this, dt, t); raceBtn(); raceEngine(); raceEdDraw(dt, t); return r; };
   const lv = scenes.town.leave; scenes.town.leave = function () { RK.drive = false; raceFree(); if (RK.ed.on) raceEdClose(); raceEngine(); raceBtn(); return lv.apply(this, arguments); }; }
