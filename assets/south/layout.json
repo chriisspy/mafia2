@@ -1,0 +1,11 @@
+{
+  "note": "THE SOUTH's layout (24 Nov 2026). Read by south.js at load and edited by the map builder. x, y = top left of a picture; door = where you stand to go in; entry = the road in from the town (x range at the top); spawn = where you appear coming from the town; race = the road out to the race track (x, y0..y1 on the right edge); props = things he places (trees, bushes...): {lib, x, y, flip, shadow, solid, fade}, picture = assets/builder/props/<lib>.png.",
+  "blacksmith": {"x": 88, "y": 10, "door": [219, 172]},
+  "mine": {"x": 60, "y": 470, "door": [128, 598]},
+  "sign": {"x": 432, "y": 200},
+  "stalls": [[268, 270], [318, 270], [432, 270], [482, 270], [268, 455], [318, 455], [432, 455], [482, 455]],
+  "race": {"x": 784, "y0": 358, "y1": 438},
+  "entry": {"x0": 380, "x1": 420},
+  "spawn": [400, 24],
+  "props": []
+}

@@ -12,9 +12,10 @@ SRC = '../mafia2-art/south/'
 # name: (source, out file, cell size in source pixels, kind, colours)
 JOBS = {
     'blacksmith': ('blacksmith-src.png', 'assets/buildings/blacksmith.png', 20, 'sprite', 64),
+    'cave': ('cave-front-a.png', 'assets/south/mine.png', 40.6, 'sprite', 64),   # (24 Nov, his calls) small, simple, STRAIGHT-ON south-facing mine entrance (angled tries rejected: cave-side-*.png, cave-top-*.png unused)
     'smithy': ('smithy-in-src.png', 'assets/interiors/smithy.png', 15, 'room', 110),   # the Tavern's grid
     'minein': ('mine-in-src.png', 'assets/interiors/mine.png', 15, 'room', 110),
-    'ground': ('ground-src.png', 'assets/south/day.png', 3712 / 800, 'ground', 0),   # the same scale as the town: 800 wide
+    'ground': ('ground2-b.png', 'assets/south/day.png', 4096 / 800, 'ground', 0),   # (24 Nov, his ask) v2: better layout, NO trees (he adds his own), 800 x 800 (was 992 tall). v1 kept as mafia2-art/south/day-v1.png   # the same scale as the town: 800 wide
 }
 
 def cell_size(a, lo=6.0, hi=40.0):
@@ -52,7 +53,8 @@ def run(name):
     if cell is None: cell = cell_size(a)
     small = sample(a, cell); os.makedirs(os.path.dirname(out), exist_ok=True)
     if kind == 'sprite':
-        s = small.astype(int); mag = (s[..., 0] > 150) & (s[..., 2] > 150) & (s[..., 1] < 110) & (np.abs(s[..., 0] - s[..., 2]) < 90)
+        s = small.astype(int); r_, g_, b_ = s[..., 0], s[..., 1], s[..., 2]
+        mag = ((r_ > 150) & (b_ > 150) & (g_ < 110) & (np.abs(r_ - b_) < 90)) | ((b_ > 90) & (r_ > g_ + 35) & (b_ > g_ + 45) & (np.abs(r_ - b_) < 70))   # magenta and the purple fringe it leaves on the edges
         rgb = np.asarray(Image.fromarray(small).quantize(cols, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).convert('RGB'))
         img = np.dstack([rgb, np.where(mag, 0, 255).astype(np.uint8)])
         ys, xs = np.nonzero(img[..., 3]); img = img[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
@@ -71,9 +73,8 @@ for n in (sys.argv[1:] or JOBS):
     if n in JOBS: run(n)
 
 # ---- the south's WALK MASK (white = you can walk): dark forest by colour, plus hand-set shapes for the snowy pines and the pond ----
-BLOCK_RECTS = [(36, 0, 212, 138), (215, 0, 300, 52), (555, 0, 690, 62), (636, 100, 676, 142),   # top-left trees + bushes along the top edge
-               (672, 0, 800, 335), (650, 455, 800, 992), (530, 840, 800, 992), (560, 800, 660, 850)]   # the snowy pines on the right
-POND = (306, 752, 496, 908)
+BLOCK_RECTS = []   # (24 Nov v2 ground: no trees; he paints the rest in the map builder)
+POND = (564, 570, 736, 746)
 def walk():
     a = np.asarray(Image.open('assets/south/day.png').convert('RGB')).astype(int); h, w = a.shape[:2]
     lum = a.sum(-1) / 3; ok = ~((lum < 95) & (a[..., 1] > a[..., 0] + 6))       # dark green-teal forest (not the grey asphalt)

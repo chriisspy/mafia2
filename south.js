@@ -9,26 +9,38 @@
 
 /* ---------- the places ---------- */
 const SOUTH = 100 + HALLS.length;
-HALLS.push({k: 'south', name: 'The South', step: 'snow', door: [-999, -999], spawn: [400, 24, 'front'], out: true, spots: [],
+HALLS.push({k: 'south', name: 'The South', door: [-999, -999], spawn: [400, 24, 'front'], out: true, spots: [],
   hint: 'Walk up the road to go back to the town', back: [280, 976]});
 const SMITHY = 100 + HALLS.length;
 HALLS.push({k: 'smithy', name: 'The Blacksmith', step: 'stone', door: [155, 218], spawn: [155, 204], spots: [], exit: SOUTH});   // exit: its door opens onto the South
 const MINE = 100 + HALLS.length;
 HALLS.push({k: 'mine', name: 'The Mine', step: 'stone', door: [154, 222], spawn: [154, 204], spots: [], exit: SOUTH});
 
-/* ---------- the South's layout: x, y = top left of the picture; base = where its feet are (for sorting); solid = the part you
-   cannot walk through [x0, y0, x1, y1]. Edit these numbers to move things. ---------- */
-const S_BLD = {k: 'blacksmith', x: 60, y: 175, door: [191, 338]};          // the Blacksmith's shop (206 x 155); his door is right of middle
-const S_MINE = {x: 100, y: 590, door: [168, 718]};                          // the mine entrance (131 x 123)
-const S_SIGN = {x: 430, y: 198};                                              // the signpost by the road into the square
-const S_STALLS = [[284, 285], [334, 285], [422, 285], [472, 285], [284, 415], [334, 415], [422, 415], [472, 415]];   // the market plots (49 x 56)
+/* ---------- the South's layout (24 Nov v2: his ask, "add the south to the map builder"): the numbers below are only the defaults;
+   assets/south/layout.json overrides them at load, and the MAP BUILDER edits that file (buildings, stalls, the way in, the race road,
+   and the props he places: trees, bushes...). x, y = top left of a picture; door = where you stand to go in. ---------- */
+const S_BLD = {k: 'blacksmith', x: 88, y: 10, door: [219, 172]};           // the Blacksmith's shop (206 x 155); his door is right of middle
+const S_MINE = {x: 60, y: 470, door: [128, 598]};                           // the mine entrance (131 x 123)
+const S_SIGN = {x: 432, y: 200};                                              // the signpost by the road into the square
+const S_STALLS = [[268, 270], [318, 270], [432, 270], [482, 270], [268, 455], [318, 455], [432, 455], [482, 455]];   // the market plots (49 x 56)
 const S_STALL_COL = ['red', 'blue', 'green'];
-const S_RACE = {x: 784, y0: 345, y1: 428};                                    // the road out to the right: the race track (built next)
+const S_RACE = {x: 784, y0: 358, y1: 438};                                    // the road out to the right: the race track
+const S_ENTRY = {x0: 380, x1: 420};                                           // the road in from the town, along the top edge
+const S_PROPS = [];                                                           // {lib, x, y, flip, shadow, solid, fade}: assets/builder/props/<lib>.png
+function southLayout(L) {
+  if (!L) return; const put = (o, v) => { if (v) Object.assign(o, v); };
+  put(S_BLD, L.blacksmith); put(S_MINE, L.mine); put(S_SIGN, L.sign); put(S_RACE, L.race); put(S_ENTRY, L.entry);
+  if (Array.isArray(L.stalls) && L.stalls.length) S_STALLS.splice(0, S_STALLS.length, ...L.stalls.slice(0, 8));
+  if (Array.isArray(L.spawn)) HALLS[SOUTH - 100].spawn = [L.spawn[0], L.spawn[1], 'front'];
+  S_PROPS.splice(0, S_PROPS.length, ...(Array.isArray(L.props) ? L.props : []));
+}
 
 /* ---------- pictures ---------- */
 function southLoad() {
-  const L = (k, src) => load(k, src).catch(() => {});
-  const jobs = [L('hall/south', 'assets/south/day.png'), L('swalk', 'assets/south/day-walk.png'), L('bld/blacksmith', 'assets/buildings/blacksmith.png'),
+  const L = (k, src) => load(k, src).catch(() => {}), L0 = L;
+  const lay = fetch('assets/south/layout.json?v=' + (typeof av === 'function' ? av('assets/south/layout.json') : BUILD)).then(r => r.json()).then(L => { southLayout(L);
+    return Promise.all([...new Set(S_PROPS.map(q => q.lib))].map(k => L0('sp/' + k, `assets/builder/props/${k}.png`))); }).catch(() => {});
+  const jobs = [lay, L('hall/south', 'assets/south/day.png'), L('swalk', 'assets/south/day-walk.png'), L('bld/blacksmith', 'assets/buildings/blacksmith.png'),
     L('s/mine', 'assets/south/mine.png'), L('s/sign', 'assets/south/signpost.png'), ...S_STALL_COL.map(c => L('s/stall-' + c, `assets/south/stall-${c}.png`)),
   ];
   // the Blacksmith + the Mine live in mine.js, the market stalls in market.js: loaded from here (so index.html's boot line stays as it is)
@@ -45,8 +57,11 @@ function maskCanvas(w, h, floor, blocks, base) {
 }
 function southMasks() {
   const g = IMG.swalk; if (!g) return;
-  const blocks = [[S_BLD.x + 4, S_BLD.y + 46, S_BLD.x + 202, S_BLD.y + 152], [S_MINE.x + 6, S_MINE.y + 30, S_MINE.x + 125, S_MINE.y + 112],
-    [S_SIGN.x + 15, S_SIGN.y + 48, S_SIGN.x + 22, S_SIGN.y + 55], ...S_STALLS.map(([x, y]) => [x + 2, y + 34, x + 47, y + 55])];
+  const mi = IMG['s/mine'], mw = mi ? mi.width : 131, mh = mi ? mi.height : 125;
+  S_MINE.door = [Math.round(S_MINE.x + mw / 2), S_MINE.y + mh + 3];   // (24 Nov) the mine's door is always the middle of its opening's foot, worked out from the picture (any size)
+  const blocks = [[S_BLD.x + 4, S_BLD.y + 46, S_BLD.x + 202, S_BLD.y + 152], [S_MINE.x + 4, S_MINE.y + Math.round(mh * .3), S_MINE.x + mw - 4, S_MINE.y + mh - 4],
+    [S_SIGN.x + 15, S_SIGN.y + 48, S_SIGN.x + 22, S_SIGN.y + 55], ...S_STALLS.map(([x, y]) => [x + 2, y + 34, x + 47, y + 55]),
+    ...S_PROPS.filter(q => q.solid !== false).map(propFoot).filter(Boolean)];   // only the foot of a tree or bush is solid (like the town's trees)
   IMG['hallw/south'] = maskCanvas(g.width, g.height, null, blocks, g);
   HALLS[SOUTH - 100].g = null;   // rebuilt from the new mask on first use
 }
@@ -71,6 +86,9 @@ function southObjs(m, dt) {
     S_BLD.a = clamp((S_BLD.a ?? 1) + (hid ? -1 : 1) * dt * 4, .45, 1); if (S_BLD.a < 1) o.alpha = S_BLD.a; o.after = () => chimneySmoke(dt); out.push(o); }
   const mi = IMG['s/mine']; if (mi) out.push({img: mi, x: S_MINE.x, y: S_MINE.y, base: S_MINE.y + mi.height - 2});
   const sg = IMG['s/sign']; if (sg) out.push({img: sg, x: S_SIGN.x, y: S_SIGN.y, base: S_SIGN.y + sg.height - 2});
+  for (const q of S_PROPS) { const im = propImg(q); if (!im) continue; const o = {img: im, x: q.x, y: q.y, base: q.y + im.base};   // his trees and bushes: walk behind them, the one you are behind fades
+    if (q.fade !== false) { const hid = m.y < o.base && m.y > q.y + 6 && m.x > q.x + 3 && m.x < q.x + im.width - 3; q.a = clamp((q.a ?? 1) + (hid ? -1 : 1) * dt * 4, .45, 1); if (q.a < 1) o.alpha = q.a; }
+    out.push(o); }
   S_STALLS.forEach(([x, y], i) => { const im = IMG['s/stall-' + S_STALL_COL[window.marketCol ? marketCol(i) : i % 3]]; /* the colour its keeper picked (market.js) */ if (im) out.push({img: im, x, y, base: y + im.height - 2, after: () => stallAfter(i, x, y)}); });
   return out;
 }
@@ -88,6 +106,30 @@ function chimneySmoke(dt) {
   }
   lx.globalAlpha = 1;
 }
+/* FOOTSTEPS (his ask, 24 Nov: "exactly like the Town"): the same test the town uses (groundAt + snowMask in index.html) on the South's
+   own ground: snow crunches, grass is grass, everything else (cobbles, road, gravel) is stone. Read from the picture once. */
+let SGROUND = null;
+function southGroundAt(x, y) {
+  const im = IMG['hall/south']; if (!im) return 'snow';
+  if (!SGROUND || SGROUND.im !== im) { const c = mk(im.width, im.height), g = c.getContext('2d'); g.drawImage(im, 0, 0); SGROUND = {im, w: im.width, h: im.height, d: g.getImageData(0, 0, im.width, im.height).data}; }
+  const xi = clamp(Math.round(x), 0, SGROUND.w - 1), yi = clamp(Math.round(y), 0, SGROUND.h - 1), i = (yi * SGROUND.w + xi) * 4, r = SGROUND.d[i], gg = SGROUND.d[i + 1], b = SGROUND.d[i + 2], l = (r + gg + b) / 3;
+  if (b >= r - 6 && l > 160 && gg >= r - 10) return 'snow';   // the town's daytime snow test, word for word
+  return gg > r + 18 && gg > b + 18 ? 'grass' : 'stone';      // the town's grass / stone test
+}
+Object.defineProperty(SH, 'step', {get: () => WL.me && WL.me.loc === SOUTH ? southGroundAt(WL.me.x, WL.me.y) : 'snow', configurable: true});   // footstep() reads hallOf(loc).step, only ever for you
+/* a placed prop's picture: flipped if asked, with his flat 2px drop shadow under whatever touches the ground (unless shadow: false).
+   .base = its foot row (the last row with solid pixels), for sorting and the solid foot */
+const PROPC = {};
+function propImg(q) {
+  const src = IMG['sp/' + q.lib]; if (!src) return null; const k = q.lib + '|' + (q.flip ? 1 : 0) + '|' + (q.shadow === false ? 0 : 1); if (PROPC[k]) return PROPC[k];
+  const w = src.width, h = src.height, c = mk(w, h + 2), x = c.getContext('2d'); if (q.flip) { x.translate(w, 0); x.scale(-1, 1); } x.drawImage(src, 0, 0); x.setTransform(1, 0, 0, 1, 0, 0);
+  const d = x.getImageData(0, 0, w, h + 2), a = i => d.data[i * 4 + 3]; let base = 0;
+  for (let y = h - 1; y >= 0 && !base; y--) for (let xx = 0; xx < w; xx++) if (a(y * w + xx) === 255) { base = y; break; }
+  if (q.shadow !== false) for (let xx = 0; xx < w; xx++) { let y = h - 1; while (y >= 0 && a(y * w + xx) < 255) y--; if (y < base - 2) continue;
+    for (let k2 = 1; k2 <= 2; k2++) { const i = ((y + k2) * w + xx) * 4; if (!d.data[i + 3]) { d.data[i] = 18; d.data[i + 1] = 28; d.data[i + 2] = 58; d.data[i + 3] = 96; } } }
+  x.putImageData(d, 0, 0); c.base = base || h - 1; return PROPC[k] = c;
+}
+function propFoot(q) { const im = propImg(q); if (!im) return null; const cx = q.x + im.width / 2, fw = clamp(Math.round(im.width * .18), 3, 10), by = q.y + im.base; return [cx - fw, by - 3, cx + fw, by + 1]; }
 function stallAfter(i, x, y) { if (window.marketStallDraw) marketStallDraw(i, x, y); }
 SH.frame = (m, people, dt, t, H, img) => {
   const tp = $('#townHud #hallBar'), r = tp && tp.getBoundingClientRect(), cr = cv.getBoundingClientRect();
@@ -103,7 +145,7 @@ SH.frame = (m, people, dt, t, H, img) => {
 };
 const nearDoor = (m, d, r) => Math.abs(m.x - d[0]) < (r || 11) && Math.abs(m.y - d[1]) < 9;
 SH.joy = (m, J) => {
-  if (J.y < -.5 && m.y < 12 && m.x > 380 && m.x < 420) { wlDoor(-1); return true; }                // back up the road to the town
+  if (J.y < -.5 && m.y < 12 && m.x > S_ENTRY.x0 && m.x < S_ENTRY.x1) { wlDoor(-1); return true; }   // back up the road to the town
   if (J.y < -.5 && nearDoor(m, S_BLD.door)) { wlDoor(SMITHY); return true; }
   if (J.y < -.5 && nearDoor(m, S_MINE.door, 16)) { wlDoor(MINE); return true; }
   if (J.x > .5 && m.x > S_RACE.x - 8 && m.y > S_RACE.y0 && m.y < S_RACE.y1) { raceGate(); return true; }
@@ -111,7 +153,7 @@ SH.joy = (m, J) => {
 };
 SH.tap = (e, m, x, y) => {
   if (m.seat) { wlUp(m); return true; }
-  if (y < 30 && x > 370 && x < 430) { wlGo(m, 400, 4, () => wlDoor(-1)); return true; }
+  if (y < 30 && x > S_ENTRY.x0 - 10 && x < S_ENTRY.x1 + 10) { wlGo(m, (S_ENTRY.x0 + S_ENTRY.x1) / 2, 4, () => wlDoor(-1)); return true; }
   const b = IMG['bld/blacksmith']; if (b && x > S_BLD.x + 12 && x < S_BLD.x + b.width - 12 && y > S_BLD.y + 50 && y < S_BLD.y + b.height + 2) { wlGo(m, S_BLD.door[0], S_BLD.door[1], () => wlDoor(SMITHY)); return true; }
   const mi = IMG['s/mine']; if (mi && x > S_MINE.x + 10 && x < S_MINE.x + mi.width - 10 && y > S_MINE.y + 20 && y < S_MINE.y + mi.height + 4) { wlGo(m, S_MINE.door[0], S_MINE.door[1], () => wlDoor(MINE)); return true; }
   const si = S_STALLS.findIndex(([sx, sy]) => x > sx && x < sx + 49 && y > sy && y < sy + 58);

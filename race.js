@@ -3,7 +3,7 @@
    editing image. If I go to change the exhaust the car spins around and shows the exhaust changing, if I change the engine it
    opens the bonnet and shows the engine, etc. similar to the GTA mechanic system."
    Walk out of the South along its east road and you are here. A "place" like the South (loc 100 + its spot in HALLS):
-     THE GROUND   one 2D picture of the whole circuit (assets/race/track.png, Nano Banana Pro; tools/make_race.py cuts it and
+     THE GROUND   one 2D picture of the whole circuit (assets/race/track.webp, Nano Banana Pro; tools/make_race.py cuts it and
                   reads the road, the kerbs and the forest off it into assets/race/mask.png: red = open, green = road, blue = kerb)
      ON TOP       the garage, the pits, the grandstands, the start gantry, the trackside props and the Mechanic are their own
                   pictures; the TYRE BARRIERS and the CARS are sprite stacks (his ask: the 3D sliced style of the Godfather's
@@ -23,30 +23,44 @@
 
 /* ---------- the place ---------- */
 const RACE = 100 + HALLS.length;
-HALLS.push({k: 'race', name: 'The Race Track', step: 'snow', door: [-999, -999], spawn: [16, 1338, 'right'], out: true, spots: [], hint: 'Walk back along the road to leave', back: [280, 976]});
+HALLS.push({k: 'race', name: 'The Race Track', step: 'grass', door: [-999, -999], spawn: [16, 1250, 'right'], out: true, spots: [], hint: 'Drive back along the road to leave', back: [280, 976]});
 const RH = HALLS[RACE - 100];
 
-/* ---------- the layout (game pixels on the 2400 x 1792 ground). Edit these numbers to move things. ---------- */
-const R_GAR = {x: 170, y: 977, door: [256, 1136]};                     // the Mechanic's garage (206 x 153) at the top of the paddock
-const R_PITS = {x: 430, y: 1006};                                      // the pit garages (225 x 126) beside it
-const R_STANDS = [{x: 1700, y: 992}, {x: 2160, y: 902}];               // the two grandstands (202 x 156), either side of the main straight
-const R_GANTRY = {x: 1961, y: 854, lamps: [75, 87, 99, 111, 123], ly: 43};   // the start gantry (198 x 152) over the line; where its five lamps are on the picture
-const R_MECH = [344, 1144];                                            // where the Mechanic stands, by his tyres
-const R_PARK = [300, 1232, 0];                                         // where your car waits: x, y, the way it points
-const R_OUT = {x: 10, y0: 1294, y1: 1382};                             // the road back to the South (left edge)
-const R_LINE = {y: 1000, x0: 1990, x1: 2130};                          // the start / finish line across the main straight (you race UP it)
-const R_GRIDS = [0, 1, 2, 3, 4].map(i => [i % 2 ? 2090 : 2030, 1085 + i * 56]);   // the grid boxes, front first
-const R_GRIDZONE = [1996, 1012, 2124, 1420];                           // stop in here and you can start a race
-const R_APRON = [190, 1132, 330, 1205];                                // stop in front of the garage door and the Mechanic comes over
+/* ---------- the layout (game pixels on the 2250 x 1680 ground). Edit these numbers to move things. ----------
+   ROUND 3 (his note, 24 Nov): "the race map looks like it lost the pixel art style in some areas ... the stands aren't necessary with the
+   characters. just make it look like a cool grassy race track full of details that a race track would have" -> a new GRASS ground
+   (tools/make_race.py ground: one master picture, its four quarters redrawn as fine pixel art and joined), no grandstands, no crowd.
+   The paddock is a small concrete plot now (his note: "make the mechanic area smaller, it looks too big"). */
+const R_GAR = {x: 140, y: 971, door: [226, 1126]};                     // the Mechanic's garage (206 x 153) at the top of the paddock (the concrete is 474 x 422: x 132..606, y 1050..1472)
+const R_PITS = {x: 356, y: 998};                                       // the pit garages (225 x 126) beside it
+const R_GANTRY = {x: 1836, y: 790, lamps: [75, 87, 99, 111, 123], ly: 43};   // the start gantry (198 x 152) over the line; where its five lamps are on the picture
+const R_MECH = [314, 1138];                                            // where the Mechanic stands, by his tyres
+const R_PARK = [292, 1182, 0];                                         // where your car waits (the yellow bay in front of the garage): x, y, the way it points
+const R_OUT = {x: 10, y0: 1208, y1: 1290};                             // the road back to the South (left edge)
+const R_LINE = {y: 936, x0: 1873, x1: 1997};                           // the start / finish line across the main straight (you race UP it)
+const R_GRIDS = [990, 1042, 1095, 1148, 1200].map((y, i) => [i % 2 ? 1962 : 1906, y + 25]);   // the painted grid boxes, front first
+const R_GRIDZONE = [1878, 950, 1992, 1300];                            // stop in here and you can start a race
+const R_APRON = [160, 1124, 300, 1200];                                // stop in front of the garage door and the Mechanic comes over
 const R_LAPS = 3;
 // trackside props: [picture, x, y of its top left]. Each is its own picture (tools/make_race.py props), 2px flat shadow under it.
-const R_PROPS = [['board-tyre', 660, 742], ['board-cup', 900, 742], ['board-cup', 1640, 96], ['board-tyre', 1800, 96], ['board-tyre', 1500, 1650], ['board-cup', 1700, 1650],
-  ['floodlight', 2200, 250], ['floodlight', 1470, 700], ['floodlight', 150, 560], ['floodlight', 1240, 1480], ['floodlight', 1900, 1250],
-  ['flag', 1930, 1030], ['flag', 2152, 1128], ['flag', 780, 1228], ['snowman', 1190, 990], ['snowman', 2230, 1180], ['hay', 540, 728], ['hay', 590, 742], ['hay', 1240, 1262], ['podium', 1790, 1182]];
-// the middle of the road in the order you drive it (the plan the ground was painted to: tools/make_race_sketch.py)
-const R_CTRL = [[2060, 1300], [2060, 420], [2060, 300], [1950, 220], [1620, 220], [1480, 220], [1380, 320], [1380, 460], [1280, 600], [1120, 620], [520, 620],
-  [330, 620], [250, 750], [330, 880], [520, 880], [1100, 880], [1260, 880], [1360, 980], [1360, 1180], [1360, 1420], [1480, 1560], [1920, 1560], [2060, 1470]].map(p => [p[0], p[1] * 1792 / 1800]);
-const RLINE = (() => { let p = R_CTRL; for (let k = 0; k < 3; k++) { const q = []; for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length]; q.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]); } p = q; } return p; })();
+const R_PROPS = [['board-tyre', 1473, 60], ['board-cup', 1653, 60], ['board-cup', 673, 448], ['board-tyre', 873, 448], ['board-tyre', 1473, 1522], ['board-cup', 1653, 1522],
+  ['floodlight', 2043, 192], ['floodlight', 1543, 582], ['floodlight', 99, 462], ['floodlight', 1143, 1382], ['floodlight', 1783, 1232], ['flag', 1832, 906],
+  ['flag', 2004, 906], ['flag', 622, 1137], ['hay', 417, 664], ['hay', 463, 670], ['hay', 1157, 1280], ['podium', 1717, 1039]];
+// the middle of the road in the order you drive it, read off the painted road every 34 pixels (the old plan, re-centred on the new ground)
+const R_CTRL = [[1934, 844], [1934, 810], [1934, 776], [1934, 742], [1934, 708], [1934, 674], [1934, 640], [1934, 606], [1934, 572], [1934, 538], [1934, 504], [1932, 470], [1927, 436],
+  [1923, 403], [1927, 369], [1928, 335], [1920, 302], [1904, 272], [1880, 248], [1851, 231], [1819, 219], [1785, 213], [1752, 209], [1718, 208], [1684, 207], [1650, 207],
+  [1616, 207], [1582, 207], [1548, 207], [1514, 207], [1480, 207], [1446, 208], [1412, 215], [1381, 227], [1352, 245], [1328, 269], [1311, 298], [1303, 331], [1298, 365],
+  [1290, 398], [1281, 431], [1268, 462], [1249, 490], [1227, 517], [1203, 540], [1173, 556], [1140, 565], [1107, 571], [1073, 574], [1039, 575], [1005, 576], [971, 578],
+  [937, 578], [903, 578], [869, 578], [835, 579], [801, 579], [767, 579], [733, 579], [699, 579], [665, 579], [631, 578], [597, 577], [563, 577], [529, 579], [495, 580],
+  [461, 579], [427, 579], [393, 580], [360, 585], [327, 595], [297, 611], [274, 636], [262, 667], [257, 701], [257, 735], [267, 767], [288, 793], [318, 808], [351, 816],
+  [385, 821], [419, 823], [453, 823], [487, 823], [521, 823], [555, 823], [589, 823], [623, 823], [657, 823], [691, 823], [725, 823], [759, 823], [793, 823], [827, 823],
+  [861, 823], [895, 823], [929, 823], [963, 823], [997, 824], [1031, 823], [1065, 823], [1099, 824], [1133, 828], [1166, 836], [1197, 848], [1225, 868], [1246, 895],
+  [1260, 925], [1270, 958], [1275, 992], [1277, 1026], [1277, 1060], [1277, 1094], [1277, 1128], [1277, 1162], [1274, 1195], [1270, 1229], [1270, 1263], [1275, 1297],
+  [1286, 1329], [1303, 1359], [1320, 1388], [1342, 1413], [1373, 1427], [1406, 1436], [1439, 1444], [1472, 1450], [1506, 1454], [1540, 1457], [1574, 1459], [1608, 1459],
+  [1642, 1459], [1676, 1458], [1710, 1456], [1744, 1452], [1777, 1447], [1810, 1440], [1843, 1430], [1874, 1417], [1902, 1397], [1918, 1368], [1929, 1335], [1933, 1302],
+  [1934, 1268], [1934, 1234], [1934, 1200], [1934, 1166], [1934, 1132], [1934, 1098], [1934, 1064], [1934, 1030], [1934, 996], [1934, 962], [1934, 928], [1934, 894],
+  [1934, 860]];
+const RLINE = (() => { let p = R_CTRL; for (let k = 0; k < 1; k++) { const q = []; for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length]; q.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]); } p = q; } return p; })();
 /* the same line every 4 pixels, with the way it points, how hard it bends and how far round the lap each point is: the other
    cars drive along this, and it says how far round YOU are (for places and laps) */
 const RD = (() => { const pts = [], n = RLINE.length; for (let i = 0; i < n; i++) { const a = RLINE[i], b = RLINE[(i + 1) % n], d = Math.hypot(b[0] - a[0], b[1] - a[1]), k = Math.max(1, Math.round(d / 4)); for (let j = 0; j < k; j++) pts.push({x: a[0] + (b[0] - a[0]) * j / k, y: a[1] + (b[1] - a[1]) * j / k}); }
@@ -54,7 +68,7 @@ const RD = (() => { const pts = [], n = RLINE.length; for (let i = 0; i < n; i++
   for (let i = 0; i < m; i++) { const p = pts[i], q = pts[(i + 1) % m], a = pts[(i - 8 + m) % m], c = pts[(i + 8) % m], d = Math.hypot(q.x - p.x, q.y - p.y); p.s = s; s += d;
     const t = Math.atan2(c.y - a.y, c.x - a.x); p.tx = Math.cos(t); p.ty = Math.sin(t); p.a = t;
     p.k = wrapA(Math.atan2(c.y - p.y, c.x - p.x) - Math.atan2(p.y - a.y, p.x - a.x)) / (Math.hypot(c.x - a.x, c.y - a.y) / 2 || 1); }
-  pts.L = s; let bi = 0, bd = 1e9; pts.forEach((p, i) => { const d = Math.hypot(p.x - 2060, p.y - R_LINE.y); if (d < bd) { bd = d; bi = i; } }); pts.s0 = pts[bi].s; return pts; })();
+  pts.L = s; let bi = 0, bd = 1e9; pts.forEach((p, i) => { const d = Math.hypot(p.x - (R_LINE.x0 + R_LINE.x1) / 2, p.y - R_LINE.y); if (d < bd) { bd = d; bi = i; } }); pts.s0 = pts[bi].s; return pts; })();
 const rdRel = s => ((s - RD.s0) % RD.L + RD.L) % RD.L;                  // how far past the line a point of the lap is
 const R_CPS = [.12, .25, .38, .5, .62, .75, .88].map(f => { const s = (RD.s0 + f * RD.L) % RD.L; return RD.find(p => p.s >= s) || RD[0]; });   // gates you must pass, in order, for a lap to count
 
@@ -107,7 +121,7 @@ const RK = {car: {x: R_PARK[0], y: R_PARK[1], tv: R_PARK[2], ca: R_PARK[2], slip
 const R_PROP_KEYS = [...new Set(R_PROPS.map(p => p[0]))];
 function raceLoad() {
   const L = (k, src) => load(k, src).catch(() => {});
-  const jobs = [L('hall/race', 'assets/race/track.webp'), L('race/mask', 'assets/race/mask.png'), L('race/garage', 'assets/race/garage.png'), L('race/stand', 'assets/race/grandstand.png'),
+  const jobs = [L('hall/race', 'assets/race/track.webp'), L('race/mask', 'assets/race/mask.png'), L('race/garage', 'assets/race/garage.png'),
     L('race/gantry', 'assets/race/gantry.png'), L('race/pits', 'assets/race/pits.png'), ...R_PROP_KEYS.map(k => L('race/' + k, `assets/race/${k}.png`)),
     L('race/car', 'assets/race/car.png'), L('stack/tyres', 'assets/race/tyres.png'), ...['front', 'right', 'back', 'left'].map(d => L('mech/' + d, `assets/final/mechanic/${d}.png`)),
     fetch('assets/race/car.json?v=' + BUILD).then(r => r.json()).then(j => { RK.j = j; }).catch(() => {}), fetch('assets/race/tyres.json?v=' + BUILD).then(r => r.json()).then(j => { RK.tj = j; }).catch(() => {})];
@@ -145,7 +159,6 @@ function raceMasks() {
   const rect = (x0, y0, x1, y1) => { for (let y = Math.max(0, y0); y < Math.min(RHT, y1); y++) RSOLID.fill(1, y * RW + Math.max(0, x0), y * RW + Math.min(RW, x1)); };
   rect(R_GAR.x + 3, R_GAR.y + 60, R_GAR.x + 203, R_GAR.y + 150);                              // the garage's walls
   rect(R_PITS.x + 3, R_PITS.y + 50, R_PITS.x + 222, R_PITS.y + 122);                          // the pit garages
-  for (const s of R_STANDS) rect(s.x + 3, s.y + 70, s.x + 199, s.y + 154);                    // the grandstands
   rect(R_GANTRY.x, R_GANTRY.y + 134, R_GANTRY.x + 26, R_GANTRY.y + 150); rect(R_GANTRY.x + 172, R_GANTRY.y + 134, R_GANTRY.x + 198, R_GANTRY.y + 150);   // the gantry's two feet
   rect(R_MECH[0] - 7, R_MECH[1] - 5, R_MECH[0] + 8, R_MECH[1] + 2);                           // the Mechanic himself
   for (const [k, px, py] of R_PROPS) { const p = IMG['race/' + k]; if (p) rect(px + Math.round(p.width * .2), py + p.height - 9, px + Math.round(p.width * .8), py + p.height - 2); }
@@ -169,7 +182,7 @@ function raceBarriers() {
   for (let i = 0; i < m; i++) { const b = RD[i], turn = b.k * 64;   // how far it turns over the next 64 px
     since += 4; if (Math.abs(turn) < .1) continue;
     const t = b.a, side = turn > 0 ? 1 : -1, nx = Math.sin(t) * side, ny = -Math.cos(t) * side;   // a right-hand bend (clockwise on screen): the outside is on the left
-    let r = 20; while (r < 150 && rRoad(b.x + nx * r, b.y + ny * r)) r += 2; if (r >= 150) continue;
+    let r = 20; while (r < 150 && rRoad(b.x + nx * r, b.y + ny * r)) r += 2; if (r >= 100) continue;   // (further than the road is wide: that way is the pit lane, not the edge)
     const x = b.x + nx * (r + 13), y = b.y + ny * (r + 9), g = Math.atan2(Math.sin(t) / .55, Math.cos(t));   // g = its angle on the ground (the screen squashes it)
     const need = 56 * Math.hypot(Math.cos(g), .55 * Math.sin(g)) + 2; if (side === lastSide && since < need) continue;
     if (rSolid(x, y) || rRoad(x, y) || out.some(o => Math.hypot(o.x - x, (o.y - y) * 1.6) < need - 4)) continue;
@@ -179,9 +192,28 @@ function raceBarriers() {
 }
 
 /* ---------- getting here, and back ---------- */
-window.raceOpen = () => { if (IMG['hall/race'] && IMG['hallw/race']) wlDoor(RACE); else wlSay('The race track is still loading.'); };
+/* ROUND 4 (his notes, 24 Nov): "when you drive up to the gate to enter the track there is two options. 'Start race' or 'Practice' with teleports
+   them to the starting grid" + "lets just make it so the players cant get out of their cars on the tracks". So the gate asks, and either way you
+   arrive IN your car on the grid. Practice = the track to yourself with the lap clock. You leave by driving back out along the road in. */
+window.raceOpen = () => { if (!(IMG['hall/race'] && IMG['hallw/race'])) { wlSay('The race track is still loading.'); return; } if (!WL.fading) $('#raceGate').classList.add('on'); };
+function raceGo(kind) { $('#raceGate').classList.remove('on'); if (WL.fading) return; RK.want = kind; sfx('click'); wlDoor(RACE); }
+(() => {
+  const d = document.createElement('div'); d.id = 'raceGate'; d.innerHTML = `<button class="btn red" id="rgRace">Start race</button><button class="btn" id="rgPrac">Practice</button>`;
+  $('#phone').appendChild(d); d.addEventListener('pointerdown', e => e.stopPropagation());
+  $('#rgRace').onclick = () => raceGo('race'); $('#rgPrac').onclick = () => raceGo('prac');
+  const st = document.createElement('style'); st.textContent = `#raceGate{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);z-index:25;display:none;flex-direction:column;gap:10px;width:min(240px,74%);background:#f6dfae;color:#1a1430;border:4px solid #5a3420;border-radius:6px;box-shadow:inset 0 -6px 0 #e9c88a,0 5px 0 #0008;padding:14px 14px 18px;font-family:"Pixelify Sans",system-ui,sans-serif}
+#raceGate.on{display:flex}#raceGate .btn{font-size:18px;padding:9px 8px 11px;text-align:center}`; document.head.appendChild(st);
+})();
+/* into the car on the front of the grid: every way onto the track comes through here */
+function raceSeat(kind) {
+  const C = RK.car, m = WL.me, g = R_GRIDS[0]; RK.gar = null; raceFree(); RK.drive = true;
+  C.x = g[0]; C.y = g[1]; C.tv = C.ca = -Math.PI / 2; C.rev = 0; C.slip = 0; C.kx = C.ky = 0; C.v = 0; C.boost = 0; C.dT = 0; C.cox = C.coy = 0; CARFX.marks.length = 0;
+  if (m) { m.path = []; m.todo = null; m.walk = false; m.x = C.x; m.y = C.y; }
+  let bi = 0, bd = 1e12; RD.forEach((p, i) => { const dd = (p.x - C.x) ** 2 + (p.y - C.y) ** 2; if (dd < bd) { bd = dd; bi = i; } }); RK.pi = bi; RK.prel = rdRel(RD[bi].s);
+  if (kind === 'race') raceStart();
+}
 { const f = SH.from; SH.from = was => was === RACE ? [S_RACE.x - 16, (S_RACE.y0 + S_RACE.y1) / 2, 'left'] : (f ? f(was) : null); }   // back in the South: on the road you left by
-RH.enter = () => { $('#hallLine').textContent = ''; RK.drive = false; raceFree(); RK.vw = 190; const C = RK.car; C.rev = 0; C.slip = 0; C.kx = C.ky = 0; if (typeof goldChip === 'function') goldChip(); raceChip(); };
+RH.enter = () => { $('#hallLine').textContent = ''; RK.vw = 375; raceSeat(RK.want || 'prac'); RK.want = null; if (typeof goldChip === 'function') goldChip(); raceChip(); };
 const raceNear = (m, p, r) => Math.hypot(m.x - p[0], m.y - p[1]) < r;
 RH.joy = (m, J) => {
   if (J.x < -.5 && m.x < R_OUT.x && m.y > R_OUT.y0 && m.y < R_OUT.y1) { wlDoor(SOUTH); return true; }
@@ -191,7 +223,7 @@ RH.joy = (m, J) => {
 RH.tap = (e, m, x, y) => {
   if (RK.drive) { const C = RK.car;
     if (RK.mode === 'free' && inR(R_GRIDZONE, C.x, C.y)) raceStart();
-    else if (RK.mode === 'free' && inR(R_APRON, C.x, C.y) && C.rev < .3) raceEdOpen();
+    else if (RK.mode === 'free' && inR(R_APRON, C.x, C.y) && C.rev < .3) raceGarIn();
     return true; }
   if (x < 40 && y > R_OUT.y0 - 10 && y < R_OUT.y1 + 10) { wlGo(m, 4, clamp(y, R_OUT.y0 + 6, R_OUT.y1 - 6), () => wlDoor(SOUTH)); return true; }
   const g = IMG['race/garage'];
@@ -204,8 +236,6 @@ RH.tap = (e, m, x, y) => {
 /* ---------- in and out of the car ---------- */
 function raceIn() { const m = WL.me; if (!m || m.loc !== RACE || RK.drive || m.ko || m.seat) return; const C = RK.car; if (Math.hypot(m.x - C.x, m.y - C.y) > 70) return;
   RK.drive = true; RK.mode = 'free'; m.path = []; m.todo = null; m.walk = false; C.rev = 0; C.slip = 0; C.tv = C.ca; sfx('door'); carPoof(C.x, C.y, 8); }
-function raceOut() { const m = WL.me; if (!m || !RK.drive) return; const C = RK.car; RK.drive = false; raceFree(); C.rev = 0; C.slip = 0; C.ca = C.tv; C.boost = 0;
-  const q = nearOk(RACE, C.x - Math.sin(C.tv) * 22, C.y + Math.cos(C.tv) * 16 + 6); m.x = q[0]; m.y = q[1]; m.dir = 'front'; m.walk = false; sfx('door'); netMove(); }
 /* the round button across from the joystick (the same pixel disc as the car, fishing and punch buttons): a steering wheel */
 $('#phone').insertAdjacentHTML('beforeend', '<button id="raceBtn" title="Car"></button>');
 { const st = document.createElement('style'); st.textContent = `#raceBtn{position:absolute;right:22px;bottom:240px;width:84px;height:84px;z-index:8;display:none;align-items:center;justify-content:center;border:0;padding:0;background:none;touch-action:none;pointer-events:auto;cursor:pointer}
@@ -226,11 +256,11 @@ $('#phone').insertAdjacentHTML('beforeend', '<button id="raceBtn" title="Car"></
 #reList .ro.on{border-color:#1a1430;background:#ffe08a}#reList .ro b{flex:1;font-size:16px}#reList .ro .btn{min-width:86px;font-size:14px;padding:5px 8px 7px;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
 #reList .ro .sw{width:26px;height:26px;flex:none;border:3px solid #1a1430;box-shadow:inset -6px -6px 0 #0003,inset 4px 4px 0 #fff5}
 #reList .ro small{font-size:12px;opacity:.75;margin-right:2px}`; document.head.appendChild(st); }
-$('#raceBtn').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (WL.fading || document.querySelector('.modal.on') || RK.ed.on) return; if (RK.drive) { if (RK.car.rev < .35) raceOut(); } else raceIn(); });
+$('#raceBtn').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (WL.fading || document.querySelector('.modal.on') || RK.ed.on) return; if (!RK.drive) raceIn(); });   // (round 4: on the track you stay in the car; the button only ever puts you in)
 function raceBtn() {
   const b = $('#raceBtn'), m = WL.me; if (!b) return;
   if (!b.dataset.pb) { const v = $('#punchBtn').style.getPropertyValue('--pb'); if (v) { b.style.setProperty('--pb', v); b.dataset.pb = 1; b.innerHTML = ic('steer', 5, 'solo'); } }
-  const here = !!(m && scene === scenes.town && m.loc === RACE && !WL.fading), show = here && !RK.ed.on && !m.ko && (RK.drive ? RK.mode !== 'count' : raceNear(m, [RK.car.x, RK.car.y + 6], 54)), key = String(show) + (RK.drive ? 1 : 0);
+  const here = !!(m && scene === scenes.town && m.loc === RACE && !WL.fading), show = here && !RK.ed.on && !m.ko && !RK.drive && raceNear(m, [RK.car.x, RK.car.y + 6], 54), key = String(show) + (RK.drive ? 1 : 0);
   if (b.dataset.s !== key) { b.dataset.s = key; b.style.display = show ? 'flex' : 'none'; b.classList.toggle('sel', RK.drive); }
   const j = $('#joy'); if (show && j && (raceBtn.n = (raceBtn.n || 0) + 1) % 20 === 1) { const jb = parseFloat(getComputedStyle(j).bottom); if (jb === jb) b.style.bottom = Math.round(jb + (j.offsetHeight - 84) / 2) + 'px'; }
 }
@@ -290,7 +320,7 @@ function raceCarStep(dt, t) {
   const cx = C.x + C.cox, cy = C.y + C.coy, rx = cx - cx0 * 21, ry = cy - sy0 * 12, now = performance.now(), px = -sy0 * 13, py = cx0 * 7;
   if ((C.drift || C.braking) && on && v > 60) { CARFX.marks.push({x: rx + px, y: ry + py, t: now}, {x: rx - px, y: ry - py, t: now}); if (CARFX.marks.length > 900) CARFX.marks.splice(0, CARFX.marks.length - 900);
     if (Math.random() < .7) CARFX.puffs.push({x: rx + (Math.random() - .5) * 22, y: ry - 2, vx: (Math.random() - .5) * 16, vy: -6 - Math.random() * 10, t: 0, l: .5 + Math.random() * .4, s: 3}); }
-  if (!on && v > 50) for (let k = 0; k < 2; k++) { const sd = k ? 1 : -1; CARFX.puffs.push({x: rx + px * sd, y: ry + py * sd, vx: -Math.cos(C.tv) * v * .25 + (Math.random() - .5) * 70, vy: -Math.sin(C.tv) * v * .15 - 50 - Math.random() * 60, t: 0, l: .35 + Math.random() * .3, s: k + Math.floor(now / 40), c: Math.random() < .5 ? '#eef8ff' : '#cfe4ff'}); }   // snow thrown up off the road
+  if (!on && v > 50) for (let k = 0; k < 2; k++) { const sd = k ? 1 : -1; CARFX.puffs.push({x: rx + px * sd, y: ry + py * sd, vx: -Math.cos(C.tv) * v * .25 + (Math.random() - .5) * 70, vy: -Math.sin(C.tv) * v * .15 - 50 - Math.random() * 60, t: 0, l: .35 + Math.random() * .3, s: k + Math.floor(now / 40), c: Math.random() < .5 ? '#6fae4a' : '#b89a6a'}); }   // grass and dirt thrown up off the road
   if (C.boost > 0) for (let k = 0; k < 2; k++) CARFX.puffs.push({x: rx - cx0 * 8 + (Math.random() - .5) * 10, y: ry - sy0 * 5 - 4, vx: -Math.cos(C.tv) * 120 + (Math.random() - .5) * 40, vy: -Math.sin(C.tv) * 70 - 30 - Math.random() * 40, t: 0, l: .2 + Math.random() * .2, s: k, c: Math.random() < .5 ? '#ffb24a' : '#ffe9a8'});   // flames out the back
   if (J && v > 20) { C.exT = (C.exT || 0) - dt; if (C.exT <= 0) { C.exT = .07 + .12 * (1 - C.rev); CARFX.puffs.push({x: rx - cx0 * 9, y: ry - sy0 * 5 - 3, vx: -cx0 * 20 + (Math.random() - .5) * 8, vy: -sy0 * 8 - 6 - Math.random() * 8, t: 0, l: .4 + Math.random() * .3, s: 2}); } }
   if (RK.drive && v > 90 && rKerb(C.x, C.y)) { RK.shake = Math.max(RK.shake, .16); if (t - (RK.kerbT || 0) > 85) { RK.kerbT = t; sfx('rkerb'); } }   // the kerbs rumble
@@ -338,9 +368,9 @@ function racePos() {
   for (let k = -40; k <= 70; k++) { const i = ((RK.pi + k) % M + M) % M, p = RD[i], d = (p.x - C.x) ** 2 + (p.y - C.y) ** 2; if (d < bd) { bd = d; bi = i; } }
   if (bd > 300 * 300 && RK.mode !== 'race') for (let i = 0; i < M; i++) { const p = RD[i], d = (p.x - C.x) ** 2 + (p.y - C.y) ** 2; if (d < bd) { bd = d; bi = i; } }
   RK.pi = bi; const p = RD[bi]; RK.ps = p.s; RK.plane = (C.x - p.x) * -p.ty + (C.y - p.y) * p.tx; const rel = rdRel(p.s);
-  if (RK.mode === 'race') {
-    const g = R_CPS[RK.cp]; if (g && Math.hypot(C.x - g.x, C.y - g.y) < 120) RK.cp++;
-    if (RK.prel > L * .8 && rel < L * .2) { if (RK.back) RK.back = false; else if (RK.plap === 0) RK.plap = 1; else if (RK.cp >= R_CPS.length) raceLapDone(); }
+  if (RK.mode === 'race' || (RK.mode === 'free' && RK.drive && !RK.gar)) {   // (practice counts laps too: every time you cross the line a new one starts)
+    const prac = RK.mode !== 'race', g = R_CPS[RK.cp]; if (g && Math.hypot(C.x - g.x, C.y - g.y) < 120) RK.cp++;
+    if (RK.prel > L * .8 && rel < L * .2) { if (RK.back) RK.back = false; else if (RK.plap === 0) { RK.plap = 1; if (prac) { RK.lapT = 0; RK.cp = 0; } } else if (RK.cp >= R_CPS.length) raceLapDone(); else if (prac) { RK.lapT = 0; RK.cp = 0; } }
     else if (RK.prel < L * .2 && rel > L * .8 && RK.plap > 0) RK.back = true;   // rolled back over the line
     RK.prog = (RK.plap - 1 - (RK.back ? 1 : 0)) * L + rel;
   }
@@ -354,7 +384,7 @@ const raceNth = n => n + (['TH', 'ST', 'ND', 'RD'][n > 3 ? 0 : n] || 'TH');
 
 /* ---------- THE RACE: five lights on the gantry, three laps, four other cars, a results card ---------- */
 const raceTime = ms => { ms = Math.max(0, Math.round(ms)); const m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60, c = Math.floor(ms / 10) % 100; return m + ':' + String(s).padStart(2, '0') + '.' + String(c).padStart(2, '0'); };
-function raceFree() { RK.mode = 'free'; RK.ai = []; RK.fin = 0; RK.prog = 0; const r = $('#raceRes'); if (r) r.classList.remove('on'); }
+function raceFree() { RK.mode = 'free'; RK.ai = []; RK.fin = 0; RK.prog = 0; RK.plap = 0; RK.cp = 0; RK.lapT = 0; RK.back = false; RK.laps = []; const r = $('#raceRes'); if (r) r.classList.remove('on'); }
 function raceStart() { const C = RK.car, M = RD.length; if (!RK.drive || RK.mode !== 'free') return;
   const put = (g) => { let bi = 0, bd = 1e12; for (let i = 0; i < M; i++) { const p = RD[i], d = (p.x - g[0]) ** 2 + (p.y - g[1]) ** 2; if (d < bd) { bd = d; bi = i; } } const p = RD[bi]; return {i: bi, s: p.s, lane: (g[0] - p.x) * -p.ty + (g[1] - p.y) * p.tx}; };
   RK.ai = R_RIVALS.map((r, k) => { const q = put(R_GRIDS[k]); return {n: r.n, name: 'rival' + 'abcd'[k], vmax: r.v, g: r.g, acc: 150 + k * 14, s: q.s, lane: q.lane, lt: q.lane, v: 0, lap: 0, rel: rdRel(q.s), prog: rdRel(q.s) - RD.L, fin: 0, x: R_GRIDS[k][0], y: R_GRIDS[k][1], a: -Math.PI / 2}; });
@@ -366,6 +396,7 @@ function raceTick(dt, t) {
   if (RK.mode === 'count') { RK.ct -= dt; const n = clamp(Math.floor((3.8 - RK.ct) / .6), 0, 5); if (n > RK.lit) { RK.lit = n; sfx('rbeep'); }
     if (RK.ct <= 0) { RK.mode = 'race'; RK.goT = 1.4; sfx('rgo'); } }
   else if (RK.mode === 'race') { RK.lapT += dt * 1000; RK.total += dt * 1000; if (RK.goT > 0) RK.goT -= dt; }
+  else if (RK.mode === 'free' && RK.drive && RK.plap > 0 && !RK.gar) RK.lapT += dt * 1000;   // practice: the lap clock
   else if (RK.mode === 'done') { RK.total += dt * 1000; RK.resT = (RK.resT || 0) - dt; if (RK.resT <= 0) { RK.resT = .5; raceResults(); } }
   if (RK.drive || RK.ai.length) racePos();
   if (RK.ai.length) raceAiStep(dt);
@@ -375,7 +406,7 @@ function raceTick(dt, t) {
 function raceLapDone() {
   const ms = Math.round(RK.lapT), best = !RBEST || ms < RBEST; RK.laps.push(ms); RK.cp = 0; RK.lapT = 0; RK.plap++;
   if (best) { RBEST = ms; raceSrv('rlap', {ms}).catch(() => {}); }
-  if (RK.plap > R_LAPS) { RK.fin = RK.total; RK.place = raceOrder().findIndex(r => r.me) + 1; RK.mode = 'done'; RK.resT = 0; RK.newBest = best; sfx(RK.place === 1 ? 'win' : 'rare'); raceResults(); $('#raceRes').classList.add('on'); }
+  if (RK.mode === 'race' && RK.plap > R_LAPS) { RK.fin = RK.total; RK.place = raceOrder().findIndex(r => r.me) + 1; RK.mode = 'done'; RK.resT = 0; RK.newBest = best; sfx(RK.place === 1 ? 'win' : 'rare'); raceResults(); $('#raceRes').classList.add('on'); }
   else { RK.lap = RK.plap; RK.msg = (best ? 'BEST LAP ' : 'LAP ') + raceTime(ms); RK.msgT = 2.2; sfx(best ? 'rare' : 'coin'); }
   raceChip();
 }
@@ -387,13 +418,13 @@ function raceResults() {   // the card at the end: where everyone came, and your
 }
 function raceChip() {   // beside the coins: the lap you are on and its clock; otherwise your best lap
   const row = $('#hallBar .lrow'); if (!row) return; let c = $('#raceChip'); if (!c) { c = document.createElement('span'); c.className = 'lchip'; c.id = 'raceChip'; row.appendChild(c); }
-  const m = WL.me, here = !!m && m.loc === RACE, txt = !here ? '' : RK.mode === 'race' ? `LAP ${RK.lap}/${R_LAPS}  ${raceTime(RK.lapT).slice(0, -1)}` : RBEST ? 'BEST ' + raceTime(RBEST) : '';
+  const m = WL.me, here = !!m && m.loc === RACE, txt = !here ? '' : RK.mode === 'race' ? `LAP ${RK.lap}/${R_LAPS}  ${raceTime(RK.lapT).slice(0, -1)}` : RK.mode === 'free' && RK.drive && RK.plap > 0 ? 'LAP ' + raceTime(RK.lapT).slice(0, -1) : RBEST ? 'BEST ' + raceTime(RBEST) : '';
   if (c.dataset.t !== txt) { c.dataset.t = txt; c.textContent = txt; c.style.display = txt ? 'inline-flex' : 'none'; }
 }
 function raceLine() {   // the big line over the bottom bar: your place while you race
   const C = RK.car; let s = '';
   if (RK.msg) s = RK.msg; else if (RK.mode === 'race') s = RK.goT > 0 ? 'GO' : raceNth(RK.place); else if (RK.mode !== 'free') s = '';
-  else if (RK.drive && inR(R_GRIDZONE, C.x, C.y)) s = 'TAP TO RACE'; else if (RK.drive && inR(R_APRON, C.x, C.y) && C.rev < .3) s = 'TAP FOR THE MECHANIC';
+  else if (RK.drive && inR(R_GRIDZONE, C.x, C.y)) s = 'TAP TO RACE';
   const e = $('#hallLine'); if (e && e.textContent !== s) e.textContent = s;
 }
 SFX.rbeep = () => tone(520, .16, {type: 'square', vol: .1});
@@ -417,15 +448,6 @@ SFX.wrench = () => { tone(1900, .03, {type: 'square', vol: .06, to: 1200}); tone
 /* ---------- drawing the place ---------- */
 function raceMechSet() { if (!SP.mechanic && IMG['mech/front']) SP.mechanic = {front: makeDir(IMG['mech/front'], false, [[8, 14, 2, 3], [14, 14, 2, 3]]), back: makeDir(IMG['mech/back'], false, []),
   right: makeDir(IMG['mech/right'], false, []), left: makeDir(IMG['mech/left'], false, [])}; return SP.mechanic; }
-/* THE CROWD: the game's own cast, sat along the benches of both grandstands. They bob, and jump when a car goes past. */
-const R_SEATS = [[88, 26, 86], [88, 114, 176], [101, 22, 84], [101, 116, 180], [115, 18, 82], [115, 118, 184]];   // the benches on the grandstand picture: feet line, from x, to x
-function raceCrowd(st, si, t) {
-  if (!RK.fans) RK.fans = Object.keys(SP).filter(n => !STACK[n] && SP[n] && SP[n].front && SP[n].front.frames && SP[n].front.frames[0] && n !== 'mechanic' && n !== 'smith'); const F = RK.fans; if (!F.length) return;
-  const img = IMG['race/stand'], cars = [RK.car, ...RK.ai], hot = cars.some(c => Math.abs(c.x - (st.x + 100)) < 260 && Math.abs(c.y - (st.y + 100)) < 260 && (c.v || 0) > 100); let k = si * 97;
-  for (const [fy, x0, x1] of R_SEATS) for (let x = x0 + 6; x <= x1 - 4; x += 13) { k++; const d = SP[F[(k * 7 + si * 3) % F.length]].front, ph = (k * 37) % 100 / 100 * 6.28;
-    const up = hot ? Math.max(0, Math.sin(t * .012 + ph)) * 4 : Math.max(0, Math.sin(t * .003 + ph) - .8) * 6; lx.drawImage(d.frames[0][0], X(st.x + x) - (d.w >> 1), Y(st.y + fy) - d.h - Math.round(up)); }
-  lx.drawImage(img, 0, 119, img.width, img.height - 119, X(st.x), Y(st.y + 119), img.width, img.height - 119);   // the front rail and its garland go back over their legs
-}
 function raceGantryLights(t) {   // five red lamps come on one by one; all out = GO (then green for a moment)
   const G = R_GANTRY, go = RK.mode === 'race' && RK.goT > 0, n = RK.mode === 'count' ? RK.lit : 0; if (!go && !n) return;
   G.lamps.forEach((lxp, i) => { if (!go && i >= n) return; const cx = X(G.x + lxp), cy = Y(G.y + G.ly); lx.fillStyle = go ? '#5fc46f' : '#e4544f'; lx.fillRect(cx - 3, cy - 4, 7, 9); lx.fillRect(cx - 4, cy - 3, 9, 7);
@@ -433,14 +455,17 @@ function raceGantryLights(t) {   // five red lamps come on one by one; all out =
 }
 function raceObjs(m, dt, t) {
   const out = [], fade = (o, R, k) => { const hid = !RK.drive && m.y < o.base - 2 && m.y > o.y + 6 && m.x > o.x + 3 && m.x < o.x + o.img.width - 3; R[k] = clamp((R[k] ?? 1) + (hid ? -1 : 1) * dt * 4, .45, 1); if (R[k] < 1) o.alpha = R[k]; return o; };
-  const x0 = cam.x - 60, x1 = cam.x + cam.lw + 60, y0 = cam.y - 30, y1 = cam.y + cam.lh + 170, seen = (x, y, w) => x + w > x0 && x < x1 && y > y0 - 20 && y < y1;
-  const g = IMG['race/garage']; if (g && seen(R_GAR.x, R_GAR.y, g.width)) out.push(fade({img: g, x: R_GAR.x, y: R_GAR.y, base: R_GAR.y + g.height - 4}, R_GAR, 'a'));
-  const pt = IMG['race/pits']; if (pt && seen(R_PITS.x, R_PITS.y, pt.width)) out.push(fade({img: pt, x: R_PITS.x, y: R_PITS.y, base: R_PITS.y + pt.height - 4}, R_PITS, 'a'));
-  const s = IMG['race/stand']; if (s) R_STANDS.forEach((st, i) => { if (seen(st.x, st.y, s.width)) out.push({img: s, x: st.x, y: st.y, base: st.y + s.height - 4, after: () => raceCrowd(st, i, t)}); });
-  const ga = IMG['race/gantry']; if (ga && seen(R_GANTRY.x, R_GANTRY.y, ga.width)) out.push({img: ga, x: R_GANTRY.x, y: R_GANTRY.y, base: R_GANTRY.y + ga.height - 4, after: () => raceGantryLights(t)});
-  for (const [k, px, py] of R_PROPS) { const im = IMG['race/' + k]; if (im && seen(px, py, im.width)) out.push({img: im, x: px, y: py, base: py + im.height - 3}); }
-  for (const b of RK.bars) { if (b.x < x0 || b.x > x1 || b.y < y0 || b.y > y1) continue; const im = stackFrame('tyres', 0, b.ai); if (!im) continue;
-    const sx = b.sh > 0 ? Math.round(Math.sin(b.sh * 70) * 1.5) : 0; out.push({img: im, x: Math.round(b.x) - (im.width >> 1) + sx, y: Math.round(b.y) - im.height + 4 + Math.round(STACK.tyres.s * .55), base: b.y + 5}); }
+  /* WHAT IS ON SCREEN (his note, 24 Nov: "the buildings arent loading when slightly out of frame, they disappear"): the test was on a
+     picture's TOP edge, so a tall building went as soon as its roof left the top of the screen. Now it is the WHOLE picture
+     (x, y, width, height) against the camera's view, with room to spare for the shake and the part-pixel slide. */
+  const PAD = 24, x0 = cam.x - PAD, x1 = cam.x + cam.lw + PAD, y0 = cam.y - PAD, y1 = cam.y + cam.lh + PAD, seen = (x, y, w, h) => x + w > x0 && x < x1 && y + h > y0 && y < y1;
+  const g = IMG['race/garage']; if (g && seen(R_GAR.x, R_GAR.y, g.width, g.height)) out.push(fade({img: g, x: R_GAR.x, y: R_GAR.y, base: R_GAR.y + g.height - 4}, R_GAR, 'a'));
+  const pt = IMG['race/pits']; if (pt && seen(R_PITS.x, R_PITS.y, pt.width, pt.height)) out.push(fade({img: pt, x: R_PITS.x, y: R_PITS.y, base: R_PITS.y + pt.height - 4}, R_PITS, 'a'));
+  const ga = IMG['race/gantry']; if (ga && seen(R_GANTRY.x, R_GANTRY.y, ga.width, ga.height)) out.push({img: ga, x: R_GANTRY.x, y: R_GANTRY.y, base: R_GANTRY.y + ga.height - 4, after: () => raceGantryLights(t)});
+  for (const [k, px, py] of R_PROPS) { const im = IMG['race/' + k]; if (im && seen(px, py, im.width, im.height)) out.push({img: im, x: px, y: py, base: py + im.height - 3}); }
+  for (const b of RK.bars) { const im = stackFrame('tyres', 0, b.ai); if (!im) continue;   // a barrier's picture is its whole stack of slices
+    const bx = Math.round(b.x) - (im.width >> 1), by = Math.round(b.y) - im.height + 4 + Math.round(STACK.tyres.s * .55); if (!seen(bx - 2, by, im.width + 4, im.height)) continue;
+    const sx = b.sh > 0 ? Math.round(Math.sin(b.sh * 70) * 1.5) : 0; out.push({img: im, x: bx + sx, y: by, base: b.y + 5}); }
   return out;
 }
 /* SPEED STREAKS: thin white lines flying back past the screen the faster you go (gold while you boost). Solid pixels, no blur. */
@@ -454,7 +479,11 @@ function raceStreaks(dt) {
     lx.fillStyle = C.boost > 0 ? `rgba(255,226,150,${s.a})` : `rgba(255,255,255,${al})`; for (let k = 0; k < n; k++) lx.fillRect(Math.round(s.x + dx * k), Math.round(s.y + dy * k), 1, 1); }
 }
 RH.frame = (m, people, dt, t, H, img) => {
-  const C = RK.car; raceCarStep(dt, t); raceTick(dt, t);
+  const C = RK.car;
+  if (!RK.drive && !RK.ed.on && !WL.fading && !m.ko && Math.hypot(m.x - C.x, m.y - C.y - 6) < 34) raceIn();   // (round 4: "walking up to your car gets you in the car")
+  { const door = Math.abs(C.x - R_BAY[0]) < 38 && C.y > R_BAY[1] && C.y < R_BAY[1] + 46; if (RK.gar) RK.garOk = false; else if (!door) RK.garOk = true; else if (RK.garOk && Math.sin(C.tv) < -.45) raceGarIn(); }   // nose up to the open bay: in you go
+  if (RK.gar) raceGarStep(dt); else raceCarStep(dt, t); raceTick(dt, t);
+  if (RK.drive && RK.mode === 'free' && !RK.gar && !WL.fading && C.x < R_OUT.x + 40 && C.y > R_OUT.y0 - 8 && C.y < R_OUT.y1 + 8 && Math.cos(C.tv) < -.3) wlDoor(SOUTH);   // out along the road you came in by
   if (RK.drive) { m.x = C.x; m.y = C.y; m.walk = false; m.path = []; if (NET.on && (C.v || 0) > 1) netMove(); }   // (online, the others see you where the car is; they do not see the car itself yet)
   // the camera: on foot it follows you like anywhere else; in the car it pulls right back, looks up the road the faster you go, and shakes on a bump
   const want = RK.drive ? 375 : 190; RK.vw += (want - RK.vw) * Math.min(1, dt * 3.2); if (Math.abs(RK.vw - want) < 2) RK.vw = want;
@@ -468,7 +497,7 @@ RH.frame = (m, people, dt, t, H, img) => {
   if (RK.mode === 'free' && RK.drive) { const q = Math.floor(t / 400) % 2; lx.fillStyle = q ? 'rgba(255,210,94,.55)' : 'rgba(255,242,168,.55)';   // the grid, lit up: stop here to race
     for (const g of R_GRIDS) { const bx = X(g[0] - 20), by = Y(g[1] - 30); lx.fillRect(bx, by, 40, 2); lx.fillRect(bx, by, 2, 20); lx.fillRect(bx + 38, by, 2, 20); } }
   if (WL.sel && WL.sel.loc === m.loc) { const q = Math.floor(t / 200) % 2; lx.strokeStyle = q ? '#ffd25e' : '#fff2a8'; lx.lineWidth = 1; lx.beginPath(); lx.ellipse(X(WL.sel.x) + .5, Y(WL.sel.y) + .5, 9 + q, 3 + q * .5, 0, 0, 7); lx.stroke(); }
-  const extra = []; if (IMG['stack/racecar']) extra.push({name: 'racecar', ang: C.ca, x: C.x + (C.cox || 0), y: C.y + (C.coy || 0), t, phase: 0, walk: (C.v || 0) > 30, dir: 'front'});
+  const extra = []; if (IMG['stack/racecar']) extra.push({name: 'racecar', ang: C.ca, x: C.x + (C.cox || 0), y: C.y + (C.coy || 0), t, phase: 0, walk: (C.v || 0) > 30, dir: 'front', ...(RK.gar ? {alpha: RK.gar.al, sortY: R_GAR.y + 156} : {})});   // (in the garage doorway it is drawn over the building and fades into the dark)
   for (const a of RK.ai) if (IMG['stack/' + a.name]) extra.push({name: a.name, ang: a.a, x: a.x, y: a.y, t, phase: 0, walk: a.v > 30, dir: 'front'});
   if (raceMechSet()) { const dx = m.x - R_MECH[0], dy = m.y - R_MECH[1], near = Math.hypot(dx, dy) < 90; extra.push({name: 'mechanic', dir: near ? dirFrom(dx, dy) : 'front', x: R_MECH[0], y: R_MECH[1], t, phase: 400}); }
   const hits = drawScene((RK.drive ? people.filter(p => p.e !== m) : people).concat(extra), null, img, raceObjs(m, dt, t)); for (const p of extra) hits.delete(p);
@@ -478,7 +507,7 @@ RH.frame = (m, people, dt, t, H, img) => {
     lx.fillStyle = '#1a1430'; lx.fillRect(fx0 - 1, fy0 - 1, w + 2, 9); lx.fillRect(fx0 + Math.floor(w / 2) - 1, fy0 + 8, 3, 2); lx.fillStyle = '#e4544f'; lx.fillRect(fx0, fy0, w, 7); lx.fillStyle = '#fff'; pxText(lx, txt, fx0 + 1, fy0 + 1); }
   raceStreaks(dt);
   lx.fillStyle = 'rgba(255,236,190,.06)'; lx.fillRect(0, 0, cam.lw, cam.lh);
-  raceLine(); if (RK.mode === 'race') raceChip();
+  raceLine(); if (RK.mode === 'race' || RK.plap > 0) raceChip();
   return hits;
 };
 
@@ -507,7 +536,19 @@ function raceEdOpen() {
   Object.assign(E, {on: true, cat: 'paint', pre: {...RSET}, a: -1.2, ta: R_VIEW.paint.a, sq: .55, bon: 0, hop: 0, free: false, strip: null, key: '', busy: false});
   RK.car.rev = 0; sfx('open'); $('#raceEd').classList.add('on'); paintCoins(); raceEdCat('paint'); raceEdFit();
 }
-function raceEdClose() { const E = RK.ed; if (!E.on) return; E.on = false; $('#raceEd').classList.remove('on'); sfx('close'); raceBuildCar(); }
+function raceEdClose() { const E = RK.ed; if (!E.on) return; E.on = false; $('#raceEd').classList.remove('on'); sfx('close'); raceBuildCar(); if (RK.gar) { RK.gar.ph = 'out'; RK.gar.t = 0; } }
+/* INTO THE GARAGE (his note, round 4: "allow people to drive into the mechanics garage, which shows the car slowly going in and getting darker,
+   then goes to the car editor"): drive up to the open bay and the car takes itself in, fading into the dark; the editor opens; closing it
+   backs the car out onto the apron the same way. */
+const R_BAY = [R_GAR.x + 70, R_GAR.y + 149];                             // the middle of the open bay's doorway, on the ground
+function raceGarIn() { const C = RK.car; if (RK.gar || !RK.drive || RK.mode !== 'free' || RK.ed.on || WL.fading || !RK.j) return; RK.gar = {ph: 'in', t: 0, x0: C.x, y0: C.y, a0: C.tv, al: 1}; RK.garOk = false; }
+function raceGarStep(dt) {
+  const G = RK.gar, C = RK.car, yin = R_BAY[1] - 40, yout = R_BAY[1] + 42, up = -Math.PI / 2; C.slip = 0; C.kx = C.ky = 0; C.boost = 0; C.dT = 0; C.drift = false; C.gas = false; C.cox = C.coy = 0; C.rev = 0;
+  if (G.ph === 'in') { G.t = Math.min(1, G.t + dt / 1.7); const k = G.t, q = Math.min(1, k * 2.6); C.x = lerp(G.x0, R_BAY[0], q); C.y = lerp(G.y0, yin, k); C.tv = C.ca = G.a0 + rWrap(up - G.a0) * q; C.v = 34;
+    G.al = 1 - clamp((k - .3) / .6, 0, 1); if (k >= 1) { G.ph = 'ed'; C.v = 0; raceEdOpen(); if (!RK.ed.on) { G.ph = 'out'; G.t = 0; } } }
+  else if (G.ph === 'out') { G.t = Math.min(1, G.t + dt / 1.5); const k = G.t; C.x = R_BAY[0]; C.y = lerp(yin, yout, k); C.tv = C.ca = up; C.v = 34; G.al = clamp((k - .1) / .6, 0, 1); if (k >= 1) { RK.gar = null; C.v = 0; } }
+  else { C.v = 0; G.al = 0; if (!RK.ed.on) { G.ph = 'out'; G.t = 0; } }
+}
 function raceEdFit() { const st = $('#reStage'), c = $('#reCv'); if (!st || !c) return; const k = Math.max(2, Math.floor(Math.min(st.clientWidth / RBW, st.clientHeight / RBH))); c.style.width = RBW * k + 'px'; c.style.height = RBH * k + 'px'; }
 function raceEdCat(c) { const E = RK.ed; E.cat = c; E.pre = {...RSET}; E.free = false; const V = R_VIEW[c];
   const wrapA = a => ((a % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI; E.ta = E.a + wrapA(V.a - E.a);   // turn the short way round
@@ -566,7 +607,8 @@ function raceEdDraw(dt, t) {
 }
 
 /* ---------- every frame, in any place ---------- */
-{ const fr = scenes.town.frame; scenes.town.frame = function (dt, t) { const m = WL.me; if ((RK.drive || RK.ai.length) && (!m || m.loc !== RACE)) { RK.drive = false; raceFree(); } if (RK.ed.on && (!m || m.loc !== RACE)) raceEdClose();
+{ const fr = scenes.town.frame; scenes.town.frame = function (dt, t) { const m = WL.me; { const g = $('#raceGate'); if (g.classList.contains('on') && (!m || m.loc !== SOUTH || WL.fading || m.x < S_RACE.x - 40)) g.classList.remove('on'); }   // walk away from the gate and its two buttons go
+  if ((RK.drive || RK.ai.length) && (!m || m.loc !== RACE)) { RK.drive = false; raceFree(); } if (RK.ed.on && (!m || m.loc !== RACE)) raceEdClose();
     const r = fr.call(this, dt, t); raceBtn(); raceEngine(); raceEdDraw(dt, t); return r; };
   const lv = scenes.town.leave; scenes.town.leave = function () { RK.drive = false; raceFree(); if (RK.ed.on) raceEdClose(); raceEngine(); raceBtn(); return lv.apply(this, arguments); }; }
 setInterval(raceChip, 1000);
