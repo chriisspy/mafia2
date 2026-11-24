@@ -7,3 +7,6 @@ __pycache__/
 
 # the server code's installed packages
 functions/node_modules/
+
+# the full-colour track (24 Nov): the game loads track.webp; this one is only the cutter tool's working copy
+assets/race/track.png

@@ -16,7 +16,7 @@ const ADMINS = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2', 'XAnbqovmaFUIHDkziEIyPO6
 const GIFT_NOW = new Set(['JRLtZMZkMTTJnHgaHmtLNk0V5mc2', 'XAnbqovmaFUIHDkziEIyPO6Yg5m2']);   // his accounts (@mafia, @chrispy) can send coins on day one (his call, 18 Nov)   // his Google account: the lab's test buttons only work for him
 const MIGRATE_MAX = 20000;
 const DEV_REQUIRED = true;                                     // every copy of the game says which phone it is since build 11211426; one that does not is an old copy or a script
-const FISH_DAY = 10000;                                        // the most coins Fisherman Joe pays one player in a day
+const FISH_DAY = 10000;
 const PROP_PRICE = 7500, PROP_MAX = 48;                       // the prop maker (phase 5): what a drawing costs, and its biggest side                                    // coins carried over from a phone, once, at most
 
 const bad = m => { throw new HttpsError('failed-precondition', m); };
@@ -38,7 +38,7 @@ function fresh(claim) {
   return w;
 }
 function norm(w) {   // fill in what an older wallet lacks
-  w.own = w.own || {}; w.kit = w.kit || {}; w.kit.rods = w.kit.rods || { twig: 1 }; w.kit.bait = w.kit.bait | 0; w.kit.bag = w.kit.bag || [];
+  w.own = w.own || {}; w.kit = w.kit || {}; w.kit.rods = w.kit.rods || { twig: 1 }; w.kit.bait = w.kit.bait | 0; w.kit.bag = w.kit.bag || []; w.kit.gold = w.kit.gold | 0;
   w.day = w.day || {}; w.fl = w.fl || {}; w.dr = w.dr || { b: 0, t: 0 }; w.paid = w.paid || {}; return w;
 }
 // drunk: how many beers are still in you (one wears off every 90 s), and the little luck it gives (0 -> 1 from the 3rd to the 6th)
@@ -333,13 +333,18 @@ const OPS = {
   },
   // THE PROP MAKER (phase 5): you draw a prop (a PNG up to 48 x 48, see-through where you did not draw), it costs 7,500 coins,
   // and it becomes a decoration only you own: props/{uid}/{id} = {png, wall, sh (shadow), at}; wallet.dec['@uid:id'] = 1.
+  // THE MAKER (24 Nov, his ask): unlocked once for 7,500 coins (makerUnlock, functions/market.js); after that every drawing is free.
+  // A PROP is up to 48 x 48 and becomes a decoration you own (wallet.dec). A COSMETIC is drawn on the mannequin: front, side and back
+  // side by side, each 32 x 40 (a 96 x 40 strip), worn over any outfit; slot 'head' sits on the top of the head, 'body' on the feet.
   async propMake(uid, d) {
-    const png = String(d.png || ''), m = /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/.exec(png); if (!m || png.length > 40000) bad('That drawing is too big.');
+    const png = String(d.png || ''), m = /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/.exec(png); if (!m || png.length > 60000) bad('That drawing is too big.');
     const b = Buffer.from(m[1], 'base64'); if (b.length < 33 || b.readUInt32BE(0) !== 0x89504e47 || b.toString('ascii', 12, 16) !== 'IHDR') bad('That is not a picture.');
-    const w = b.readUInt32BE(16), h = b.readUInt32BE(20); if (!(w >= 1 && h >= 1 && w <= PROP_MAX && h <= PROP_MAX)) bad('48 by 48 at most.');
+    const w = b.readUInt32BE(16), h = b.readUInt32BE(20), cos = !!d.cos;
+    if (cos ? !(w === 96 && h === 40) : !(w >= 1 && h >= 1 && w <= PROP_MAX && h <= PROP_MAX)) bad(cos ? 'Bad cosmetic.' : '48 by 48 at most.');
     const id = db.ref('props/' + uid).push().key, key = '@' + uid + ':' + id;
-    await tx(uid, w0 => { spend(w0, PROP_PRICE); w0.dec = w0.dec || {}; w0.dec[key] = 1; return {}; });
-    await db.ref('props/' + uid + '/' + id).set({ png, w, h, wall: !!d.wall, sh: d.sh !== false, at: Date.now() });
+    await tx(uid, w0 => { if (!w0.maker) bad('Unlock the maker first.'); w0.made = (w0.made | 0) + 1; if (w0.made > 200) bad('You have made 200 things already.');
+      if (cos) { w0.cos = w0.cos || {}; w0.cos[key] = 1; } else { w0.dec = w0.dec || {}; w0.dec[key] = 1; } return {}; });
+    await db.ref('props/' + uid + '/' + id).set(cos ? { png, w, h, cos: true, slot: d.slot === 'head' ? 'head' : 'body', name: String(d.name || '').slice(0, 16), at: Date.now() } : { png, w, h, wall: !!d.wall, sh: d.sh !== false, name: String(d.name || '').slice(0, 16), at: Date.now() });
     return { id: key };
   },
   // ONE DEVICE PER ACCOUNT (21 Nov, his call): device/{uid} = {id, name, at}, written only here. The first phone to play gets the
@@ -354,6 +359,13 @@ const OPS = {
     else if (d.what === 'bait') w.kit.bait = 99;
     return {}; }); },
 };
+
+// the market + the maker unlock (24 Nov): functions/market.js
+Object.assign(OPS, require('./market')({ db, tx, spend, bad, C }));
+// racing (24 Nov): car parts, the car setup, lap times: functions/race.js
+Object.assign(OPS, require('./race.js')({ tx, spend, bad }));
+// the mine + the Blacksmith (24 Nov): levels, pickaxes, crystals, smelting: functions/mine.js
+Object.assign(OPS, require('./mine.js')({ tx, spend, bad, dayKey, flag }));
 
 exports.act = onCall({ region: 'asia-southeast1', maxInstances: 10 }, async req => {
   const uid = req.auth && req.auth.uid; if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');

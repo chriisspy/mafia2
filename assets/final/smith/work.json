@@ -1,0 +1,1 @@
+{"cell": 64, "rows": {"idle_south": [0, 1], "idle_east": [1, 1], "idle_north": [2, 1], "idle_west": [3, 1], "walk_south": [4, 6], "walk_east": [5, 6], "walk_north": [6, 6], "walk_west": [7, 6], "pour_south": [8, 8], "pour_north": [9, 8], "hammer_east": [10, 8]}}
