@@ -632,7 +632,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #phone.land .bottom>*{pointer-events:auto}
 #phone.land #tabs{overflow-x:auto;padding:6px calc(10px + var(--sr)) 6px calc(10px + var(--sl));scrollbar-width:none}#phone.land #tabs .btn{font-size:12px;padding:5px 6px}
 #phone.land #buildTag{left:calc(6px + var(--sl))}
-#phone.land #menuBtn,#phone.land #chatBtn{left:calc(10px + var(--sl))}#phone.land #menuBtn{top:10px}#phone.land #chatBtn{top:56px}
+#phone.land #menuBtn,#phone.land #chatBtn{left:calc(10px + var(--sl))}#phone.land #menuBtn{top:10px}#phone.land #playersBtn{left:calc(10px + var(--sl));top:56px}#phone.land #chatBtn{top:102px}
 #phone.land #chatBox{left:calc(58px + var(--sl));right:auto;width:min(380px,60%);top:10px}#phone.land #chatLog{max-height:96px}
 #phone.land #top{right:calc(10px + var(--sr));top:8px}
 #phone.land #menuModal{left:calc(10px + var(--sl));top:54px;max-height:calc(100% - 62px);overflow-y:auto}
@@ -709,6 +709,9 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #phone.land #townHud.tmini .tbtn img{margin:0!important}
 #phone.land #townHud.tmini #townStart{width:auto;padding:6px 12px 9px;font-size:16px;margin:0}
 #phone.land #townHud.tmini #townFold{position:static}
+#phone.land #townHud.tmini.hall .tpanel,#phone.land #townHud.tmini.lake .tpanel{display:none!important}   /* (his catch) never inside the South, the Tavern, the mine, the lake... */
+#phone.land #townHud.tmini #townMafia{width:52px;height:52px;padding:0!important;font-size:0!important;margin:0;display:flex;align-items:center;justify-content:center;flex:none}
+#phone.land #townHud.tmini #townMafia[style*="none"]{display:none!important}
 /* (24 Nov, his ask) THE COIN COUNTER sits TOP RIGHT (it looked odd under the joystick upright and in the middle sideways),
    and the mine's LEVEL line sits TOP MIDDLE. In a place the bottom bar is only the joystick's floor now. */
 #townHud.hall .bottom{position:static}
@@ -1410,7 +1413,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11242700'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11242800'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2662,9 +2665,9 @@ setTimeout(townFoldPaint,0);
 setTimeout(()=>{const h=$('#townHud'),chip=$('#lakeBar .lrow .lchip i[data-ic],#lakeBar .lrow .lchip img')?.closest('.lchip');if(!h||$('#lakeCoins'))return;const box=document.createElement('div');box.id='lakeCoins';box.className='lrow';h.appendChild(box);
   const c=[...document.querySelectorAll('#lakeBar .lrow .lchip')].find(e=>e.querySelector('.coinN'));if(c)box.appendChild(c);},0);
 function landBtns(){const ph=$('#phone');let R='',B='',pad=0,col=0;
-  if(LAND){const pr=ph.getBoundingClientRect(),hud=scene&&scene.hud&&$(scene.hud);let top=pr.bottom,left=pr.right,any=false;
-    if(hud)for(const e of hud.querySelectorAll('.bottom>*,#sheet')){if(!e.offsetParent)continue;const r=e.getBoundingClientRect();if(r.height<5||r.width<5)continue;any=true;top=Math.min(top,r.top);left=Math.min(left,r.left);}
-    if(any){if(top-pr.top>=150)B=Math.round(pr.bottom-top+14)+'px';else R=Math.round(pr.right-left+14)+'px';if(top-pr.top<pr.height*.45)pad=pr.right-left;col=pr.right-left;}}
+  if(LAND){const pr=ph.getBoundingClientRect(),hud=scene&&scene.hud&&$(scene.hud);let top=pr.bottom,left=pr.right,any=false,cam=false;
+    if(hud)for(const e of hud.querySelectorAll('.bottom>*,#sheet')){if(!e.offsetParent)continue;const r=e.getBoundingClientRect();if(r.height<5||r.width<5)continue;any=true;top=Math.min(top,r.top);left=Math.min(left,r.left);if(!(TMINI&&e.classList.contains('tpanel')))cam=true;}
+    if(any){if(top-pr.top>=150)B=Math.round(pr.bottom-top+14)+'px';else R=Math.round(pr.right-left+14)+'px';if(cam){if(top-pr.top<pr.height*.45)pad=pr.right-left;col=pr.right-left;}}}   /* (his note) the folded menu buttons never move the camera; the round buttons still keep clear of them */
   LANDPAD=pad;LANDCOL=col;const k=R+'|'+B;if(landBtns.k!==k){landBtns.k=k;R?ph.style.setProperty('--abR',R):ph.style.removeProperty('--abR');B?ph.style.setProperty('--abB',B):ph.style.removeProperty('--abB');}}
 /* THE PUNCH BUTTON (16 Nov, his ask): for spectators only. A ghost punches the ghost next to it, or the living player
    whose cabin it is in. The living never see the ghosts, but they see a puff come off them and feel a little bump. */
