@@ -703,7 +703,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #phone.land #townHud.tmini .bottom{width:auto;padding:0 0 4px;overflow:visible}
 #phone.land #townHud.tmini .tpanel{background:none!important;border:0!important;border-image:none!important;box-shadow:none!important;padding:46px 0 0!important;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 #phone.land #townHud.tmini .tpanel::before,#phone.land #townHud.tmini .tpanel::after{display:none!important}
-#phone.land #townHud.tmini .thead,#phone.land #townHud.tmini #townRoles,#phone.land #townHud.tmini #townMaf,#phone.land #townHud.tmini #townDev{display:none!important}
+#phone.land #townHud.tmini .tpanel .thead{display:none!important}   /* only the panel's own heading: the role + game settings live in the Mafia window (worlds.js) and must show there */
 #phone.land #townHud.tmini .tpanel .row{display:flex;flex-direction:column;gap:8px!important;margin:0!important;align-items:flex-end}
 #phone.land #townHud.tmini .tbtn{width:52px;height:52px;padding:0 0 6px!important;font-size:0!important;letter-spacing:0!important;gap:0;justify-content:center;align-items:center;position:relative;flex:none}   /* (25 Nov, his ask) icons dead centre on the button face: no letter spacing left from the hidden words, bottom padding = the 6px 3D edge */
 #phone.land #townHud.tmini .tbtn img{margin:0!important}
@@ -723,6 +723,14 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #lakeCoins{display:none}#townHud.lake #lakeCoins{display:flex}
 #phone.land #townHud.hall #hallBar .lrow,#phone.land #lakeCoins{right:calc(10px + var(--sr));top:10px}
 #phone.land #townHud.hall #hallLine{top:16px}
+#townFlip{display:none!important}   /* (25 Nov, his call) the coin flip button is not needed: the machines are in the Casino */
+/* (25 Nov, his ask) the TOWN WHEEL sideways: wheel on the left, words + odds + Spin on the right, no scrolling */
+#phone.land #wheelModal.on{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto 1fr auto auto auto auto 1fr;column-gap:18px;row-gap:8px;align-items:start;overflow:hidden}
+#phone.land #wheelModal .mhead{grid-column:1/3}
+#phone.land #wheelCv{grid-column:1;grid-row:2/8;width:auto;height:min(250px,calc(100dvh - 120px));margin:0 0 0 6px}
+#phone.land #wheelModal>.small,#phone.land #wheelRes,#phone.land #wheelOdds,#phone.land #wheelModal>.row{grid-column:2;text-align:center;justify-content:center!important;margin:0!important}
+#phone.land #wheelModal>.small{grid-row:3}#phone.land #wheelRes{grid-row:4}#phone.land #wheelOdds{grid-row:5}#phone.land #wheelModal>.row{grid-row:6}
+#phone.land #wheelRes:empty{display:none}
 /*END-LAND-CSS*/
 </style>
 </head>
@@ -1413,7 +1421,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11250200'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11250230'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -2659,9 +2667,12 @@ function joyPlace(){floatXTick();const el=$('#joy'),ok=[scenes.town,scenes.cabin
    LANDPAD = how much of the right of the screen a tall column covers (the camera leans left by half of it, so you are not walking under the panel). */
 let LANDPAD=0,LANDCOL=0;const NUDGE={r:0,p:0,t:0};
 /* THE TOWN PANEL, FOLDED (24 Nov, his ask "make the panel collapse into small buttons"): sideways it starts folded; the top button opens and folds it */
-let TMINI=true;try{TMINI=localStorage.getItem('m2_tmini')!=='0';}catch(e){}
+let TMINI=true;   /* (25 Nov, his ask) folded automatically: every time you arrive somewhere, and after you use one of its buttons */
 function townFoldPaint(){const h=$('#townHud'),b=$('#townFold');if(!h||!b)return;h.classList.toggle('tmini',TMINI);b.innerHTML=ic(TMINI?'left':'right',2,'solo');b.title=TMINI?'Open the menu':'Fold the menu';   /* (25 Nov, his ask) an arrow both ways: left = open it, right = fold it */}
-document.addEventListener('click',e=>{if(!e.target.closest('#townFold'))return;TMINI=!TMINI;try{localStorage.setItem('m2_tmini',TMINI?'1':'0');}catch(_){}sfx('click');townFoldPaint();});
+document.addEventListener('click',e=>{if(e.target.closest('#townFold')){TMINI=!TMINI;sfx('click');townFoldPaint();return;}
+});
+document.addEventListener('click',e=>{if(!TMINI&&e.target.closest('#townHud .tpanel button')&&!e.target.closest('#townFold')){TMINI=true;townFoldPaint();}},true);   /* capture: some panel buttons stop the click */
+setTimeout(()=>{const _wd=wlDoor;wlDoor=function(ci){if(!TMINI){TMINI=true;townFoldPaint();}return _wd.apply(this,arguments);};const _en=scenes.town.enter;scenes.town.enter=function(){TMINI=true;townFoldPaint();return _en.apply(this,arguments);};},0);   /* after scenes.town exists */
 setTimeout(townFoldPaint,0);
 /* the lake's coin chip, moved to the top left (24 Nov, his ask) */
 setTimeout(()=>{const h=$('#townHud'),chip=$('#lakeBar .lrow .lchip i[data-ic],#lakeBar .lrow .lchip img')?.closest('.lchip');if(!h||$('#lakeCoins'))return;const box=document.createElement('div');box.id='lakeCoins';box.className='lrow';h.appendChild(box);
@@ -4402,7 +4413,7 @@ $('#townShop').onclick=()=>openShop();$('#townColl').onclick=()=>openColl();   /
 /* ---- the Town Wheel: slices are as wide as their odds (they add up to 100) ---- */
 /* coins and odds (12 Nov, his prices): Mafia Case 500, Cabin Case 1000, a spin 300. A spin pays back about 200 on average
    (about 110 in coins, the rest in outfits), with a 4% shot at 1000. A game pays 250 for a win (500 as Mafia, 1000 as the Jester), 100 for a loss. */
-const WHEEL=[['c',50,13],['o','common',8],['c',100,9],['c',250,10],['o','rare',6],['c',50,13],['c',100,9],['o','epic',4],['c',50,13],['c',1000,4],['c',100,9],['o','legendary',2]];
+const WHEEL=[['c',50,10],['o','common',9],['c',100,9],['c',250,13],['o','rare',8],['c',50,10],['c',100,9],['o','epic',5],['c',50,10],['c',1000,5],['c',100,9],['o','legendary',3]];   /* (25 Nov, his ask "a bit better") fewer 50s; more 250s, 1000s and outfits */
 const hexRGB=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
 const WSEG=(()=>{let s=0;return WHEEL.map(w=>{const col=w[0]==='o'?RAR_COL[w[1]]:w[1]>=1000?'#e4544f':w[1]>=250?'#ff9a4a':w[1]>=100?'#e9b25a':'#f6dfae';const o={kind:w[0],v:w[1],w:w[2],s0:s/100,s1:(s+w[2])/100,rgb:hexRGB(col)};s+=w[2];return o;});})();
 const W_NAVY=[26,20,48],W_GOLD=[211,155,42],W_CANV={};
@@ -4580,7 +4591,7 @@ $('#dcCoinsBtn').onclick=async()=>{if(!dayCoins()||$('#dcCoinsBtn').classList.co
   for(const e of[$('#dcCoins'),$('#dailyModal .wal')]){const k=e.id?'got':'bump';e.classList.remove(k);void e.offsetWidth;e.classList.add(k);}};
 $('#dcSpinBtn').onclick=()=>{if(!daySpin())return;$('#dailyModal').classList.remove('on');wheelOpen();};
 function wheelUI(){paintCoins();dayPaint();const b=$('#wheelSpin'),W=WL.wheel,free=daySpin();const other=W.busy&&W.by&&W.by.i!==0;b.innerHTML=other?esc(wlName(W.by))+' is spinning…':free?'Free spin':ic('coin',2)+' Spin · '+SPIN_PRICE;b.disabled=W.busy||(!free&&coins<SPIN_PRICE);b.classList.toggle('go',free&&!other);b.classList.toggle('red',!(free&&!other));b.style.setProperty('--accent','#5fc46f');
-  $('#wheelOdds').innerHTML=[['COINS',76,''],['COMMON',8,''],['RARE',6,'rare'],['EPIC',4,'epic'],['LEGENDARY',2,'legendary']].map(o=>`<span class="rar ${o[2]}">${o[0]} ${o[1]}%</span>`).join('');}
+  $('#wheelOdds').innerHTML=[['COINS',WHEEL.filter(w=>w[0]==='c').reduce((t,w)=>t+w[2],0),''],...[['common',''],['rare','rare'],['epic','epic'],['legendary','legendary']].map(([r,c])=>[r.toUpperCase(),WHEEL.filter(w=>w[1]===r).reduce((t,w)=>t+w[2],0),c])].map(o=>`<span class="rar ${o[2]}">${o[0]} ${o[1]}%</span>`).join('');}
 function wheelOpen(){$('#wheelRes').innerHTML='';wheelUI();$('#wheelModal').classList.add('on');}
 $('#wheelX').onclick=()=>$('#wheelModal').classList.remove('on');
 $('#wheelSpin').onclick=async()=>{const W=WL.wheel,free=daySpin();if(W.busy||W.ask||(!free&&coins<SPIN_PRICE))return;W.ask=true;$('#wheelRes').innerHTML='';let r;try{r=await srv('wheel');}catch(e){W.ask=false;$('#wheelRes').textContent=e.message;wheelUI();return;}W.ask=false;W.mine=r;wheelSpin(WL.me,{k:r.k,f:.2+Math.random()*.6,win:r.win});wheelUI();};   /* the server spun it (his call: cheat-proof) */   /* today's first spin is free */

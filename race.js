@@ -91,7 +91,7 @@ const ROWN = {paint: new Set([0]), wheels: new Set([0]), exhaust: new Set([0]), 
 let RBEST = 0;                                                                               // your best lap, ms
 function raceStats(set) {   // what a setup is worth, and what that does to the car
   let spd = 0, acc = 0, grip = 0; for (const c of RCATS) { const q = RPARTS[c][set[c]] || {}; spd += q.spd || 0; acc += q.acc || 0; grip += q.grip || 0; }
-  return {spd, acc, grip, vmax: 330 * (1 + .07 * spd), accT: 1.7 / (1 + .16 * acc), turn: 2.5 + .25 * grip, loose: 1 - .09 * grip, scrub: 1 - .1 * grip};   // (round 2: twice as fast, quicker off the line)
+  return {spd, acc, grip, vmax: 410 * (1 + .07 * spd), accT: 1.5 / (1 + .16 * acc), turn: 2.5 + .25 * grip, loose: 1 - .09 * grip, scrub: 1 - .1 * grip};   // (round 2: twice as fast, quicker off the line; 25 Nov his ask "faster": 330 -> 410, 1.7 -> 1.5 s, rivals x1.24)
 }
 
 /* ---------- the server's copy / the lab's copy ---------- */
@@ -462,7 +462,7 @@ function raceStart() { if (!RK.drive || RK.mode !== 'free') return; if (!raceMpC
 function raceGrid(M) { const C = RK.car, Mn = RD.length;
   const put = (g) => { let bi = 0, bd = 1e12; for (let i = 0; i < Mn; i++) { const p = RD[i], d = (p.x - g[0]) ** 2 + (p.y - g[1]) ** 2; if (d < bd) { bd = d; bi = i; } } const p = RD[bi]; return {i: bi, s: p.s, lane: (g[0] - p.x) * -p.ty + (g[1] - p.y) * p.tx}; };
   const mine = M ? Math.max(0, M.g.indexOf(NET.uid)) : 0, nAi = M ? Math.max(0, 5 - M.g.length) : 4;
-  RK.ai = R_RIVALS.slice(0, nAi).map((r, k) => { const q = put(R_GRIDS[k]); return {n: r.n, name: 'rival' + 'abcd'[k], vmax: r.v, g: r.g, acc: 150 + k * 14, s: q.s, lane: q.lane, lt: q.lane, v: 0, lap: 0, rel: rdRel(q.s), prog: rdRel(q.s) - RD.L, fin: 0, x: R_GRIDS[k][0], y: R_GRIDS[k][1], a: -Math.PI / 2}; });
+  RK.ai = R_RIVALS.slice(0, nAi).map((r, k) => { const q = put(R_GRIDS[k]); return {n: r.n, name: 'rival' + 'abcd'[k], vmax: r.v * 1.24, g: r.g * 1.25, acc: 150 + k * 14, s: q.s, lane: q.lane, lt: q.lane, v: 0, lap: 0, rel: rdRel(q.s), prog: rdRel(q.s) - RD.L, fin: 0, x: R_GRIDS[k][0], y: R_GRIDS[k][1], a: -Math.PI / 2}; });
   const g = R_GRIDS[4 - mine]; C.x = g[0]; C.y = g[1]; C.tv = C.ca = -Math.PI / 2; C.rev = 0; C.slip = 0; C.kx = C.ky = 0; C.v = 0; C.boost = 0; C.dT = 0;
   if (M) { const m = WL.me; C.cox = C.coy = 0; if (m) { m.x = C.x; m.y = C.y; } }
   const q = put(g); RK.pi = q.i; RK.ps = q.s; RK.plane = q.lane; RK.prel = rdRel(q.s); RK.plap = 0; RK.back = false; RK.prog = RK.prel - RD.L;
