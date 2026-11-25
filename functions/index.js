@@ -366,6 +366,8 @@ Object.assign(OPS, require('./market')({ db, tx, spend, bad, C }));
 Object.assign(OPS, require('./race.js')({ tx, spend, bad }));
 // the mine + the Blacksmith (24 Nov): levels, pickaxes, crystals, smelting: functions/mine.js
 Object.assign(OPS, require('./mine.js')({ tx, spend, bad, dayKey, flag }));
+// the Glimmerkin (25 Nov): the secret hunt's steps, in order: functions/quest.js
+Object.assign(OPS, require('./quest.js')({ tx, bad }));
 
 exports.act = onCall({ region: 'asia-southeast1', maxInstances: 10 }, async req => {
   const uid = req.auth && req.auth.uid; if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');

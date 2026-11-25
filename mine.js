@@ -23,9 +23,10 @@ const MR = {
   rocks: 16, veins: 8, rockOdds: [[70, 28, 2], [64, 32, 4], [58, 36, 6], [53, 38, 9], [48, 40, 12], [44, 41, 15], [40, 42, 18], [36, 43, 21], [32, 44, 24], [28, 45, 27], [24, 45, 31], [20, 45, 35]],   // per level: stone, gold, rich (out of 100)
   cryFrom: 7, cryOdds: [0, 0, 0, 0, 0, 0, .002, .003, .005, .007, .011, .015], cryMix: [0, 0, 0, 0, 0, 0, [90, 10, 0], [80, 20, 0], [70, 25, 5], [62, 30, 8], [50, 35, 15], [40, 38, 22]], cryYield: {e: 1, u: 2, d: 4}, cryKeep: 3,   // a crystal rock under a break: the chance, which one, how many crystals
   goldMul: [1, 1.25, 1.5, 1.8, 2.1, 2.5, 3, 3.5, 4, 4.6, 5.3, 6],                                                // round 3, his note: "the lower you go ... the more gold chunks there are in each rock": gold rocks and veins pay this many times more per level
+  crackHits: 5,                                                               // (25 Nov) the cracked wall on level 12 (THE GLIMMERKIN, further down): this many swings with any pickaxe
   hearts: 3, fallLoss: .2,                                                    // (25 Nov) 3 hearts in the mine; passing out costs this share of the gold chunks you carry
   dayGold: 600, dayCry: 10, cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, swingMs: 520};   // smeltMs: he takes 5 minutes over your gold
-const mHits = (k, lv, pick) => Math.max(1, Math.ceil(MR.hp[k] * ('eud'.includes(k) ? 1 : MR.lvmul[lv - 1]) / MR.picks[pick].pow));
+const mHits = (k, lv, pick) => k === 'c' ? MR.crackHits : Math.max(1, Math.ceil(MR.hp[k] * ('eud'.includes(k) ? 1 : MR.lvmul[lv - 1]) / MR.picks[pick].pow));
 const isCry = k => 'eud'.includes(k);
 const mNeed = lv => (lv - 1) >> 1;   // the pickaxe a level asks for: wood 1-2, stone 3-4, iron 5-6, steel 7-8, gold 9-10, diamond 11-12
 const CRY_NAME = {e: 'emerald', u: 'ruby', d: 'diamond'}, CRY_GLOW = {e: '90,255,170', u: '255,110,120', d: '150,225,255'};
@@ -36,6 +37,7 @@ function mineLoad() {
     L('mine/rocks', 'assets/mine/rocks.png'), L('mine/props', 'assets/mine/props.png'), L('smith/work', 'assets/final/smith/work.png'),
     fetch('assets/final/smith/work.json?v=' + BUILD).then(r => r.json()).then(j => { SMW.rows = j.rows; SMW.cell = j.cell; }).catch(() => {}), L('mine/walls', 'assets/mine/walls.png'), L('mine/floor', 'assets/mine/floor.png'),
     ...['forge', 'anvil', 'counter', 'toolrack', 'barrel', 'coal', 'grindstone', 'coins'].map(k => L('sm/' + k, `assets/smithy/${k}.png`)),
+    ...['front', 'right', 'back', 'left'].map(d => L('pip/' + d, `assets/final/pip/${d}.png`)),
     ...['wood', 'stone', 'iron', 'steel', 'gold', 'diamond'].flatMap(k => [L('pick/' + k, `assets/mine/picks/${k}.png`), L('pick/' + k + '-swing', `assets/mine/picks/${k}-swing.png`)])]).then(mineMasks);
 }
 function mineMasks() {
@@ -82,6 +84,9 @@ function mineLocal(op, d) {
     let grow = null; const lab = typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.cryAlways ? LABM.cryAlways : '';   // the lab only: LABM.cryAlways = 'e' | 'u' | 'd' puts a crystal under every break, to look at them
     if (!isCry(k) && lv >= MR.cryFrom && W.cs.length < MR.cryKeep && (lab || Math.random() < MR.cryOdds[lv - 1])) { const c = lab || 'eud'[roll(MR.cryMix[lv - 1])]; W.cs += c; grow = {i: M.k.length, k: c}; M.k += c; }
     sync(); return {got, gc, gold: W.gold, cry: W.cry, grow, cap: W.m >= MR.dayGold}; }
+  if (op === 'qcrack' || op === 'qpip') { const Q = W.q || (W.q = {s: 0}); if (!W.mine || W.mine.lv !== MR.levels) bad('You are not there.');   // the same order as functions/quest.js
+    if (op === 'qcrack') { if (Q.s < 1) Q.s = 1; QUEST.s = Q.s; save(); return {s: Q.s}; }
+    if (Q.s < 1) bad('Not yet.'); const got = Q.s === 1; if (got) Q.s = 2; QUEST.s = Q.s; save(); return {s: Q.s, got}; }
   if (op === 'mfall') { if (!W.mine) bad('You are not in the mine.'); const lost = Math.floor(W.gold * MR.fallLoss); W.gold -= lost; delete W.mine; sync(); return {lost, gold: W.gold}; }
   if (op === 'mpick') { const t = MR.picks.findIndex(p => p.id === d.id); if (t < 0) bad('No such pickaxe.'); if (W.pick >= t) return {pick: W.pick}; const P = MR.picks[t]; if (P.cry && W.cry < P.cry) bad('You need ' + P.cry + ' crystals.'); if (coins < P.price) bad('Not enough coins.'); coins -= P.price; if (P.cry) W.cry -= P.cry; paintCoins(); W.pick = t; sync(); return {pick: t}; }
   if (op === 'mcry') { const n = d.n | 0; if (n < 1 || n > W.cry) bad('You have no crystals.'); W.cry -= n; W.gold += n * MR.cryGold; sync(); return {gold: W.gold, cry: W.cry, got: n * MR.cryGold}; }
@@ -276,7 +281,7 @@ const blocked = (x, y) => !isFloor(x, y) || !!rockAt(x, y) || (MN.shaft && MN.sh
 
 /* the shape of a level: a wandering dig from where you come in. Level 1 has the way out at the bottom; the others a ladder up. */
 function mineGeo(lv) {
-  const M = MN; M.lv = lv; M.cell.fill(1); M.rocks = []; M.veins = new Map(); M.wdmg = new Map(); M.lamps = []; M.keep = new Set(); M.fx = []; M.shaft = null; DIG.on = null;
+  const M = MN; M.den = false; M.crack = null; M.lv = lv; M.cell.fill(1); M.rocks = []; M.veins = new Map(); M.wdmg = new Map(); M.lamps = []; M.keep = new Set(); M.fx = []; M.shaft = null; DIG.on = null;
   const R = n => Math.floor(Math.random() * n); let ex, ey;
   if (lv === 1) { ex = 11; ey = MGH - 3; M.cell[mci(ex, MGH - 2)] = 0; M.cell[mci(ex, MGH - 1)] = 0; M.keep.add(mci(ex - 1, MGH - 2)).add(mci(ex + 1, MGH - 2)); }
   else { ex = 5 + R(MGW - 10); ey = 7 + R(MGH - 11); M.keep.add(mci(ex, ey - 1)).add(mci(ex, ey - 2)).add(mci(ex, ey - 3)); }   // the ladder's wall stays a full wall: nothing dug behind it
@@ -297,9 +302,9 @@ function mineGeo(lv) {
   if (lv < MR.levels) { const d = mineFlood(ex, ey, () => false); let best = -1, bd = -1; for (let i = 0; i < MGW * MGH; i++) if (d[i] > bd && !(lv === 1 && ((i / MGW) | 0) >= MGH - 2) && Math.max(Math.abs(i % MGW - ex), Math.abs(((i / MGW) | 0) - ey)) >= 4) { bd = d[i]; best = i; } if (best >= 0) M.shaft = [best % MGW, (best / MGW) | 0]; }
   // NOTHING ON OR ROUND A LADDER (round 3, his note): the cells round the shaft, and in front of and beside the ladder up, are open floor
   for (const [cx, cy, top] of [M.shaft ? [M.shaft[0], M.shaft[1], -1] : null, lv > 1 ? [ex, ey, 0] : null].filter(Boolean)) for (let b = top; b <= 1; b++) for (let a = -1; a <= 1; a++) { const X0 = cx + a, Y0 = cy + b; if (inCave(X0, Y0) && !M.keep.has(mci(X0, Y0))) M.cell[mci(X0, Y0)] = 0; }
-  mineHaz(); M.dirty = true;
+  if (lv === MR.levels) crackPick(); mineHaz(); M.dirty = true;
 }
-const nearLadder = (x, y) => (MN.shaft && Math.max(Math.abs(MN.shaft[0] - x), Math.abs(MN.shaft[1] - y)) <= 1) || Math.max(Math.abs(MN.entry[0] - x), Math.abs(MN.entry[1] - y)) <= 1;   // on a ladder or one of the 8 cells round it
+const nearLadder = (x, y) => (MN.shaft && Math.max(Math.abs(MN.shaft[0] - x), Math.abs(MN.shaft[1] - y)) <= 1) || Math.max(Math.abs(MN.entry[0] - x), Math.abs(MN.entry[1] - y)) <= 1 || nearCrack(x, y, 1);   // on a ladder or one of the 8 cells round it (and the floor in front of level 12's crack)
 function mineFlood(sx, sy, stop) {   // steps from (sx, sy) over the open floor; -1 = cannot be reached
   const d = new Int16Array(MGW * MGH).fill(-1), q = [mci(sx, sy)]; d[q[0]] = 0;
   for (let h = 0; h < q.length; h++) { const c = q[h], cx = c % MGW, cy = (c / MGW) | 0; for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const X0 = cx + a, Y0 = cy + b; if (X0 < 0 || Y0 < 0 || X0 >= MGW || Y0 >= MGH) continue; const i = mci(X0, Y0); if (d[i] >= 0 || MN.cell[i] || stop(X0, Y0)) continue; d[i] = d[c] + 1; q.push(i); } }
@@ -308,6 +313,7 @@ function mineFlood(sx, sy, stop) {   // steps from (sx, sy) over the open floor;
 /* what is in it: k = the server's list (16 rocks, 8 wall veins, then any crystal rocks still waiting for you) */
 function mineFill(k) {
   const M = MN, [ex, ey] = M.entry, R = n => Math.floor(Math.random() * n); M.rocks = []; M.veins = new Map(); M.lamps = [];
+  const ck = M.crack && !M.keep.has(M.crack.i) ? M.crack.i : -1; if (ck >= 0) M.keep.add(ck);   // no vein and no lamp on the cracked wall
   const stop = (x, y) => !!rockAt(x, y) || (M.shaft && M.shaft[0] === x && M.shaft[1] === y) || hazStop(x, y);
   const okAll = () => { const d = mineFlood(ex, ey, stop), near = (x, y) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => { const X0 = x + a, Y0 = y + b; return X0 >= 0 && Y0 >= 0 && X0 < MGW && Y0 < MGH && d[mci(X0, Y0)] >= 0; });
     return M.rocks.every(r => near(r.gx, r.gy)) && (!M.shaft || near(M.shaft[0], M.shaft[1])); };
@@ -321,13 +327,14 @@ function mineFill(k) {
   { const more = []; for (let y = 3; y <= MGH - 3; y++) for (let x = 2; x <= MGW - 3; x++) if (mineable(x, y) && !faces.includes(mci(x, y))) more.push(mci(x, y)); more.sort(() => Math.random() - .5); faces.unshift(...more); }   // not enough faces: the rest go in walls you see from the side or from above
   for (let i = 0; i < k.length; i++) if ('GR'.includes(k[i]) && faces.length) M.veins.set(faces.pop(), {k: k[i], i});
   for (let n = 0; n < 3 && faces.length; n++) { const i = faces.pop(); if (isFloor(i % MGW, ((i / MGW) | 0) + 1)) M.lamps.push(i); }
+  if (ck >= 0) M.keep.delete(ck);
   M.dirty = true;
 }
 function mkRock(gx, gy, k, i) { return {gx, gy, k, i, hp: 0, max: 0, st: 0, a: Math.floor(Math.random() * 16), shake: 0, flash: 0, born: 0}; }
 
 /* ---------- drawing the stacks ---------- */
 function rockRow(r) { return (isCry(r.k) ? MR.levels * 9 + 'eud'.indexOf(r.k) * 3 : (MN.lv - 1) * 9 + 'sgr'.indexOf(r.k) * 3) + r.st; }
-function wallRow(idx) { const v = MN.veins.get(idx), d = MN.wdmg.get(idx), st = d ? d.st : 0; return (MN.lv - 1) * 12 + (v ? (v.k === 'G' ? 2 : 3) : hash(idx * 7 + MN.lv) % 2) * 3 + st; }
+function wallRow(idx) { const v = MN.veins.get(idx), d = MN.wdmg.get(idx), st = d ? d.st : 0; return (mArt() - 1) * 12 + (v ? (v.k === 'G' ? 2 : 3) : hash(idx * 7 + MN.lv) % 2) * 3 + st; }
 /* a rock at one of 16 turns: slices bottom to top, each turned, squashed and one pixel higher; ONE navy line round the lot; a flat 2 px shadow under it */
 function rockSprite(row, a, white) {
   const key = 'r' + row + '|' + a + (white ? 'w' : ''); if (MN.cache[key]) return MN.cache[key];
@@ -395,7 +402,7 @@ function mineBake() {
   const bg = M.bg && M.bg.width === W ? M.bg : (M.bg = mk(W, H)), x = bg.getContext('2d'), fl = IMG['mine/floor']; x.fillStyle = '#07060f'; x.fillRect(0, 0, W, H);
   const mask = mk(W, H), mx = mask.getContext('2d'); mx.fillStyle = '#000'; mx.fillRect(0, 0, W, H); mx.fillStyle = '#fff';
   for (let gy = 0; gy < MGH; gy++) for (let gx = 0; gx < MGW; gx++) { if (M.cell[mci(gx, gy)]) continue; const X0 = gx * CS, Y0 = gy * CS, hh = hash(mci(gx, gy) * 13 + M.lv);
-    if (fl) x.drawImage(fl, (hh % 8 < 5 ? 0 : 1 + hh % 3) * CS, (M.lv - 1) * CS, CS, CS, X0, Y0, CS, CS);
+    if (fl) x.drawImage(fl, (hh % 8 < 5 ? 0 : 1 + hh % 3) * CS, (mArt() - 1) * CS, CS, CS, X0, Y0, CS, CS);
     if (!isFloor(gx, gy - 1)) { x.fillStyle = 'rgba(7,6,15,.45)'; x.fillRect(X0, Y0, CS, 2); x.fillStyle = 'rgba(7,6,15,.22)'; x.fillRect(X0, Y0 + 2, CS, 2); }   // the wall's shade on the ground at its foot
     const l = isFloor(gx - 1, gy) ? 0 : 5, r = isFloor(gx + 1, gy) ? 0 : 5, t = isFloor(gx, gy - 1) ? 0 : 1, b = isFloor(gx, gy + 1) || gy === MGH - 1 ? 0 : 4;
     mx.fillRect(X0 + l, Y0 + t, CS - l - r, CS - t - b); }
@@ -403,18 +410,19 @@ function mineBake() {
   mineDeco(x);
   mx.fillStyle = '#000';
   for (const r of M.rocks) mx.fillRect(r.gx * CS - 1, r.gy * CS + 2, CS + 2, CS - 1);
+  if (M.den) denMask(mx);
   M.wobj = [];
   if (M.shaft) { const [sx, sy] = M.shaft, im = shaftSprite(M.lv); mx.fillRect(sx * CS - 1, sy * CS + 1, CS + 2, CS); if (im) M.wobj.push({img: im, x: sx * CS + 8 - 14, y: sy * CS + 9 - im.gy, base: sy * CS + 12}); }
   for (let gy = 0; gy < MGH; gy++) for (let gx = 0; gx < MGW; gx++) { const i = mci(gx, gy); if (!M.cell[i] || M.dist[i] > 3) continue; const h = wallH(gx, gy), im = wallSprite(wallRow(i), h, M.dist[i] - 1); if (!im) continue;
     M.wobj.push({img: im, x: gx * CS, y: gy * CS - (h - 1), base: gy * CS + CS, i}); }
   M.lamps = M.lamps.filter(i => M.cell[i] && wallH(i % MGW, (i / MGW) | 0) === WZ && isFloor(i % MGW, ((i / MGW) | 0) + 1));   // a lamp hangs on a full wall face only
   for (const i of M.lamps) { const gx = i % MGW, gy = (i / MGW) | 0; M.wobj.push({img: lampSprite(), x: gx * CS + 4, y: gy * CS - 2, base: gy * CS + CS + .2}); }
-  if (M.lv > 1) { const [ex, ey] = M.entry, im = ladderSprite(); if (im) M.wobj.push({img: im, x: ex * CS + 8 - 12, y: ey * CS + 2 - im.gy, base: ey * CS + .3}); }
+  if (M.lv > 1 && !M.den) { const [ex, ey] = M.entry, im = ladderSprite(); if (im) M.wobj.push({img: im, x: ex * CS + 8 - 12, y: ey * CS + 2 - im.gy, base: ey * CS + .3}); }
   IMG['hall/mine'] = bg; IMG['hallw/mine'] = mask; MNH.g = null; mineGridHaz();
 }
 
 /* ---------- coming and going ---------- */
-const mineSpawn = () => MN.lv === 1 ? [MN.entry[0] * CS + 8, (MGH - 2) * CS + 6, 'back'] : [MN.entry[0] * CS + 8, MN.entry[1] * CS + 9, 'front'];
+const mineSpawn = () => MN.lv === 1 || MN.den ? [MN.entry[0] * CS + 8, (MGH - 2) * CS + 6, 'back'] : [MN.entry[0] * CS + 8, MN.entry[1] * CS + 9, 'front'];
 function mineHead() { wlHead('The Mine', 'Tap a rock or a wall to dig'); $('#hallLine').innerHTML = 'LEVEL ' + MN.lv + '<span id="mineHp" style="display:inline-flex;gap:2px;margin-left:8px;vertical-align:-1px"></span>'; mineHearts(); }
 MNH.from = () => { mineGeo(1); mineFill(''); mineBake(); return mineSpawn(); };
 MNH.enter = () => { mineHeal(); goldChip.sig = ''; goldChip(); mineHead(); mineStock(1); };   // your hearts are full again every time you walk in
@@ -436,12 +444,12 @@ function mineTo(lv, viaShaft) {   // down the shaft, or back up the ladder
 function mineLeave() { DIG.on = null; wlDoor(SOUTH); }
 
 /* ---------- what you can hit ---------- */
-const mineable = (x, y) => inCave(x, y) && MN.cell[mci(x, y)] && !MN.keep.has(mci(x, y)) && (isFloor(x + 1, y) || isFloor(x - 1, y) || isFloor(x, y + 1) || isFloor(x, y - 1));
+const mineable = (x, y) => !MN.den && inCave(x, y) && MN.cell[mci(x, y)] && !MN.keep.has(mci(x, y)) && !(crackAt(mci(x, y)) && MN.crack.open) && (isFloor(x + 1, y) || isFloor(x - 1, y) || isFloor(x, y + 1) || isFloor(x, y - 1));
 const tgtOf = (x, y) => { const r = rockAt(x, y); return r ? {r, gx: x, gy: y} : mineable(x, y) ? {w: mci(x, y), gx: x, gy: y} : null; };
 const tgtPt = T => T.r ? [T.gx * CS + 8, T.gy * CS + 2] : [T.gx * CS + 8, T.gy * CS + CS - (isFloor(T.gx, T.gy + 1) ? 10 : 2)];   // the spot the pick lands on
 function tgtInfo(T) {   // its kind, the server's number for it, and how hurt it is
   if (T.r) return {k: T.r.k, i: T.r.i, o: T.r};
-  const v = MN.veins.get(T.w); let d = MN.wdmg.get(T.w); if (!d) { d = {hp: 0, max: 0, st: 0, shake: 0}; MN.wdmg.set(T.w, d); } return {k: v ? v.k : 'w', i: v ? v.i : -1, o: d};
+  const v = MN.veins.get(T.w); let d = MN.wdmg.get(T.w); if (!d) { d = {hp: 0, max: 0, st: 0, shake: 0}; MN.wdmg.set(T.w, d); } return {k: crackShut(T.w) ? 'c' : v ? v.k : 'w', i: v ? v.i : -1, o: d};   // 'c' = level 12's cracked wall
 }
 /* where to stand to hit it: beside a rock if you can (you see the swing best side on); under a wall's face */
 function tgtStands(T) {
@@ -453,7 +461,10 @@ function tgtStands(T) {
 MNH.tap = (e, m, x, y) => {
   if (MN.busy) return true; if (MN.dirty) mineBake();
   const gx = Math.floor(x / CS); let T = null;
-  if (MN.lv === 1 && y > (MGH - 2) * CS + 4 && Math.abs(x - (MN.entry[0] * CS + 8)) < 16) { DIG.on = null; wlGo(m, MN.entry[0] * CS + 8, MGH * CS - 3, mineLeave); return true; }
+  if (PIP.talk) { pipNext(); return true; }   // Pip is talking: a tap anywhere is the next line
+  if (MN.den && Math.abs(x - PIP_AT[0]) < 16 && y > PIP_AT[1] - 40 && y < PIP_AT[1] + 8) { wlGo(m, PIP_STAND[0], PIP_STAND[1], pipTalk); return true; }
+  { const C = MN.crack; if (C && C.open && Math.abs(x - (C.gx * CS + 8)) < 9 && y > C.gy * CS - 8 && y < C.gy * CS + 18) { DIG.on = null; wlGo(m, C.gx * CS + 8, (C.gy + 1) * CS + 5, denGo); return true; } }
+  if ((MN.lv === 1 || MN.den) && y > (MGH - 2) * CS + 4 && Math.abs(x - (MN.entry[0] * CS + 8)) < 16) { DIG.on = null; wlGo(m, MN.entry[0] * CS + 8, MGH * CS - 3, MN.den ? denLeave : mineLeave); return true; }
   if (MN.shaft && Math.abs(x - (MN.shaft[0] * CS + 8)) < 10 && y > MN.shaft[1] * CS - 6 && y < MN.shaft[1] * CS + 17) { const [sx, sy] = MN.shaft; DIG.on = null; mineWalk(m, [[sx * CS + 8, sy * CS + CS + 4], [sx * CS + CS + 6, sy * CS + 10], [sx * CS - 6, sy * CS + 10], [sx * CS + 8, sy * CS - 4]], () => mineTo(MN.lv + 1)); return true; }
   if (MN.lv > 1 && Math.abs(x - (MN.entry[0] * CS + 8)) < 8 && y > MN.entry[1] * CS - 30 && y < MN.entry[1] * CS + 4) { DIG.on = null; wlGo(m, MN.entry[0] * CS + 8, MN.entry[1] * CS + 4, () => mineTo(MN.lv - 1)); return true; }
   const r = MN.rocks.find(r => Math.abs(x - (r.gx * CS + 8)) < 11 && y > r.gy * CS - 12 && y < r.gy * CS + 17); if (r) T = {r, gx: r.gx, gy: r.gy};
@@ -467,9 +478,12 @@ function mineWalk(m, spots, todo) {   // the nearest of these you can walk to
 }
 MNH.joy = (m, J) => {
   if (MN.busy) return true; const now = performance.now(), ax = Math.abs(J.x) > Math.abs(J.y), dx = ax ? Math.sign(J.x) : 0, dy = ax ? 0 : Math.sign(J.y);
-  if (MN.lv === 1 && J.y > .5 && m.y > MGH * CS - 9) { mineLeave(); return true; }
+  if (PIP.talk) return true;
+  if (MN.den && dy < 0 && !m.walk && Math.abs(m.x - PIP_AT[0]) < 15 && m.y > PIP_AT[1] && m.y < PIP_AT[1] + 40) { pipTalk(); return true; }   // walked up to Pip
+  if ((MN.lv === 1 || MN.den) && J.y > .5 && m.y > MGH * CS - 9) { if (MN.den) denLeave(); else mineLeave(); return true; }
   const gx = Math.floor((m.x + dx * 12) / CS), gy = Math.floor((m.y - 3 + dy * 10) / CS);
   if (MN.shaft && MN.shaft[0] === gx && MN.shaft[1] === gy && !m.walk) { mineTo(MN.lv + 1); return true; }
+  if (MN.crack && MN.crack.open && dy < 0 && gx === MN.crack.gx && gy === MN.crack.gy && !m.walk) { denGo(); return true; }   // into the hole in level 12's wall
   if (MN.lv > 1 && dy < 0 && gx === MN.entry[0] && gy === MN.entry[1] - 1 && !m.walk) { mineTo(MN.lv - 1); return true; }
   if (DIG.on) { if (m.walk && !PICK.held && !DIG.on.air) DIG.on = null; return true; }
   const T = !m.walk && Math.max(Math.abs(J.x), Math.abs(J.y)) > .6 ? tgtOf(gx, gy) : null;   // pushing into a rock or a wall: dig it
@@ -507,7 +521,7 @@ function digHit(T) {
   const inf = tgtInfo(T), o = inf.o, [tx, ty] = tgtPt(T); o.hp--; o.shake = .2; if (T.r) T.r.flash = .07; MN.shake = .1;
   const st = o.hp <= 0 ? 2 : o.hp <= o.max / 3 ? 2 : o.hp <= o.max * 2 / 3 ? 1 : 0; if (st !== o.st) { o.st = st; if (T.w != null) MN.dirty = true; }
   sfx(isCry(inf.k) ? 'mgem' : 'pick'); mineChips(tx, ty, inf.k, 7);
-  if (o.hp <= 0) digBreak(T, inf);
+  if (o.hp <= 0) { if (inf.k === 'c') crackBreak(T); else digBreak(T, inf); }
 }
 function mineChips(x, y, k, n) {
   const P = MINE_COL[MN.lv - 1], gold = 'grGR'.includes(k), gem = isCry(k);
@@ -611,8 +625,8 @@ MNH.frame = (m, people, dt, t, H, img) => {
   const objs = M.wobj.map(o => { const dm = o.i != null && M.wdmg.get(o.i); return dm && dm.shake > 0 ? {...o, x: o.x + Math.round(Math.sin(dm.shake * 70) * 1.2)} : o; });
   for (const r of M.rocks) { const im = rockSprite(rockRow(r), r.a, r.flash > 0); if (!im) continue; const cx = r.gx * CS + 8, cy = r.gy * CS + 11, sx = r.shake > 0 ? Math.round(Math.sin(r.shake * 70) * 1.4) : 0, up = r.born > 0 ? Math.round(r.born * 12) : 0;
     objs.push({img: im, x: cx - im.width / 2 + sx, y: cy - im.gy + up, base: r.gy * CS + 13, after: isCry(r.k) ? () => gemTwinkle(cx, cy, t, r) : null}); }
-  mineHazObjs(objs, t);
-  const hits = drawScene(M.inv > 0 && Math.floor(t / 80) % 2 ? [] : mine, null, M.bg, objs);   // just hurt: you blink
+  crackObjs(objs, t); if (M.den) denObjs(objs, t); mineHazObjs(objs, t);
+  const hits = drawScene((M.inv > 0 && Math.floor(t / 80) % 2 ? [] : mine).concat(M.den ? denPeople(m, t) : []), null, M.bg, objs); if (M.den || PIP.el) pipBubble(hits);   // just hurt: you blink
   const sf = sw && !own && swingFrame(GOLD.pick, sw.k, sw.aim, sw.side < 0); if (own) {} else if (sf) lx.drawImage(sf, X(sw.hx) - 32, Y(sw.hy) - 32);
   else if (sw) { const st = ((Math.round(sw.a / (Math.PI * 2) * 64) % 64) + 64) % 64, im = pickRot(GOLD.pick, st, sw.side < 0) || pickSprite(GOLD.pick, st); lx.drawImage(im, X(sw.hx) - 20, Y(sw.hy) - 20);
     if (sw.k > .5 && sw.k < HIT_AT + .04) { lx.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 1; i <= 3; i++) { const a = sw.a - sw.side * i * .22; lx.fillRect(X(sw.hx + Math.cos(a) * 14), Y(sw.hy + Math.sin(a) * 14), 1, 1); } } }   // a streak behind the head on the way down
@@ -657,8 +671,8 @@ const MLOOK = [   // one per pair of levels: the lamps' light, your own light, t
   {lt: '186,110,255', me: '205,170,255', fl: ['#c88cff', '#f4e4ff', '#8a4ee0']},   // 7-8 purple
   {lt: '255,92,52', me: '255,170,140', fl: ['#ff7a3c', '#ffe0a8', '#d83a20']},     // 9-10 red
   {lt: '255,40,48', me: '255,140,130', fl: ['#ff4040', '#ffc0b0', '#b01828']}];    // 11-12 blood red
-const mLook = () => MLOOK[(MN.lv - 1) >> 1];
-function lampSprite() { const th = (MN.lv - 1) >> 1, key = 'lamp' + th; if (MN.cache[key]) return MN.cache[key]; const f = MLOOK[th].fl;
+const mLook = () => MLOOK[(mArt() - 1) >> 1];
+function lampSprite() { const th = (mArt() - 1) >> 1, key = 'lamp' + th; if (MN.cache[key]) return MN.cache[key]; const f = MLOOK[th].fl;
   return MN.cache[key] = pxIcon(['..KKK..', '.KwwwK.', '.KKKKK.', 'KYWWYYK', 'KYWWYYK', 'KYYYYgK', '.KKKKK.', '..KKK..'], {K: '#1a1430', w: '#8a5a2b', Y: f[0], W: f[1], g: f[2]}); }
 const mixHex = (a, b, k) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - k) + parseInt(b.slice(i, i + 2), 16) * k).toString(16).padStart(2, '0')).join('');
 const hazAt = (x, y) => x >= 0 && y >= 0 && x < MGW && y < MGH ? MN.haz.get(mci(x, y)) : undefined;
@@ -669,8 +683,8 @@ const lavaAt = (x, y) => { const h = hazAt(x, y); return !!h && h.k === 'lava'; 
 function mineHaz() {
   const M = MN, lv = M.lv, [ex, ey] = M.entry, R = n => Math.floor(Math.random() * n);
   M.haz = new Map(); M.hzc = {}; M.falls = []; M.emb = []; M.pools = []; M.fallT = 4 + Math.random() * 3; M.rumT = 12 + Math.random() * 16; M.seed = R(1e6); M.safe = null;
-  if (lv < HZ.spike) return;
-  const far = (x, y) => Math.max(Math.abs(x - ex), Math.abs(y - ey)) > 2 && !(M.shaft && Math.max(Math.abs(x - M.shaft[0]), Math.abs(y - M.shaft[1])) <= 2);
+  if (lv < HZ.spike || M.den) return;
+  const far = (x, y) => Math.max(Math.abs(x - ex), Math.abs(y - ey)) > 2 && !nearCrack(x, y, 2) && !(M.shaft && Math.max(Math.abs(x - M.shaft[0]), Math.abs(y - M.shaft[1])) <= 2);
   const open = (x, y) => inCave(x, y) && !M.cell[mci(x, y)] && !M.haz.has(mci(x, y)) && far(x, y);
   const cells = []; for (let y = 3; y <= MGH - 3; y++) for (let x = 2; x <= MGW - 3; x++) if (open(x, y)) cells.push([x, y]);
   cells.sort(() => Math.random() - .5);
@@ -764,12 +778,12 @@ function mineDanger(dt, t) {
     else hit = (h.k === 'sp' || popState(h, t) === 2) && Math.abs(fx - cx) < 6 && Math.abs(fy - cy) < 5;
     if (hit) mineHurt(cx, cy, h.k); }
   for (const [i, q] of M.haz) if (q.k === 'pop') { const st = popState(q, t); if (st === 2 && q.ls !== 2 && Math.hypot((i % MGW) * CS + 8 - fx, ((i / MGW) | 0) * CS + 8 - fy) < 56) sfx('mspike'); q.ls = st; }
-  if (M.lv >= HZ.fall) { M.fallT -= dt;
+  if (M.lv >= HZ.fall && !M.den) { M.fallT -= dt;
     if (M.fallT <= 0) { M.fallT = Math.max(2.5, 9 - (M.lv - HZ.fall) * 1.5) * (.7 + Math.random() * .6);
       const a = Math.random() * 6.283, r = Math.random() * 26, x = Math.round(fx + Math.cos(a) * r), y = Math.round(fy + Math.sin(a) * r * .8), cx = Math.floor(x / CS), cy = Math.floor(y / CS);
       if (inCave(cx, cy) && isFloor(cx, cy) && !rockAt(cx, cy) && !nearLadder(cx, cy) && !nearLadder(gx, gy) && !document.querySelector('.modal.on')) { M.falls.push({x, y, t: 0, l: 1.15}); sfx('mcrack'); } } }
   for (let i = M.falls.length - 1; i >= 0; i--) { const f = M.falls[i]; f.t += dt; if (f.t < f.l) continue; M.falls.splice(i, 1); mineChips(f.x, f.y - 4, 's', 9); M.shake = .2; sfx('mbreak'); if (Math.hypot(m.x - f.x, (m.y - 3 - f.y) * 1.3) < 7.5) mineHurt(f.x, f.y, 'fall'); }
-  if (M.lv >= 7) { M.rumT -= dt; if (M.rumT <= 0) { M.rumT = 18 + Math.random() * 22; sfx('mrumble'); M.shake = Math.max(M.shake, .3); } }   // the deep groans now and then
+  if (M.lv >= 7 && !M.den) { M.rumT -= dt; if (M.rumT <= 0) { M.rumT = 18 + Math.random() * 22; sfx('mrumble'); M.shake = Math.max(M.shake, .3); } }   // the deep groans now and then
 }
 { const fr = scenes.town.frame; scenes.town.frame = function (dt, t) { mineDanger(dt, t); return fr.call(this, dt, t); }; }
 
@@ -783,7 +797,7 @@ function webSprite(flip) { const key = 'web' + flip; if (MN.cache[key]) return M
 function shroomSprite(th) { const key = 'shroom' + th; if (MN.cache[key]) return MN.cache[key];
   return MN.cache[key] = pxIcon(['.CCC....', 'CWCCC...', '..S..CC.', '..S.CWCC', '......S.'], th === 2 ? {C: '#3ed8c4', W: '#d8fff6', S: '#cfe8e4'} : {C: '#c060f0', W: '#f6dcff', S: '#e0d0e8'}); }
 function mineDeco(x) {   // called by mineBake with the ground picture; the same cells get the same things every time (M.seed)
-  const M = MN, lv = M.lv, th = (lv - 1) >> 1; M.shrooms = []; M.eyes = []; M.drips = [];
+  const M = MN, lv = M.lv, th = (lv - 1) >> 1; M.shrooms = []; M.eyes = []; M.drips = []; if (M.den) { denDeco(x); return; }
   for (let gy = 3; gy <= MGH - 3; gy++) for (let gx = 2; gx <= MGW - 3; gx++) { const i = mci(gx, gy); if (M.cell[i] || M.haz.has(i) || nearLadder(gx, gy)) continue;
     const h = hash(i * 31 + M.seed), r = h % 1000, X0 = gx * CS, Y0 = gy * CS, wN = !isFloor(gx, gy - 1), wW = !isFloor(gx - 1, gy), wE = !isFloor(gx + 1, gy);
     if (lv >= 3 && wN && (wW || wE) && r < 150 + lv * 25) x.drawImage(webSprite(wW ? 0 : 1), wW ? X0 + 5 : X0 + 2, Y0 + 1);   // a cobweb in the corner
@@ -796,7 +810,7 @@ function mineDeco(x) {   // called by mineBake with the ground picture; the same
     c.sort((a, b) => hash(a * 23 + M.seed) - hash(b * 23 + M.seed)); for (const i of c.slice(0, 3)) M.drips.push({x: (i % MGW) * CS + 3 + hash(i) % 10, y: ((i / MGW) | 0) * CS + 4, s: hash(i * 3 + M.seed)}); }
 }
 function mineAmb(dt, t, m) {   // drawn over the cave, every frame: a handful of single pixels
-  const M = MN, lv = M.lv, s = t / 1000;
+  const M = MN, lv = mArt(), s = t / 1000;
   for (const e of M.eyes) { const cyc = 6 + e.s % 5, p = (s + e.s % 97) % cyc; if (p > 2.8 || (p > 1.3 && p < 1.42) || Math.hypot(m.x - e.x, m.y - 10 - e.y) < 44) continue;   // they open, blink once, close; and shut when you come near
     const small = e.s % 3 === 0; lx.fillStyle = p < .12 || p > 2.68 ? (lv >= 9 ? '#7a1c1c' : '#6a6048') : lv >= 9 ? '#ff4a3a' : lv >= 7 ? '#ecd6ff' : '#ffe9a0';
     lx.fillRect(X(e.x), Y(e.y), small ? 1 : 2, 1); lx.fillRect(X(e.x) + (small ? 2 : 4), Y(e.y), small ? 1 : 2, 1); }
@@ -808,15 +822,151 @@ function mineAmb(dt, t, m) {   // drawn over the cave, every frame: a handful of
 }
 function mineGlow(L, t) {   // the lava and the mushrooms light the cave
   const M = MN; for (const [x, y, n] of M.pools) L.push([x, y, 26 + n * 4, '255,104,36', .3, x + y]);
-  const c = M.lv >= 7 ? '200,110,255' : '70,230,205'; for (const [x, y] of M.shrooms) L.push([x, y, 14, c, .26, x * 3 + y]);
+  if (M.den) denGlow(L); const C = M.crack; if (C && M.cell[C.i]) L.push([C.gx * CS + 8, C.gy * CS + 8, C.open ? 22 : 14, '110,190,255', C.open ? .26 : .2, 80]);   // the crack's cold light
+  const c = mArt() >= 7 ? '200,110,255' : '70,230,205'; for (const [x, y] of M.shrooms) L.push([x, y, 14, c, .26, x * 3 + y]);
 }
-function mineDark() { const M = MN; vignette(Math.min(.74, .3 + .038 * M.lv)); if (M.flash > 0) { lx.fillStyle = `rgba(255,36,36,${Math.min(.34, M.flash * 1.2).toFixed(2)})`; lx.fillRect(0, 0, cam.lw, cam.lh); } }
+function mineDark() { const M = MN; vignette(M.den ? .44 : Math.min(.74, .3 + .038 * M.lv)); if (M.flash > 0) { lx.fillStyle = `rgba(255,36,36,${Math.min(.34, M.flash * 1.2).toFixed(2)})`; lx.fillRect(0, 0, cam.lw, cam.lh); } }
 SFX.mhurt = () => { tone(220, .12, {type: 'square', vol: .1, to: 90}); tone(140, .18, {type: 'triangle', vol: .14, to: 60, at: .02}); hiss(.08, {vol: .08, bp: 1800}); };
 SFX.mburn = () => { hiss(.35, {vol: .12, hp: 3000}); tone(200, .14, {type: 'square', vol: .09, to: 80}); };
 SFX.mfall = () => { tone(300, .5, {type: 'triangle', vol: .14, to: 50}); tone(150, .6, {type: 'sine', vol: .1, to: 40, at: .1}); };
 SFX.mcrack = () => { tone(900, .03, {type: 'square', vol: .04, to: 500}); hiss(.12, {vol: .05, bp: 2200, at: .02}); };
 SFX.mrumble = () => { hiss(1.1, {vol: .13, lp: 160}); tone(48, .9, {type: 'sine', vol: .12, to: 36}); };
 SFX.mspike = () => { tone(2600, .03, {type: 'square', vol: .03, to: 1800}); };
+
+/* ================= THE GLIMMERKIN (25 Nov 2026, his secret hunt), BATCH 1: finding Pip =================
+   On level 12 one wall always has a thin blue CRACK. Any pickaxe breaks it open (MR.crackHits swings); the server remembers (op qcrack),
+   so it is an open hole on every later visit. Through it: THE DEN (MN.den), a fixed map on the same grid as a level (DEN_SPANS), drawn in
+   the cold teal stone: a quiet tunnel (no danger of any kind, nothing to dig), an iron cage with two bars bent apart, and Pip's round room.
+   PIP (assets/final/pip/front|right|back|left.png, like the mechanic) talks in a speech bubble over his head, a line at a time: tap, or
+   press the pickaxe button, for the next one. After his first talk the server hands over the MOON SNIPS (op qpip).
+   QUEST.s = the step, kept by the server on the wallet (w.q.s, functions/quest.js has the table). Nothing on the screen tracks it (his rule). */
+const QUEST = {s: 0};
+{ const _wa = walletApply; walletApply = function (w) { _wa(w); if (!GOLD.local) QUEST.s = (w && w.q && w.q.s) | 0; }; }
+if (typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.q) QUEST.s = LABM.q.s | 0;
+// not through mop(): an old server without these ops must not switch the whole mine over to this phone's own rules
+const qop = op => Promise.resolve().then(() => (typeof LABLOCAL !== 'undefined' && LABLOCAL) || GOLD.local ? mineLocal(op) : srv(op)).then(r => { if (r && r.s != null) QUEST.s = Math.max(QUEST.s, r.s | 0); return r; });
+const mArt = () => MN.den ? 6 : MN.lv;   // the stone a place is drawn in: the den is cold teal, not level 12's black rock
+
+/* ---------- the crack, on level 12 ---------- */
+const crackAt = i => !!MN.crack && MN.crack.i === i, crackShut = i => crackAt(i) && !MN.crack.open;
+function crackPick() {   // called by mineGeo before the danger is laid out: a tall wall face you can walk up to, away from the ladder
+  const M = MN, [ex, ey] = M.entry, W = (x, y) => x < 0 || y < 0 || x >= MGW || y >= MGH || !!M.cell[mci(x, y)], c = [], d = [];
+  for (let y = 4; y <= MGH - 4; y++) for (let x = 3; x <= MGW - 4; x++) { if (!M.cell[mci(x, y)] || M.keep.has(mci(x, y)) || !isFloor(x, y + 1) || !W(x, y - 1) || !W(x, y - 2)) continue;
+    if (Math.max(Math.abs(x - ex), Math.abs(y + 1 - ey)) <= 3) continue; (W(x - 1, y) && W(x + 1, y) ? c : d).push([x, y]); }
+  const L = c.length ? c : d; if (!L.length) return; const [gx, gy] = L[Math.floor(Math.random() * L.length)];
+  M.crack = {i: mci(gx, gy), gx, gy, open: QUEST.s >= 1}; M.keep.add(mci(gx, gy - 1)).add(mci(gx, gy - 2));   // the rock over it stays, so its face stays tall
+}
+const nearCrack = (x, y, r) => !!MN.crack && Math.max(Math.abs(x - MN.crack.gx), Math.abs(y - MN.crack.gy - 1)) <= r;   // the floor in front of it
+function crackSprite(open, fr) {
+  const key = 'crack' + (open ? 'o' : fr); if (MN.cache[key]) return MN.cache[key]; const c = mk(16, 22), x = c.getContext('2d'), P = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w || 1, h || 1); };
+  if (open) { for (let r = 0; r < 19; r++) { const hw = r < 5 ? 2 + r : 6; P('#01032e', 8 - hw - 1, 3 + r, hw * 2 + 2, 1); P(r > 15 ? '#123a6e' : r > 12 ? '#0c2148' : '#07060f', 8 - hw, 3 + r, hw * 2, 1); }
+    P('#01032e', 5, 2, 6, 1); P('#2c607a', 1, 20, 3, 2); P('#468498', 12, 20, 3, 2); P('#1e425c', 4, 21, 2, 1); }   // the hole, a cold light low inside it, two bits of rubble
+  else { const xs = [8, 8, 7, 7, 8, 9, 9, 8, 7, 7, 8, 8, 9, 8, 8, 7]; xs.forEach((cx, r) => { P('#01032e', cx - 1, 3 + r, 3, 1); });
+    xs.forEach((cx, r) => P(fr && r % 5 === 2 ? '#e8f8ff' : r < 2 || r > 13 ? '#3a86e0' : '#8fd6ff', cx, 3 + r)); P('#01032e', 9, 7, 2, 1); P('#3a86e0', 10, 7); P('#01032e', 5, 12, 2, 1); P('#3a86e0', 5, 12); }   // a thin split with light behind it
+  return MN.cache[key] = c;
+}
+function crackBreak(T) {   // the last swing: the wall falls in, the server is told
+  const M = MN, C = M.crack, [tx, ty] = tgtPt(T), row = wallRow(T.w); DIG.on = null; M.shake = .3; sfx('mbreak'); mineChips(tx, ty, 'w', 16); puffAt(tx, ty + 4, 14);
+  for (let z = 0; z < 12; z += 2) M.fx.push({k: 'slice', row, z, x: C.gx * CS + 8, y: C.gy * CS + 10, h: z, vx: (Math.random() - .5) * 46, vy: 8 + Math.random() * 22, vh: 10 + Math.random() * 50, a: 0, va: (Math.random() - .5) * 3, t: 0, l: .4 + Math.random() * .25});
+  C.open = true; M.wdmg.delete(C.i); M.dirty = true; DIG.ask = true; sfx('rare');
+  qop('qcrack').then(() => { DIG.ask = false; }, e => { DIG.ask = false; C.open = false; M.dirty = true; wlSay(e.message, 'bad'); });
+}
+function crackObjs(objs, t) { const C = MN.crack; if (!C || !MN.cell[C.i]) return;
+  objs.push({img: crackSprite(C.open, Math.floor(t / 420) % 3 === 0 ? 1 : 0), x: C.gx * CS, y: C.gy * CS - 6, base: C.gy * CS + CS + .1}); }
+
+/* ---------- the den: the tunnel, the cage, Pip's room ---------- */
+const DEN_SPANS = {3: [15, 17], 4: [13, 19], 5: [13, 19], 6: [13, 19], 7: [14, 18], 8: [15, 17], 9: [15, 17], 10: [7, 16], 11: [7, 8], 12: [3, 8], 13: [3, 4], 14: [3, 3], 15: [3, 3], 16: [3, 3]};   // row: the first and last open cell
+const DEN_CAGE = [15, 8], PIP_AT = [264, 76], PIP_STAND = [264, 120], DEN_GEMS = [[13, 4, 3], [19, 6, 9], [17, 3, 14]], DEN_PUDDLE = [226, 104];
+const DEN_SHROOMS = [[52, 211], [98, 195], [134, 178], [170, 163], [214, 164], [246, 150], [298, 118]];
+function denGeo() {
+  const M = MN; M.lv = MR.levels; M.cell.fill(1); M.rocks = []; M.veins = new Map(); M.wdmg = new Map(); M.lamps = []; M.keep = new Set(); M.fx = []; M.shaft = null; M.crack = null; DIG.on = null;
+  for (const y in DEN_SPANS) for (let x = DEN_SPANS[y][0]; x <= DEN_SPANS[y][1]; x++) M.cell[mci(x, +y)] = 0;
+  M.den = true; M.entry = [3, MGH - 3]; mineHaz(); M.dirty = true;
+}
+function denGo() {   // through the hole
+  const m = WL.me; if (MN.busy || WL.fading || !m) return; MN.busy = true; WL.fading = true; DIG.on = null; sfx('door'); $('#xfade').classList.add('on');
+  setTimeout(() => { MN.den = true; denGeo(); mineBake(); m.path = []; m.todo = null; m.walk = false; const sp = mineSpawn(); m.x = sp[0]; m.y = sp[1]; m.dir = sp[2]; netMove(); WL.fading = false; MN.busy = false; $('#xfade').classList.remove('on'); }, 260);
+}
+function denLeave() {   // back out to level 12, in front of the hole
+  const m = WL.me; if (MN.busy || WL.fading || !m) return; MN.busy = true; WL.fading = true; pipHush(); sfx('door'); $('#xfade').classList.add('on');
+  setTimeout(() => { mineGeo(MR.levels); mineFill(''); mineBake(); m.path = []; m.todo = null; m.walk = false; const C = MN.crack, sp = C ? [C.gx * CS + 8, (C.gy + 1) * CS + 9, 'front'] : mineSpawn();
+    m.x = sp[0]; m.y = sp[1]; m.dir = sp[2]; netMove(); WL.fading = false; mineStock(MR.levels); }, 260);
+}
+function barsSprite() {   // straight on: a rail, twelve iron bars, the two in the middle bent apart at the foot
+  const key = 'bars'; if (MN.cache[key]) return MN.cache[key]; const c = mk(50, 30), x = c.getContext('2d'), P = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w || 1, h || 1); };
+  for (let i = 0; i < 12; i++) { const bx = 2 + i * 4, L = i === 5, R = i === 6;
+    for (let y = 3; y < 29; y++) { const k = y - 15, off = (L || R) && k > 0 ? Math.min(3, Math.round(k * .45)) * (L ? -1 : 1) : 0; if ((L || R) && y > 25) continue; P('#4a5068', bx + off, y, 2, 1); P('#8e98b0', bx + off, y); } }
+  P('#4a5068', 1, 1, 48, 3); P('#8e98b0', 1, 1, 48, 1); P('#2c3044', 1, 3, 48, 1); P('#4a5068', 1, 27, 18, 2); P('#4a5068', 31, 27, 18, 2); P('#8e98b0', 1, 27, 18, 1); P('#8e98b0', 31, 27, 18, 1);
+  navyEdge(c); return MN.cache[key] = c;
+}
+const SHARD = pxIcon(['..K..', '.KWK.', '.KCK.', 'KWCDK', 'KCCDK', 'KCDDK', '.KKK.'], {K: '#1a1430', W: '#ffffff', C: '#8fe6ff', D: '#3d9fe0'});
+function denDeco(x) {   // baked into the den's ground: mushrooms, little crystals, his nest, the puddle, the red of level 12 at the way out
+  const M = MN; for (const [a, b] of DEN_SHROOMS) x.drawImage(shroomSprite(2), a - 4, b - 2); M.shrooms = DEN_SHROOMS.slice(0, 7);
+  for (const [a, b] of [[84, 200], [150, 168], [270, 150], [228, 72], [300, 74]]) x.drawImage(SHARD, a, b);
+  const E = (cx, cy, rx, ry, col) => { x.fillStyle = col; for (let dy = -ry; dy <= ry; dy++) { const w = Math.round(rx * Math.sqrt(1 - (dy / (ry + .5)) ** 2)); x.fillRect(cx - w, cy + dy, w * 2, 1); } };
+  E(PIP_AT[0], PIP_AT[1] - 1, 15, 7, '#1a1430'); E(PIP_AT[0], PIP_AT[1] - 1, 14, 6, '#6b5a34'); E(PIP_AT[0], PIP_AT[1] - 2, 11, 4, '#3f6a3c'); E(PIP_AT[0], PIP_AT[1] - 2, 8, 3, '#578a4a');   // the nest: twigs round a bed of moss
+  for (let i = 0; i < 14; i++) { const a = i / 14 * 6.283; x.fillStyle = i % 2 ? '#8a7444' : '#4a3d22'; x.fillRect(Math.round(PIP_AT[0] + Math.cos(a) * 13), Math.round(PIP_AT[1] - 1 + Math.sin(a) * 5.5), 2, 1); }
+  E(DEN_PUDDLE[0], DEN_PUDDLE[1], 8, 3, '#0e2a5c'); E(DEN_PUDDLE[0], DEN_PUDDLE[1], 7, 2, '#1f58a8'); x.fillStyle = '#7fc4ff'; x.fillRect(DEN_PUDDLE[0] - 4, DEN_PUDDLE[1] - 1, 3, 1);
+  M.drips.push({x: DEN_PUDDLE[0], y: DEN_PUDDLE[1] - 22, s: 7});
+  const X0 = M.entry[0] * CS; for (let i = 0; i < 20; i++) { x.fillStyle = `rgba(255,96,40,${(.02 + i * .011).toFixed(3)})`; x.fillRect(X0, MGH * CS - 20 + i, CS, 1); }
+}
+function denMask(mx) {   // what you cannot walk through: the bars either side of the gap, the crystals, Pip on his nest
+  const [cx, cy] = DEN_CAGE; mx.fillRect(cx * CS, cy * CS + 2, CS + 3, CS - 4); mx.fillRect(cx * CS + 2 * CS - 3, cy * CS + 2, CS + 3, CS - 4);
+  for (const [gx, gy] of DEN_GEMS) mx.fillRect(gx * CS, gy * CS + 2, CS, CS - 2); mx.fillRect(PIP_AT[0] - 13, PIP_AT[1] - 9, 26, 33);   // and the floor right under him: you stand back, so you never cover him
+}
+function denObjs(objs, t) {
+  const [cx, cy] = DEN_CAGE, b = barsSprite(); objs.push({img: b, x: cx * CS - 1, y: cy * CS + 14 - b.height, base: cy * CS + 9});
+  for (const [gx, gy, a] of DEN_GEMS) { const im = rockSprite(MR.levels * 9 + 6, a); if (!im) continue; const X0 = gx * CS + 8, Y0 = gy * CS + 11; objs.push({img: im, x: X0 - im.width / 2, y: Y0 - im.gy, base: gy * CS + 13, after: () => gemTwinkle(X0, Y0, t, {gx})}); }
+}
+function denGlow(L) { for (const [gx, gy] of DEN_GEMS) L.push([gx * CS + 8, gy * CS + 2, 26, CRY_GLOW.d, .3, gx * 31 + gy]);
+  L.push([PIP_AT[0] + 10, PIP_AT[1] - 6, 18, '150,215,255', .22, 77], [DEN_PUDDLE[0], DEN_PUDDLE[1], 14, '90,160,255', .14, 78], [DEN_CAGE[0] * CS + 24, DEN_CAGE[1] * CS + 4, 30, '110,180,255', .1, 79]); }
+
+/* ---------- Pip ---------- */
+const PIP = {talk: null, el: null, p: null, held: false, coolT: 0};
+const PIP_FIRST = ['Oh! A big one! Nobody has ever come down this far. Ever.', "I'm Pip. I slipped on the hot rocks and my leg went crack.", "There's a moss that mends bones. Moonmoss. It only grows in the Forgotten Forest.",
+  'Nobody remembers the way anymore. Look where the trees forget to grow, at the edge of your town.', "Take my moon snips. Moonmoss won't let anything else cut it."];
+const PIP_WAIT = ['The forest. Where the trees forget to grow. Please hurry, it hurts.'];
+function pipSet() { if (SP.pip || !IMG['pip/front']) return SP.pip; const D = d => makeDir(IMG['pip/' + d] || IMG['pip/front'], false, []);   // [] = no blink painted on him: his eyes are in the picture
+  return SP.pip = {front: D('front'), back: D('back'), right: D('right'), left: D('left')}; }
+function denPeople(m, t) { if (!pipSet()) return []; const dx = m.x - PIP_AT[0], dy = m.y - PIP_AT[1];
+  return [PIP.p = {name: 'pip', dir: Math.hypot(dx, dy) < 90 ? dirFrom(dx, dy) : 'front', x: PIP_AT[0], y: PIP_AT[1], t, phase: 400, walk: false, noShadow: true}]; }
+function pipTalk() { const m = WL.me, now = performance.now(); if (PIP.talk || now < PIP.coolT || !MN.den || QUEST.s < 1) return; m.path = []; m.todo = null; m.walk = false; m.dir = dirFrom(PIP_AT[0] - m.x, PIP_AT[1] - m.y);
+  PIP.talk = {L: QUEST.s >= 2 ? PIP_WAIT : PIP_FIRST, i: 0, give: QUEST.s === 1}; sfx('pip'); }
+function pipNext() { const T = PIP.talk; if (!T) return; if (++T.i < T.L.length) { sfx('pip'); return; } pipHush();
+  if (T.give) qop('qpip').then(r => { if (r && r.got) itemGot('MOON SNIPS', SNIPS_ICON, '120,200,255'); }, e => wlSay(e.message, 'bad')); }
+function pipHush() { PIP.talk = null; PIP.coolT = performance.now() + 700; if (PIP.el) { PIP.el.remove(); PIP.el = null; } }
+function pipBubble(hits) {   // his words, in the game's own speech bubble, over his head
+  const T = PIP.talk, m = WL.me; if (T && (!MN.den || m.loc !== MINE || Math.hypot(m.x - PIP_AT[0], m.y - PIP_AT[1]) > 58)) pipHush();
+  const h = PIP.talk && PIP.p && hits.get(PIP.p), box = $('#heads'); if (!h || !box) { if (PIP.el) PIP.el.style.display = 'none'; return; }
+  if (!PIP.el) { PIP.el = document.createElement('div'); PIP.el.className = 'hb say'; box.appendChild(PIP.el); } const el = PIP.el, s = PIP.talk.L[PIP.talk.i];
+  if (el._s !== s) { el._s = s; el.textContent = s; const n = document.createElement('i'); n.className = 'pipNext'; el.appendChild(n); }
+  el.style.display = ''; const W = box.clientWidth || 390, px = (h.cx - (cam.fx || 0)) * S / DPR, py = (h.top - (cam.fy || 0)) * S / DPR - 4, eh = el.offsetHeight, lo = eh + (LAND ? 46 : 96), side = py < lo;   // no room over his head (a phone held sideways): beside him instead, never over him
+  el.style.left = Math.round(clamp(side ? px - 128 : px, 104, Math.max(104, W - 104))) + 'px'; el.style.top = Math.round(side ? Math.max(lo, py + eh * .85) : py) + 'px'; el.classList.toggle('side', side);
+}
+function denTick() {   // the pickaxe button also turns his page (for thumbs on the joystick); walking off ends the talk
+  const m = WL.me; if (!m || m.loc !== MINE || !MN.den) { if (PIP.talk || PIP.el) pipHush(); return; }
+  if (PIP.talk) { if (PICK.held && !PIP.held) pipNext(); DIG.on = null; } PIP.held = PICK.held;
+}
+{ const fr = scenes.town.frame; scenes.town.frame = function (dt, t) { denTick(); return fr.call(this, dt, t); }; }
+
+/* ---------- a thing handed to you: the same card as a fish you caught ---------- */
+const SNIPS_ICON = pxIcon(['.....K....K.....', '....KWK..KWK....', '....KWK..KWK....', '....KWSKKSWK....', '.....KWSSWK.....', '.....KWSSWK.....', '......KWWK......', '......KBBK......', '.....KSKKSK.....', '....KSK..KSK....', '...KSK....KSK...',
+  '..KSSK....KSSK..', '.KS..SK..KS..SK.', '.KS..SK..KS..SK.', '..KSSK....KSSK..', '...KK......KK...'], {K: '#1a1430', W: '#ffffff', S: '#b8c2d4', B: '#6ec8ff'});
+function itemGot(name, icon, glow) {
+  const c = $('#itCv'), x = c.getContext('2d'), sc = 3; x.clearRect(0, 0, c.width, c.height); const g = x.createRadialGradient(48, 32, 2, 48, 32, 34); g.addColorStop(0, `rgba(${glow},.55)`); g.addColorStop(1, `rgba(${glow},0)`); x.fillStyle = g; x.fillRect(0, 0, 96, 64);
+  x.imageSmoothingEnabled = false; x.drawImage(icon, 48 - icon.width * sc / 2, 32 - icon.height * sc / 2, icon.width * sc, icon.height * sc);
+  $('#itName').textContent = name; document.querySelectorAll('.modal.on').forEach(q => q.classList.remove('on')); $('#itemModal').classList.add('on'); sfx('rare');
+}
+(() => {
+  const ref = $('#beerModal'), d = document.createElement('div'); d.className = 'modal panel'; d.id = 'itemModal';
+  d.innerHTML = '<div class="mhead"><b>YOU GOT</b></div><div id="itStage"><canvas id="itCv" width="96" height="64"></canvas></div><h3 id="itName"></h3><div class="row"><button class="btn go" id="itOk">OK</button></div>';
+  ref.parentNode.insertBefore(d, ref); $('#itOk').onclick = () => { d.classList.remove('on'); sfx('close'); };
+  const st = document.createElement('style'); st.textContent = '#itemModal{text-align:center;padding:12px;z-index:10}#itemModal .mhead{text-align:left}#itemModal .btn{font-size:17px;padding:8px 22px 11px}#itemModal .row{justify-content:center}'
+    + '#itStage{position:relative;width:240px;max-width:100%;margin:2px auto 8px;padding:14px 0;border:3px solid #6ec8ff;border-radius:6px;background:#16233f;box-shadow:inset 0 0 0 3px #1a1430}#itCv{width:192px;height:128px;image-rendering:pixelated;display:block;margin:0 auto}'
+    + '.hb.say .pipNext{display:inline-block;width:0;height:0;margin-left:5px;border:4px solid transparent;border-top:5px solid #1a1430;border-bottom:0;vertical-align:1px;animation:pipNext .9s steps(2) infinite}@keyframes pipNext{50%{opacity:.15}}.hb.say.side::after{display:none}';
+  document.head.appendChild(st);
+})();
+SFX.pip = () => { tone(1250, .05, {type: 'sine', vol: .06, to: 1700}); tone(1900, .06, {type: 'sine', vol: .05, to: 1500, at: .06}); };
 
 /* ---------- sounds ---------- */
 SFX.pick = () => { tone(1500, .04, {type: 'square', vol: .07, to: 900}); tone(260, .06, {type: 'triangle', vol: .12, to: 120, at: .005}); hiss(.05, {vol: .07, bp: 3000}); };
