@@ -107,6 +107,7 @@ small{color:var(--dim);font-size:12px}textarea{width:100%;height:56px;resize:ver
       <div id="insp"></div>
       <div id="selBox"><h4>Selection</h4>
         <div class="row"><button data-s="fh" data-i="fliph" class="ib" title="Flip left-right"></button><button data-s="fv" data-i="flipv" class="ib" title="Flip up-down"></button><button data-s="rot" data-i="rot" class="ib" title="Rotate"></button><button data-s="del" data-i="bin" class="ib" title="Delete (Del)"></button></div>
+        <div class="row" id="selSize" title="Resize the selection or an imported picture. Pixels stay sharp (nearest neighbour, like Photoshop). Or drag the yellow corner square."><small>Size</small><input type="number" id="fsW" min="1" max="4000" style="width:58px"><small>×</small><input type="number" id="fsH" min="1" max="4000" style="width:58px"><label><input type="checkbox" id="fsLock" checked> keep shape</label><button data-s="half" title="Half the size">½</button><button data-s="x2" title="Twice the size">×2</button></div>
         <div class="row"><button data-s="toprop" title="Lift the selected ground pixels off the ground and make them a prop you can move and walk behind">Make prop</button><button data-s="d2n" title="Copy the selected day ground to the night ground in night colours">Day → night</button><button id="bImport" title="Bring a picture file in to place on the map. Ctrl+V pastes pictures too.">Import</button></div>
       </div>
     </div>
@@ -170,6 +171,13 @@ small{color:var(--dim);font-size:12px}textarea{width:100%;height:56px;resize:ver
     <div class="pane on" data-pane="layers">
       <div class="row" id="layTop"><select id="layBlend" title="How this whole layer mixes with what is behind it"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="hard-light">Hard light</option><option value="darken">Darken</option><option value="lighten">Lighten</option><option value="add">Add</option><option value="color">Colour</option></select><label title="This layer's opacity">Opacity <input type="range" id="layOp" min="5" max="100" value="100" style="width:86px"></label></div>
       <div id="layers"></div>
+      <div id="refBox" style="display:none">
+        <div class="row"><button id="bRefLoad" title="Pick a picture from your computer to trace or line things up with">Import picture…</button><button id="bRefFit" title="Stretch it to the size of the map">Fit</button><button id="bRefDel" title="Take the picture away">Remove</button></div>
+        <div class="row"><small>See-through</small><input type="range" id="refOp" min="5" max="100"><small>Size %</small><input type="number" id="refSc" min="5" max="1000" style="width:56px"></div>
+        <div class="row"><label title="Over: on top of everything. Off: under the props and buildings, over the ground"><input type="checkbox" id="refTop"> over everything</label></div>
+        <div class="row"><small>Drag it on the map to move it, or use the arrow keys. It is only for you: it is never saved into the game.</small></div>
+        <input type="file" id="refFile" accept="image/*" style="display:none">
+      </div>
       <div class="row" id="layBtns"><button id="bLayAdd" title="A new see-through layer to paint on, above the ground">+ Layer</button><button id="bLayUp" class="ib" title="Move the layer up">▲</button><button id="bLayDn" class="ib" title="Move the layer down">▼</button><button id="bLayMerge" title="Paint this layer into the ground for good, with its effects">Merge</button><button id="bLayDel" data-i="bin" class="ib" title="Delete the layer"></button></div>
     </div></div>
   </div>
@@ -239,8 +247,8 @@ function panelShow(k){tab(k);}
 
 /* ---------- state ---------- */
 const S={doc:null,tool:'pencil',zoom:1,px:0,py:0,fg:'#ffffff',bg:'#000000',brush:1,shape:'square',soft:0,dens:100,blend:'normal',opac:100,detail:0,pp:false,tile:null,layer:'ground',view:'day',both:true,
-  vis:{ground:true,block:false,props:true,ref:true,glow:true,mark:true},open:{props:false,ref:false,mark:false},sel:null,float:null,selProp:null,placing:null,play:null,undo:[],redo:[],clip:null};
-const DOCS={},isMap=d=>!!d&&(d.kind==='town'||d.kind==='south');   // the two outdoor maps: the town and THE SOUTH
+  vis:{ground:true,block:false,props:true,ref:true,glow:true,mark:true,rimg:true},open:{props:false,ref:false,mark:false},sel:null,float:null,selProp:null,placing:null,play:null,undo:[],redo:[],clip:null};
+const DOCS={},isMap=d=>!!d&&(d.kind==='town'||d.kind==='south');   // the outdoor maps: the town, THE SOUTH, and THE LAKE (kind 'south' too, with d.lake: the same props, the same files, its own folder)
 let GAME={ox:120,doors:[],blds:[],halls:{}};
 const LIB={};   // id -> {id,c,fxo,baseo,fw,file?,dirty,fixed}
 const TOOLS=[['pencil','B','','Pen'],['eraser','E','','Eraser'],['fill','G','','Fill'],['picker','I','','Colour picker'],['line','L','','Line'],['rect','U','','Box'],['ellipse','O','','Circle'],['marquee','M','','Select'],['lasso','Q','','Lasso select'],['wand','W','','Magic wand'],['move','V','','Move'],['place','P','','Place prop'],['hand','H','','Pan']];
@@ -377,6 +385,22 @@ async function openSouth(){await loadLib();let lay={};try{lay=await (await fetch
   mark('race','Race road','race','v','#ff9a4d',{x:J.race.x,y:J.race.y0,y2:J.race.y1});
   for(const q of Array.isArray(lay.props)?lay.props:[]){if(!LIB[q.lib]){d.keep.push(q);continue;}d.props.push(flatP({lib:q.lib,x:q.x,y:q.y,fade:q.fade!==false,solid:q.solid!==false,shadow:q.shadow!==false,flip:!!q.flip}));}
   return d;}
+/* THE LAKE (25 Nov 2026, his ask: "add the lake to the map builder so I can add trees there"). A map like the South (kind 'south', d.lake): its files are
+   assets/fishing/lake.png (the ground), lake-walk.png (WHITE = walk: the Blocked paths layer) and layout.json (the props he places, the spawn and the
+   path back to the town; fishing.js reads it and draws the props like south.js does). The water (lake-water.png) is not edited here: tools/make_lake.py. */
+const L_DEF={spawn:[432,450],door:[432,469]};
+async function openLake(){await loadLib();let lay={};try{lay=await (await fetch('/assets/fishing/layout.json?t='+Date.now())).json();}catch(e){}
+  const[day,walk]=await Promise.all([loadImg('/assets/fishing/lake.png'),loadImg('/assets/fishing/lake-walk.png')]),J={...L_DEF,...lay};
+  const blk=mk(day.width,day.height);X2(blk).drawImage(maskFrom(walk,false),0,0);
+  const d={kind:'south',lake:true,name:'The Lake',w:day.width,h:day.height,ox:0,day:toC(day),night:null,block:blk,props:[],opaque:true,blds:[],cab:[],lay,keep:[],marks:[]};
+  const sw=col=>{const c=mk(1,1),x=X2(c);x.fillStyle=col;x.fillRect(0,0,1,1);return png(c);},mark=(k,n,s,t,col,o)=>d.marks.push({k,n,s,t,col,thumb:sw(col),...o});
+  mark('spawn','Spawn','spawn','pt','#ffcf5e',{x:J.spawn[0],y:J.spawn[1]});
+  mark('door','Path back to the town','town','pt','#6cd6ff',{x:J.door[0],y:J.door[1]});
+  for(const q of Array.isArray(lay.props)?lay.props:[]){if(!LIB[q.lib]){d.keep.push(q);continue;}d.props.push(flatP({lib:q.lib,x:q.x,y:q.y,fade:q.fade!==false,solid:q.solid!==false,shadow:q.shadow!==false,flip:!!q.flip}));}
+  return d;}
+function lakeLayout(d){const L={...d.lay},m=k=>d.marks.find(m=>m.k===k);L.spawn=[m('spawn').x,m('spawn').y];L.door=[m('door').x,m('door').y];
+  L.props=[...d.props.map(p=>({lib:p.lib,x:p.x,y:p.y,flip:!!p.flip,shadow:!!p.shadow,solid:!!p.solid,fade:!!p.fade})),...d.keep];
+  return'{\n'+Object.entries(L).map(([k,v])=>'  '+JSON.stringify(k)+': '+JSON.stringify(v)).join(',\n')+'\n}\n';}
 /* layout.json again, from what is on the map now (the note and anything else in the file are kept as they were) */
 function southLayout(d){markSync(d);const L={...d.lay},b=k=>d.blds.find(b=>b.k===k),m=k=>d.marks.find(m=>m.k===k),J={...S_DEF,...d.lay};
   for(const[k,dk]of[['blacksmith','bdoor'],['mine','mdoor']]){const q=b(k),dm=m(dk);L[k]={...J[k],...(q?{x:q.x,y:q.y}:{}),door:[dm.x,dm.y]};}
@@ -418,14 +442,14 @@ async function openSprite(path){const im=await loadImg('/'+path);return{kind:'sp
 function libDoc(id){const L=LIB[id];return{kind:'sprite',name:'Prop: '+id,libId:id,w:L.c.width,h:L.c.height,ox:0,day:L.c,night:null,block:null,props:[],opaque:false};}
 
 async function show(key){commitFloat();let d=DOCS[key];
-  try{if(!d){if(key==='town')d=await openTown();else if(key==='south')d=await openSouth();else if(key==='room')d=await openRoom();else if(key.startsWith('hall:'))d=await openHall(key.slice(5));else if(key.startsWith('lib:'))d=libDoc(key.slice(4));else if(key.startsWith('bmask:'))d=openBMask(key.slice(6));else d=await openSprite(key);DOCS[key]=d;d.key=key;await loadLayers(d);}}
+  try{if(!d){if(key==='town')d=await openTown();else if(key==='south')d=await openSouth();else if(key==='lake')d=await openLake();else if(key==='room')d=await openRoom();else if(key.startsWith('hall:'))d=await openHall(key.slice(5));else if(key.startsWith('lib:'))d=libDoc(key.slice(4));else if(key.startsWith('bmask:'))d=openBMask(key.slice(6));else d=await openSprite(key);DOCS[key]=d;d.key=key;await loadLayers(d);}}
   catch(e){toast('Could not open: '+e.message,true);return;}
   if(d.kind==='south')for(const b of d.blds){const q=DOCS[b.path];if(q){b.img=q.day;b.w=q.w;b.h=q.h;b.thumb=null;}}   /* a building picture he just edited */
   MS.clear();S.doc=d;S.sel=null;S.selProp=null;S.selCab=null;S.selBld=null;S.selMark=null;S.placing=null;S.undo=[];S.redo=[];S.play=null;$('#bPlay').classList.remove('on');
-  if(!d.night){S.view='day';}if(S.layer==='block'&&!d.block)S.layer='ground';if(S.layer==='props'&&!isMap(d)&&d.kind!=='room')S.layer='ground';if(S.layer==='ref'&&!isMap(d))S.layer='ground';if(S.layer==='mark'&&!d.marks)S.layer='ground';if(S.layer==='glow'&&!d.glows)S.layer='ground';S.selGlow=null;if(S.layer.startsWith('L:')&&!curL())S.layer='ground';
+  if(!d.night){S.view='day';}if(S.layer==='block'&&!d.block)S.layer='ground';if(S.layer==='props'&&!isMap(d)&&d.kind!=='room')S.layer='ground';if(S.layer==='ref'&&(!isMap(d)||d.lake))S.layer='ground';if(S.layer==='mark'&&!d.marks)S.layer='ground';if(S.layer==='glow'&&!d.glows)S.layer='ground';S.selGlow=null;if(S.layer.startsWith('L:')&&!curL())S.layer='ground';
   if(d.kind==='bmask'){S.layer='block';S.vis.block=true;if(!['pencil','eraser','fill','rect','line'].includes(S.tool))setTool('pencil');}
   fillDocSel();fit();buildPal();ui();draw();}
-function fillDocSel(){const s=$('#docSel');const opts=[['town','Town map'],['south','The South'],...GAME.blds.map(b=>['hall:'+b.k,'Inside: '+b.name]),['room','Cabin room (furniture)']];
+function fillDocSel(){const s=$('#docSel');const opts=[['town','Town map'],['south','The South'],['lake','The Lake'],...GAME.blds.map(b=>['hall:'+b.k,'Inside: '+b.name]),['room','Cabin room (furniture)']];
   for(const k of Object.keys(DOCS))if(!opts.some(o=>o[0]===k))opts.push([k,DOCS[k].name]);
   s.innerHTML=opts.map(([k,n])=>`<option value="${k}">${n}${DOCS[k]?.dirty?' *':''}</option>`).join('');s.value=S.doc?.key||'town';}
 
@@ -433,6 +457,24 @@ function fillDocSel(){const s=$('#docSel');const opts=[['town','Town map'],['sou
 const V=$('#view'),vx=V.getContext('2d');
 function fit(){const d=S.doc,r=$('#stage').getBoundingClientRect();S.zoom=Math.max(1,Math.floor(Math.min(r.width/d.w,r.height/d.h)*.95))||1;if(d.w*S.zoom>r.width||d.h*S.zoom>r.height)S.zoom=Math.min(r.width/d.w,r.height/d.h)*.95;S.px=(r.width-d.w*S.zoom)/2;S.py=(r.height-d.h*S.zoom)/2;draw();}
 const toDoc=e=>{const r=V.getBoundingClientRect();return[(e.clientX-r.left-S.px)/S.zoom,(e.clientY-r.top-S.py)/S.zoom];};
+/* THE REFERENCE PICTURE (25 Nov, his ask): any picture from his computer laid over the map to line things up with. One per map/picture in the list
+   at the top, moved by dragging (or the arrow keys), sized, made see-through, shown over everything or under the props. It is ticked on and off like
+   any layer. It is ONLY in the builder: kept in this browser between visits, never written into the game. */
+function drawRef(d){const R=d.rimg;if(!R||!S.vis.rimg||!R.img)return;vx.globalAlpha=R.op/100;vx.imageSmoothingEnabled=false;vx.drawImage(R.img,R.x,R.y,R.img.width*R.s/100,R.img.height*R.s/100);vx.imageSmoothingEnabled=false;vx.globalAlpha=1;
+  if(S.layer==='rimg'){vx.strokeStyle='#ffcf5e';vx.lineWidth=1/S.zoom;vx.setLineDash([4/S.zoom,3/S.zoom]);vx.strokeRect(R.x,R.y,R.img.width*R.s/100,R.img.height*R.s/100);vx.setLineDash([]);}}
+const refKey=d=>'mb_ref_'+(d.key||d.name);
+function refKeep(d){const R=d.rimg;try{if(!R)localStorage.removeItem(refKey(d));else localStorage.setItem(refKey(d),JSON.stringify({src:R.src,x:R.x,y:R.y,s:R.s,op:R.op,top:R.top}));}catch(e){if(R)toast('Too big to remember after a reload, but it works for now',true);}}
+function refLoad(d){if(d.rimg!==undefined)return;d.rimg=null;let o=null;try{o=JSON.parse(localStorage.getItem(refKey(d))||'null');}catch(e){}if(!o||!o.src)return;const im=new Image();im.onload=()=>{d.rimg={...o,img:im};draw();};im.src=o.src;}
+function refSet(d,src){const im=new Image();im.onload=()=>{const R=d.rimg;d.rimg={src,img:im,x:R?R.x:0,y:R?R.y:0,s:R?R.s:100,op:R?R.op:50,top:R?R.top:true};S.vis.rimg=true;S.layer='rimg';refKeep(d);ui();toast('Reference picture in. Drag it to move it.');};im.onerror=()=>toast('That file is not a picture I can read',true);im.src=src;}
+function refUI(d){refLoad(d);const on=S.layer==='rimg';$('#refBox').style.display=on?'':'none';if(!on)return;const R=d.rimg;$('#bRefFit').disabled=$('#bRefDel').disabled=$('#refOp').disabled=$('#refSc').disabled=$('#refTop').disabled=!R;
+  if(R){$('#refOp').value=R.op;if(document.activeElement!==$('#refSc'))$('#refSc').value=R.s;$('#refTop').checked=!!R.top;}}
+$('#bRefLoad').onclick=()=>$('#refFile').click();
+$('#refFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const r=new FileReader();r.onload=()=>refSet(S.doc,r.result);r.readAsDataURL(f);};
+$('#bRefDel').onclick=()=>{const d=S.doc;d.rimg=null;refKeep(d);ui();};
+$('#bRefFit').onclick=()=>{const R=S.doc.rimg;if(!R)return;R.x=0;R.y=0;R.s=Math.round(Math.min(S.doc.w/R.img.width,S.doc.h/R.img.height)*1000)/10;refKeep(S.doc);ui();};
+$('#refOp').oninput=e=>{const R=S.doc.rimg;if(!R)return;R.op=+e.target.value;draw();};$('#refOp').onchange=()=>refKeep(S.doc);
+$('#refSc').oninput=e=>{const R=S.doc.rimg,v=+e.target.value;if(!R||!(v>0))return;R.s=v;draw();};$('#refSc').onchange=()=>refKeep(S.doc);
+$('#refTop').onchange=e=>{const R=S.doc.rimg;if(!R)return;R.top=e.target.checked;refKeep(S.doc);draw();};
 let raf=0;const draw=()=>{if(!raf)raf=requestAnimationFrame(render);};
 function drawables(night){const d=S.doc,out=[];
   if(S.vis.props)for(const p of d.props){if(p.hid)continue;const v=variant(p,night);if(v)out.push({c:v.c,x:p.x+v.dx,y:p.y+v.dy,base:pBase(p),p});}
@@ -445,6 +487,7 @@ function render(){raf=0;const d=S.doc;if(!d)return;const r=$('#stage').getBoundi
   if(S.vis.ground)vx.drawImage(night?d.night:d.day,0,0);
   const F=S.float;if(F&&F.tg[0].kind!=='block'&&!F.tg[0].L){const i=F.tg.findIndex(t=>t.c===(night?d.night:d.day));vx.drawImage(F.cs[i<0?0:i],F.x,F.y);}
   for(const l of d.layers||[])if(lvis(d,l)){drawLay(vx,l,night,l.mx,l.my);if(F&&F.tg[0].L===l){vx.globalAlpha=l.op/100;vx.globalCompositeOperation=GCO[l.bm]||'source-over';vx.drawImage(night&&!blended(l)?(F.nc||(F.nc=nightC(F.cs[0]))):F.cs[0],F.x,F.y);vx.globalAlpha=1;vx.globalCompositeOperation='source-over';}}
+  if(!(d.rimg&&d.rimg.top))drawRef(d);
   const me=S.play;let list=drawables(night);if(me)list=[...list,{me:true,base:me.y}].sort((a,b)=>a.base-b.base);
   for(const o of list){if(o.me){vx.fillStyle='#000';vx.fillRect(me.x-4,me.y-13,8,13);vx.fillStyle='#ffcf5e';vx.fillRect(me.x-3,me.y-12,6,11);vx.fillStyle='#000';vx.fillRect(me.x-2,me.y-9,1,2);vx.fillRect(me.x+1,me.y-9,1,2);continue;}
     let a=1;if(me&&o.p&&o.p.fade&&me.y<o.base&&me.y>o.p.y+6&&me.x>o.p.x+3&&me.x<o.p.x+LIB[o.p.lib].c.width-3)a=.45;if(me&&o.b&&o.b.fade!==0&&me.y<o.base&&me.y>o.b.y+6&&me.x-d.ox>o.b.x+3&&me.x-d.ox<o.b.x+o.b.w-3)a=.45;vx.globalAlpha=a;vx.drawImage(o.c,o.x,o.y);vx.globalAlpha=1;}
@@ -453,6 +496,10 @@ function render(){raf=0;const d=S.doc;if(!d)return;const r=$('#stage').getBoundi
     if(isMap(d)){vx.fillStyle='rgba(255,42,42,.42)';for(const p of d.props)if(p.solid)vx.fillRect(...footR(p));
       vx.globalAlpha=.42;for(const b of d.blds)vx.drawImage(b.blk,b.x+d.ox,b.y);vx.globalAlpha=1;for(const c of d.cab)vx.fillRect(c.cx-50+d.ox,c.top-10,100,41);}}
   drawMarks(d);
+  if(d.rimg&&d.rimg.top)drawRef(d);
+  if(S.float)hndDraw(S.float.x+S.float.w,S.float.y+S.float.h);
+  if(S.layer==='rimg'&&d.rimg&&d.rimg.img&&S.vis.rimg){const R=d.rimg;hndDraw(R.x+R.img.width*R.s/100,R.y+R.img.height*R.s/100);}
+  fsSync();
   if(d.door){vx.fillStyle='#6fdc8c';vx.fillRect(d.door[0]-8,d.door[1]-1,17,2);vx.font='6px system-ui';vx.fillText('door',d.door[0]-7,d.door[1]-3);}
   /* Alt = colour picker: the colour under the pointer, read off what is on screen (before any guides are drawn) */
   S.altCol=null;if(altDown&&S.mouse&&isPaint()&&!S.play&&!S.asizing){const q=vx.getImageData(Math.round(S.mouse[0]),Math.round(S.mouse[1]),1,1).data;S.altCol=hex(q[0],q[1],q[2]);}
@@ -615,6 +662,19 @@ function floatFrom(c,x,y){commitFloat();S.sel=null;opBegin();const tg=OP.tg;if(!
   const p=X2(c).getImageData(0,0,c.width,c.height).data,m=new Uint8Array(c.width*c.height);for(let i=0;i<m.length;i++)m[i]=p[i*4+3]>0?1:0;
   const cs=tg.map(t=>t.kind==='block'?(()=>{const o=mk(c.width,c.height),x2=X2(o);x2.drawImage(c,0,0);x2.globalCompositeOperation='source-in';x2.fillStyle='#ff2a2a';x2.fillRect(0,0,o.width,o.height);return o;})():t.night&&!t.asis?nightC(c):clone(c));
   S.float={x:Math.round(x),y:Math.round(y),w:c.width,h:c.height,m,cs,tg};setTool('move');draw();}
+/* RESIZING (25 Nov, his ask): a selection, a pasted or imported picture, or the reference picture gets bigger or smaller with NEAREST NEIGHBOUR, like
+   Photoshop's: every pixel stays a hard square, no blur, no new colours. Each resize starts again from the picture as it was before the first one,
+   so going small then big again does not lose pixels. The yellow square on the corner drags it (keeps its shape; Shift = stretch freely). */
+function floatScale(F,w,h){if(!F.o)F.o={cs:F.cs,m:F.m,w:F.w,h:F.h};const O=F.o;w=clamp(Math.round(w),1,4000);h=clamp(Math.round(h),1,4000);if(w===F.w&&h===F.h)return;
+  F.cs=O.cs.map(c=>{const o=mk(w,h),x=X2(o);x.imageSmoothingEnabled=false;x.drawImage(c,0,0,w,h);return o;});
+  const m=new Uint8Array(w*h);for(let y=0;y<h;y++){const sy=Math.min(O.h-1,Math.floor((y+.5)*O.h/h));for(let x=0;x<w;x++)m[y*w+x]=O.m[sy*O.w+Math.min(O.w-1,Math.floor((x+.5)*O.w/w))];}
+  F.m=m;F.w=w;F.h=h;draw();}
+const HND=()=>Math.max(3,7/S.zoom);
+function hndHit(fx,fy,x,y){const r=HND();return Math.abs(fx-x)<=r&&Math.abs(fy-y)<=r;}
+function hndDraw(x,y){const r=HND();vx.fillStyle='#01032e';vx.fillRect(x-r,y-r,r*2,r*2);vx.fillStyle='#ffcf5e';vx.fillRect(x-r+1/S.zoom,y-r+1/S.zoom,r*2-2/S.zoom,r*2-2/S.zoom);}
+function fsSync(){const F=S.float,w=$('#fsW'),h=$('#fsH');if(!w)return;const a=document.activeElement;if(F){if(a!==w)w.value=F.w;if(a!==h)h.value=F.h;}else if(S.sel){if(a!==w)w.value=S.sel.x1-S.sel.x0;if(a!==h)h.value=S.sel.y1-S.sel.y0;}else{if(a!==w)w.value='';if(a!==h)h.value='';}}
+function fsInput(which){if(!S.float&&S.sel)lift(true);const F=S.float;if(!F)return toast('Select something or import a picture first');const O=F.o||F,ar=O.w/O.h;let w=+$('#fsW').value||F.w,h=+$('#fsH').value||F.h;
+  if($('#fsLock').checked){if(which==='w')h=w/ar;else w=h*ar;}if(!(w>0)||!(h>0))return;floatScale(F,w,h);fsSync();}
 function selAct(a){const d=S.doc;
   if(a==='del'){if(S.float){S.float=null;opEnd();draw();return;}if(!S.sel)return;opBegin();applyMask(S.sel,'erase');opEnd();return;}
   if(a==='d2n'){if(!d.night||!S.sel)return toast('Select some day ground first');commitFloat();const s=S.sel,sv=S.layer,vv=S.view,bb=S.both;S.layer='ground';S.view='night';S.both=false;opBegin();const im=X2(d.day).getImageData(s.x0,s.y0,s.x1-s.x0,s.y1-s.y0),c=mk(im.width,im.height);X2(c).putImageData(im,0,0);const n=nightC(c),nd=X2(n).getImageData(0,0,c.width,c.height),x2=X2(d.night),cur=x2.getImageData(s.x0,s.y0,c.width,c.height);
@@ -622,8 +682,9 @@ function selAct(a){const d=S.doc;
   if(a==='toprop'){if(!isMap(d))return toast('Props live on the town map and the South');if(!S.sel&&!S.float)return toast('Select the thing on the ground first');S.layer='ground';const vv=S.view;S.view='day';if(!S.float)lift(true);const F=S.float,i=F.tg.findIndex(t=>t.c===d.day);const id=newLibId('cut');addLib(id,clone(F.cs[i<0?0:i]));const p={...newProp(id,0,0),x:F.x,y:F.y};
     S.float=null;d.props.push(p);opEnd();S.view=vv;S.layer='props';S.selProp=p;setTool('move');ui();toast('Now a prop. The hole in the ground is your 2nd colour: paint it in.');return;}
   if(!S.float)lift(true);const F=S.float;if(!F)return;
+  if(a==='half'||a==='x2'){const k=a==='x2'?2:.5;floatScale(F,F.w*k,F.h*k);return;}
   const tf=c=>{const r=a==='rot',o=mk(r?c.height:c.width,r?c.width:c.height),x=X2(o);if(a==='fh'){x.translate(c.width,0);x.scale(-1,1);}else if(a==='fv'){x.translate(0,c.height);x.scale(1,-1);}else{x.translate(c.height,0);x.rotate(Math.PI/2);}x.drawImage(c,0,0);return o;};
-  F.cs=F.cs.map(tf);const mc=mk(F.w,F.h),mx=X2(mc),im=mx.createImageData(F.w,F.h);for(let i=0;i<F.m.length;i++)im.data[i*4+3]=F.m[i]?255:0;mx.putImageData(im,0,0);const m2=tf(mc),p=X2(m2).getImageData(0,0,m2.width,m2.height).data;
+  F.o=null;F.cs=F.cs.map(tf);const mc=mk(F.w,F.h),mx=X2(mc),im=mx.createImageData(F.w,F.h);for(let i=0;i<F.m.length;i++)im.data[i*4+3]=F.m[i]?255:0;mx.putImageData(im,0,0);const m2=tf(mc),p=X2(m2).getImageData(0,0,m2.width,m2.height).data;
   F.w=m2.width;F.h=m2.height;F.m=new Uint8Array(F.w*F.h);for(let i=0;i<F.m.length;i++)F.m[i]=p[i*4+3]>127?1:0;draw();}
 function copySel(cut){const d=S.doc;if(S.layer==='props'&&S.selProp){S.clip={prop:JSON.stringify(S.selProp)};if(cut&&!S.selProp.fixed){opBegin();d.props=d.props.filter(p=>p!==S.selProp);S.selProp=null;opEnd();ui();}return;}
   const F=S.float;if(F){S.clip={c:clone(F.cs[0]),x:F.x,y:F.y};if(cut){S.float=null;opEnd();draw();}return;}if(!S.sel)return;const s=S.sel,tg=targets();if(!tg.length)return;
@@ -639,6 +700,9 @@ V.addEventListener('contextmenu',e=>e.preventDefault());V.addEventListener('poin
 V.addEventListener('pointerdown',e=>{V.setPointerCapture(e.pointerId);const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Math.floor(fy),d=S.doc,rb=e.button===2;
   if(e.button===1||spaceDown||S.tool==='hand'){drag={k:'pan',sx:e.clientX,sy:e.clientY,px:S.px,py:S.py};return;}
   if(S.play){S.play.x=fx;S.play.y=fy;draw();return;}
+  if(S.float&&hndHit(fx,fy,S.float.x+S.float.w,S.float.y+S.float.h)){const F=S.float,O=F.o||F;drag={k:'fscale',ar:O.w/O.h};return;}
+  if(S.layer==='rimg'&&d.rimg&&d.rimg.img&&S.vis.rimg){const R=d.rimg;if(hndHit(fx,fy,R.x+R.img.width*R.s/100,R.y+R.img.height*R.s/100)){drag={k:'rscale'};return;}}
+  if(S.layer==='rimg'){if(d.rimg&&S.vis.rimg)drag={k:'rimg',ox:fx-d.rimg.x,oy:fy-d.rimg.y};else toast(d.rimg?'The reference picture is hidden: tick its box':'Import a picture first');return;}   /* the reference picture's layer: a drag moves the picture, nothing else */
   if(S.tool==='place'){if(!isMap(d))return toast('Props are placed on the town map or the South');if(!S.placing||!LIB[S.placing]){tab('props');return toast('Pick a prop in the list first');}opBegin();const p=newProp(S.placing,x,y);d.props.push(p);S.selProp=p;opEnd();S.layer='props';ui();return;}
   /* ALT + DRAG LEFT / RIGHT = BRUSH SIZE (his ask, 18 Nov, like Photoshop): the brush shows in red where you started while it grows or shrinks.
      Alt + a click without dragging is still the colour picker (it picks when you let go). */
@@ -675,7 +739,9 @@ V.addEventListener('pointerdown',e=>{V.setPointerCapture(e.pointerId);const[fx,f
   if(tool==='wand'){if(x<0||y<0||x>=d.w||y>=d.h)return;setSel(flood(tg[0].c,x,y),e.shiftKey);return;}
   const mode=tool==='eraser'?'erase':rb?'bg':'fg';
   if(tool==='fill'){if(x<0||y<0||x>=d.w||y>=d.h)return;opBegin();applyMask(flood(tg[0].c,x,y),mode);opEnd();return;}
-  if(tool==='pencil'||tool==='eraser'){opBegin();plot(x,y,mode,S.brush);drag={k:'draw',mode,lx:x,ly:y,pp:S.pp&&S.brush===1?[[x,y]]:null};draw();return;}
+  if(tool==='pencil'||tool==='eraser'){opBegin();
+plot(x,y,mode,S.brush);
+    drag={k:'draw',mode,tool,lx:x,ly:y,pp:S.pp&&S.brush===1?[[x,y]]:null,lock:e.shiftKey?{ax:x,ay:y,dir:null}:null};draw();return;}   /* Shift held before the click: straight from the start */
   if(['line','rect','ellipse'].includes(tool)){drag={k:'shape',kind:tool,mode,x0:x,y0:y};}});
 V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Math.floor(fy),d=S.doc;if(!d)return;S.hover=[x,y];
   {const r=V.getBoundingClientRect();S.mouse=[e.clientX-r.left,e.clientY-r.top];}
@@ -683,7 +749,14 @@ V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Ma
   draw();if(!drag)return;
   if(drag.k==='pan'){S.px=drag.px+e.clientX-drag.sx;S.py=drag.py+e.clientY-drag.sy;draw();}
   else if(drag.k==='asize'){if(Math.abs(e.movementX)<120)drag.dx+=e.movementX;const dx=drag.dx;if(Math.abs(dx)>3)drag.moved=true;if(drag.moved){S.brush=clamp(drag.b0+Math.round(dx/6),1,64);S.sizing=[drag.x,drag.y];ui();draw();}}
-  else if(drag.k==='draw'){for(const[a,b]of linePts(drag.lx,drag.ly,x,y)){if(drag.pp)ppStep(drag.pp,a,b,drag.mode);else plot(a,b,drag.mode,S.brush);}drag.lx=x;drag.ly=y;draw();}
+  else if(drag.k==='draw'){let x=Math.floor(fx),y=Math.floor(fy);
+    /* HOLD SHIFT WHILE DRAWING (25 Nov, his ask), pressed before the click or during the stroke: it locks into a straight line from where Shift went down: across, up-down or a
+       45-degree slant, whichever the pointer is nearest. Let go of Shift and it draws freely again. */
+    if(e.shiftKey){if(!drag.lock)drag.lock={ax:drag.lx,ay:drag.ly,dir:null};const L=drag.lock,dx=x-L.ax,dy=y-L.ay;
+      if(!L.dir&&Math.max(Math.abs(dx),Math.abs(dy))>=2){const a=Math.abs(Math.atan2(dy,dx)*180/Math.PI)%180,t=Math.min(a,180-a);L.dir=t<22.5?'h':t>67.5?'v':(Math.sign(dx)===Math.sign(dy)?'d1':'d2');}
+      if(!L.dir){draw();return;}if(L.dir==='h')y=L.ay;else if(L.dir==='v')x=L.ax;else{const n=Math.round((Math.abs(dx)+Math.abs(dy))/2);x=L.ax+Math.sign(dx||1)*n;y=L.ay+(L.dir==='d1'?Math.sign(dx||1):-Math.sign(dx||1))*n;}}
+    else drag.lock=null;
+    for(const[a,b]of linePts(drag.lx,drag.ly,x,y)){if(drag.pp)ppStep(drag.pp,a,b,drag.mode);else plot(a,b,drag.mode,S.brush);}drag.lx=x;drag.ly=y;draw();}
   else if(drag.k==='shape'){let x1=x,y1=y;if(e.shiftKey&&drag.kind!=='line'){const s=Math.max(Math.abs(x-drag.x0),Math.abs(y-drag.y0));x1=drag.x0+Math.sign(x-drag.x0)*s;y1=drag.y0+Math.sign(y-drag.y0)*s;}
     drag.pts=shapePts(drag.kind,drag.x0,drag.y0,x1,y1,$('#cFill').checked);S.prev={pts:drag.pts,col:S.layer==='block'?'#ff2a2a':drag.mode==='bg'?S.bg:S.fg};draw();}
   else if(drag.k==='marq'){const a=Math.min(drag.x0,x),b=Math.min(drag.y0,y),c=Math.max(drag.x0,x)+1,f=Math.max(drag.y0,y)+1;drag.r=[a,b,c,f];S.prev={pts:[],col:'#fff'};S.lasso=[[a,b],[c,b],[c,f],[a,f],[a,b]];draw();}
@@ -695,10 +768,15 @@ V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Ma
   else if(drag.k==='mark'){const m=drag.m,X=Math.round(fx),Y=Math.round(fy),p=drag.part;
     if(m.t==='h'&&p)p==='a'?m.x=Math.min(X,m.x2-6):m.x2=Math.max(X,m.x+6);else if(m.t==='v'&&p)p==='a'?m.y=Math.min(Y,m.y2-6):m.y2=Math.max(Y,m.y+6);
     else markMove(m,Math.round(fx-drag.ox)-m.x,Math.round(fy-drag.oy)-m.y);draw();}
+  else if(drag.k==='fscale'){const F=S.float;let w=Math.max(1,fx-F.x),h=Math.max(1,fy-F.y);if(!e.shiftKey){if(w/h>drag.ar)h=w/drag.ar;else w=h*drag.ar;}floatScale(F,w,h);}
+  else if(drag.k==='rscale'){const R=d.rimg;R.s=Math.max(1,Math.round(Math.max((fx-R.x)/R.img.width,(fy-R.y)/R.img.height)*1000)/10);if(document.activeElement!==$('#refSc'))$('#refSc').value=R.s;draw();}
+  else if(drag.k==='rimg'){d.rimg.x=Math.round(fx-drag.ox);d.rimg.y=Math.round(fy-drag.oy);draw();}
   else if(drag.k==='cab'){drag.c.cx=Math.round(fx-drag.ox);drag.c.top=Math.round(fy-drag.oy);draw();}
   else if(drag.k==='glow'){drag.g.x=Math.round(fx-drag.ox);drag.g.y=Math.round(fy-drag.oy);winSync(d,drag.g);draw();}
   else if(drag.k==='glowr'){drag.g.r=clamp(Math.round(Math.hypot(fx-drag.g.x,fy-drag.g.y)),2,300);draw();}});
 V.addEventListener('pointerup',e=>{const g=drag;drag=null;if(!g)return;
+  if(g.k==='rimg'||g.k==='rscale'){refKeep(S.doc);return;}
+  if(g.k==='fscale'){draw();return;}
   if(g.k==='asize'){S.sizing=null;S.asizing=false;if(document.pointerLockElement)document.exitPointerLock();if(!g.moved){const col=g.alt||pickAt(g.fx,g.fy,g.x,g.y);if(col){if(g.rb)S.bg=col;else{S.fg=col;S.tile=null;}}}ui();draw();return;}
   if(g.k==='lay'){for(const l of g.ls){const dx=l.mx||0,dy=l.my||0;l.mx=l.my=0;shiftLayer(l,dx,dy);}opEnd();draw();return;}
   if(g.k==='draw')opEnd();
@@ -723,7 +801,8 @@ addEventListener('keydown',e=>{if(e.target.matches('input,textarea,select'))retu
   if(k==='escape'&&$('#brushPop').classList.contains('on')){brushPop(false);return;}if(k==='escape'){if(S.tool==='place')setTool('move');commitFloat();setSel(null);S.selProp=null;S.selMark=null;ui();return;}
   if(k==='delete'||k==='backspace'){if(S.layer==='glow'&&S.selGlow&&S.selGlow.t!=='square'){opBegin();S.doc.glows=S.doc.glows.filter(g=>g!==S.selGlow);S.selGlow=null;opEnd();ui();return;}if(S.layer==='props'&&S.selProp&&!S.selProp.fixed){opBegin();S.doc.props=S.doc.props.filter(p=>p!==S.selProp);S.selProp=null;opEnd();ui();}else selAct('del');return;}
   if(k.startsWith('arrow')){const dx=k==='arrowleft'?-1:k==='arrowright'?1:0,dy=k==='arrowup'?-1:k==='arrowdown'?1:0,n=e.shiftKey?8:1;e.preventDefault();
-    if(S.layer==='glow'&&S.selGlow){opBegin();S.selGlow.x+=dx*n;S.selGlow.y+=dy*n;winSync(S.doc,S.selGlow);opEnd();ui();}
+    if(S.layer==='rimg'&&S.doc.rimg){S.doc.rimg.x+=dx*n;S.doc.rimg.y+=dy*n;refKeep(S.doc);draw();}
+    else if(S.layer==='glow'&&S.selGlow){opBegin();S.selGlow.x+=dx*n;S.selGlow.y+=dy*n;winSync(S.doc,S.selGlow);opEnd();ui();}
     else if(S.layer==='props'&&S.selProp){opBegin();S.selProp.x+=dx*n;S.selProp.y+=dy*n;opEnd();ui();}
     else if(S.layer==='mark'&&S.selMark){opBegin();markMove(S.selMark,dx*n,dy*n);opEnd();ui();}
     else if(S.layer==='ref'&&(S.selCab||S.selBld)){opBegin();if(S.selCab){S.selCab.cx+=dx*n;S.selCab.top+=dy*n;}else bldMove(S.doc,S.selBld,S.selBld.x+dx*n,S.selBld.y+dy*n);opEnd();ui();}else if(!S.float&&!S.sel&&curL()){opBegin();const ls=picked();OP.tg=ls.map(l=>({c:l.c,kind:'layer',L:l}));OP.cl=ls.map(l=>clone(l.c));for(const l of ls)shiftLayer(l,dx*n,dy*n);opEnd();}
@@ -757,7 +836,7 @@ function ui(){const d=S.doc;if(!d)return;$('#cfg').style.background=S.fg;$('#cbg
   $('#vSoft').textContent=S.soft;$('#vDens').textContent=S.dens;$('#vOpac').textContent=S.opac;$('#vDet').textContent=S.detail;
   $('#tiles').innerHTML=TILES.map((T,i)=>`<div class="tl ${S.tile===T?'on':''}" data-ti="${i}" title="${T.w}×${T.h}${T.vs.length>1?', '+T.vs.length+' looks':''}. Click to paint with it, click again to stop." style="background-image:url(${T.vs[0].url})">${T.vs.length>1?'<b>'+T.vs.length+'</b>':''}</div>`).join('');
   $('#bDay').classList.toggle('on',S.view==='day');$('#bNight').classList.toggle('on',S.view==='night');$('#bNight').disabled=!d.night;$('#cBoth').disabled=!d.night;$('#cBoth').checked=S.both;
-  const Ltop=[...(d.glows?[['glow','Glows']]:[]),...(d.marks?[['mark','Doors + roads']]:[]),...(d.block?[['block','Blocked paths']]:[]),...(isMap(d)?[['ref',d.kind==='south'?'Buildings + stalls':'Cabins + buildings']]:[]),...(isMap(d)||d.kind==='room'?[['props',d.kind==='room'?'Furniture':'Props']]:[])],Lbot=[['ground',d.night?'Ground':'Picture']];
+  const Ltop=[['rimg','Reference picture'],...(d.glows?[['glow','Glows']]:[]),...(d.marks?[['mark','Doors + roads']]:[]),...(d.block?[['block','Blocked paths']]:[]),...(isMap(d)&&!d.lake?[['ref',d.kind==='south'?'Buildings + stalls':'Cabins + buildings']]:[]),...(isMap(d)||d.kind==='room'?[['props',d.kind==='room'?'Furniture':'Props']]:[])],Lbot=[['ground',d.night?'Ground':'Picture']];
   const kids=k=>k==='props'?d.props.map((p,i)=>({id:'p'+i,o:p,n:(p.name||p.lib),th:LIB[p.lib],on:S.selProp===p})):k==='ref'?[...d.cab.map((c,i)=>({id:'c'+i,o:c,n:'Cabin '+(i+1),img:c.img,on:S.selCab===c})),...d.blds.map((b,i)=>({id:'b'+i,o:b,n:b.name,img:b.img,on:S.selBld===b}))]:k==='mark'?d.marks.map((m,i)=>({id:'m'+i,o:m,n:m.n,on:S.layer==='mark'&&S.selMark===m})):[];
   const thumb=q=>{if(q.th)return q.th.thumb||(q.th.thumb=png(q.th.c));const o=q.o;return o.thumb||(o.thumb=png(toC(q.img)));};
   const row=([k,n])=>{const ks=kids(k),op=S.open[k]&&ks.length;
@@ -765,6 +844,7 @@ function ui(){const d=S.doc;if(!d)return;$('#cfg').style.background=S.fg;$('#cbg
       (op?`<div class="kids">${ks.map(q=>`<div class="kid ${q.on?'on':''}" data-item="${q.id}"><input type="checkbox" data-eye="${q.id}" ${q.o.hid?'':'checked'} title="show / hide"><i style="background-image:url(${thumb(q)})"></i><span>${q.n}</span></div>`).join('')}</div>`:'');};
   $('#layers').innerHTML=Ltop.map(row).join('')+(()=>{let h='',last=null;for(const l of[...(d.layers||[])].reverse()){const g=grpOf(d,l);if(g&&g!==last){const n=d.layers.filter(q=>q.g===g.id),all=n.every(q=>MS.has(q.id)||S.layer==='L:'+q.id);h+=`<div class="lay grp ${all?'sel':''}" data-g="${g.id}" title="Double-click to rename"><input type="checkbox" data-gv="${g.id}" ${g.vis!==false?'checked':''} title="show / hide"><b class="tw" data-gx="${g.id}">${g.open!==false?'▾':'▸'}</b><span>${g.name}</span><small>${n.length}</small></div>`;}last=g;if(g&&g.open===false)continue;
       h+=`<div class="lay pl ${S.layer==='L:'+l.id?'on':MS.has(l.id)?'sel':''} ${g?'ing':''}" data-l="L:${l.id}" title="Double-click for its effects"><input type="checkbox" data-lv="${l.id}" ${l.vis?'checked':''} title="show / hide"><span>${l.name}</span>${hasFx(l)?'<small class="fx">fx</small>':''}</div>`;}return h;})()+Lbot.map(row).join('');
+  refUI(d);
   $('#layBtns').style.display=d.libId?'none':'';{const l=curL();$('#layTop').style.display=l?'':'none';if(l){$('#layBlend').value=l.bm||'normal';$('#layOp').value=l.op;}}
   $('#propBox').style.display=isMap(d)||d.kind==='room'?'':'none';$('#plBox').style.display=isMap(d)?'':'none';$('#mapBox').style.display=d.kind==='town'?'':'none';
   $('#lib').innerHTML=Object.values(LIB).filter(l=>d.kind==='room'?l.fixed:!l.fixed).map(l=>`<div class="it ${S.placing===l.id||S.libPick===l.id?'on':''}" data-id="${l.id}" title="${l.id.replace('room:','')}" style="background-image:url(${l.thumb||(l.thumb=png(l.c))})"></div>`).join('');
@@ -812,6 +892,7 @@ $('#insp').addEventListener('click',e=>{const a=e.target.dataset.a,p=S.selProp,d
   if(a==='bake'){OP.tg=[{c:d.day},...(d.night?[{c:d.night}]:[])];OP.cl=OP.tg.map(t=>clone(t.c));const v=variant(p,false);X2(d.day).drawImage(v.c,p.x+v.dx,p.y+v.dy);if(d.night){const n=variant(p,true);X2(d.night).drawImage(n.c,p.x+n.dx,p.y+n.dy);}dirty(p.x+v.dx,p.y+v.dy,p.x+v.dx+v.c.width,p.y+v.dy+v.c.height);d.props=d.props.filter(q=>q!==p);S.selProp=null;}
   opEnd();ui();});
 $('#selBox').addEventListener('click',e=>{const s=e.target.dataset.s;if(s)selAct(s);});
+$('#fsW').addEventListener('change',()=>fsInput('w'));$('#fsH').addEventListener('change',()=>fsInput('h'));
 $('#pick').oninput=e=>{S.fg=e.target.value;S.tile=null;ui();};$('#pick2').oninput=e=>{S.bg=e.target.value;ui();};
 $('#hexTx').onchange=e=>{let v=e.target.value.trim();if(!v.startsWith('#'))v='#'+v;if(/^#[0-9a-f]{6}$/i.test(v)){S.fg=v.toLowerCase();S.tile=null;}ui();};
 /* THE BRUSH PANEL: right-click the canvas with a painting tool and it opens where you clicked (like Photoshop's); click outside or Esc to close */
@@ -1006,11 +1087,11 @@ async function save(){commitFloat();let d=S.doc;if(d.libId){d.dirty=false;d=Obje
       for(const b of d.blds){const q=DOCS['bmask:'+b.k];if(q&&q.dirty){files.push({path:`assets/buildings/${b.k}-block.png`,b64:png(maskOut(b.blk,true)),mode:'L'});q.dirty=false;}}
       patch={map:{ox:d.ox,w:d.w,h:d.h},cabins:d.cab.length===GAME.doors.length?d.cab.map(c=>[c.cx,c.top]):null,buildings:d.blds.filter(b=>!b.stall).map(({k,name,x,y,w,h,fade})=>({k,name,x,y,w,h,fade})),stall:(q=>q?{x:q.x,y:q.y}:null)(d.blds.find(b=>b.stall))};
     }else if(d.kind==='south'){   /* THE SOUTH: its ground, its walk mask (white = walk) and layout.json. Nothing in index.html or the .js files. */
-      files.push({path:'assets/south/day.png',b64:png(FD),mode:'RGB'},{path:'assets/south/day-walk.png',b64:png(maskOut(d.block,false)),mode:'L'});
+      files.push({path:d.lake?'assets/fishing/lake.png':'assets/south/day.png',b64:png(FD),mode:'RGB'},{path:d.lake?'assets/fishing/lake-walk.png':'assets/south/day-walk.png',b64:png(maskOut(d.block,false)),mode:'L'});   /* THE LAKE is saved the same way, into assets/fishing (never lake-water.png) */
       const libs=Object.values(LIB).filter(l=>!l.fixed);for(const l of libs)if(l.dirty)files.push({path:'assets/builder/props/'+l.id+'.png',b64:png(l.c)});
       files.push({path:'assets/builder/library.json',text:JSON.stringify(libs.map(l=>({id:l.id,fxo:l.fxo,baseo:l.baseo,fw:l.fw})))});
       for(const pth of new Set(d.blds.map(b=>b.path))){const q=DOCS[pth];if(q&&q.dirty){files.push({path:pth,b64:png(flat(q,false))});q.dirty=false;}if(q)for(const b of d.blds)if(b.path===pth){b.img=q.day;b.w=q.w;b.h=q.h;b.thumb=null;}}
-      files.push({path:'assets/south/layout.json',text:southLayout(d)});
+      files.push(d.lake?{path:'assets/fishing/layout.json',text:lakeLayout(d)}:{path:'assets/south/layout.json',text:southLayout(d)});
     }else if(d.kind==='bmask'){files.push({path:`assets/buildings/${d.k}-block.png`,b64:png(maskOut(d.block,true)),mode:'L'});
     }else if(d.kind==='hall'){files.push({path:`assets/interiors/${d.k}.png`,b64:png(FD),mode:'RGB'},{path:`assets/interiors/${d.k}-walk.png`,b64:png(maskOut(d.block,false)),mode:'L'});}
     else if(d.kind==='room'){files.push({path:'assets/room-objects/room-empty.png',b64:png(FD)});const obj={},sh={};

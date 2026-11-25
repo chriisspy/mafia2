@@ -65,8 +65,8 @@ const FISH_ODDS=[{common:82,rare:17,epic:1,legendary:0},{common:64,rare:28,epic:
 /* a rare fish (or better) shows a PINK "!" when it bites, and fights harder: this much more pull (his call, 18 Nov) */
 const FISH_TOUGH={rare:1.4,epic:1.55,legendary:1.7};
 const FISH_RC={junk:'#9a8f86',common:'#7bc96f',rare:'#6fb5ff',epic:'#c58bff',legendary:'#ffcf4a'};
-Object.assign(FISH,{ph:'idle',t:0,held:false,press:false,px:140,pow:0,pdir:1,tg:null,bob:null,shad:[],rip:[],spl:[],cand:null,hook:null,d:1,ten:0,burst:0,nextB:2,
-  cx:140,cy:300,rods:{},rodAsk:{},spawnT:0,dip:0,reelT:0,warnT:0,land:null,mask:null,log:{},fr:0});
+Object.assign(FISH,{ph:'idle',t:0,held:false,press:false,px:432,pow:0,pdir:1,tg:null,bob:null,shad:[],rip:[],spl:[],cand:null,hook:null,d:1,ten:0,burst:0,nextB:2,
+  cx:432,cy:298,rods:{},rodAsk:{},spawnT:0,dip:0,reelT:0,warnT:0,land:null,mask:null,log:{},fr:0});
 try{FISH.log=JSON.parse(localStorage.getItem('m2_fish')||'{}')||{};}catch(e){}
 TUNES.lake={bpm:84,step:.5,vol:.34,leadType:'triangle',   /* a slow, sunny farm tune */
   lead:SEQ('G4 - B4 - D5 - B4 -  E5 - D5 - B4 - - -  C5 - E5 - G5 - E5 -  D5 - - - B4 - - -  G4 - B4 - D5 - G5 -  F#5 - E5 - D5 - - -  C5 - B4 - A4 - F#4 -  G4 - - - - - - -'),
@@ -95,9 +95,13 @@ function fishPic(c,i,k,dark){const x=c.getContext('2d');x.imageSmoothingEnabled=
 function fishMask(){if(FISH.mask)return FISH.mask;const im=IMG['fish/mask'],c=mk(im.width,im.height),x=c.getContext('2d');x.drawImage(im,0,0);const d=x.getImageData(0,0,im.width,im.height).data;
   FISH.mw=im.width;FISH.mh=im.height;FISH.mask=new Uint8Array(im.width*im.height);for(let i=0;i<FISH.mask.length;i++)FISH.mask[i]=d[i*4]>127?1:0;return FISH.mask;}
 function fishWet(x,y){const M=fishMask(),xi=Math.round(x),yi=Math.round(y);return xi>=0&&yi>=0&&xi<FISH.mw&&yi<FISH.mh&&!!M[yi*FISH.mw+xi];}
-function fishSpot(nearX,nearY,r){for(let k=0;k<60;k++){const x=nearX!=null?nearX+(Math.random()*2-1)*r:30+Math.random()*220,y=nearY!=null?nearY+(Math.random()*2-1)*r:100+Math.random()*300;
+function fishSpot(nearX,nearY,r){for(let k=0;k<60;k++){const x=nearX!=null?nearX+(Math.random()*2-1)*r:LAKE_WATER[0]+Math.random()*LAKE_WATER[2],y=nearY!=null?nearY+(Math.random()*2-1)*r:LAKE_WATER[1]+Math.random()*LAKE_WATER[3];
     if(fishWet(x,y)&&fishWet(x-9,y)&&fishWet(x+9,y)&&fishWet(x,y-9)&&fishWet(x,y+9))return[x,y];}return null;}
-const FISH_ME=[140,331];   /* where you stand to fish: the end of the jetty */
+const FISH_ME=[432,329];   /* where you stand to fish: the end of the jetty */
+/* THE WIDER LAKE (25 Nov 2026, his new base map, 850 x 474: tools/make_lake.py). The same pixel scale as the old 266 x 478 one; the jetty and the
+   boat sit at old + (292, -2). The lake's own places are all here: the box the water is in, the jetty you cast far from, the path out at the bottom. */
+const LAKE_WATER=[325,86,280,330],LAKE_JETTY=[402,462,416];   /* x, y, w, h of the water | the jetty: x from, x to, its foot (y) */
+Object.assign(HALLS[LAKE-100],{door:[432,469],spawn:[432,450]});   /* the path back to the town leaves at the bottom middle; you arrive on it, just below the jetty (assets/fishing/layout.json may move both: the map builder's marks) */
 function fishRoll(y){const d=FISH_ME[1]-y,z=d<95?0:d<175?1:2,L=fishRod().luck,B=FISH_ODDS[z],O={common:B.common-7*L,rare:B.rare+3.5*L,epic:B.epic+2.5*L,legendary:B.legendary+L};let r=Math.random()*100,rar='common';for(const k of['legendary','epic','rare','common']){if(r<O[k]){rar=k;break;}r-=O[k];}
   const pool=FISHES.map((f,i)=>i).filter(i=>FISHES[i].rar===rar);return pool[Math.floor(Math.random()*pool.length)];}
 function fishSpawn(){const F=FISH,p=fishSpot();if(!p)return;if(F.bob&&Math.hypot(p[0]-F.bob.x,p[1]-F.bob.y)<50)return;const kind=fishRoll(p[1]);
@@ -130,7 +134,7 @@ function fishPh(p){const F=FISH;F.ph=p;F.t=0;
    'right' or 'left' (the side pictures; left is the right ones mirrored). fishNear = the first bit of water that way, or null when there is none
    within reach. fishFace picks the way: the way you are facing if there is water there, else whichever way has some. */
 const FISH_V={back:[0,-1],right:[1,0],left:[-1,0]};
-function fishNear(m,face){if(!m||m.loc!==LAKE||m.ko)return null;const v=FISH_V[face||'back'],side=v[0]!==0,jet=m.y<418&&m.x>110&&m.x<170,reach=side?40:jet?110:34,oy=side?-5:0;
+function fishNear(m,face){if(!m||m.loc!==LAKE||m.ko)return null;const v=FISH_V[face||'back'],side=v[0]!==0,jet=m.y<LAKE_JETTY[2]&&m.x>LAKE_JETTY[0]&&m.x<LAKE_JETTY[1],reach=side?40:jet?110:34,oy=side?-5:0;
   for(let d=6;d<=reach;d+=3)if(fishWet(m.x+v[0]*d,m.y+oy+v[1]*d)&&fishWet(m.x+v[0]*(d+6),m.y+oy+v[1]*(d+6)))return[m.x+v[0]*(d+5),m.y+oy+v[1]*(d+5)];return null;}
 function fishFace(m,pref){if(!m)return null;for(const f of[pref,m.dir,'back','right','left']){if(!FISH_V[f])continue;const nw=fishNear(m,f);if(nw)return{face:f,near:nw};}return null;}
 function fishStart(){const F=FISH,m=WL.me;if(F.on||!m||m.loc!==LAKE)return;F.on=true;F.held=false;F.press=false;F.bob=null;F.cand=null;F.hook=null;F.land=null;const ff=fishFace(m,F.want);F.want=null;if(!ff){F.on=false;wlSay('Stand at the edge of the water to fish.','bad');return;}F.near=ff.near;F.face=ff.face;F.px=m.x;F.py=m.y-8;m.dir=ff.face;m.walk=false;m.path=[];m.todo=null;
@@ -231,13 +235,14 @@ $('#fishRodBtn').onclick=()=>{sfx('click');fishStart();};
 $('#fishStopBtn').onclick=()=>{sfx('close');fishStop();const H=hallOf(LAKE);wlHead(H.name,'Tap the water to fish. Walk down to leave.');};
 
 /* ---- drawing the lake: called for every frame you are there ---- */
-function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud').classList.contains('lake')){F.lakeOn=1;$('#townHud').classList.add('lake');paintCoins();if(!F.on)fishSay('');}fishTick(dt,t,m);
+function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud').classList.contains('lake')){F.lakeOn=1;F.cx=m.x;F.cy=m.y;lakeMask();$('#townHud').classList.add('lake');paintCoins();if(!F.on)fishSay('');}fishTick(dt,t,m);
   {const can=!!fishFace(m)&&!m.walk,b=$('#fishRodBtn'),show=!F.on&&$('#joy').classList.contains('on');if(b.disabled===can)b.disabled=!can;
     if(!F.pbSet){const v=$('#punchBtn').style.getPropertyValue('--pb');if(v){b.style.setProperty('--pb',v);F.pbSet=1;}}
     if(show)b.style.bottom=(parseFloat($('#joy').style.bottom)+23)+'px';if(b.classList.contains('on')!==show)b.classList.toggle('on',show);}   /* the rod button is grey wherever you cannot fish from */
   const lhE=Hh()/Math.max(1,Math.round(VW()/190)),B=F.bob,foc=F.on?(B?[(m.x*2+B.x)/3,(m.y+B.y)/2+lhE*.02]:[m.x,m.y-lhE*.2]):[m.x,m.y-lhE*.08];
   F.cx+=(foc[0]-F.cx)*Math.min(1,dt*3);F.cy+=(foc[1]-F.cy)*Math.min(1,dt*3);
-  view(img,F.cx,F.cy,190,{hi:true,void:'#dfeefc'});   /* (24 Nov, his ask) never past the bottom of the lake picture */
+  view(img,F.cx,F.cy,190,{hi:true,void:'#dfeefc'});   /* (24 Nov, his ask) never past the bottom of the lake picture. 25 Nov: the lake is wider than a phone now, so the camera follows you sideways too and stops at each edge (view() clamps it) */
+  if(!F.propsOk)lakeMask();const objs=lakeObjs(m,dt);
   /* the ripple: PixelLab's loop, each frame melting into the next so it never ticks */
   const Wj=F.wj,wim=IMG['fish/water'];if(Wj&&wim){const fr=t/300,a=Math.floor(fr)%Wj.n,b=(a+1)%Wj.n,k=fr%1,dx=Wj.x-cam.x,dy=Wj.y-cam.y;
     lx.drawImage(wim,a*Wj.w,0,Wj.w,Wj.h,dx,dy,Wj.w,Wj.h);lx.globalAlpha=k;lx.drawImage(wim,b*Wj.w,0,Wj.w,Wj.h,dx,dy,Wj.w,Wj.h);lx.globalAlpha=1;}
@@ -251,7 +256,8 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
     const tp=fishTip(m);for(let i=1;i<9;i++){const k=i/9;lx.fillStyle=i%2?'#8fc4ff':'#ffffff';lx.fillRect(Math.round(lerp(X(tp[0]),gx,k)),Math.round(lerp(Y(tp[1]),gy,k)-Math.sin(k*Math.PI)*10),1,1);}}
   /* you, with the rod */
   const me=people.find(p=>p.e===m),rest=people.filter(p=>p!==me),hits=new Map();
-  if(me&&F.on){const c=fishCell(),tip=fishTip(m),px=XP(m.x),py=YP(m.y);
+  if(me&&F.on){for(const o of objs)if(o.base<=m.y)drawObj(o);   /* fishing, you are drawn here and not in the sorted scene: the trees behind you first */
+    const c=fishCell(),tip=fishTip(m),px=XP(m.x),py=YP(m.y);
     if(c!=null){shadow(px,py,6,2,.28);const sh=IMG[fishKey()];if(fishSide()<0){lx.save();lx.translate(px,0);lx.scale(-1,1);lx.drawImage(sh,c*64,0,64,64,-32,py-56,64,64);lx.restore();}else lx.drawImage(sh,c*64,0,64,64,px-32,py-56,64,64);
       if(KIT.rod==='gold'&&Math.floor(t/110)%7===0){lx.fillStyle='#fffbe0';lx.fillRect(X(tip[0])+(Math.floor(t/770)%3)-1,Y(tip[1])-1+(Math.floor(t/770)%2),1,1);}   /* the Golden Rod glints */hits.set(me,{cx:px,top:py-36});}
     else{const hx=fishSide()?m.x+fishSide()*5:m.x+8,ry=m.y-9-fishUp(),air=(STACK[fishLook()]||{}).hover>0,rod=()=>{fishLine(X(hx),Y(ry),X(tip[0]),Y(tip[1]),'#3a2413');fishLine(X(hx)+1,Y(ry),X(tip[0])+1,Y(tip[1]),{twig:'#a36a35',oak:'#ba6c32',steel:'#96acd0',gold:'#eeb632'}[KIT.rod]||'#a36a35');};   /* (his note, 21 Nov) an outfit with no rod pictures of its own: the rod is drawn BEHIND them, so it comes out from behind the body like a held rod (in front it cut across them and looked like a bug). Only the hovering Alien keeps it in front, as he asked for that one */if(!air)rod();const h=drawChar({...me,dir:F.face||'back',walk:false});if(h)hits.set(me,h);if(air)rod();}
@@ -280,7 +286,7 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
     const c=V.ph==='charge'?1+Math.min(5,Math.floor(V.t/.7*6)):V.ph==='fly'?(V.t<.25?7:8):V.ph==='fight'?7+(Math.floor(t/150)%2):(V.ph==='idle'||V.ph==='card')?0:8;
     return{k,c,sd,tip:[e.x+(sd<0?-1:1)*R[c][0],e.y+R[c][1]]};};
   for(const p of fishers)p.sh=sheetOf(p);
-  for(const[p,h]of drawScene(rest.filter(p=>!p.sh),null,img,null))hits.set(p,h);
+  for(const[p,h]of drawScene(rest.filter(p=>!p.sh),null,img,me&&F.on?objs.filter(o=>o.base>m.y):objs))hits.set(p,h);
   for(const p of fishers)if(p.sh){const e=p.e,q=p.sh,im=IMG[q.k],px=XP(e.x),py=YP(e.y);shadow(px,py,6,2,.28);
     if(q.sd<0){lx.save();lx.translate(px,0);lx.scale(-1,1);lx.drawImage(im,q.c*64,0,64,64,-32,py-56,64,64);lx.restore();}else lx.drawImage(im,q.c*64,0,64,64,px-32,py-56,64,64);hits.set(p,{cx:px,top:py-36});}
   for(const p of fishers){const e=p.e,f=e.fish,V=e.fv;
@@ -308,6 +314,24 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
   lx.fillStyle='rgba(255,236,190,.05)';lx.fillRect(0,0,cam.lw,cam.lh);
   return hits;}
 function Hh(){return H;}
+
+/* ---- THE LAKE'S PROPS (25 Nov 2026, his ask: "add the lake to the map builder so I can add trees there"). Exactly like the South:
+   assets/fishing/layout.json holds what he placed ({lib, x, y, flip, shadow, solid, fade}: assets/builder/props/<lib>.png), drawn in order
+   with the people by their foot row, with his flat 2 px shadow, fading when you stand behind one (south.js propImg / propFoot do the
+   pictures and the solid foot). The builder also saves lake-walk.png (white = walk); the water mask (lake-water.png) is never the builder's. ---- */
+const L_PROPS=[];
+fetch('assets/fishing/layout.json?v='+(typeof av==='function'?av('assets/fishing/layout.json'):BUILD)).then(r=>r.json()).then(L=>{const H=HALLS[LAKE-100];
+  if(Array.isArray(L.spawn))H.spawn=[L.spawn[0],L.spawn[1]];if(Array.isArray(L.door))H.door=[L.door[0],L.door[1]];
+  L_PROPS.splice(0,L_PROPS.length,...(Array.isArray(L.props)?L.props:[]));FISH.propsOk=!L_PROPS.length;
+  return Promise.all([...new Set(L_PROPS.map(q=>q.lib))].map(k=>load('sp/'+k,`assets/builder/props/${k}.png`).catch(()=>{})));}).then(()=>{FISH.propsIn=1;}).catch(()=>{FISH.propsOk=1;});
+/* the feet of his trees are solid: cut out of the walk mask once everything is in (south.js gives propFoot and maskCanvas) */
+function lakeMask(){const F=FISH;if(F.propsOk||!F.propsIn||typeof propFoot!=='function'||!IMG['hallw/lake'])return;F.propsOk=1;
+  const g=F.walk0||(F.walk0=IMG['hallw/lake']);IMG['hallw/lake']=maskCanvas(g.width,g.height,null,L_PROPS.filter(q=>q.solid!==false).map(propFoot).filter(Boolean),g);HALLS[LAKE-100].g=null;}
+function lakeObjs(m,dt){const out=[];if(typeof propImg!=='function')return out;
+  for(const q of L_PROPS){const im=propImg(q);if(!im)continue;const o={img:im,x:q.x,y:q.y,base:q.y+im.base};
+    if(q.fade!==false){const hid=m.y<o.base&&m.y>q.y+6&&m.x>q.x+3&&m.x<q.x+im.width-3;q.a=clamp((q.a??1)+(hid?-1:1)*dt*4,.45,1);if(q.a<1)o.alpha=q.a;}
+    out.push(o);}
+  return out;}
 
 /* every outfit's rod pictures: assets/fishing/rods/<outfit>.png (9 cells of 64) + rods.json (the rod tip in each cell, from the feet) */
 fetch('assets/fishing/rods.json?v='+BUILD).then(r=>r.json()).then(j=>{FISH.rods=j;}).catch(()=>{});   /* {outfit: {rod: [the tip in each of the 9 cells]}} */

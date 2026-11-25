@@ -31,7 +31,7 @@ function mineLoad() {
   return Promise.all([L('hall/smithy', 'assets/interiors/smithy.png'), L('smith/front', 'assets/final/smith/front.png'),
     L('mine/rocks', 'assets/mine/rocks.png'), L('mine/props', 'assets/mine/props.png'), L('smith/work', 'assets/final/smith/work.png'),
     fetch('assets/final/smith/work.json?v=' + BUILD).then(r => r.json()).then(j => { SMW.rows = j.rows; SMW.cell = j.cell; }).catch(() => {}), L('mine/walls', 'assets/mine/walls.png'), L('mine/floor', 'assets/mine/floor.png'),
-    ...['forge', 'anvil', 'counter', 'toolrack', 'barrel', 'coal', 'grindstone'].map(k => L('sm/' + k, `assets/smithy/${k}.png`))]).then(mineMasks);
+    ...['forge', 'anvil', 'counter', 'toolrack', 'barrel', 'coal', 'grindstone', 'coins'].map(k => L('sm/' + k, `assets/smithy/${k}.png`))]).then(mineMasks);
 }
 function mineMasks() {
   const sm = IMG['hall/smithy']; if (sm) IMG['hallw/smithy'] = maskCanvas(sm.width, sm.height, [[14, 82, 296, 214], [146, 212, 165, 226]], SMITHY_OBJS.filter(o => o.solid).map(o => o.solid));
@@ -168,10 +168,14 @@ function smithProps(S, t) {   // the little things round him, drawn in code: the
   if (S.st === 'barrel') { if (S.anim === 'pour') { crucible(S.x, S.y - 11); if (S.k > .3 && S.k < .85) { for (let y = S.y - 7; y < S.y + 9; y++) P1((y + q) % 3 ? '#ffb24a' : '#fff0a0', S.x, y); } }
     const a = S.se < 26 ? 1 : clamp(1 - (S.se - 26) / 20, 0, 1); if (a > 0) for (let i = 0; i < 5; i++) { const ph = ((t / 900 + i * .21) % 1); lx.globalAlpha = (1 - ph) * .8 * a; P1('#e8f0ff', S.x - 6 + i * 3 + Math.round(Math.sin(ph * 5 + i) * 2), S.y + 8 - ph * 22, 2, 2); } lx.globalAlpha = 1; }   // steam off the water
   if (S.st === 'bar') { P1('#01032e', S.x + 3, S.y - 13, 7, 4); P1('#ffb24a', S.x + 4, S.y - 12, 5, 2); }
-  if (S.st === 'anvil') { const coinsK = clamp((S.se - 30) / 80, 0, 1), bx = 108, by = 138;   // on the anvil: a glowing bar that turns, blow by blow, into coins
-    if (coinsK < 1) { P1('#01032e', bx, by - 1, 9, 4); P1(S.se < 40 ? '#ffb24a' : '#e8b13a', bx + 1, by, 7, 2); P1('#fff0a0', bx + 2, by, 3, 1); }
-    for (let i = 0; i < Math.floor(coinsK * 4); i++) { P1('#01032e', bx + 9 + i * 4, by - 1 - (i % 2), 5, 4); P1('#ffd25e', bx + 10 + i * 4, by - (i % 2), 3, 2); P1('#fff6cf', bx + 10 + i * 4, by - (i % 2), 1, 1); }
-    if (S.anim === 'hammer' && S.k > .5 && S.k < .8) { for (let i = 0; i < 5; i++) { const a = i * 1.3 + q, r = 3 + (S.k - .5) * 30; P1(i % 2 ? '#fff0a0' : '#ffb24a', bx + 4 + Math.cos(a) * r, by - 1 - Math.abs(Math.sin(a)) * r * .8); } } }
+}
+/* (25 Nov, his note) THE GOLD ON THE ANVIL rests ON its flat top, drawn right after the anvil so the anvil never covers it */
+const ANVIL_TOP = [116, 132];
+function anvilGold(t) { const S = smithNow(); if (S.home || S.st !== 'anvil') return;
+  const q = Math.floor(t / 90), coinsK = clamp((S.se - 30) / 80, 0, 1), bx = ANVIL_TOP[0], by = ANVIL_TOP[1];   // a glowing bar that turns, blow by blow, into coins
+  if (coinsK < 1) { P1('#01032e', bx, by - 1, 9, 4); P1(S.se < 40 ? '#ffb24a' : '#e8b13a', bx + 1, by, 7, 2); P1('#fff0a0', bx + 2, by, 3, 1); }
+  for (let i = 0; i < Math.floor(coinsK * 4); i++) { P1('#01032e', bx + 9 + i * 4, by - 1 - (i % 2), 5, 4); P1('#ffd25e', bx + 10 + i * 4, by - (i % 2), 3, 2); P1('#fff6cf', bx + 10 + i * 4, by - (i % 2), 1, 1); }
+  if (S.anim === 'hammer' && S.k > .5 && S.k < .8) { for (let i = 0; i < 5; i++) { const a = i * 1.3 + q, r = 3 + (S.k - .5) * 30; P1(i % 2 ? '#fff0a0' : '#ffb24a', bx + 4 + Math.cos(a) * r, by - 1 - Math.abs(Math.sin(a)) * r * .8); } }
 }
 function smithObj(t) {   // him, out on the floor at work
   const S = smithNow(); smithSound(S); if (S.home) return null; const fr = smithFrame(S.anim, S.dir, S.k || 0, t);
@@ -179,6 +183,7 @@ function smithObj(t) {   // him, out on the floor at work
   return {img: PX1, x: S.x, y: S.y, base: S.y, after: () => { smithSet(); if (SP.smith) drawChar({name: 'smith', dir: 'front', x: S.x, y: S.y, t: performance.now(), phase: 400, walk: S.anim === 'walk'}); smithProps(S, t); }};
 }
 const PX1 = mk(1, 1);
+const COIN_PILE = [212, 121];   // the pile's bottom middle, on the counter's flat top
 function smithSound(S) {   // only while you are in his shop: the hammer rings, the water hisses
   const m = WL.me; if (!m || m.loc !== SMITHY || S.home) { smithSound.h = 0; return; }
   if (S.st === 'anvil' && S.anim === 'hammer') { const hit = S.k > .55; if (hit && !smithSound.h) sfx('anvil'); smithSound.h = hit; } else smithSound.h = 0;
@@ -190,14 +195,15 @@ SMH.objs = (t) => SMITHY_OBJS.map(o => {
   if (o.k === 'pickwall') r.after = () => pickWallAfter(t);
   if (o.smith) r.after = () => { smithSet(); const S = smithNow();
     if (SP.smith && S.home) { drawChar({name: 'smith', dir: 'front', x: SMITH_AT[0], y: SMITH_AT[1], t: performance.now(), phase: 400, noShadow: true}); lx.drawImage(im, X(o.x), Y(o.y)); }   // he stands behind his counter: counter drawn again over his legs
-    if (S.ready) for (let i = 0; i < 4; i++) { const cx = 212 + i * 5, cy = 103 - (i % 2) * 2; P1('#01032e', cx - 1, cy - 1, 6, 5); P1('#ffd25e', cx, cy, 4, 3); P1('#fff6cf', cx, cy, 2, 1); P1('#b9781f', cx, cy + 2, 4, 1); } };   // your coins, waiting on the counter
+    const cp = IMG['sm/coins']; if (S.ready && cp) lx.drawImage(cp, X(COIN_PILE[0] - (cp.width >> 1)), Y(COIN_PILE[1] - cp.height)); };   // your coins, waiting ON the counter top (PixelLab pile, 25 Nov)
   if (o.k === 'forge') r.after = () => forgeFire(t);
+  if (o.k === 'anvil') r.after = () => anvilGold(t);
   return r; }).filter(Boolean).concat(smithObj(t) || []);
 function forgeFire(t) {   // a few solid embers hopping in the forge's mouth
   const k = Math.floor(t / 110); for (let i = 0; i < 5; i++) { const ph = (k + i * 7) % 9; lx.fillStyle = ph % 3 ? '#ffb24a' : '#ffe9a8'; lx.fillRect(X(46 + ((i * 7 + k) % 22)), Y(72 - ph), 1, 1); }
 }
 SMH.lights = (fl) => { const S = smithNow(), L = [[57, 66, 58, '255,140,60', .24 + .14 * fl + (S.st === 'forge' ? .1 : 0), 1], [240, 104, 30, '255,210,140', .08, 2], [70, 18, 16, '255,214,130', .12, 3], [240, 18, 16, '255,214,130', .12, 4]];
-  if (S.st === 'anvil' && S.se < 60) L.push([112, 138, 14, '255,170,70', .25, 5]); if (S.st === 'carry' || (S.st === 'barrel' && S.anim === 'pour')) L.push([S.x, S.y - 12, 12, '255,170,70', .25, 6]); return L; };
+  if (S.st === 'anvil' && S.se < 60) L.push([ANVIL_TOP[0] + 4, ANVIL_TOP[1], 14, '255,170,70', .25, 5]); if (S.st === 'carry' || (S.st === 'barrel' && S.anim === 'pour')) L.push([S.x, S.y - 12, 12, '255,170,70', .25, 6]); return L; };
 SMH.enter = () => { goldChip.sig = ''; goldChip(); $('#hallLine').textContent = ''; };
 SMH.spots = [{k: 'smith', hit: [196, 78, 290, 148], stand: [240, 156], dir: 'back', use: () => smithOpen()},
   {k: 'picks', hit: [PICKWALL.x, PICKWALL.y - 4, PICKWALL.x + PICKWALL.w, PICKWALL.y + PICKWALL.h + 6], stand: [PICKWALL.x + PICKWALL.w / 2, 88], dir: 'back', use: () => pickOpen()}];
