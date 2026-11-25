@@ -537,7 +537,7 @@ function knClose(){$('#knifeModal').classList.remove('on');cancelAnimationFrame(
    25% of the time; knives: the rings count up to 6% wider. */
 function drunkLuck(){return typeof drunkL==='function'?Math.min(1,drunkL()/4):0;}
 const DRUNK_GAMES={bjModal:['#bjStage','#bjCv'],slotModal:['#slotCv','#slotCv'],knifeModal:['#knifeCv','#knifeCv'],flipModal:['#flipMach','#flipMach','#flipStage']};   /* [the main picture to double, what sways...] */
-function drunkGames(){requestAnimationFrame(drunkGames);const L=typeof drunkL==='function'?drunkL():0,q=performance.now()/1000;
+function drunkGames(){const L=typeof drunkL==='function'?drunkL():0,q=performance.now()/1000;if(L>0)requestAnimationFrame(drunkGames);else setTimeout(()=>requestAnimationFrame(drunkGames),500);   /* sober: it only looks twice a second (battery, 25 Nov) */
   for(const id in DRUNK_GAMES){const M=document.getElementById(id);if(!M)continue;const[srcSel,...sway]=DRUNK_GAMES[id],src=M.querySelector(srcSel.replace('#bjStage','#bjCv'));let g=M.querySelector('canvas.drunkGhost');
     const on=L>0&&M.classList.contains('on')&&src&&src.width;
     if(!on){if(g)g.style.display='none';for(const s of sway){const e=M.querySelector(s);if(e&&e.dataset.dk){e.style.transform='';delete e.dataset.dk;}}continue;}

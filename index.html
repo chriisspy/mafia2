@@ -1376,7 +1376,7 @@ function sndUI(){const h=$('#homeSnd'),c=$('#caseSnd');if(h)h.innerHTML=ic(SND.o
   function spawn(px){const k=PICK[Math.floor(Math.random()*PICK.length)],tree=k===5||k===6;const p={k,x:px,sink:k===5?5:k===6?3:5+Math.floor(Math.random()*Math.random()*10),flip:Math.random()<.5};/* always sunk past its base: no plant shows its foot or ground patch (his call) */
     if(px==null)p.x=-BSZ[k][0];plants.push(p);gap=(tree?10:2)+Math.floor(Math.random()*Math.random()*70);return p;}
   for(let px=W-10;px>-20;){const p=spawn(px);px-=BSZ[p.k][0]+gap;p.x=px;}                                   // some already there when it opens
-  function tick(t){if(el.classList.contains('off')&&getComputedStyle(el).opacity==='0')return setTimeout(()=>requestAnimationFrame(tick),300);
+  function tick(t){if(el.classList.contains('off')&&getComputedStyle(el).opacity==='0'){tick.idle=true;return;}   /* hidden: it stops (battery, 25 Nov) and wakes when it is shown again */
     x.clearRect(0,0,W,H);const f=Math.floor(t/80),v=im.v,m=im.m;
     // the ground is one thin line; bushes drift past behind them (his call: no road, no sweat)
     {const dt=Math.min(100,t-(lastT||t));lastT=t;for(const p of plants)p.x+=dt*.045;
@@ -1391,12 +1391,13 @@ function sndUI(){const h=$('#homeSnd'),c=$('#caseSnd');if(h)h.innerHTML=ic(SND.o
     for(let i=0;i<d.length;i+=4){if(d[i+3]<40){d[i+3]=0;continue;}const l=Math.round(.299*d[i]+.587*d[i+1]+.114*d[i+2])*3;d[i]=LUT[l];d[i+1]=LUT[l+1];d[i+2]=LUT[l+2];d[i+3]=255;}
     x.putImageData(id,0,0);requestAnimationFrame(tick);}
   requestAnimationFrame(tick);
+  new MutationObserver(()=>{if(tick.idle&&!el.classList.contains('off')){tick.idle=false;requestAnimationFrame(tick);}}).observe(el,{attributes:true,attributeFilter:['class']});
 })();
 const loading=on=>document.getElementById('loader').classList.toggle('off',!on);
 let W=0,H=0,DPR=1,LAND=false;   /* LAND = a phone held sideways (24 Nov): a wide, short screen; #phone wears .land */
 const LANDQ=matchMedia('(orientation:landscape) and (max-height:520px)');
 const VW=()=>LAND?Math.min(W,H):W;   /* what the zoom is measured against: the screen's width, or its SHORT side when the phone is sideways (the art pixels stay the size they are upright) */
-function resize(){LAND=LANDQ.matches;document.getElementById('phone').classList.toggle('land',LAND);const r=cv.getBoundingClientRect();DPR=Math.min(3,window.devicePixelRatio||1);W=cv.width=Math.round(r.width*DPR);H=cv.height=Math.round(r.height*DPR);}
+function resize(){LAND=LANDQ.matches;document.getElementById('phone').classList.toggle('land',LAND);const r=cv.getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);   /* (25 Nov, battery) 2x at most: the art is just as sharp (every art pixel is still a clean square), a 3x iPhone paints less than half the pixels */W=cv.width=Math.round(r.width*DPR);H=cv.height=Math.round(r.height*DPR);}
 addEventListener('resize',resize);
 try{LANDQ.addEventListener('change',()=>{resize();dispatchEvent(new Event('resize'));});}catch(e){}addEventListener('orientationchange',()=>setTimeout(()=>dispatchEvent(new Event('resize')),300));   /* turning the phone: measure again once the browser has settled (the games' own fit listeners hear it too) */
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
@@ -1421,7 +1422,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11251320'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11251332'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -5486,7 +5487,14 @@ $('#roleBtn').onclick=()=>{viewRole=VIEW_ROLES[(VIEW_ROLES.indexOf(viewRole)+1)%
   if(scene===scenes.night)scene.enter();};
 
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(scene&&IMG.town){try{scene.frame(dt,now);}catch(e){if(loop.err!==String(e)){loop.err=String(e);console.warn('frame',e);}}   /* one bad frame must never stop the picture for good */
+/* BATTERY (25 Nov, his ask, measured: painting the screen is the cost, not the code): never more than 60 pictures a second (120 Hz phones
+   painted twice as often for nothing), and about 30 while nothing moves (you have not touched the screen for 4 seconds, nobody in your place is
+   walking or driving, no fishing, race, wheel spin, mining or Mafia game). The first touch brings it straight back to full speed. */
+let lastInput=performance.now();for(const ev of['pointerdown','pointermove','keydown','touchstart','wheel'])addEventListener(ev,()=>{lastInput=performance.now();},{capture:true,passive:true});
+function quiet(now){if(scene!==scenes.town||now-lastInput<4000||JOY.on||WL.fading||(WL.wheel&&WL.wheel.busy)||(typeof GAME!=='undefined'&&GAME.on))return false;
+  const m=WL.me;if(!m||m.loc===106||(typeof FISH!=='undefined'&&FISH.on)||(typeof PICK!=='undefined'&&PICK.held)||(typeof DIG!=='undefined'&&DIG.on))return false;
+  for(const e of wlAll())if(e.loc===m.loc&&(e.walk||(e.path&&e.path.length)))return false;return true;}
+function loop(now){if(now-last<(quiet(now)?30:15)){requestAnimationFrame(loop);return;}const dt=Math.min(.05,(now-last)/1000);last=now;if(scene&&IMG.town){try{scene.frame(dt,now);}catch(e){if(loop.err!==String(e)){loop.err=String(e);console.warn('frame',e);}}   /* one bad frame must never stop the picture for good */
   joyPlace();}requestAnimationFrame(loop);}
 
 let OBJ_META={};
