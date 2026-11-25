@@ -9,7 +9,7 @@
 //           day.md / day.m / day.mc   today's date, gold chunks dug today, crystals dug today
 // MR = the numbers. THE SAME NUMBERS LIVE IN mine.js (the phone draws the hits from them): change both.
 const MR = {
-  picks: [{ id: 'wood', price: 0, pow: 1 }, { id: 'stone', price: 50, pow: 2 }, { id: 'iron', price: 200, pow: 3 }, { id: 'steel', price: 700, pow: 5 }, { id: 'gold', price: 2500, pow: 8 }],
+  picks: [{ id: 'wood', price: 0, pow: 1 }, { id: 'stone', price: 50, pow: 2 }, { id: 'iron', price: 200, pow: 3 }, { id: 'steel', price: 700, pow: 5 }, { id: 'gold', price: 2500, pow: 8 }, { id: 'diamond', price: 3500, cry: 5, pow: 12 }],   // (25 Nov, his ask) the diamond pickaxe is CRAFTED: 3500 coins + 5 crystals
   levels: 5, lvmul: [1, 1.6, 2.4, 3.6, 5],
   hp: { s: 3, g: 4, r: 6, w: 4, G: 5, R: 7, e: 30, u: 36, d: 44 },   // s stone, g gold rock, r rich rock, w plain wall, G gold vein, R rich vein, e emerald, u ruby, d diamond
   rocks: 16, veins: 8, rockOdds: [[70, 28, 2], [58, 36, 6], [48, 40, 12], [40, 42, 18], [32, 44, 24]],
@@ -44,7 +44,7 @@ module.exports = ({ tx, spend, bad, dayKey, flag }) => {
       const lv = M.lv | 0, i = Number.isInteger(d.i) ? d.i : -1; let k = 'w';
       if (i >= 0) { k = M.k[i]; if (!k || k === '.') bad('That is already dug out.'); }
       else { M.n = (M.n | 0) + 1; if (M.n > MR.wallsPerLevel) bad('That is already dug out.'); }
-      if (isCry(k) && K.pick < MR.picks.length - 1) bad('Only a gold pickaxe can break crystal.');
+      if (isCry(k) && K.pick < 4) bad('Only a gold pickaxe can break crystal.');   // gold or better
       const now = Date.now(); if (now - (M.t || 0) < hits(k, lv, K.pick) * MR.swingMs * MR.quick) bad('Too quick.'); M.t = now;
       if (i >= 0) M.k = M.k.slice(0, i) + '.' + M.k.slice(i + 1);
       today(w); const r = Math.random(); let got = 0, gc = 0;
@@ -64,7 +64,8 @@ module.exports = ({ tx, spend, bad, dayKey, flag }) => {
     mpick: (uid, d) => tx(uid, w => {
       const K = kit(w), t = MR.picks.findIndex(p => p.id === d.id); if (t < 0) bad('No such pickaxe.');
       if (K.pick >= t) return { pick: K.pick };
-      spend(w, MR.picks[t].price); K.pick = t; return { pick: t };
+      const P = MR.picks[t]; if (P.cry && K.cry < P.cry) bad('You need ' + P.cry + ' crystals.');
+      spend(w, P.price); if (P.cry) K.cry -= P.cry; K.pick = t; return { pick: t, cry: K.cry };
     }),
     // crystals for gold chunks at the Blacksmith's
     mcry: (uid, d) => tx(uid, w => {

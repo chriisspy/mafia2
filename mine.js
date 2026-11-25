@@ -15,7 +15,8 @@
 
 const MR = {
   picks: [{id: 'wood', name: 'Wooden pickaxe', price: 0, pow: 1}, {id: 'stone', name: 'Stone pickaxe', price: 50, pow: 2}, {id: 'iron', name: 'Iron pickaxe', price: 200, pow: 3},
-    {id: 'steel', name: 'Steel pickaxe', price: 700, pow: 5}, {id: 'gold', name: 'Gold pickaxe', price: 2500, pow: 8}],   // pickaxe n digs down to level n + 1; only the last one breaks crystal
+    {id: 'steel', name: 'Steel pickaxe', price: 700, pow: 5}, {id: 'gold', name: 'Gold pickaxe', price: 2500, pow: 8},
+    {id: 'diamond', name: 'Diamond pickaxe', price: 3500, cry: 5, pow: 12}],   // (25 Nov, his ask) crafted: 3500 coins + 5 crystals   // pickaxe n digs down to level n + 1; only the last one breaks crystal
   levels: 5, lvmul: [1, 1.6, 2.4, 3.6, 5],                                  // how much harder each level's stone is
   hp: {s: 3, g: 4, r: 6, w: 4, G: 5, R: 7, e: 30, u: 36, d: 44},            // s stone, g gold rock, r rich rock, w plain wall, G gold vein, R rich vein, e emerald, u ruby, d diamond
   rocks: 16, veins: 8, rockOdds: [[70, 28, 2], [58, 36, 6], [48, 40, 12], [40, 42, 18], [32, 44, 24]],   // per level: stone, gold, rich (out of 100)
@@ -31,7 +32,8 @@ function mineLoad() {
   return Promise.all([L('hall/smithy', 'assets/interiors/smithy.png'), L('smith/front', 'assets/final/smith/front.png'),
     L('mine/rocks', 'assets/mine/rocks.png'), L('mine/props', 'assets/mine/props.png'), L('smith/work', 'assets/final/smith/work.png'),
     fetch('assets/final/smith/work.json?v=' + BUILD).then(r => r.json()).then(j => { SMW.rows = j.rows; SMW.cell = j.cell; }).catch(() => {}), L('mine/walls', 'assets/mine/walls.png'), L('mine/floor', 'assets/mine/floor.png'),
-    ...['forge', 'anvil', 'counter', 'toolrack', 'barrel', 'coal', 'grindstone', 'coins'].map(k => L('sm/' + k, `assets/smithy/${k}.png`))]).then(mineMasks);
+    ...['forge', 'anvil', 'counter', 'toolrack', 'barrel', 'coal', 'grindstone', 'coins'].map(k => L('sm/' + k, `assets/smithy/${k}.png`)),
+    ...['wood', 'stone', 'iron', 'steel', 'gold', 'diamond'].flatMap(k => [L('pick/' + k, `assets/mine/picks/${k}.png`), L('pick/' + k + '-swing', `assets/mine/picks/${k}-swing.png`)])]).then(mineMasks);
 }
 function mineMasks() {
   const sm = IMG['hall/smithy']; if (sm) IMG['hallw/smithy'] = maskCanvas(sm.width, sm.height, [[14, 82, 296, 214], [146, 212, 165, 226]], SMITHY_OBJS.filter(o => o.solid).map(o => o.solid));
@@ -77,13 +79,13 @@ function mineLocal(op, d) {
     let grow = null; const lab = typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.cryAlways ? LABM.cryAlways : '';   // the lab only: LABM.cryAlways = 'e' | 'u' | 'd' puts a crystal under every break, to look at them
     if (!isCry(k) && lv >= 4 && W.cs.length < MR.cryKeep && (lab || Math.random() < MR.cryOdds[lv - 1])) { const c = lab || 'eud'[roll(MR.cryMix[lv - 1])]; W.cs += c; grow = {i: M.k.length, k: c}; M.k += c; }
     sync(); return {got, gc, gold: W.gold, cry: W.cry, grow, cap: W.m >= MR.dayGold}; }
-  if (op === 'mpick') { const t = MR.picks.findIndex(p => p.id === d.id); if (t < 0) bad('No such pickaxe.'); if (W.pick >= t) return {pick: W.pick}; if (coins < MR.picks[t].price) bad('Not enough coins.'); coins -= MR.picks[t].price; paintCoins(); W.pick = t; sync(); return {pick: t}; }
+  if (op === 'mpick') { const t = MR.picks.findIndex(p => p.id === d.id); if (t < 0) bad('No such pickaxe.'); if (W.pick >= t) return {pick: W.pick}; const P = MR.picks[t]; if (P.cry && W.cry < P.cry) bad('You need ' + P.cry + ' crystals.'); if (coins < P.price) bad('Not enough coins.'); coins -= P.price; if (P.cry) W.cry -= P.cry; paintCoins(); W.pick = t; sync(); return {pick: t}; }
   if (op === 'mcry') { const n = d.n | 0; if (n < 1 || n > W.cry) bad('You have no crystals.'); W.cry -= n; W.gold += n * MR.cryGold; sync(); return {gold: W.gold, cry: W.cry, got: n * MR.cryGold}; }
   if (op === 'smelt') { if (W.sm) bad('He is still working on your gold.'); const lots = Math.floor(W.gold / MR.smeltIn); if (!lots) bad('You need ' + MR.smeltIn + ' gold chunks.'); W.gold -= lots * MR.smeltIn; W.sm = {c: lots * MR.smeltOut, t: Date.now()}; sync(); return {job: W.sm, gold: W.gold}; }
   if (op === 'smeltGet') { const J = W.sm; if (!J) bad('He has nothing of yours.'); if (Date.now() - J.t < smeltMs()) bad('Your coins are not ready yet.'); coins += J.c; paintCoins(); delete W.sm; sync(); return {coins: J.c}; }
   bad('Unknown action.');
 }
-if (typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.gold != null) { GOLD.local = true; GOLD.n = LABM.gold | 0; GOLD.cry = LABM.cry | 0; GOLD.pick = clamp(LABM.pick | 0, 0, 4); GOLD.job = LABM.sm || null; }   // the lab remembers what you dug
+if (typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.gold != null) { GOLD.local = true; GOLD.n = LABM.gold | 0; GOLD.cry = LABM.cry | 0; GOLD.pick = clamp(LABM.pick | 0, 0, MR.picks.length - 1); GOLD.job = LABM.sm || null; }   // the lab remembers what you dug
 const smeltMs = () => (typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.smeltMs) || MR.smeltMs;   // the lab only: LABM.smeltMs = 30000 makes his five minutes half a minute, to watch the whole job
 async function mop(op, d) {
   if ((typeof LABLOCAL !== 'undefined' && LABLOCAL) || GOLD.local) return mineLocal(op, d);
@@ -92,7 +94,7 @@ async function mop(op, d) {
 
 /* ---------- THE BLACKSMITH'S, inside ---------- */
 const SMITH_AT = [240, 119];   // where he stands, behind his counter
-const PICKWALL = {x: 98, y: 27, w: 94, h: 40};   // the pickaxe wall (round 2: where the sword shelf was): all five, and where you buy the next one
+const PICKWALL = {x: 98, y: 25, w: 94, h: 50};   // (25 Nov) taller: the six new pickaxes hang in two rows of three   // the pickaxe wall (round 2: where the sword shelf was): all five, and where you buy the next one
 const SMITHY_OBJS = [
   {k: 'pickwall', x: PICKWALL.x, y: PICKWALL.y, wall: true}, {k: 'toolrack', x: 212, y: 30, wall: true},   // his hammers and pliers hang behind him now (his note)
   {k: 'forge', x: 18, y: 6, solid: [20, 80, 94, 122]},
@@ -111,22 +113,27 @@ function smithSet() {
   SP.smith = {front: ds};
 }
 /* the pickaxe wall: a board with the five hanging on it. Yours and the ones under it in full colour, the next one too (it blinks), the rest dark. */
+const pickSlot = t => [Math.round(((t % 3) + .5) * PICKWALL.w / 3) - 12, 2 + Math.floor(t / 3) * 22];   // where pickaxe t hangs on the board (its 24 x 24 picture's corner)
 function pickWall() {
-  const sig = GOLD.pick; if (pickWall.c && pickWall.sig === sig) return pickWall.c; pickWall.sig = sig;
+  const sig = GOLD.pick + '|' + !!IMG['pick/diamond']; if (pickWall.c && pickWall.sig === sig) return pickWall.c; pickWall.sig = sig;
   const W = PICKWALL.w, H = PICKWALL.h, c = pickWall.c || (pickWall.c = mk(W, H)), x = c.getContext('2d'), F = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); }; x.clearRect(0, 0, W, H);
-  F('#01032e', 0, 0, W, H - 3); F('#8a4a22', 1, 1, W - 2, H - 5); F('#a85f2c', 1, 1, W - 2, 1); F('#6b3718', 1, H - 6, W - 2, 2);
-  for (let i = 1; i < 5; i++) F('#6b3718', Math.round(i * W / 5), 2, 1, H - 8);                       // the planks
-  for (const [a, b] of [[3, 3], [W - 5, 3], [3, H - 9], [W - 5, H - 9]]) F('#3a1f12', a, b, 2, 2);     // nails
+  /* (25 Nov, his note) the same wood as the tool rack beside it: wide flat planks lying across, a light top edge on each, dark seams, grain streaks */
+  const BH = H - 3, R = n => { n = Math.sin(n * 12.9898) * 43758.5453; return n - Math.floor(n); };
+  F('#3e162b', 0, 0, W, BH); F('#0c0321', 0, BH - 1, W, 1);
+  for (let y = 1, row = 0; y < BH - 1; y += 12, row++) { const h = Math.min(11, BH - 1 - y);
+    F('#7f3c2b', 1, y, W - 2, h); F('#9c4d2c', 1, y, W - 2, Math.min(2, h)); if (y + 11 < BH - 1) F('#4c202d', 1, y + 11, W - 2, 1);
+    for (let k = 0; k < 9; k++) { const gy = y + 3 + Math.floor(R(row * 31 + k) * (h - 4)), gx = 1 + Math.floor(R(row * 57 + k * 3) * (W - 12)), gw = 3 + Math.floor(R(k * 7 + row) * 9);
+      F(k % 3 ? '#59242d' : '#662c2c', gx, gy, gw, 1); if (k % 2) F('#833e2b', gx + 2, gy - 1, Math.max(1, gw - 4), 1); } }
   F('rgba(18,28,58,.38)', 1, H - 3, W - 2, 2);                                                         // its flat shadow on the wall
-  for (let t = 0; t < 5; t++) { const cx = Math.round((t + .5) * W / 5), s = pickSprite(t, 48);
-    F('#3a1f12', cx - 5, 9, 2, 2); F('#3a1f12', cx + 4, 9, 2, 2);                                      // two pegs under the head
-    if (t <= GOLD.pick + 1) x.drawImage(s, cx - 20, 24 - 20);
-    else { const d = mk(41, 41), dx = d.getContext('2d'); dx.drawImage(s, 0, 0); dx.globalCompositeOperation = 'source-in'; dx.fillStyle = '#4a2812'; dx.fillRect(0, 0, 41, 41); x.drawImage(d, cx - 20, 24 - 20); } }
+  for (let t = 0; t < 6; t++) { const [px, py] = pickSlot(t), s = IMG['pick/' + PICK_ART[t]]; if (!s) continue;
+    F('#3a1f12', px + 12, py + 7, 2, 2);                                                               // the peg it hangs on, under the head
+    if (t <= GOLD.pick + 1) x.drawImage(s, px, py);
+    else { const d = mk(24, 24), dx = d.getContext('2d'); dx.drawImage(s, 0, 0); dx.globalCompositeOperation = 'source-in'; dx.fillStyle = '#4a2812'; dx.fillRect(0, 0, 24, 24); x.drawImage(d, px, py); } }
   return c;
 }
 function pickWallAfter(t) {   // the next one to buy: yellow corners blinking round it
-  const n = GOLD.pick + 1; if (n > 4 || Math.floor(t / 450) % 2) return; const cx = X(PICKWALL.x + Math.round((n + .5) * PICKWALL.w / 5)), y = Y(PICKWALL.y + 5); lx.fillStyle = '#ffd25e';
-  for (const [a, b, sx, sy] of [[-8, 0, 1, 1], [8, 0, -1, 1], [-8, 26, 1, -1], [8, 26, -1, -1]]) { lx.fillRect(cx + a, y + b, 1, 1); lx.fillRect(cx + a + sx, y + b, 1, 1); lx.fillRect(cx + a, y + b + sy, 1, 1); }
+  const n = GOLD.pick + 1; if (n > 5 || Math.floor(t / 450) % 2) return; const [qx, qy] = pickSlot(n), cx = X(PICKWALL.x + qx + 12), y = Y(PICKWALL.y + qy + 1); lx.fillStyle = '#ffd25e';
+  for (const [a, b, sx, sy] of [[-11, 0, 1, 1], [11, 0, -1, 1], [-11, 22, 1, -1], [11, 22, -1, -1]]) { lx.fillRect(cx + a, y + b, 1, 1); lx.fillRect(cx + a + sx, y + b, 1, 1); lx.fillRect(cx + a, y + b + sy, 1, 1); }
 }
 
 /* ---------- SMELTING IS A JOB (round 2, his ask): "the blacksmith moves around the blacksmith interior realistically crafting/smelting the
@@ -223,8 +230,8 @@ function smithUI() {
 }
 function pickUI() {
   $('#pickPicks').innerHTML = MR.picks.map((p, t) => { const own = GOLD.pick >= t, on = GOLD.pick === t, next = t === GOLD.pick + 1;
-    return `<div class="jrod${on ? ' on' : ''}"><img class="jimg" src="${pickIcon(t)}" alt=""${own || next ? '' : ' style="filter:brightness(.35)"'}><div class="jt"><b>${p.name}</b><div class="small">${t === 4 ? 'Level 5. Breaks crystal.' : 'Level ' + (t + 1)}</div></div>` +
-      `<button class="btn${own ? '' : ' go'}" data-p="${p.id}"${own || !next || coins < p.price ? ' disabled' : ''}>${on ? 'Yours' : own ? 'Owned' : ic('coin', 2) + ' ' + p.price}</button></div>`; }).join('');
+    return `<div class="jrod${on ? ' on' : ''}"><img class="jimg" src="${pickIcon(t)}" alt=""${own || next ? '' : ' style="filter:brightness(.35)"'}><div class="jt"><b>${p.name}</b><div class="small">${t === 5 ? 'Crafted: coins + crystals. Fastest.' : t === 4 ? 'Level 5. Breaks crystal.' : 'Level ' + (t + 1)}</div></div>` +
+      `<button class="btn${own ? '' : ' go'}" data-p="${p.id}"${own || !next || coins < p.price || (p.cry && GOLD.cry < p.cry) ? ' disabled' : ''}>${on ? 'Yours' : own ? 'Owned' : ic('coin', 2) + ' ' + p.price + (p.cry ? '<br>' + cryImg(2) + ' ' + p.cry : '')}</button></div>`; }).join('');
   for (const q of $('#pickPicks').querySelectorAll('button[data-p]')) q.onclick = () => pickBuy(q.dataset.p);
 }
 function smithOpen() { sfx('click'); document.querySelectorAll('.modal.on').forEach(q => q.classList.remove('on')); paintCoins(); smithUI(); $('#smithModal').classList.add('on'); }
@@ -522,6 +529,39 @@ function digBreak(T, inf) {
 
 /* THE PICKAXE: drawn in code at any angle, on the art's own pixels (so every outfit can swing every pickaxe). Angle 0 = pointing right. */
 const PICK_COL = [['#96683e', '#be8c5a'], ['#787c8c', '#aab0bc'], ['#b0bacc', '#e2e8f0'], ['#568cc4', '#96c8f0'], ['#e8b13a', '#fff0a0']];
+/* THE PICKAXES (25 Nov, his ask: "normal and look good when they are small"): PixelLab art, 24 x 24, plain, no outline (his pick, A).
+   Drawn head top-right, handle bottom-left; the hand holds PICK_GRIP. For the swing the picture is TURNED without blur: blown up 8 times,
+   turned, then each 8 x 8 block read from its middle, so every pixel stays a hard square in the picture's own colours. */
+const PICK_ART = ['wood', 'stone', 'iron', 'steel', 'gold', 'diamond'], PICK_GRIP = [7, 16], PICK_NAT = Math.atan2(6 - 16, 15 - 7);
+function pickRot(tier, step, flip) {
+  const key = 'r' + tier + '|' + step + '|' + (flip ? 1 : 0); if (MN.cache[key]) return MN.cache[key];
+  const im = IMG['pick/' + PICK_ART[tier]]; if (!im) return null;
+  const N = 41, C = 20, U = 8, a = step / 64 * Math.PI * 2, big = mk(N * U, N * U), bx = big.getContext('2d'); bx.imageSmoothingEnabled = false;
+  bx.translate((C + .5) * U, (C + .5) * U); bx.rotate(a - (flip ? Math.PI - PICK_NAT : PICK_NAT)); if (flip) bx.scale(-1, 1);
+  bx.drawImage(im, -(PICK_GRIP[0] + .5) * U, -(PICK_GRIP[1] + .5) * U, im.width * U, im.height * U);
+  const B = bx.getImageData(0, 0, N * U, N * U).data, c = mk(N, N), x = c.getContext('2d'), o = x.createImageData(N, N), d = o.data;
+  for (let y = 0; y < N; y++) for (let X0 = 0; X0 < N; X0++) { const i = ((y * U + (U >> 1)) * N * U + X0 * U + (U >> 1)) * 4, j = (y * N + X0) * 4; if (B[i + 3] > 127) { d[j] = B[i]; d[j + 1] = B[i + 1]; d[j + 2] = B[i + 2]; d[j + 3] = 255; } }
+  x.putImageData(o, 0, 0); return MN.cache[key] = c;
+}
+/* THE SWING (25 Nov, his ask): PixelLab drew each pickaxe's swing, 9 frames of 48 x 48 (assets/mine/picks/<name>-swing.png), the hand at
+   SWING_GRIP, the blow landing straight out to the right. The frames follow the swing's own timing, are turned (without blur, like pickRot) to
+   aim at the rock, and mirrored when you face left. The white streak is see-through (his note), done in the pictures. */
+const SWING_GRIP = [18, 30];
+function crispTurn(src, sx, sy, sw, sh, gx, gy, ang, flip, N) {   // a part of a picture turned round (gx, gy) without blur; (gx, gy) lands in the middle of an N x N canvas
+  const C = N >> 1, U = 8, big = mk(N * U, N * U), bx = big.getContext('2d'); bx.imageSmoothingEnabled = false;
+  bx.translate((C + .5) * U, (C + .5) * U); bx.rotate(ang); if (flip) bx.scale(-1, 1);
+  bx.drawImage(src, sx, sy, sw, sh, -(gx + .5) * U, -(gy + .5) * U, sw * U, sh * U);
+  const B = bx.getImageData(0, 0, N * U, N * U).data, c = mk(N, N), x = c.getContext('2d'), o = x.createImageData(N, N), d = o.data;
+  for (let y = 0; y < N; y++) for (let X0 = 0; X0 < N; X0++) { const i = ((y * U + (U >> 1)) * N * U + X0 * U + (U >> 1)) * 4, j = (y * N + X0) * 4; if (B[i + 3] > 40) { d[j] = B[i]; d[j + 1] = B[i + 1]; d[j + 2] = B[i + 2]; d[j + 3] = B[i + 3] > 200 ? 255 : B[i + 3]; } }
+  x.putImageData(o, 0, 0); return c;
+}
+function swingFrame(tier, k, aim, flip) {
+  const src = IMG['pick/' + PICK_ART[tier] + '-swing']; if (!src) return null;
+  const f = k < .46 ? Math.min(2, Math.floor(k / .46 * 3)) : k < HIT_AT ? 3 : k < .74 ? (k < (HIT_AT + .74) / 2 ? 4 : 5) : Math.min(8, 6 + Math.floor((k - .74) / .26 * 3)),
+    st = ((Math.round(aim / (Math.PI * 2) * 32) % 32) + 32) % 32, key = 'sw' + tier + '|' + f + '|' + st + '|' + (flip ? 1 : 0);
+  if (MN.cache[key]) return MN.cache[key];
+  const a = st / 32 * Math.PI * 2; return MN.cache[key] = crispTurn(src, f * 48, 0, 48, 48, SWING_GRIP[0], SWING_GRIP[1], flip ? -a : a, flip, 65);
+}
 function pickSprite(tier, step) {
   const key = 'p' + tier + '|' + step; if (MN.cache[key]) return MN.cache[key];
   const N = 41, C = 20, c = mk(N, N), x = c.getContext('2d'), a = step / 64 * Math.PI * 2, ux = Math.cos(a), uy = Math.sin(a), px = -uy, py = ux, P = (col, fx, fy) => { x.fillStyle = col; x.fillRect(Math.round(C + fx), Math.round(C + fy), 1, 1); };
@@ -532,7 +572,7 @@ function pickSprite(tier, step) {
   for (let Y0 = 0; Y0 < N; Y0++) for (let X0 = 0; X0 < N; X0++) if (!A(X0, Y0) && (A(X0 + 1, Y0) || A(X0 - 1, Y0) || A(X0, Y0 + 1) || A(X0, Y0 - 1))) edge.push((Y0 * N + X0) * 4);
   for (const i of edge) { p[i] = 1; p[i + 1] = 3; p[i + 2] = 46; p[i + 3] = 255; } x.putImageData(d, 0, 0); return MN.cache[key] = c;
 }
-function pickIcon(tier) { const k = 'pi' + tier; if (MN.cache[k]) return MN.cache[k]; const s = pickSprite(tier, 56), c = mk(64, 64), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(s, 15, 3, 21, 21, 0, 0, 63, 63); return MN.cache[k] = c.toDataURL(); }
+function pickIcon(tier) { const k = 'pi' + tier; if (MN.cache[k]) return MN.cache[k]; const A = IMG['pick/' + PICK_ART[tier]]; if (A) { const c = mk(48, 48), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(A, 0, 0, 48, 48); return MN.cache[k] = c.toDataURL(); } const s = pickSprite(tier, 56), c = mk(64, 64), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(s, 15, 3, 21, 21, 0, 0, 63, 63); return MN.cache[k] = c.toDataURL(); }
 /* one swing, k = 0..1: the pick goes up and back, comes down hard, bounces off, settles. Returns how the body moves and where the pick is. */
 function swingPose(m, d) {
   const [tx, ty] = d.T ? tgtPt(d.T) : airPt(m), k = d.t / SW, side = tx >= m.x ? 1 : -1, hx = m.x + side * 6, hy0 = m.y - 11;
@@ -544,7 +584,7 @@ function swingPose(m, d) {
   else { const q = (k - .74) / .26; a = a1 + (rest - a1) * q; lunge = 1 - q; }
   const L = Math.hypot(tx - m.x, ty + 6 - m.y) || 1, ox = (tx - m.x) / L * lunge, oy = (ty + 6 - m.y) / L * lunge * .6;
   if (side < 0) a = Math.PI - a;
-  return {a, lift, ox, oy, hx: hx + ox, hy: hy0 + oy - lift, side, k};
+  return {a, lift, ox, oy, hx: hx + ox, hy: hy0 + oy - lift, side, k, aim: a1};
 }
 
 /* ---------- every frame ---------- */
@@ -553,12 +593,18 @@ MNH.frame = (m, people, dt, t, H, img) => {
   const d = DIG.on, sw = d ? swingPose(m, d) : null, sh = M.shake > 0 ? M.shake * 14 : 0, shx = sh ? Math.round(Math.sin(t * .09) * sh) : 0, shy = sh ? Math.round(Math.cos(t * .11) * sh * .6) : 0;
   const tp = $('#townHud #hallBar'), br = tp && tp.getBoundingClientRect(), cr = cv.getBoundingClientRect();
   view(M.bg, m.x + shx, m.y - 8 + shy, 190, {hi: true, void: '#07060f', loose: br && br.height ? clamp((br.top - cr.top + 6) / cr.height, .6, 1) : .85});
-  const mine = people.filter(p => p.e === m).map(p => sw ? {...p, x: p.x + sw.ox, y: p.y + sw.oy, lift: (p.lift || 0) + sw.lift, walk: false} : p);   // every level is your own cave: only you are in it
+  /* (25 Nov, his ask) an outfit with its own swing (mine<tier>_right_<n>, PixelLab) swings the pickaxe itself: no separate pickaxe drawn over it */
+  const swingStep = k => k < .46 ? (k < .23 ? 1 : 2) : k < HIT_AT ? 3 : k < .74 ? (k < (HIT_AT + .74) / 2 ? 4 : 5) : Math.min(8, 6 + Math.floor((k - .74) / .26 * 3));
+  let own = false;
+  const mine = people.filter(p => p.e === m).map(p => { if (!sw) return p; const sd = sw.side > 0 ? 'right' : 'left', S0 = SP[p.name];
+    if (S0 && S0.poses && S0.poses[`mine${GOLD.pick}_${sd}_0`]) { own = true; return {...p, dir: sd, pose: 'mine', tier: GOLD.pick, step: swingStep(sw.k), walk: false}; }
+    return {...p, x: p.x + sw.ox, y: p.y + sw.oy, lift: (p.lift || 0) + sw.lift, walk: false}; });   // every level is your own cave: only you are in it
   const objs = M.wobj.map(o => { const dm = o.i != null && M.wdmg.get(o.i); return dm && dm.shake > 0 ? {...o, x: o.x + Math.round(Math.sin(dm.shake * 70) * 1.2)} : o; });
   for (const r of M.rocks) { const im = rockSprite(rockRow(r), r.a, r.flash > 0); if (!im) continue; const cx = r.gx * CS + 8, cy = r.gy * CS + 11, sx = r.shake > 0 ? Math.round(Math.sin(r.shake * 70) * 1.4) : 0, up = r.born > 0 ? Math.round(r.born * 12) : 0;
     objs.push({img: im, x: cx - im.width / 2 + sx, y: cy - im.gy + up, base: r.gy * CS + 13, after: isCry(r.k) ? () => gemTwinkle(cx, cy, t, r) : null}); }
   const hits = drawScene(mine, null, M.bg, objs);
-  if (sw) { const st = ((Math.round(sw.a / (Math.PI * 2) * 64) % 64) + 64) % 64, im = pickSprite(GOLD.pick, st); lx.drawImage(im, X(sw.hx) - 20, Y(sw.hy) - 20);
+  const sf = sw && !own && swingFrame(GOLD.pick, sw.k, sw.aim, sw.side < 0); if (own) {} else if (sf) lx.drawImage(sf, X(sw.hx) - 32, Y(sw.hy) - 32);
+  else if (sw) { const st = ((Math.round(sw.a / (Math.PI * 2) * 64) % 64) + 64) % 64, im = pickRot(GOLD.pick, st, sw.side < 0) || pickSprite(GOLD.pick, st); lx.drawImage(im, X(sw.hx) - 20, Y(sw.hy) - 20);
     if (sw.k > .5 && sw.k < HIT_AT + .04) { lx.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 1; i <= 3; i++) { const a = sw.a - sw.side * i * .22; lx.fillRect(X(sw.hx + Math.cos(a) * 14), Y(sw.hy + Math.sin(a) * 14), 1, 1); } } }   // a streak behind the head on the way down
   mineFx(dt, m); wlFx(dt, m.loc); drawPuffs(dt);
   const L = [[m.x, m.y - 14, 52, '255,206,140', .13, 1]];

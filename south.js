@@ -82,14 +82,14 @@ const SH = HALLS[SOUTH - 100];
 SH.from = was => was === SMITHY ? [S_BLD.door[0], S_BLD.door[1], 'front'] : was === MINE ? [S_MINE.door[0], S_MINE.door[1] + 4, 'front'] : null;
 function southObjs(m, dt) {
   const out = [], b = IMG['bld/blacksmith'];
-  if (b) { const o = {img: b, x: S_BLD.x, y: S_BLD.y, base: S_BLD.y + 100};   /* sorts by the middle of its solid footprint: anyone in front of the wall is drawn over it, anyone behind it under */ const hid = m.y < S_BLD.y + 46 && m.y > S_BLD.y + 6 && m.x > S_BLD.x + 3 && m.x < S_BLD.x + b.width - 3;   /* only when you are really behind it (his catch: walking up to the front wall made it see-through) */
+  if (b) { const o = {img: b, x: S_BLD.x, y: S_BLD.y, base: S_BLD.y + 100, prof: true};   /* sorts by the middle of its solid footprint: anyone in front of the wall is drawn over it, anyone behind it under */ const hid = m.y < S_BLD.y + 46 && m.y > S_BLD.y + 6 && m.x > S_BLD.x + 3 && m.x < S_BLD.x + b.width - 3;   /* only when you are really behind it (his catch: walking up to the front wall made it see-through) */
     S_BLD.a = clamp((S_BLD.a ?? 1) + (hid ? -1 : 1) * dt * 4, .45, 1); if (S_BLD.a < 1) o.alpha = S_BLD.a; o.after = () => chimneySmoke(dt); out.push(o); }
-  const mi = IMG['s/mine']; if (mi) out.push({img: mi, x: S_MINE.x, y: S_MINE.y, base: S_MINE.y + mi.height - 2});
+  const mi = IMG['s/mine']; if (mi) out.push({img: mi, x: S_MINE.x, y: S_MINE.y, base: S_MINE.y + mi.height - 2, prof: true});
   const sg = IMG['s/sign']; if (sg) out.push({img: sg, x: S_SIGN.x, y: S_SIGN.y, base: S_SIGN.y + sg.height - 2});
   for (const q of S_PROPS) { const im = propImg(q); if (!im) continue; const o = {img: im, x: q.x, y: q.y, base: q.y + im.base};   // his trees and bushes: walk behind them, the one you are behind fades
     if (q.fade !== false) { const hid = m.y < o.base && m.y > q.y + 6 && m.x > q.x + 3 && m.x < q.x + im.width - 3; q.a = clamp((q.a ?? 1) + (hid ? -1 : 1) * dt * 4, .45, 1); if (q.a < 1) o.alpha = q.a; }
     out.push(o); }
-  S_STALLS.forEach(([x, y], i) => { const im = IMG['s/stall-' + S_STALL_COL[window.marketCol ? marketCol(i) : i % 3]]; /* the colour its keeper picked (market.js) */ if (im) out.push({img: im, x, y, base: y + im.height - 2, after: () => stallAfter(i, x, y)}); });
+  S_STALLS.forEach(([x, y], i) => { const im = IMG['s/stall-' + S_STALL_COL[window.marketCol ? marketCol(i) : i % 3]]; /* the colour its keeper picked (market.js) */ if (im) out.push({img: im, x, y, base: y + im.height - 2, prof: true, after: () => stallAfter(i, x, y)}); });
   return out;
 }
 /* CHIMNEY SMOKE (his ask, 24 Nov): soft grey puffs out of the forge chimney, rising, drifting a little with the wind, growing and fading.
