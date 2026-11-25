@@ -3,9 +3,9 @@ mining the walls ... deeper you go ... diamond rocks, emerald rocks").
 Everything here is built as little voxel models and written out as SLICE STRIPS (ground slice on the left), the same idea as the UFO and
 the Getaway Car (tools/make_ufo.py). mine.js stacks them: one slice a pixel higher than the last.
   assets/mine/rocks.png   one row per (rock, damage stage); 14 slices of 20 x 20
-        rows: for each of the 5 cave levels: stone, gold, rich gold  (x 3 damage stages), then emerald, ruby, diamond (x 3 stages)
+        rows: for each of the 12 cave levels: stone, gold, rich gold  (x 3 damage stages), then emerald, ruby, diamond (x 3 stages)
   assets/mine/walls.png   one row per (wall, damage stage); 24 slices of 16 x 16 (a wall block is one 16 px cell, 24 px tall)
-        rows: for each of the 5 levels: plain A, plain B, gold vein, rich vein  (x 3 stages)
+        rows: for each of the 12 levels: plain A, plain B, gold vein, rich vein  (x 3 stages)
   assets/mine/floor.png   16 x 16 ground tiles: one row per level, 4 tiles each
   ../mafia2-art/mine/mine-check.png   a look at everything stacked (not used by the game)
 No AI art in here: all drawn by this script, so the numbers below are the only thing to edit.
@@ -14,12 +14,26 @@ import numpy as np
 from PIL import Image
 rng = np.random.default_rng(2411)
 NAVY = (26, 20, 48)
-# 5 tones, dark -> light, for each level's stone
+# 5 tones, dark -> light, for each level's stone. (25 Nov 2026, his ask: "around 10 levels ... mysterious colours and wall textures as it
+# gets deeper") 12 LEVELS, two to a pickaxe: every pair is one THEME (its own wall texture), the second level of a pair a darker cousin.
 STONE = [[(58, 40, 38), (92, 64, 52), (128, 92, 70), (164, 124, 92), (198, 162, 122)],      # 1 brown earth
-         [(44, 44, 60), (72, 74, 92), (104, 108, 124), (140, 146, 158), (182, 190, 198)],   # 2 grey stone
-         [(30, 38, 66), (48, 62, 98), (70, 92, 132), (98, 126, 164), (142, 170, 200)],      # 3 blue slate
-         [(40, 26, 60), (66, 42, 92), (96, 62, 124), (130, 90, 156), (172, 130, 192)],      # 4 deep purple
-         [(18, 22, 34), (32, 40, 56), (50, 60, 80), (74, 88, 110), (112, 130, 152)]]        # 5 black rock
+         [(52, 38, 42), (82, 58, 56), (114, 82, 72), (148, 112, 94), (184, 150, 126)],      # 2 umber
+         [(44, 44, 60), (72, 74, 92), (104, 108, 124), (140, 146, 158), (182, 190, 198)],   # 3 grey stone
+         [(38, 42, 60), (62, 72, 94), (90, 104, 128), (124, 142, 164), (166, 186, 204)],    # 4 cold grey
+         [(30, 38, 66), (48, 62, 98), (70, 92, 132), (98, 126, 164), (142, 170, 200)],      # 5 blue slate
+         [(20, 40, 62), (30, 66, 92), (44, 96, 122), (70, 132, 152), (116, 176, 186)],      # 6 deep teal
+         [(40, 26, 60), (66, 42, 92), (96, 62, 124), (130, 90, 156), (172, 130, 192)],      # 7 deep purple
+         [(38, 20, 54), (64, 32, 82), (94, 46, 108), (130, 66, 136), (176, 104, 170)],      # 8 dark violet
+         [(40, 18, 28), (68, 28, 38), (100, 42, 48), (136, 62, 60), (180, 96, 84)],         # 9 maroon
+         [(32, 16, 24), (56, 24, 30), (84, 34, 38), (118, 50, 46), (164, 82, 66)],          # 10 charred red
+         [(20, 16, 26), (34, 26, 38), (52, 36, 50), (78, 50, 62), (118, 74, 84)],           # 11 obsidian
+         [(14, 12, 20), (26, 20, 30), (40, 28, 38), (60, 36, 44), (98, 54, 58)]]            # 12 black rock
+LEVELS = len(STONE)
+GEM_ROCK = [(18, 22, 34), (32, 40, 56), (50, 60, 80), (74, 88, 110), (112, 130, 152)]      # the dark stone a crystal sits in (the same on every level)
+LAVA = [(120, 22, 18), (200, 56, 18), (255, 128, 36), (255, 196, 80), (255, 238, 170)]     # glowing in the joints of the deepest walls
+AMETH = [(96, 48, 170), (140, 80, 220), (186, 130, 250), (220, 180, 255), (244, 226, 255)] # little crystals in the purple walls
+# a theme's wall: how many stones on a face, and how they are stretched (x, z): cobbles, big blocks, flat slate beds, tall shards, cracked rock, basalt columns
+WALL_LOOK = [(9, 1, .9), (6, .8, 1.15), (10, .38, 1.9), (9, 1.5, .5), (7, 1, .9), (8, 1.7, .36)]
 GOLD = [(122, 78, 22), (185, 120, 31), (232, 177, 58), (255, 210, 94), (255, 246, 207)]
 GEMS = {'emerald': [(10, 84, 62), (22, 140, 90), (54, 200, 120), (130, 240, 170), (224, 255, 236)],
         'ruby': [(110, 16, 40), (176, 28, 52), (228, 60, 72), (255, 130, 130), (255, 224, 224)],
@@ -113,19 +127,20 @@ def gem(name, gi, stage):
     for p0, p1, r in spikes[:5 if stage == 0 else 4]: solid, mat, tone = prism(solid, mat, tone, p0, p1, r, 1)
     s2, mat = damage(solid, mat, stage, seed + 60 + stage); gemv = mat == 1; solid = np.where(gemv, solid, s2)      # the bites only come out of the stone
     mat[(mat == 9) & gemv] = 1
-    return paint(solid, tone, mat, [STONE[4], GEMS[name]])
+    return paint(solid, tone, mat, [GEM_ROCK, GEMS[name]])
 
-rows = [strip(rock(l, k, s)) for l in range(5) for k in range(3) for s in range(3)] + [strip(gem(n, i, s)) for i, n in enumerate(GEMS) for s in range(3)]
+rows = [strip(rock(l, k, s)) for l in range(LEVELS) for k in range(3) for s in range(3)] + [strip(gem(n, i, s)) for i, n in enumerate(GEMS) for s in range(3)]
 rocks = np.concatenate(rows, axis=0); Image.fromarray(rocks).save('assets/mine/rocks.png', optimize=True)
 
 # ---------------- WALLS: 16 x 16, 24 slices. The front face is a wall of cobbles, set in and out, so the stack has real ledges ----------------
 WS, WZ = 16, 24
 def wall(level, kind, stage):
     seed = 300 + level * 10 + (kind if kind < 2 else 0) + (5 if kind >= 2 else 0); g = np.random.default_rng(seed)
-    pts = np.array([[g.uniform(0, WS), g.uniform(0, WZ)] for _ in range(9)])                     # cobble middles on the face (x, z); they wrap round in x so blocks tile
+    th = level // 2; NP, WX, WZS = WALL_LOOK[th]
+    pts = np.array([[g.uniform(0, WS), g.uniform(0, WZ)] for _ in range(NP)])                     # cobble middles on the face (x, z); they wrap round in x so blocks tile
     xs, zs = np.meshgrid(np.arange(WS), np.arange(WZ)); d = []
     for px, pz in pts:
-        dx = np.abs(xs - px); dx = np.minimum(dx, WS - dx); d.append(np.sqrt(dx ** 2 + ((zs - pz) * .9) ** 2))
+        dx = np.abs(xs - px); dx = np.minimum(dx, WS - dx); d.append(np.sqrt((dx * WX) ** 2 + ((zs - pz) * WZS) ** 2))
     d = np.array(d); order = np.sort(d, axis=0); cell = d.argmin(0); gap = order[1] - order[0]
     indent = np.where(gap < 1.1, 2, np.where(gap < 2.4, 1, 0)); indent[-1] = 0                         # the joints between cobbles sit deeper
     base = np.array([g.integers(1, 3) for _ in pts])[cell]                                         # each cobble its own tone
@@ -144,14 +159,23 @@ def wall(level, kind, stage):
             dx = np.abs(xx - x); dx = np.minimum(dx, WS - dx); sel = (dx ** 2 + ((zz - z) * 1.0) ** 2 < r * r) & (yy >= WS - 4); mat[sel] = 1
             tone[sel] = np.clip(2 + (zz[sel] > z).astype(int) - (indent[zz[sel], xx[sel]] == 2), 0, 4)
         mat[WZ - 1][g.random((WS, WS)) > (.93 if kind == 3 else .97)] = 1
+    if th == 3 and kind == 1:                                                                          # purple: a few small crystals growing out of the face
+        zz, yy, xx = np.indices(solid.shape)
+        for _ in range(3):
+            x, z = g.uniform(2, WS - 2), g.uniform(4, WZ - 5); sel = (np.abs(xx - x) + np.abs(zz - z) * .7 < 1.6) & (yy >= WS - 3); mat[sel] = 2; tone[sel] = np.clip(1 + (zz[sel] - int(z)) + 1, 0, 4)
+    if th >= 4 and kind < 2:                                                                            # the deepest: lava glows in some of the joints
+        hot = g.choice(len(pts), 2 if th == 4 else 3, replace=False); zz, yy, xx = np.indices(solid.shape)
+        j2 = (indent == 2) & np.isin(cell, hot); j2[-2:] = False; j2[:2] = False
+        sel = j2[zz, xx] & (yy == WS - 3); mat[sel] = 2; tone[sel] = 2 + ((xx[sel] + zz[sel]) % 3 == 0)
+        sel = j2[zz, xx] & (yy == WS - 2) ; solid[sel] = False
     solid, mat = damage(solid, mat, stage, seed + 70 + stage, face=True)
     Zs, Ys, Xs = solid.shape; out = np.zeros((Zs, Ys, Xs, 4), np.uint8); above = np.zeros_like(solid); above[:-1] = solid[1:]; above[-1] = True
     t = np.clip(tone + ((~above) & solid) * 1, 0, 4)
-    for m, pal in enumerate([STONE[level], GOLD]):
-        P = np.array(pal, np.uint8); sel = solid & (mat == m); out[sel, :3] = P[t[sel]]; out[sel, 3] = 255
+    for m, pal in enumerate([STONE[level], GOLD, AMETH if th == 3 else LAVA]):
+        P = np.array(pal, np.uint8); sel = solid & (mat == m); out[sel, :3] = P[(tone if m == 2 else t)[sel]]; out[sel, 3] = 255
     cr = solid & (mat == 9); out[cr, :3] = NAVY; out[cr, 3] = 255
     return out
-wrows = [strip(wall(l, k, s)) for l in range(5) for k in range(4) for s in range(3)]
+wrows = [strip(wall(l, k, s)) for l in range(LEVELS) for k in range(4) for s in range(3)]
 walls = np.concatenate(wrows, axis=0); Image.fromarray(walls).save('assets/mine/walls.png', optimize=True)
 
 # ---------------- FLOOR: 16 x 16 tiles ----------------
@@ -165,10 +189,10 @@ def floor(level, v):
         for _ in range(2): x, y = g.integers(2, 13, 2); t[y, x:x + 2, :3] = P[2]; t[y + 1, x:x + 2, :3] = P[1]; t[y + 2, x:x + 3, :3] = dk
     if v == 2:
         x, y = g.integers(3, 12, 2)
-        for i in range(6): t[np.clip(y + i // 2, 0, 15), np.clip(x + i - 3 + (i % 3 == 0), 0, 15), :3] = dk
+        for i in range(6): t[np.clip(y + i // 2, 0, 15), np.clip(x + i - 3 + (i % 3 == 0), 0, 15), :3] = (96, 26, 26) if level >= 8 and i in (2, 3) else dk   # deep down: a dull ember in the crack
     if v == 3: x, y = g.integers(3, 11, 2); t[y, x, :3] = P[3]; t[y + 1, x, :3] = P[1]
     return t
-fl = np.concatenate([np.concatenate([floor(l, v) for v in range(4)], axis=1) for l in range(5)], axis=0); Image.fromarray(fl).save('assets/mine/floor.png', optimize=True)
+fl = np.concatenate([np.concatenate([floor(l, v) for v in range(4)], axis=1) for l in range(LEVELS)], axis=0); Image.fromarray(fl).save('assets/mine/floor.png', optimize=True)
 
 # ---------------- PROPS (round 2, his note: "improve the ladders ... same sliced style"): the shaft's stone rim and the ladder, as stacks ----------------
 # assets/mine/props.png: 30 slices of 20 x 20 a row. Rows 0-4 = the ring of stones round the shaft, one per level (8 slices used); row 5 = the ladder
@@ -187,7 +211,7 @@ def ladder():
         for x0 in (5, 13): out[z, 9:11, x0:x0 + 2] = (*W1, 255); out[z, 9, x0] = (*W2, 255); out[z, 10, x0 + 1] = (*W0, 255)
         if z % 4 == 2: out[z, 9:11, 7:13] = (*W2, 255); out[z, 10, 7:13] = (*W1, 255)
     return out
-props = np.concatenate([strip(rim(l)) for l in range(5)] + [strip(ladder())], axis=0); Image.fromarray(props).save('assets/mine/props.png', optimize=True)
+props = np.concatenate([strip(rim(l * 2)) for l in range(5)] + [strip(ladder())], axis=0); Image.fromarray(props).save('assets/mine/props.png', optimize=True)
 
 # ---------------- a check picture ----------------
 def stackup(st, S, n, squash=1.0, lift=1):
@@ -195,12 +219,12 @@ def stackup(st, S, n, squash=1.0, lift=1):
     for z in range(n):
         sl = Image.fromarray(st[:, z * S:(z + 1) * S]).resize((S, h), Image.NEAREST); im.alpha_composite(sl, (0, n * lift - z * lift - 1))
     return im
-chk = Image.new('RGBA', (15 * 24 + 8, 5 * 44 + 4 * 40 + 60), (20, 16, 30, 255))
+chk = Image.new('RGBA', (12 * 18 + 9 * 24 + 100, LEVELS * 44 + 60), (20, 16, 30, 255))
 for i, r in enumerate(rows):
-    lv, rest = divmod(i, 9)
-    im = stackup(r, RS, RZ, .7); chk.alpha_composite(im, (4 + (i % 9) * 24, 4 + (i // 9) * 34))
+    im = stackup(r, RS, RZ, .7); chk.alpha_composite(im, (4 + (i % 9) * 24, 4 + (i // 9) * 44))
 for i, r in enumerate(wrows):
-    im = stackup(r, WS, WZ); chk.alpha_composite(im, (4 + (i % 12) * 18, 220 + (i // 12) * 42))
-chk.alpha_composite(Image.fromarray(fl), (240, 220))
-chk.resize((chk.width * 4, chk.height * 4), Image.NEAREST).save('../mafia2-art/mine/mine-check.png')
+    im = stackup(r, WS, WZ); chk.alpha_composite(im, (224 + (i % 12) * 18, 4 + (i // 12) * 44))
+chk.alpha_composite(Image.fromarray(fl), (224 + 12 * 18 + 8, 4))
+try: chk.resize((chk.width * 3, chk.height * 3), Image.NEAREST).save('../mafia2-art/mine/mine-check.png')
+except Exception as e: print('no check picture:', e)
 print('rocks', rocks.shape, 'walls', walls.shape, 'floor', fl.shape)

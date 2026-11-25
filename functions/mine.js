@@ -4,22 +4,24 @@
 //   wallet: kit.gold  gold chunks (the Blacksmith smelts 10 into 15 coins (25 Nov, his ask: 1.5 a chunk))
 //           kit.cry   crystals (the new currency)        kit.pick  your best pickaxe, 0..4 (wood, stone, iron, steel, gold)
 //           kit.sm    your gold at the Blacksmith's: { c: coins it makes, t: when he started }; ready 5 minutes later
-//           kit.cs    crystal rocks found but not broken yet, up to 3 ("eud" letters): they wait for you on levels 4 and 5
+//           kit.cs    crystal rocks found but not broken yet, up to 3 ("eud" letters): they wait for you from level 7 down
 //           mine = { lv, k, t }  the level you are in: k = one letter per thing ('.' = dug out), t = when the last break was
 //           day.md / day.m / day.mc   today's date, gold chunks dug today, crystals dug today
 // MR = the numbers. THE SAME NUMBERS LIVE IN mine.js (the phone draws the hits from them): change both.
 const MR = {
   picks: [{ id: 'wood', price: 0, pow: 1 }, { id: 'stone', price: 50, pow: 2 }, { id: 'iron', price: 200, pow: 3 }, { id: 'steel', price: 700, pow: 5 }, { id: 'gold', price: 2500, pow: 8 }, { id: 'diamond', price: 3500, cry: 5, pow: 12 }],   // (25 Nov, his ask) the diamond pickaxe is CRAFTED: 3500 coins + 5 crystals
-  levels: 5, lvmul: [1, 1.6, 2.4, 3.6, 5],
+  levels: 12, lvmul: [1, 1.3, 1.7, 2.2, 2.8, 3.5, 4.4, 5.4, 6.6, 8, 9.6, 11.5],   // (25 Nov, his ask) 12 levels, two to a pickaxe (need)
   hp: { s: 3, g: 4, r: 6, w: 4, G: 5, R: 7, e: 30, u: 36, d: 44 },   // s stone, g gold rock, r rich rock, w plain wall, G gold vein, R rich vein, e emerald, u ruby, d diamond
-  rocks: 16, veins: 8, rockOdds: [[70, 28, 2], [58, 36, 6], [48, 40, 12], [40, 42, 18], [32, 44, 24]],
-  cryOdds: [0, 0, 0, .003, .008], cryMix: [0, 0, 0, [75, 25, 0], [60, 30, 10]], cryYield: { e: 1, u: 2, d: 4 }, cryKeep: 3,
-  goldMul: [1, 1.5, 2, 3, 4],   // round 3 (his note): gold rocks and veins pay this many times more per level
-  dayGold: 400, dayCry: 6, cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, swingMs: 520,   // smeltMs: the Blacksmith takes 5 minutes over your gold
+  rocks: 16, veins: 8, rockOdds: [[70, 28, 2], [64, 32, 4], [58, 36, 6], [53, 38, 9], [48, 40, 12], [44, 41, 15], [40, 42, 18], [36, 43, 21], [32, 44, 24], [28, 45, 27], [24, 45, 31], [20, 45, 35]],
+  cryFrom: 7, cryOdds: [0, 0, 0, 0, 0, 0, .002, .003, .005, .007, .011, .015], cryMix: [0, 0, 0, 0, 0, 0, [90, 10, 0], [80, 20, 0], [70, 25, 5], [62, 30, 8], [50, 35, 15], [40, 38, 22]], cryYield: { e: 1, u: 2, d: 4 }, cryKeep: 3,
+  goldMul: [1, 1.25, 1.5, 1.8, 2.1, 2.5, 3, 3.5, 4, 4.6, 5.3, 6],   // round 3 (his note): gold rocks and veins pay this many times more per level
+  fallLoss: .2,       // (25 Nov) passing out in the mine (mfall) costs this share of the gold chunks you carry
+  dayGold: 600, dayCry: 10, cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, swingMs: 520,   // smeltMs: the Blacksmith takes 5 minutes over your gold
   quick: .7,          // a break may come this much sooner than its swings take (lag), no sooner
   wallsPerLevel: 140  // plain walls you can dig in one visit to a level (the cave is 22 x 17)
 };
 const isCry = k => k === 'e' || k === 'u' || k === 'd';
+const need = lv => (lv - 1) >> 1;   // the pickaxe a level asks for: wood 1-2, stone 3-4, iron 5-6, steel 7-8, gold 9-10, diamond 11-12
 const hits = (k, lv, pick) => Math.max(1, Math.ceil(MR.hp[k] * (isCry(k) ? 1 : MR.lvmul[lv - 1]) / MR.picks[pick].pow));
 const roll = odds => { let r = Math.random() * 100; for (let i = 0; i < odds.length; i++) { r -= odds[i]; if (r < 0) return i; } return 0; };
 
@@ -31,17 +33,18 @@ module.exports = ({ tx, spend, bad, dayKey, flag }) => {
     // into a level (down the shaft, back up the ladder, or in from outside): what is in it
     mgo: (uid, d) => tx(uid, w => {
       const K = kit(w), lv = d.lv | 0; if (!(lv >= 1 && lv <= MR.levels)) bad('No such level.');
-      if (K.pick < lv - 1) bad('You need a better pickaxe to go deeper.');
+      if (K.pick < need(lv)) bad('You need a better pickaxe to go deeper.');
       const now = Date.now(); if (w.mine && now - (w.mine.g || 0) < 700) bad('Slow down.');
       let k = ''; for (let i = 0; i < MR.rocks; i++) k += 'sgr'[roll(MR.rockOdds[lv - 1])];
-      for (let i = 0; i < MR.veins; i++) k += Math.random() * 100 < 10 + lv * 10 ? 'R' : 'G';
-      if (lv >= 4) k += K.cs;
+      for (let i = 0; i < MR.veins; i++) k += Math.random() * 100 < 10 + lv * 6 ? 'R' : 'G';
+      if (lv >= MR.cryFrom) k += K.cs;
       w.mine = { lv, k, t: now, g: now, n: 0 }; return { lv, k };
     }),
     // one thing broken: i = its place in the level's list, or -1 = a plain piece of wall
     mbreak: (uid, d) => tx(uid, w => {
       const K = kit(w), M = w.mine; if (!M || typeof M.k !== 'string') bad('You are not in the mine.');
       const lv = M.lv | 0, i = Number.isInteger(d.i) ? d.i : -1; let k = 'w';
+      if (!(lv >= 1 && lv <= MR.levels) || K.pick < need(lv)) bad('You are not in the mine.');   // a level remembered from the old 5 can never be one your pickaxe does not reach
       if (i >= 0) { k = M.k[i]; if (!k || k === '.') bad('That is already dug out.'); }
       else { M.n = (M.n | 0) + 1; if (M.n > MR.wallsPerLevel) bad('That is already dug out.'); }
       if (isCry(k) && K.pick < 4) bad('Only a gold pickaxe can break crystal.');   // gold or better
@@ -57,9 +60,15 @@ module.exports = ({ tx, spend, bad, dayKey, flag }) => {
       w.day.m += got; K.gold += got; w.day.mc += gc; K.cry += gc;
       // now and then, deep down, a crystal rock sits under what you broke. It is kept for you (kit.cs) until you break it.
       let grow = null;
-      if (!isCry(k) && lv >= 4 && K.cs.length < MR.cryKeep && M.k.length < 60 && Math.random() < MR.cryOdds[lv - 1]) { const c = 'eud'[roll(MR.cryMix[lv - 1])]; K.cs += c; grow = { i: M.k.length, k: c }; M.k += c; }
+      if (!isCry(k) && lv >= MR.cryFrom && K.cs.length < MR.cryKeep && M.k.length < 60 && Math.random() < MR.cryOdds[lv - 1]) { const c = 'eud'[roll(MR.cryMix[lv - 1])]; K.cs += c; grow = { i: M.k.length, k: c }; M.k += c; }
       return { got, gc, gold: K.gold, cry: K.cry, grow, cap: w.day.m >= MR.dayGold };
     }).catch(quick(uid)),
+    // PASSED OUT (25 Nov, his ask: risk in the deep levels): no hearts left, so you drop a fifth of the gold chunks you carry (never
+    // crystals, never coins) and are outside again. The phone only says that it happened: how much goes is worked out here.
+    mfall: (uid) => tx(uid, w => {
+      const K = kit(w); if (!w.mine) bad('You are not in the mine.');
+      const lost = Math.floor(K.gold * MR.fallLoss); K.gold -= lost; delete w.mine; return { lost, gold: K.gold };
+    }),
     // the Blacksmith sells pickaxes: you keep the best one you have bought
     mpick: (uid, d) => tx(uid, w => {
       const K = kit(w), t = MR.picks.findIndex(p => p.id === d.id); if (t < 0) bad('No such pickaxe.');
