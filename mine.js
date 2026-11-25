@@ -451,7 +451,7 @@ MNH.joy = (m, J) => {
   const gx = Math.floor((m.x + dx * 12) / CS), gy = Math.floor((m.y - 3 + dy * 10) / CS);
   if (MN.shaft && MN.shaft[0] === gx && MN.shaft[1] === gy && !m.walk) { mineTo(MN.lv + 1); return true; }
   if (MN.lv > 1 && dy < 0 && gx === MN.entry[0] && gy === MN.entry[1] - 1 && !m.walk) { mineTo(MN.lv - 1); return true; }
-  if (DIG.on) { if (m.walk) DIG.on = null; return true; }
+  if (DIG.on) { if (m.walk && !PICK.held && !DIG.on.air) DIG.on = null; return true; }
   const T = !m.walk && Math.max(Math.abs(J.x), Math.abs(J.y)) > .6 ? tgtOf(gx, gy) : null;   // pushing into a rock or a wall: dig it
   if (!T) { MN.pushT = now; return true; }
   if (now - MN.pushT > 160) digStart(T);
@@ -473,11 +473,15 @@ function digTick(dt) {
   const M = MN; M.shake = Math.max(0, M.shake - dt);
   for (const r of M.rocks) { if (r.shake > 0) r.shake -= dt; if (r.flash > 0) r.flash -= dt; if (r.born > 0) r.born -= dt; }
   for (const d of M.wdmg.values()) if (d.shake > 0) d.shake -= dt;
-  const d = DIG.on, m = WL.me; if (!d || !m) return;
-  if (m.loc !== MINE || Math.hypot(m.x - d.x, m.y - d.y) > 2 || (m.path && m.path.length) || document.querySelector('.modal.on')) { DIG.on = null; return; }
+  const m = WL.me; if (!m) return;
+  if (!DIG.on && PICK.held && !DIG.ask && !MN.busy && m.loc === MINE && !document.querySelector('.modal.on')) pickSwing();   // held: the next swing starts as soon as the last one ends
+  const d = DIG.on; if (!d) return;
+  const free = PICK.held || d.air;   // (25 Nov, his ask) a held or button swing may walk; a tap or a push into a rock stops if you move off
+  if (m.loc !== MINE || (!free && (Math.hypot(m.x - d.x, m.y - d.y) > 2 || (m.path && m.path.length))) || document.querySelector('.modal.on')) { DIG.on = null; return; }
   d.t += dt;
-  if (!d.hit && d.t >= SW * HIT_AT) { d.hit = true; digHit(d.T); }
-  if (d.t >= SW) { if (!DIG.on) return; d.t = 0; d.hit = false; d.n++; }
+  if (!d.hit && d.t >= SW * HIT_AT) { d.hit = true; if (free) d.T = pickAim(m);   // whatever is in front of you at the moment the pick lands
+    if (d.T) digHit(d.T); else { sfx('swish'); puffAt(airPt(m)[0], airPt(m)[1] + 4, 2); } }
+  if (d.t >= SW) { if (!DIG.on) return; d.t = 0; d.hit = false; d.n++; if (free && !PICK.held) DIG.on = null; }   // one press = one swing; holding keeps swinging
 }
 function digHit(T) {
   const inf = tgtInfo(T), o = inf.o, [tx, ty] = tgtPt(T); o.hp--; o.shake = .2; if (T.r) T.r.flash = .07; MN.shake = .1;
@@ -525,7 +529,7 @@ function pickSprite(tier, step) {
 function pickIcon(tier) { const k = 'pi' + tier; if (MN.cache[k]) return MN.cache[k]; const s = pickSprite(tier, 56), c = mk(64, 64), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(s, 15, 3, 21, 21, 0, 0, 63, 63); return MN.cache[k] = c.toDataURL(); }
 /* one swing, k = 0..1: the pick goes up and back, comes down hard, bounces off, settles. Returns how the body moves and where the pick is. */
 function swingPose(m, d) {
-  const [tx, ty] = tgtPt(d.T), k = d.t / SW, side = tx >= m.x ? 1 : -1, hx = m.x + side * 6, hy0 = m.y - 11;
+  const [tx, ty] = d.T ? tgtPt(d.T) : airPt(m), k = d.t / SW, side = tx >= m.x ? 1 : -1, hx = m.x + side * 6, hy0 = m.y - 11;
   const a1 = Math.atan2(ty - hy0, (tx - hx) * side), up = Math.min(a1 - 2.2, -1.95), rest = a1 - .9, eo = q => 1 - (1 - q) * (1 - q), ei = q => q * q * q;
   let a, lift = 0, lunge = 0;
   if (k < .46) { const q = eo(k / .46); a = rest + (up - rest) * q; lift = 2 * q; lunge = -1 * q; }
@@ -624,7 +628,10 @@ const PICK_ICON = pxIcon([
     + '#pickBtn:disabled{cursor:default}#pickBtn:disabled::before{filter:grayscale(1);opacity:.45}#pickBtn:disabled img{filter:grayscale(1);opacity:.4}'
     + '#phone.land #pickBtn{right:var(--abR,calc(22px + var(--sr)));bottom:var(--abB,calc(var(--lb) + 14px))!important}';
   document.head.appendChild(st);
-  b.onclick = () => { const T = pickTarget(); if (!T) return; sfx('click'); digStart(T); };
+  const up = () => { PICK.held = false; };
+  b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); try { b.setPointerCapture(e.pointerId); } catch (_) {} PICK.held = true; if (!DIG.on) pickSwing(); });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, up);
+  b.addEventListener('contextmenu', e => e.preventDefault());
 })();
 // what you are looking at: the cell in front of you, the way you face (the same cell the joystick digs when you push into it)
 function pickTarget() {
@@ -637,8 +644,23 @@ function pickBtnTick() {
   const show = !!m && m.loc === MINE && scene === scenes.town && $('#joy').classList.contains('on') && !document.querySelector('.modal.on');
   if (show) { if (!b.style.getPropertyValue('--pb')) { const v = $('#punchBtn').style.getPropertyValue('--pb'); if (v) b.style.setProperty('--pb', v); }
     b.style.bottom = (parseFloat($('#joy').style.bottom) + 23) + 'px';   // level with the joystick, like the fishing rod button
-    const can = !!pickTarget() || !!DIG.on; if (b.disabled === can) b.disabled = !can; }
+    if (b.disabled) b.disabled = false; }   /* (25 Nov) always pressable: it swings at nothing when nothing is in front */
   if (b.classList.contains('on') !== show) b.classList.toggle('on', show);
 }
 { const fr = scenes.town.frame; scenes.town.frame = function (dt, t) { const r = fr.call(this, dt, t); pickBtnTick(); return r; }; }
 setInterval(() => { const b = $('#pickBtn'); if (b && scene !== scenes.town) b.classList.remove('on'); }, 400);   // never left showing outside the walking scene
+
+/* (25 Nov 2026, his ask) THE PICKAXE BUTTON, HELD: press it anywhere and you swing; whatever diggable thing is in front of you when the pick
+   lands takes the hit (nothing there = a swing at the air). Hold it and the swings keep coming, and you can walk while swinging. */
+const PICK = {held: false};
+function airPt(m) { const d = {right: [12, -6], left: [-12, -6], back: [2, -15], front: [2, 4]}[m.dir] || [2, 4]; return [m.x + d[0], m.y + d[1]]; }
+function pickAim(m) {   // the diggable thing in front of you, ready to be hit (crystal needs the gold pickaxe)
+  const d = {right: [1, 0], left: [-1, 0], back: [0, -1], front: [0, 1]}[m.dir] || [0, 1], [ax, ay] = airPt(m);
+  let T = null, bd = 13;   // a rock close to where the pick lands counts, even if you are not lined up on its square
+  for (const r of MN.rocks) { const dd = Math.hypot(r.gx * CS + 8 - ax, r.gy * CS + 6 - ay); if (dd < bd) { bd = dd; T = {r, gx: r.gx, gy: r.gy}; } }
+  if (!T) T = tgtOf(Math.floor((m.x + d[0] * 12) / CS), Math.floor((m.y - 3 + d[1] * 10) / CS));
+  if (!T) return null; if (T.r && !MN.rocks.includes(T.r)) return null; if (T.w != null && !MN.cell[T.w]) return null;
+  const inf = tgtInfo(T); if (isCry(inf.k) && GOLD.pick < 4) { if (performance.now() - MN.said > 1500) { MN.said = performance.now(); wlSay('Only a gold pickaxe can break crystal.', 'bad'); } return null; }
+  if (!inf.o.max) { inf.o.max = mHits(inf.k, MN.lv, GOLD.pick); inf.o.hp = inf.o.max; } return T;
+}
+function pickSwing() { const m = WL.me; if (!m || m.loc !== MINE || DIG.ask || MN.busy || DIG.on) return; DIG.on = {T: null, air: true, t: 0, hit: false, x: m.x, y: m.y, n: 0}; }

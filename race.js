@@ -280,6 +280,38 @@ function raceBtn() {
   if (b.dataset.s !== key) { b.dataset.s = key; b.style.display = show ? 'flex' : 'none'; b.classList.toggle('sel', RK.drive); }
   const j = $('#joy'); if (show && j && (raceBtn.n = (raceBtn.n || 0) + 1) % 20 === 1) { const jb = parseFloat(getComputedStyle(j).bottom); if (jb === jb) b.style.bottom = Math.round(jb + (j.offsetHeight - 84) / 2) + 'px'; }
 }
+/* THE PEDALS (25 Nov 2026, his ask: "add accelerate and brake functions and buttons on the right side of the screen ... stack it vertically in
+   portrait and horizontally in landscape"). Two round buttons (the same pixel disc as the punch and fishing buttons) at the bottom right while you
+   drive: hold the top / right one to go flat out, the other to brake. The stick only steers (raceCarStep). Each pedal follows the ONE finger that pressed it (its pointer id, captured), so the other thumb is free on the stick. */
+RK.ped = {gas: null, brk: null};
+RK.keys = {gas: false, brk: false, l: false, r: false, u: false, d: false};
+{ const MAP = {ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', Space: 'gas', ShiftLeft: 'brk', ShiftRight: 'brk', KeyX: 'brk'};
+  const key = (e, v) => { const k = MAP[e.code], m = WL.me; if (!k) return; if (!v) { RK.keys[k] = false; return; }
+    if (!m || scene !== scenes.town || m.loc !== RACE || !RK.drive || RK.ed.on || /^(INPUT|TEXTAREA)$/.test((e.target && e.target.tagName) || '') || document.querySelector('.modal.on')) return; RK.keys[k] = true; e.preventDefault(); };
+  addEventListener('keydown', e => key(e, true)); addEventListener('keyup', e => key(e, false)); addEventListener('blur', () => { for (const k in RK.keys) RK.keys[k] = false; }); }
+function raceKeyVec() { const K = RK.keys, x = (K.r ? 1 : 0) - (K.l ? 1 : 0), y = (K.d ? 1 : 0) - (K.u ? 1 : 0), d = Math.hypot(x, y); return d ? {x: x / d, y: y / d, m: 1} : null; }
+$('#phone').insertAdjacentHTML('beforeend', '<div id="racePed"><button id="rpGas" title="Accelerate"></button><button id="rpBrk" title="Brake"></button></div>');
+{ const st = document.createElement('style'); st.textContent = `#racePed{position:absolute;right:22px;bottom:143px;z-index:8;display:none;flex-direction:column;gap:10px;pointer-events:none}
+#racePed.on{display:flex}#phone.land #racePed{flex-direction:row-reverse;right:var(--abR,calc(22px + var(--sr)));bottom:var(--abB,calc(var(--lb) + 14px))!important}
+#racePed button{position:relative;width:84px;height:84px;display:flex;align-items:center;justify-content:center;border:0;padding:0;background:none;touch-action:none;pointer-events:auto;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#racePed button::before{content:'';position:absolute;inset:0;background:var(--pb) 0 0/100% 100%;image-rendering:pixelated;opacity:.72}#racePed button.sel::before{opacity:1}#racePed button.sel{transform:scale(.94)}
+#racePed button img{position:relative;width:44px;height:44px;image-rendering:pixelated;pointer-events:none}`; document.head.appendChild(st);
+  const pic = (rows, col) => { const c = mk(11, 11), x = c.getContext('2d'), on = (i, j) => rows[j] && rows[j][i] === '#';   // a little pixel sign with the navy line round it
+    for (let j = 0; j < 11; j++) for (let i = 0; i < 11; i++) { if (on(i, j)) { x.fillStyle = col; x.fillRect(i, j, 1, 1); } else if (on(i + 1, j) || on(i - 1, j) || on(i, j + 1) || on(i, j - 1)) { x.fillStyle = '#1a1430'; x.fillRect(i, j, 1, 1); } } return c.toDataURL(); };
+  const GAS = ['...........', '.....#.....', '....###....', '...#####...', '..###.###..', '...........', '.....#.....', '....###....', '...#####...', '..###.###..', '...........'];
+  const BRK = ['...........', '...........', '.#########.', '.#########.', '.#########.', '...........', '.#########.', '.#########.', '.#########.', '...........', '...........'];
+  $('#rpGas').innerHTML = `<img src="${pic(GAS, '#5fc46f')}" alt="">`; $('#rpBrk').innerHTML = `<img src="${pic(BRK, '#e4544f')}" alt="">`;
+  for (const [id, k] of [['rpGas', 'gas'], ['rpBrk', 'brk']]) { const b = $('#' + id), up = e => { if (RK.ped[k] === e.pointerId) { RK.ped[k] = null; b.classList.remove('sel'); } };
+    b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (RK.ped[k] != null) return; RK.ped[k] = e.pointerId; b.classList.add('sel'); try { b.setPointerCapture(e.pointerId); } catch (_) {} });
+    for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, up);
+    for (const ev of ['click', 'contextmenu', 'dblclick']) b.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }); } }
+function racePed() {
+  const d = $('#racePed'), m = WL.me; if (!d) return;
+  if (!d.dataset.pb) { const v = $('#punchBtn').style.getPropertyValue('--pb'); if (v) { d.style.setProperty('--pb', v); d.dataset.pb = 1; } }
+  const show = !!(m && scene === scenes.town && m.loc === RACE && !WL.fading && RK.drive && !RK.ed.on && !RK.gar && !m.ko && RK.mode !== 'done' && !document.querySelector('.modal.on'));
+  if (d.classList.contains('on') !== show) { d.classList.toggle('on', show); if (!show) { RK.ped.gas = RK.ped.brk = null; d.querySelectorAll('button').forEach(b => b.classList.remove('sel')); } }
+  const j = $('#joy'); if (show && j && (racePed.n = (racePed.n || 0) + 1) % 20 === 1) { const jb = parseFloat(getComputedStyle(j).bottom); if (jb === jb) d.style.bottom = Math.round(jb + (j.offsetHeight - 84) / 2) + 'px'; }   // portrait: the pair stands level with the stick (sideways the stylesheet places it)
+}
 /* while you drive (or the editor is open) the joystick steers the car, not your feet */
 { const jv = joyVec; joyVec = function () { const m = WL.me; if (m && m.loc === RACE && scene === scenes.town && (RK.drive || RK.ed.on)) return null; return jv(); }; RK.joy = jv; }
 
@@ -293,16 +325,25 @@ function raceBtn() {
 const RPROBE = [[30, 0], [25, 11], [25, -11], [-28, 11], [-28, -11], [0, 13], [0, -13]];   // the car's edges: ahead, across (ground pixels)
 const rWrap = a => ((a % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
 function raceHitAt(x, y, a) { const c = Math.cos(a), s = Math.sin(a); for (const [f, l] of RPROBE) { const px = x + c * f - s * l, py = y + (s * f + c * l) * .55; if (rSolid(px, py)) return [px, py]; } return null; }
+function raceCarHit(x0, y0, a0, x1, y1, a1, tie) {   // two cars touching? [the way from me to them (x, y), how deep] on the screen, or null
+  const R = 12, F = [-17, 0, 17], c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1); let best = null, bd = R * 2;
+  for (const f of F) for (const g of F) { const dx = x1 + c1 * g - x0 - c0 * f, dy = (y1 - y0) / .55 + s1 * g - s0 * f, d = Math.hypot(dx, dy); if (d < bd) { bd = d; best = d > .01 ? [dx / d, dy / d * .55, R * 2 - d] : [0, tie * .55, R * 2]; } }
+  return best; }
 function raceNormal(px, py) { let nx = 0, ny = 0; for (let k = 0; k < 16; k++) { const a = k * Math.PI / 8; for (const r of [5, 10, 16]) if (!rSolid(px + Math.cos(a) * r, py + Math.sin(a) * r)) { nx += Math.cos(a); ny += Math.sin(a); } } const d = Math.hypot(nx, ny); return d > .01 ? [nx / d, ny / d] : null; }
 function raceCarStep(dt, t) {
   const C = RK.car, P = RK.stat || raceStats(RSET);
-  let J = RK.drive && (RK.mode === 'free' || RK.mode === 'race') && !RK.ed.on && !WL.fading ? RK.joy() : null;
-  const on = rRoad(C.x, C.y); C.on = on; let steer = J;
-  if (J) { const d = rWrap(Math.atan2(J.y, J.x) - C.tv); if (Math.abs(d) > 2.25 && C.rev > .22) { C.rev = Math.max(0, C.rev - dt * 2.6); steer = null; C.braking = true; } else C.braking = false; } else C.braking = false;   // stick pulled back: the brakes
-  if (J && !C.braking) C.rev = Math.min(1, C.rev + dt / P.accT * (on ? 1 : .5)); else if (!J) C.rev = Math.max(0, C.rev - dt * (RK.drive ? .8 : 2.5));
+  /* (25 Nov, his note: "moving the joystick is still making the car accelerate. the accelerate should replace that") THE STICK ONLY STEERS: it says
+     which way to turn, never how fast. The car speeds up only while ACCELERATE is held, BRAKE slows it (and backs it up once it has stopped),
+     and with neither it coasts down. Keys, for a computer: arrows or WASD steer, Space = accelerate, Shift or X = brake. */
+  const can = RK.drive && (RK.mode === 'free' || RK.mode === 'race') && !RK.ed.on && !WL.fading, steer = can ? (RK.joy() || raceKeyVec()) : null;
+  const pb = can && (RK.ped.brk != null || RK.keys.brk), pg = can && !pb && (RK.ped.gas != null || RK.keys.gas);
+  const J = pg ? {x: steer ? steer.x : Math.cos(C.tv), y: steer ? steer.y : Math.sin(C.tv), m: 1} : null;   // J = the throttle (flat out, or nothing)
+  const on = rRoad(C.x, C.y); C.on = on; C.braking = pb;
+  if (pb) { if (C.rev > .01) C.rev = Math.max(0, C.rev - dt * 2.6); else { C.rev = 0; const bx = C.x - Math.cos(C.tv) * 70 * dt, by = C.y - Math.sin(C.tv) * 70 * dt; if (!raceHitAt(bx, by, C.tv)) { C.x = bx; C.y = by; } } }   // stopped and still on the brake: it backs up
+  else if (J) C.rev = Math.min(1, C.rev + dt / P.accT * (on ? 1 : .5)); else C.rev = Math.max(0, C.rev - dt * (RK.drive ? .8 : 2.5));
   if (!on && C.rev > .36) C.rev = Math.max(.36, C.rev - dt * 2.4);
   let turn = 0;
-  if (steer) { const d = rWrap(Math.atan2(J.y, J.x) - C.tv), rate = lerp(9, P.turn, Math.min(1, C.rev * 1.1)) * (C.drift ? 1.35 : 1) * (on ? 1 : .8); turn = clamp(d, -rate * dt, rate * dt); C.tv += turn;
+  if (steer) { const d = rWrap(Math.atan2(steer.y, steer.x) - C.tv), rate = lerp(9, P.turn, Math.min(1, C.rev * 1.1)) * (C.drift ? 1.35 : 1) * (on ? 1 : .8) * (pb && C.rev <= .01 ? .35 : pg ? 1 : clamp((C.v || 0) / 60, 0, 1));   /* (a car that is standing still does not turn on the spot) */ turn = clamp(d, -rate * dt, rate * dt); C.tv += turn;
     const over = Math.abs(d) - .5; if (over > 0 && C.rev > .45) C.slip = clamp(C.slip + Math.sign(d) * Math.min(1.2, over) * dt * 3.6 * C.rev * P.loose * (on ? 1 : 1.5), -.8, .8); }
   C.slip *= Math.exp(-dt * 2.3); C.tr = dt > 0 ? Math.abs(turn) / dt : 0; C.ca = C.tv + C.slip; C.gas = !!J && !C.braking;
   const was = C.drift; C.drift = !!steer && Math.abs(C.slip) > .36 && C.rev > .5;
@@ -311,7 +352,7 @@ function raceCarStep(dt, t) {
     else if (C.dT > .6) C.rev *= Math.max(.6, 1 - C.dT * .25 * P.scrub); C.dT = 0; }
   if (C.boost > 0) C.boost -= dt;
   // the tow: tucked in close behind another car
-  let tow = 0; if (RK.drive && RK.mode === 'race') { const c = Math.cos(C.tv), s = Math.sin(C.tv); for (const a of RK.ai) { const dx = a.x - C.x, dy = (a.y - C.y) / .75, f = dx * c + dy * s, l = Math.abs(-dx * s + dy * c); if (f > 30 && f < 190 && l < 28 && a.v > 120) tow = 1; } }
+  let tow = 0; if (RK.drive && RK.mode === 'race') { const c = Math.cos(C.tv), s = Math.sin(C.tv); for (const a of [...RK.ai, ...raceNetSolid()]) { const dx = a.x - C.x, dy = (a.y - C.y) / .75, f = dx * c + dy * s, l = Math.abs(-dx * s + dy * c); if (f > 30 && f < 190 && l < 28 && a.v > 120) tow = 1; } }
   C.tow = (C.tow || 0) + (tow - (C.tow || 0)) * Math.min(1, dt * 3);
   const base = 90, top = base + (P.vmax - base) * Math.max(0, (C.rev - .08) / .92);
   const v = (C.rev < .08 ? C.rev / .08 * base : top) * (J && !C.braking ? Math.min(1, .4 + J.m) : .94) * (C.boost > 0 ? 1.2 : 1) * (1 + .08 * C.tow); C.v = v;
@@ -331,6 +372,11 @@ function raceCarStep(dt, t) {
   // door to door with the other cars: a shove, a little speed lost on both sides
   if (RK.drive) for (const a of RK.ai) { const dx = a.x - C.x, dy = (a.y - C.y) / .6, d = Math.hypot(dx, dy); if (d < 34 && d > .01) { const ux = dx / d, uy = dy / d; C.kx = -ux * 95; C.ky = -uy * 60; a.lane += ((a.lane - RK.plane) >= 0 ? 1 : -1) * 70 * dt;
       if (t - (RK.bumpT || 0) > 320) { RK.bumpT = t; C.rev *= .95; a.v *= .93; sfx('shove'); RK.shake = Math.max(RK.shake, .22); } } }
+  /* another player's car is solid too, and by its real shape (three circles along each car, on the ground), so two cars never sit inside each other */
+  if (RK.drive && !RK.gar) for (const a of raceNetSolid()) { const h = raceCarHit(C.x, C.y, C.ca, a.x, a.y, a.a, a.u > NET.uid ? 1 : -1); if (!h) continue;
+    C.kx = -h[0] * 95; C.ky = -h[1] * 60; const nx = C.x - h[0] * h[2], ny = C.y - h[1] * h[2]; if (!raceHitAt(nx, ny, C.tv)) { C.x = nx; C.y = ny; }   // straight back out of them
+    if (Math.cos(C.tv) * h[0] + Math.sin(C.tv) * h[1] > .3 && (C.v || 0) > a.v + 20) C.rev *= Math.exp(-dt * 6);   // driving INTO them: you slow to their speed, you do not plough through
+    if (t - (RK.bumpT || 0) > 320 && (C.v || 0) > 20) { RK.bumpT = t; C.rev *= .95; sfx('shove'); RK.shake = Math.max(RK.shake, .22); } }
   // the picture pivots about its FRONT axle, so only the back steps out (his note on the town car)
   const F = 15, cx0 = Math.cos(C.ca), sy0 = Math.sin(C.ca); C.cox = (Math.cos(C.tv) - cx0) * F; C.coy = (Math.sin(C.tv) - sy0) * F * .55;
   const cx = C.x + C.cox, cy = C.y + C.coy, rx = cx - cx0 * 21, ry = cy - sy0 * 12, now = performance.now(), px = -sy0 * 13, py = cx0 * 7;
@@ -366,9 +412,14 @@ function raceEngine() {
    A light rubber band: the ones far ahead of you ease off a touch, the ones far behind push a touch. */
 function raceAiStep(dt) {
   const M = RD.length, L = RD.L, go = RK.mode === 'race' || RK.mode === 'done';
-  const all = RK.drive ? [...RK.ai, {s: RK.ps || 0, lane: RK.plane || 0, v: RK.car.v || 0, me: 1}] : RK.ai;
+  const all = RK.drive ? [...RK.ai, {s: RK.ps || 0, lane: RK.plane || 0, v: RK.car.v || 0, me: 1}] : [...RK.ai];
+  const host = raceMpHost(), now = performance.now(); if (RK.mp) for (const p of Object.values(RK.mp.pl)) if (!p.out && !p.fin) all.push({s: (RD.s0 + ((p.prog % L) + L) % L) % L, lane: p.ln || 0, v: p.v || 0});
   for (const a of RK.ai) {
-    if (go) { const i = Math.floor(a.s / L * M) % M, gap = a.prog - (RK.prog || 0); let tgt = a.vmax * (a.fin ? .6 : gap > 500 ? .94 : gap < -400 ? 1.08 : 1);
+    if (!host) {   // somebody else's phone drives them: follow what it says, smoothly
+      if (a.nt) { const el = Math.min(.6, (now - a.nt) / 1000), want = a.np + a.nv * el; a.v += (a.nv - a.v) * Math.min(1, dt * 6); a.prog += a.v * dt; const err = want - a.prog; a.prog += Math.abs(err) > 300 ? err : err * Math.min(1, dt * 3);
+        a.lane += (a.nl - a.lane) * Math.min(1, dt * 5); a.lt = a.lane; a.fin = a.nf || a.fin; }
+      const rel = ((a.prog % L) + L) % L; a.rel = rel; a.s = (RD.s0 + rel) % L; a.lap = Math.floor(a.prog / L) + 1; }
+    else if (go) { const i = Math.floor(a.s / L * M) % M, gap = a.prog - (RK.prog || 0); let tgt = a.vmax * (a.fin ? .6 : gap > 500 ? .94 : gap < -400 ? 1.08 : 1);
       for (let d = 0; d <= 260; d += 16) { const p = RD[(i + Math.round(d / 4)) % M], vc = Math.sqrt(a.g / Math.max(Math.abs(p.k), .0004)); tgt = Math.min(tgt, Math.sqrt(vc * vc + 2 * 380 * d)); }
       a.lt2 = (a.lt2 || 0) - dt; if (a.lt2 <= 0) { a.lt2 = 2 + Math.random() * 3; a.lt = (Math.random() - .5) * 64; }
       for (const o of all) { if (o === a) continue; const ds = ((o.s - a.s) % L + L) % L; if (ds > 2 && ds < 80 && Math.abs(o.lane - a.lane) < 28) { a.lt = clamp(o.lane + (o.lane > 0 ? -46 : 46), -38, 38); a.lt2 = 1; if (ds < 50) tgt = Math.min(tgt, o.v * .97 + 4); } }
@@ -396,27 +447,33 @@ function racePos() {
   RK.prel = rel;
 }
 function raceOrder() {   // everyone, first to last: those who have finished by their time, then by how far round they are
-  const rows = [{n: 'You', me: 1, prog: RK.prog || 0, fin: RK.fin || 0}, ...RK.ai.map(a => ({n: a.n, prog: a.prog, fin: a.fin || 0}))];
+  const rows = [{n: RK.mp && typeof myName === 'string' && myName ? myName : 'You', me: 1, prog: RK.prog || 0, fin: RK.fin || 0}, ...RK.ai.map(a => ({n: a.n, prog: a.prog, fin: a.fin || 0}))];
+  if (RK.mp) { const now = performance.now(); for (const p of Object.values(RK.mp.pl)) { const out = p.out && !p.fin; rows.push({n: p.n, prog: out ? -1e9 : p.prog + (p.fin ? 0 : (p.v || 0) * Math.min(.4, (now - (p.at || now)) / 1000)), fin: p.fin || 0, out}); } }
   rows.sort((a, b) => (a.fin && b.fin) ? a.fin - b.fin : a.fin ? -1 : b.fin ? 1 : b.prog - a.prog); return rows;
 }
 const raceNth = n => n + (['TH', 'ST', 'ND', 'RD'][n > 3 ? 0 : n] || 'TH');
 
 /* ---------- THE RACE: five lights on the gantry, three laps, four other cars, a results card ---------- */
 const raceTime = ms => { ms = Math.max(0, Math.round(ms)); const m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60, c = Math.floor(ms / 10) % 100; return m + ':' + String(s).padStart(2, '0') + '.' + String(c).padStart(2, '0'); };
-function raceFree() { RK.mode = 'free'; RK.ai = []; RK.fin = 0; RK.prog = 0; RK.plap = 0; RK.cp = 0; RK.lapT = 0; RK.back = false; RK.laps = []; const r = $('#raceRes'); if (r) r.classList.remove('on'); }
-function raceStart() { const C = RK.car, M = RD.length; if (!RK.drive || RK.mode !== 'free') return;
-  const put = (g) => { let bi = 0, bd = 1e12; for (let i = 0; i < M; i++) { const p = RD[i], d = (p.x - g[0]) ** 2 + (p.y - g[1]) ** 2; if (d < bd) { bd = d; bi = i; } } const p = RD[bi]; return {i: bi, s: p.s, lane: (g[0] - p.x) * -p.ty + (g[1] - p.y) * p.tx}; };
-  RK.ai = R_RIVALS.map((r, k) => { const q = put(R_GRIDS[k]); return {n: r.n, name: 'rival' + 'abcd'[k], vmax: r.v, g: r.g, acc: 150 + k * 14, s: q.s, lane: q.lane, lt: q.lane, v: 0, lap: 0, rel: rdRel(q.s), prog: rdRel(q.s) - RD.L, fin: 0, x: R_GRIDS[k][0], y: R_GRIDS[k][1], a: -Math.PI / 2}; });
-  const g = R_GRIDS[4]; C.x = g[0]; C.y = g[1]; C.tv = C.ca = -Math.PI / 2; C.rev = 0; C.slip = 0; C.kx = C.ky = 0; C.v = 0; C.boost = 0; C.dT = 0;
+function raceFree() { RK.mode = 'free'; RK.mp = null; RK.ai = []; RK.fin = 0; RK.prog = 0; RK.plap = 0; RK.cp = 0; RK.lapT = 0; RK.back = false; RK.laps = []; const r = $('#raceRes'); if (r) r.classList.remove('on'); }
+function raceStart() { if (!RK.drive || RK.mode !== 'free') return; if (!raceMpCall()) raceGrid(null); }   // with other players at the track it is a race against them (RACING THE OTHER PLAYERS, below); alone it is the four other cars
+/* onto the grid. M = a race with other players ({id, t0, g: [who, in grid order]}), or null = on your own. The players take the back of
+   the grid (the one who started it last, as on your own), the other cars fill the boxes in front of them. */
+function raceGrid(M) { const C = RK.car, Mn = RD.length;
+  const put = (g) => { let bi = 0, bd = 1e12; for (let i = 0; i < Mn; i++) { const p = RD[i], d = (p.x - g[0]) ** 2 + (p.y - g[1]) ** 2; if (d < bd) { bd = d; bi = i; } } const p = RD[bi]; return {i: bi, s: p.s, lane: (g[0] - p.x) * -p.ty + (g[1] - p.y) * p.tx}; };
+  const mine = M ? Math.max(0, M.g.indexOf(NET.uid)) : 0, nAi = M ? Math.max(0, 5 - M.g.length) : 4;
+  RK.ai = R_RIVALS.slice(0, nAi).map((r, k) => { const q = put(R_GRIDS[k]); return {n: r.n, name: 'rival' + 'abcd'[k], vmax: r.v, g: r.g, acc: 150 + k * 14, s: q.s, lane: q.lane, lt: q.lane, v: 0, lap: 0, rel: rdRel(q.s), prog: rdRel(q.s) - RD.L, fin: 0, x: R_GRIDS[k][0], y: R_GRIDS[k][1], a: -Math.PI / 2}; });
+  const g = R_GRIDS[4 - mine]; C.x = g[0]; C.y = g[1]; C.tv = C.ca = -Math.PI / 2; C.rev = 0; C.slip = 0; C.kx = C.ky = 0; C.v = 0; C.boost = 0; C.dT = 0;
+  if (M) { const m = WL.me; C.cox = C.coy = 0; if (m) { m.x = C.x; m.y = C.y; } }
   const q = put(g); RK.pi = q.i; RK.ps = q.s; RK.plane = q.lane; RK.prel = rdRel(q.s); RK.plap = 0; RK.back = false; RK.prog = RK.prel - RD.L;
-  RK.mode = 'count'; RK.ct = 3.8; RK.lit = 0; RK.lap = 1; RK.laps = []; RK.cp = 0; RK.msg = ''; RK.fin = 0; RK.total = 0; RK.lapT = 0; CARFX.marks.length = 0; sfx('click');
+  RK.mp = M; RK.mode = 'count'; RK.ct = M ? (M.t0 - serverNow()) / 1000 : 3.8; RK.lit = 0; RK.lap = 1; RK.laps = []; RK.cp = 0; RK.msg = ''; RK.fin = 0; RK.total = 0; RK.lapT = 0; CARFX.marks.length = 0; sfx('click');
   for (const a of RK.ai) carPoof(a.x, a.y, 6); }
 function raceTick(dt, t) {
-  if (RK.mode === 'count') { RK.ct -= dt; const n = clamp(Math.floor((3.8 - RK.ct) / .6), 0, 5); if (n > RK.lit) { RK.lit = n; sfx('rbeep'); }
+  if (RK.mode === 'count') { if (RK.mp) RK.ct = (RK.mp.t0 - serverNow()) / 1000; else RK.ct -= dt; const n = clamp(Math.floor((3.8 - RK.ct) / .6), 0, 5); if (n > RK.lit) { RK.lit = n; sfx('rbeep'); }
     if (RK.ct <= 0) { RK.mode = 'race'; RK.goT = 1.4; sfx('rgo'); } }
-  else if (RK.mode === 'race') { RK.lapT += dt * 1000; RK.total += dt * 1000; if (RK.goT > 0) RK.goT -= dt; }
+  else if (RK.mode === 'race') { RK.lapT += dt * 1000; RK.total = RK.mp ? serverNow() - RK.mp.t0 : RK.total + dt * 1000; if (RK.goT > 0) RK.goT -= dt; }
   else if (RK.mode === 'free' && RK.drive && RK.plap > 0 && !RK.gar) RK.lapT += dt * 1000;   // practice: the lap clock
-  else if (RK.mode === 'done') { RK.total += dt * 1000; RK.resT = (RK.resT || 0) - dt; if (RK.resT <= 0) { RK.resT = .5; raceResults(); } }
+  else if (RK.mode === 'done') { RK.total = RK.mp ? serverNow() - RK.mp.t0 : RK.total + dt * 1000; RK.resT = (RK.resT || 0) - dt; if (RK.resT <= 0) { RK.resT = .5; raceResults(); } }
   if (RK.drive || RK.ai.length) racePos();
   if (RK.ai.length) raceAiStep(dt);
   if (RK.mode === 'race') RK.place = raceOrder().findIndex(r => r.me) + 1;
@@ -432,7 +489,7 @@ function raceLapDone() {
 function raceResults() {   // the card at the end: where everyone came, and your laps
   const rows = raceOrder(), me = rows.findIndex(r => r.me) + 1, bl = Math.min(...RK.laps);
   $('#rrTitle').textContent = raceNth(me) + ' PLACE';
-  $('#rrRows').innerHTML = rows.map((r, i) => `<div class="rr${r.me ? ' me' : ''}"><i>${i + 1}</i><b>${r.n}</b><span>${r.fin ? raceTime(r.fin) : ''}</span></div>`).join('') +
+  $('#rrRows').innerHTML = rows.map((r, i) => `<div class="rr${r.me ? ' me' : ''}"><i>${i + 1}</i><b>${typeof esc === 'function' ? esc(r.n) : r.n}</b><span>${r.fin ? raceTime(r.fin) : r.out ? 'OUT' : ''}</span></div>`).join('') +
     `<div class="rrBest">Best lap <b>${raceTime(bl)}</b></div>`;
 }
 function raceChip() {   // beside the coins: the lap you are on and its clock; otherwise your best lap
@@ -455,7 +512,7 @@ SFX.wrench = () => { tone(1900, .03, {type: 'square', vol: .06, to: 1200}); tone
   const d = document.createElement('div'); d.id = 'raceRes';
   d.innerHTML = `<h3 id="rrTitle"></h3><div id="rrRows"></div><div class="row"><button class="btn red" id="rrAgain">Race again</button><button class="btn" id="rrDone">Done</button></div>`;
   $('#phone').appendChild(d); d.addEventListener('pointerdown', e => e.stopPropagation());
-  $('#rrAgain').onclick = () => { sfx('click'); raceFree(); if (RK.drive) raceStart(); };
+  $('#rrAgain').onclick = () => { sfx('click'); if (RK.mode === 'count' || RK.mode === 'race') return; raceFree(); if (RK.drive) raceStart(); };
   $('#rrDone').onclick = () => { sfx('close'); raceFree(); };
   const st = document.createElement('style'); st.textContent = `#raceRes{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);z-index:25;display:none;width:min(300px,84%);background:#f6dfae;color:#1a1430;border:4px solid #5a3420;border-radius:6px;box-shadow:inset 0 -6px 0 #e9c88a,0 5px 0 #0008;padding:12px 14px 16px;font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:none;font-feature-settings:"liga" 0,"clig" 0}
 #raceRes.on{display:block}#raceRes h3{margin:0 0 8px;font:700 24px "Pixelify Sans";text-align:center;letter-spacing:.5px}
@@ -463,6 +520,83 @@ SFX.wrench = () => { tone(1900, .03, {type: 'square', vol: .06, to: 1200}); tone
 #raceRes .rr i{font-style:normal;font-weight:700;width:18px}#raceRes .rr b{flex:1}#raceRes .rrBest{text-align:center;margin:10px 0 12px;font-size:15px}#raceRes .row{display:flex;gap:8px;justify-content:center}
 #reList{background:#f6dfae;color:#1a1430;border:4px solid #5a3420;border-radius:6px;box-shadow:inset 0 -6px 0 #e9c88a}`; document.head.appendChild(st);
 })();
+
+/* ================= RACING THE OTHER PLAYERS (25 Nov 2026, his ask) =================
+   "can you implement a function to race other players in the game? i went to the race track and just saw the other players
+   character running around but not in his car"
+   YOUR CAR, TO THE OTHERS   while you are at the track your place in the world carries `r` (index.html netM -> raceNetM): your parts
+       and paint as five digits, the way the car travels and points, its speed, a few flags (drifting, boosting, off the road, in the
+       garage), and in a race: which race, how far round you are, your finish time. Nothing new in the database's rules.
+   THE OTHERS, TO YOU        raceNetIn keeps what each one last said; raceNetStep slides their car between updates (it carries on at the
+       speed and heading they gave) and RH.frame draws it from its own stack of slices. They are solid: you bump off them.
+   A RACE                    whoever starts one (the gate's Start race, a tap on the grid, Race again) sends ONE event: {k:'race', id, t0, g}.
+       g = the players at the track who are free to race, the starter first; t0 = the server's clock time the lights go out. Every phone
+       named in it goes to its own grid box and counts down to t0, so everyone goes together. The players take the back boxes; the
+       computer cars fill what is left. Nobody else at the track = the old race on your own, exactly.
+   THE COMPUTER CARS         ONE phone drives them (the first player of g still in the race: the starter, and if they go, the next) and
+       says where they are in its `r.ai`; the other phones follow that. So every phone sees the same race.
+   PLACES AND THE CARD       everyone says how far round they are; each phone sorts players and computer cars by that. Times are from t0
+       on the server's clock. Somebody who leaves is OUT on the card and the race carries on. */
+const raceKey = set => RCATS.map(c => set[c] | 0).join('');
+function raceKeySet(k) { const s = {}; k = String(k || ''); RCATS.forEach((c, i) => { const v = parseInt(k[i], 10); s[c] = v >= 0 && v < RPARTS[c].length ? v : 0; }); return s; }
+function raceNetStack(k) { const set = raceKeySet(k), name = 'rc' + raceKey(set); if (!IMG['stack/' + name] || !STACK[name]) raceStack(name, set); return IMG['stack/' + name] ? name : null; }
+function raceNetM() {   // what the others are told about my car (small: it goes out five times a second)
+  const m = WL.me; if (!m || m.loc !== RACE) return null; const C = RK.car, M = RK.mp;
+  const r = {k: raceKey(RSET), a: Math.round(rWrap(C.ca) * 100), t: Math.round(rWrap(C.tv) * 100), v: Math.round(C.v || 0), st: {free: 0, count: 1, race: 2, done: 3}[RK.mode] || 0,
+    f: (C.drift ? 1 : 0) | (C.boost > 0 ? 2 : 0) | (RK.gar || RK.ed.on || !RK.drive ? 4 : 0) | (C.on === false ? 8 : 0) | (C.braking ? 16 : 0)};
+  if (M) { r.id = M.id; r.p = Math.round(RK.prog || 0); r.ln = Math.round(RK.plane || 0); if (RK.fin) r.fin = Math.round(RK.fin);
+    if (RK.ai.length && raceMpHost()) r.ai = RK.ai.map(a => [Math.round(a.prog), Math.round(a.lane), Math.round(a.v), Math.round(a.fin || 0)]); }
+  return r;
+}
+function raceNetIn(e, m) {   // (index.html netApply) what another player just said. true = they are a car on the track, nothing else to do
+  const r = m.loc === RACE && m.r; if (!r || typeof r !== 'object') { e.rc = null; return false; }
+  const num = (v, a, b) => { v = +v; return v === v ? clamp(v, a, b) : 0; }, was = e.rc && e.loc === RACE, R = e.rc || (e.rc = {});
+  if (e.car) e.car = 0; e.loc = m.loc; e.path = []; e.todo = null; e.walk = false; e.seat = null; e.act = null;
+  R.nx = num(m.x, 0, 1e5); R.ny = num(m.y, 0, 1e5); R.tv = num(r.t, -400, 400) / 100; R.na = num(r.a, -400, 400) / 100; R.v = num(r.v, 0, 700); R.f = r.f | 0; R.st = r.st | 0; R.k = String(r.k || '').slice(0, 5);
+  R.id = typeof r.id === 'string' ? r.id : null; R.p = num(r.p, -1e5, 1e6); R.ln = num(r.ln, -400, 400); R.fin = num(r.fin, 0, 36e5); R.at = performance.now();
+  if (!was || Math.hypot(e.x - R.nx, e.y - R.ny) > 160) { e.x = R.nx; e.y = R.ny; R.ca = R.na; }
+  const M = RK.mp;   // the computer cars, from the phone that drives them (only ever one that comes before me on the grid)
+  if (M && R.id === M.id && Array.isArray(r.ai) && r.ai.length === RK.ai.length && M.g.indexOf(e.uid) >= 0 && M.g.indexOf(e.uid) < M.g.indexOf(NET.uid))
+    r.ai.forEach((q, i) => { const a = RK.ai[i]; if (!Array.isArray(q)) return; a.np = num(q[0], -1e5, 1e6); a.nl = num(q[1], -60, 60); a.nv = num(q[2], 0, 700); a.nf = num(q[3], 0, 36e5); a.nt = R.at; });
+  return true;
+}
+const raceNetCars = () => (typeof NET !== 'undefined' && NET.on && WL.me && WL.me.loc === RACE ? WL.bots.filter(e => e && e.remote && e.loc === RACE && e.rc && !(e.rc.f & 4)) : []);
+const raceNetSolid = () => raceNetCars().map(e => ({x: e.x, y: e.y, v: e.rc.v, u: e.uid, a: e.rc.ca == null ? e.rc.na : e.rc.ca}));
+function raceNetStep(dt, t) {   // every frame at the track: slide the others' cars along, their smoke, and who is still in my race
+  const cars = raceNetCars(), now = performance.now();
+  for (const e of cars) { const R = e.rc, el = Math.min(.4, (now - R.at) / 1000), tx = R.nx + Math.cos(R.tv) * R.v * el, ty = R.ny + Math.sin(R.tv) * R.v * el, k = Math.min(1, dt * 9);
+    if (Math.hypot(tx - e.x, ty - e.y) > 220) { e.x = tx; e.y = ty; } else { e.x += (tx - e.x) * k; e.y += (ty - e.y) * k; }
+    R.ca = R.ca == null ? R.na : R.ca + rWrap(R.na - R.ca) * Math.min(1, dt * 10);
+    const c0 = Math.cos(R.ca), s0 = Math.sin(R.ca), rx = e.x + (Math.cos(R.tv) - c0) * 15 - c0 * 21, ry = e.y + (Math.sin(R.tv) - s0) * 15 * .55 - s0 * 12, px = -s0 * 13, py = c0 * 7;
+    if ((R.f & 17) && !(R.f & 8) && R.v > 60) { CARFX.marks.push({x: rx + px, y: ry + py, t: now}, {x: rx - px, y: ry - py, t: now}); if (CARFX.marks.length > 900) CARFX.marks.splice(0, CARFX.marks.length - 900);
+      if (Math.random() < .5) CARFX.puffs.push({x: rx + (Math.random() - .5) * 22, y: ry - 2, vx: (Math.random() - .5) * 16, vy: -6 - Math.random() * 10, t: 0, l: .5 + Math.random() * .4, s: 3}); }
+    if ((R.f & 8) && R.v > 50 && Math.random() < .6) CARFX.puffs.push({x: rx + px * (Math.random() < .5 ? 1 : -1), y: ry, vx: -Math.cos(R.tv) * R.v * .25 + (Math.random() - .5) * 70, vy: -Math.sin(R.tv) * R.v * .15 - 50 - Math.random() * 60, t: 0, l: .35 + Math.random() * .3, s: Math.floor(now / 40), c: Math.random() < .5 ? '#6fae4a' : '#b89a6a'});
+    if (R.f & 2) CARFX.puffs.push({x: rx - c0 * 8 + (Math.random() - .5) * 10, y: ry - s0 * 5 - 4, vx: -Math.cos(R.tv) * 120 + (Math.random() - .5) * 40, vy: -Math.sin(R.tv) * 70 - 30 - Math.random() * 40, t: 0, l: .2 + Math.random() * .2, s: 0, c: Math.random() < .5 ? '#ffb24a' : '#ffe9a8'});
+  }
+  const M = RK.mp; if (M) for (const u of Object.keys(M.pl)) { const p = M.pl[u], e = NET.on ? NET.ents.get(u) : null, R = e && e.loc === RACE ? e.rc : null;
+    if (R && R.id === M.id) { p.seen = true; p.out = false; p.prog = R.p; p.ln = R.ln; p.v = R.st === 2 ? R.v : 0; p.at = R.at; if (R.fin) p.fin = R.fin; if (e.n) p.n = e.n; }
+    else if (p.seen || now - M.at > 5000) p.out = true; }   // gone (or never came): the race goes on without them
+  return cars;
+}
+/* am I the phone that drives the computer cars? The first player on the grid who is still in this race. */
+function raceMpHost() { const M = RK.mp; if (!M) return true; for (const u of M.g) { if (u === NET.uid) return true; const p = M.pl[u]; if (p && !p.out) return false; } return true; }
+function raceMpJoin(M) {   // onto the grid for a race with other players
+  M.pl = {}; M.at = performance.now(); for (const u of M.g) if (u !== NET.uid) { const e = NET.ents.get(u); M.pl[u] = {n: (e && e.n) || 'Player', prog: -RD.L, ln: 0, v: 0, fin: 0, out: false, seen: false, at: M.at}; }
+  $('#raceGate').classList.remove('on'); raceFree(); carPoof(RK.car.x, RK.car.y, 8); raceGrid(M); RK.nsig = ''; if (NET.on) netMove();
+}
+function raceMpCall() {   // I start a race: everyone at the track who is free (driving about, or looking at the last race's card) comes too. false = nobody else here
+  if (typeof NET === 'undefined' || !NET.on || !NET.ref) return false;
+  const others = raceNetCars().filter(e => e.uid && (e.rc.st === 0 || e.rc.st === 3)).slice(0, 4); if (!others.length) return false;
+  const M = {id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), t0: serverNow() + 4800, g: [NET.uid, ...others.map(e => e.uid)]};
+  NET.ref.child('ev').push({k: 'race', by: NET.uid, id: M.id, t0: M.t0, g: M.g, ts: TS()}).catch(() => {}); raceMpJoin(M); return true;
+}
+function raceNetEv(v) {   // (index.html netEvent) somebody started a race. If I am named in it and free, I am in.
+  const m = WL.me; if (!m || scene !== scenes.town || m.loc !== RACE || !RK.drive || RK.gar || RK.ed.on || WL.fading) return;
+  if (typeof v.id !== 'string' || !Array.isArray(v.g) || v.g.length < 2 || v.g.length > 5 || v.g[0] !== v.by || !v.g.includes(NET.uid)) return;
+  const t0 = +v.t0, now = serverNow(); if (!(t0 > now - 3000 && t0 < now + 15000)) return;
+  if (!(RK.mode === 'free' || RK.mode === 'done' || (RK.mode === 'count' && (!RK.mp || v.id < RK.mp.id)))) return;   // (two started at once: the earlier one is the race)
+  raceMpJoin({id: v.id, t0, g: v.g.map(String)});
+}
 
 /* ---------- drawing the place ---------- */
 function raceMechSet() { if (!SP.mechanic && IMG['mech/front']) SP.mechanic = {front: makeDir(IMG['mech/front'], false, [[8, 14, 2, 3], [14, 14, 2, 3]]), back: makeDir(IMG['mech/back'], false, []),
@@ -507,7 +641,8 @@ RH.frame = (m, people, dt, t, H, img) => {
     if (RK.drive && west && lane && C.x > G.x - 42) { C.x = G.x - 42; C.rev = Math.min(C.rev, .05); C.boost = 0; if (RK.mode === 'free' && !WL.fading && !gp.classList.contains('on')) { gp.classList.add('on'); sfx('open'); } }   // the boom is solid from this side
     else if (gp.classList.contains('on') && (!west || C.x < G.x - 60 || !lane)) gp.classList.remove('on'); }
   if (RK.drive && RK.mode === 'free' && !RK.gar && !WL.fading && C.x < R_OUT.x + 40 && C.y > R_OUT.y0 - 8 && C.y < R_OUT.y1 + 8 && Math.cos(C.tv) < -.3) wlDoor(SOUTH);   // out along the road you came in by
-  if (RK.drive) { m.x = C.x; m.y = C.y; m.walk = false; m.path = []; if (NET.on && (C.v || 0) > 1) netMove(); }   // (online, the others see you where the car is; they do not see the car itself yet)
+  if (RK.drive) { m.x = C.x; m.y = C.y; m.walk = false; m.path = []; if (NET.on) { const sig = RK.mode + '|' + (RK.mp ? RK.mp.id : '') + '|' + (RK.fin || 0) + '|' + (RK.gar || RK.ed.on ? 1 : 0) + raceKey(RSET); if ((C.v || 0) > 1 || sig !== RK.nsig || (RK.mp && RK.ai.length && RK.mode !== 'free' && raceMpHost())) { RK.nsig = sig; netMove(); } } }   // (online, the others see your car: raceNetM)
+  const rcars = raceNetStep(dt, t);
   // the camera: on foot it follows you like anywhere else; in the car it pulls right back, looks up the road the faster you go, and shakes on a bump
   const want = RK.drive ? 375 : 190; RK.vw += (want - RK.vw) * Math.min(1, dt * 3.2); if (Math.abs(RK.vw - want) < 2) RK.vw = want;
   const la = RK.drive ? Math.min(125, (C.v || 0) * .36) : 0; RK.lookx += (Math.cos(C.tv) * la - RK.lookx) * Math.min(1, dt * 2.4); RK.looky += (Math.sin(C.tv) * la - RK.looky) * Math.min(1, dt * 2.4);
@@ -522,10 +657,12 @@ RH.frame = (m, people, dt, t, H, img) => {
   if (WL.sel && WL.sel.loc === m.loc) { const q = Math.floor(t / 200) % 2; lx.strokeStyle = q ? '#ffd25e' : '#fff2a8'; lx.lineWidth = 1; lx.beginPath(); lx.ellipse(X(WL.sel.x) + .5, Y(WL.sel.y) + .5, 9 + q, 3 + q * .5, 0, 0, 7); lx.stroke(); }
   const extra = []; if (IMG['stack/racecar']) extra.push({name: 'racecar', ang: C.ca, x: C.x + (C.cox || 0), y: C.y + (C.coy || 0), t, phase: 0, walk: (C.v || 0) > 30, dir: 'front', ...(RK.gar ? {alpha: RK.gar.al, sortY: R_GAR.y + 156} : {})});   // (in the garage doorway it is drawn over the building and fades into the dark)
   for (const a of RK.ai) if (IMG['stack/' + a.name]) extra.push({name: a.name, ang: a.a, x: a.x, y: a.y, t, phase: 0, walk: a.v > 30, dir: 'front'});
+  for (const e of rcars) { const R = e.rc, nm = raceNetStack(R.k); if (nm) extra.push({name: nm, ang: R.ca, x: e.x + (Math.cos(R.tv) - Math.cos(R.ca)) * 15, y: e.y + (Math.sin(R.tv) - Math.sin(R.ca)) * 15 * .55, t, phase: 0, walk: R.v > 30, dir: 'front'}); }   // the other players, in their own cars
   if (raceMechSet()) { const dx = m.x - R_MECH[0], dy = m.y - R_MECH[1], near = Math.hypot(dx, dy) < 90; extra.push({name: 'mechanic', dir: near ? dirFrom(dx, dy) : 'front', x: R_MECH[0], y: R_MECH[1], t, phase: 400}); }
-  const hits = drawScene((RK.drive ? people.filter(p => p.e !== m) : people).concat(extra), null, img, raceObjs(m, dt, t)); for (const p of extra) hits.delete(p);
+  const hits = drawScene(people.filter(p => !(p.e && p.e.rc) && !(RK.drive && p.e === m)).concat(extra), null, img, raceObjs(m, dt, t)); for (const p of extra) hits.delete(p);
   wlFx(dt, m.loc); drawPuffs(dt); carPuffs(dt); wlCases(dt, m.loc);
   if (RK.mode === 'race' || RK.mode === 'done') for (const a of RK.ai) { const w = a.n.length * 4 + 1, fx0 = X(a.x) - (w >> 1), fy0 = Y(a.y) - 34; lx.fillStyle = '#1a1430'; lx.fillRect(fx0 - 1, fy0 - 1, w + 2, 9); lx.fillStyle = '#fff'; pxText(lx, a.n.toUpperCase(), fx0 + 1, fy0 + 1); }   // who is who
+  for (const e of rcars) { const n = String(e.n || '').toUpperCase(), w = n.length * 4 + 1, fx0 = X(e.x) - (w >> 1), fy0 = Y(e.y) - 34; if (!n) continue; lx.fillStyle = '#1a1430'; lx.fillRect(fx0 - 1, fy0 - 1, w + 2, 9); lx.fillStyle = '#ffd25e'; pxText(lx, n, fx0 + 1, fy0 + 1); }   // the players' names (gold)
   if (RK.mode === 'free' && !RK.drive) { const txt = 'RACE', w = txt.length * 4 + 1, g = R_GRIDS[2], fx0 = X(g[0] + 30) - Math.floor(w / 2), fy0 = Y(g[1] - 46) + Math.round(Math.sin(t * .005) * 1.5);   // a tag over the grid, like FISH over the jetty
     lx.fillStyle = '#1a1430'; lx.fillRect(fx0 - 1, fy0 - 1, w + 2, 9); lx.fillRect(fx0 + Math.floor(w / 2) - 1, fy0 + 8, 3, 2); lx.fillStyle = '#e4544f'; lx.fillRect(fx0, fy0, w, 7); lx.fillStyle = '#fff'; pxText(lx, txt, fx0 + 1, fy0 + 1); }
   raceStreaks(dt);
@@ -621,7 +758,8 @@ function raceEdDraw(dt, t) {
   x.fillStyle = 'rgba(8,6,20,.45)'; for (let yy = -8; yy <= 8; yy++) { const hw = Math.round(19 * Math.sqrt(Math.max(0, 1 - (yy / 8) ** 2)) * (.75 + .25 * Math.abs(Math.sin(E.a)))); x.fillRect(cx - hw, cy + yy + 1, hw * 2, 1); }
   // the car
   b.setTransform(1, 0, 0, 1, 0, 0); b.clearRect(0, 0, RBW, RBH); b.imageSmoothingEnabled = false;
-  for (let z = 0; z < N; z++) { b.setTransform(1, 0, 0, E.sq, cx, cy - z - hop); b.rotate(E.a); b.drawImage(st, z * S, 0, S, S, -S / 2, -S / 2, S, S); }
+  if (!E.one) { E.one = mk(S + 2, S + 2); E.ox = E.one.getContext('2d'); E.ox.imageSmoothingEnabled = false; }   // each slice on a clear picture of its own, so a turned slice never picks up its neighbour's edge (index.html stackFrame)
+  for (let z = 0; z < N; z++) { E.ox.clearRect(0, 0, S + 2, S + 2); E.ox.drawImage(st, z * S, 0, S, S, 1, 1, S, S); b.setTransform(1, 0, 0, E.sq, cx, cy - z - hop); b.rotate(E.a); b.drawImage(E.one, -S / 2 - 1, -S / 2 - 1); }
   b.setTransform(1, 0, 0, 1, 0, 0);
   const d = b.getImageData(0, 0, RBW, RBH), p = d.data, edge = [], A = (X0, Y0) => X0 >= 0 && Y0 >= 0 && X0 < RBW && Y0 < RBH && p[(Y0 * RBW + X0) * 4 + 3] >= 60;
   for (let Y0 = 0; Y0 < RBH; Y0++) for (let X0 = 0; X0 < RBW; X0++) { const i = (Y0 * RBW + X0) * 4; if (A(X0, Y0)) p[i + 3] = 255; else { p[i + 3] = 0; if (A(X0 + 1, Y0) || A(X0 - 1, Y0) || A(X0, Y0 + 1) || A(X0, Y0 - 1)) edge.push(i); } }
@@ -632,6 +770,6 @@ function raceEdDraw(dt, t) {
 /* ---------- every frame, in any place ---------- */
 { const fr = scenes.town.frame; scenes.town.frame = function (dt, t) { const m = WL.me; { const g = $('#raceGate'); if (g.classList.contains('on') && (!m || m.loc !== RACE || WL.fading || !RK.drive)) g.classList.remove('on'); }   // the gate's two buttons only show at the gate
   if ((RK.drive || RK.ai.length) && (!m || m.loc !== RACE)) { RK.drive = false; raceFree(); } if (RK.ed.on && (!m || m.loc !== RACE)) raceEdClose();
-    const r = fr.call(this, dt, t); raceBtn(); raceEngine(); raceEdDraw(dt, t); return r; };
-  const lv = scenes.town.leave; scenes.town.leave = function () { RK.drive = false; raceFree(); if (RK.ed.on) raceEdClose(); raceEngine(); raceBtn(); return lv.apply(this, arguments); }; }
+    const r = fr.call(this, dt, t); raceBtn(); racePed(); raceEngine(); raceEdDraw(dt, t); return r; };
+  const lv = scenes.town.leave; scenes.town.leave = function () { RK.drive = false; raceFree(); if (RK.ed.on) raceEdClose(); raceEngine(); raceBtn(); racePed(); return lv.apply(this, arguments); }; }
 setInterval(raceChip, 1000);

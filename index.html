@@ -58,7 +58,7 @@ body{font-family:"Pixelify Sans",system-ui,sans-serif;font-variant-ligatures:non
 #clk{position:absolute;inset:0;z-index:20;background:#07060f;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#f6dfae;padding:12px}
 #clk.on{display:flex}
 #pcModal,#bjAskModal,#beerModal{top:50%;bottom:auto!important;transform:translateY(-50%)}   /* the clicker question sits in the middle of the screen (his call) */
-#clkX{position:absolute;right:10px;top:calc(16px + env(safe-area-inset-top));z-index:2;padding:6px 7px 8px;display:flex;align-items:center;justify-content:center}   /* in line with the menu button (his call) */
+#clkX{position:absolute;right:10px;top:calc(16px + env(safe-area-inset-top));z-index:2;padding:5px 7px 9px;display:flex;align-items:center;justify-content:center}   /* in line with the menu button (his call) */
 #phone:not(.game) #clkX{top:calc(66px + env(safe-area-inset-top))}   /* the lab's test buttons sit in that corner */
 #clk{padding:calc(58px + env(safe-area-inset-top)) 8px calc(10px + env(safe-area-inset-bottom));gap:6px}   /* the game in the middle, clear of the buttons at the top */
 #clk .clkTop{display:flex;align-items:center;gap:12px;font-size:18px;letter-spacing:1px}#clk .clkTop .btn{font-size:13px;padding:4px 10px}
@@ -568,8 +568,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .rl.dead{opacity:.5}.rl.dead span{text-decoration:line-through}
 #talkSkip{position:absolute;right:10px;top:calc(18px + env(safe-area-inset-top));font-size:13px;padding:6px 9px;z-index:21}
 #townLeave,#gameLeave{display:none!important}
-#menuBtn{position:absolute;left:10px;top:calc(16px + env(safe-area-inset-top));z-index:23;padding:6px 7px 8px;display:flex;align-items:center;justify-content:center}
-#chatBtn{position:absolute;left:10px;top:calc(108px + env(safe-area-inset-top));z-index:23;padding:6px 7px 8px;align-items:center;justify-content:center}#chatBtn:not([style*=none]){display:flex}
+#menuBtn{position:absolute;left:10px;top:calc(16px + env(safe-area-inset-top));z-index:23;padding:5px 7px 9px;display:flex;align-items:center;justify-content:center}
+#chatBtn{position:absolute;left:10px;top:calc(108px + env(safe-area-inset-top));z-index:23;padding:5px 7px 9px;align-items:center;justify-content:center}#chatBtn:not([style*=none]){display:flex}
 #chatBtn .chDot{position:absolute;right:-3px;top:-3px;width:10px;height:10px;border-radius:50%;background:#e4544f;border:2px solid #0f0b1e;display:none}#chatBtn.new .chDot{display:block}
 #chatBox{position:absolute;left:58px;right:10px;top:calc(62px + env(safe-area-inset-top));z-index:24;padding:8px 9px 9px;display:none}#chatBox.on{display:block}
 #chatLog{max-height:132px;overflow:auto;font:600 14px 'Pixelify Sans';text-align:left;margin-bottom:6px}#chatLog:empty{display:none}#chatLog div{padding:1px 0}#chatLog b{color:#a92b2c}
@@ -578,7 +578,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .hb{position:absolute;transform:translate(-50%,-100%);background:rgba(26,20,48,.93);border:3px solid #0f0b1e;border-radius:6px;color:#fff;font:600 13px 'Pixelify Sans';padding:2px 8px 4px;white-space:nowrap;text-align:center;line-height:1.15}
 .hb small{display:block;font-size:10px;letter-spacing:1.5px;opacity:.75}.hb b{font-weight:700}.hb b.up{color:#7dff9c}.hb b.dn{color:#ff8a8a}.hb em{font-style:normal;opacity:.75;margin-left:4px}.hb i{vertical-align:-2px}
 .hb.say{background:#fff;color:#1a1430;border-color:#1a1430;white-space:normal;max-width:190px;width:max-content;font-size:14px;padding:3px 8px 5px}.hb.say::after{content:'';position:absolute;left:50%;bottom:-7px;margin-left:-4px;border:4px solid transparent;border-top-color:#1a1430}   /* (his ask, 18 Nov) chat and results over heads */
-#playersBtn{position:absolute;left:10px;top:calc(62px + env(safe-area-inset-top));z-index:23;padding:6px 7px 8px;align-items:center;justify-content:center}#playersBtn:not([style*=none]){display:flex}
+#playersBtn{position:absolute;left:10px;top:calc(62px + env(safe-area-inset-top));z-index:23;padding:5px 7px 9px;align-items:center;justify-content:center}#playersBtn:not([style*=none]){display:flex}
 #plList{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto}#plInvite{margin-top:4px;font-size:17px;padding:8px 10px 11px}.plr{display:flex;align-items:center;gap:9px;text-align:left;padding:5px 8px 7px;border:3px solid var(--wood);border-radius:6px;background:#fff;box-shadow:inset 0 -4px 0 #0002}
 .plr img{width:34px;height:34px;image-rendering:pixelated;object-fit:contain;border-radius:4px;background:#f6dfae}.plr .pt{flex:1;min-width:0}.plr b{display:block;font:700 17px 'Pixelify Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plr small{display:block;font:600 13px 'Pixelify Sans';opacity:.7}.plr.off{opacity:.55}.plr.off img{filter:grayscale(1)}   /* (his ask, 18 Nov) the player list */
@@ -587,7 +587,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #menuCode{display:flex;flex-direction:column;align-items:center;width:100%;padding:4px 10px 6px;cursor:pointer;font-family:inherit}#menuCode small{font-size:10px;letter-spacing:3px;opacity:.7}#menuCode b{font-size:30px;letter-spacing:8px;margin-right:-8px;line-height:1.1}
 #menuCode.ok{border-color:#2f7a45;background:#dff5e3;color:#1f5a31;box-shadow:inset 0 0 0 3px #7fc98f,inset 0 -6px 0 #b9e3c2,0 5px 0 #0008}#menuCode.ok b{font-size:24px;letter-spacing:3px;margin-right:-3px;line-height:33px}
 #phone.game #menuModal{bottom:auto}
-#hideBtn,#spyBtn{position:absolute;left:10px;z-index:22;padding:6px 7px 8px;display:none;align-items:center;justify-content:center}
+#hideBtn,#spyBtn{position:absolute;left:10px;z-index:22;padding:5px 7px 9px;display:none;align-items:center;justify-content:center}
 #hideBtn{top:calc(58px + env(safe-area-inset-top))}#spyBtn{top:calc(100px + env(safe-area-inset-top))}#hideBtn:not(.on)+#spyBtn{top:calc(58px + env(safe-area-inset-top))}
 #phone.ingame #hideBtn.on,#phone.ingame #spyBtn.on{display:flex}
 #nightHud.on~#hideBtn,#nightHud.on~#spyBtn,#watchHud.on~#hideBtn,#watchHud.on~#spyBtn,#overHud.on~#hideBtn,#overHud.on~#spyBtn{display:none!important}   /* not over the night film, the binoculars or the win */
@@ -699,18 +699,18 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #phone.land #townHud.lake .bottom{width:min(400px,56%)}#phone.land #lakeBar .lrow{flex-wrap:wrap;justify-content:flex-end;row-gap:6px}#phone.land #fishLine,#phone.land #hallLine{font-size:18px;margin-bottom:6px;text-align:right}
 #phone.land.xmas #homeHud .hpanel+.hpanel{margin-top:13px}#phone.land:not(.game) .bottom{max-height:calc(100% - var(--lb) - 40px)}
 /* (24 Nov, his ask) sideways the town panel folds into small buttons: Shop, Collection, Daily, Coin flip as icons, and one button to open the whole panel */
-#townFold{display:none}#phone.land #townFold{display:flex;align-items:center;justify-content:center;position:absolute;top:6px;right:6px;width:40px;height:40px;padding:0 0 3px;z-index:2}
+#townFold{display:none}#phone.land #townFold{display:flex;align-items:center;justify-content:center;position:absolute;top:6px;right:6px;width:40px;height:40px;padding:0 0 4px;z-index:2}   /* the same dark square as the menu button; the bottom padding = its 3D edge, so the arrow sits in the middle of the face */
 #phone.land #townHud.tmini .bottom{width:auto;padding:0 0 4px;overflow:visible}
 #phone.land #townHud.tmini .tpanel{background:none!important;border:0!important;border-image:none!important;box-shadow:none!important;padding:46px 0 0!important;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 #phone.land #townHud.tmini .tpanel::before,#phone.land #townHud.tmini .tpanel::after{display:none!important}
 #phone.land #townHud.tmini .thead,#phone.land #townHud.tmini #townRoles,#phone.land #townHud.tmini #townMaf,#phone.land #townHud.tmini #townDev{display:none!important}
 #phone.land #townHud.tmini .tpanel .row{display:flex;flex-direction:column;gap:8px!important;margin:0!important;align-items:flex-end}
-#phone.land #townHud.tmini .tbtn{width:52px;height:52px;padding:0!important;font-size:0!important;gap:0;justify-content:center;position:relative;flex:none}
+#phone.land #townHud.tmini .tbtn{width:52px;height:52px;padding:0 0 6px!important;font-size:0!important;letter-spacing:0!important;gap:0;justify-content:center;align-items:center;position:relative;flex:none}   /* (25 Nov, his ask) icons dead centre on the button face: no letter spacing left from the hidden words, bottom padding = the 6px 3D edge */
 #phone.land #townHud.tmini .tbtn img{margin:0!important}
 #phone.land #townHud.tmini #townStart{width:auto;padding:6px 12px 9px;font-size:16px;margin:0}
 #phone.land #townHud.tmini #townFold{position:static}
 #phone.land #townHud.tmini.hall .tpanel,#phone.land #townHud.tmini.lake .tpanel{display:none!important}   /* (his catch) never inside the South, the Tavern, the mine, the lake... */
-#phone.land #townHud.tmini #townMafia{width:52px;height:52px;padding:0!important;font-size:0!important;margin:0;display:flex;align-items:center;justify-content:center;flex:none}
+#phone.land #townHud.tmini #townMafia{width:52px;height:52px;padding:0 0 6px!important;font-size:0!important;letter-spacing:0!important;gap:0;margin:0;display:flex;align-items:center;justify-content:center;flex:none}#phone.land #townHud.tmini #townMafia img{margin:0!important}
 #phone.land #townHud.tmini #townMafia[style*="none"]{display:none!important}
 /* (24 Nov, his ask) THE COIN COUNTER sits TOP RIGHT (it looked odd under the joystick upright and in the middle sideways),
    and the mine's LEVEL line sits TOP MIDDLE. In a place the bottom bar is only the joystick's floor now. */
@@ -836,7 +836,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <div id="fishLine"></div>
       <div class="lrow"><span class="lchip"><span class="baitIc"></span><span id="fishBaitN">0</span></span><span class="lchip"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><span class="lgap"></span><button class="btn dark" id="fishBookBtn">Fish book</button><button class="btn red" id="fishStopBtn">Stop</button></div>
     </div><div id="hallBar"><div id="hallLine"></div><div class="lrow"><span class="lchip"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span></div></div><div class="panel tpanel">
-      <button class="tfold" id="townFold" title="Menu"></button>
+      <button class="btn dark tfold" id="townFold" title="Menu"></button>
       <div class="thead"><div class="tt"><b id="townLine">Waiting for the host</b><div class="small" id="townSub"></div></div></div>
       <div id="townRoles"><button class="rtog" data-r="d"><i data-ic="detective" data-c="solo"></i>Detective</button><button class="rtog" data-r="b"><i data-ic="bodyguard" data-c="solo"></i>Bodyguard</button><button class="rtog" data-r="j"><i data-ic="jester" data-c="solo"></i>Jester</button><button class="rtog" data-r="f"><i data-ic="framer" data-c="solo"></i>Framer</button><button class="rtog rand" data-r="r"><i data-ic="dice" data-c="solo"></i>Random</button></div>
       <div id="townMaf"><span class="mlbl"><i data-ic="mafia" data-c="solo"></i>MAFIA</span><button class="btn" id="mafMinus">-</button><b id="mafN">1</b><button class="btn" id="mafPlus">+</button><small id="mafMax"></small></div>
@@ -1114,7 +1114,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </nav>
 </div>
 
-<script src="icons.js?v=11212031"></script>
+<script src="icons.js?v=11250110"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -1413,7 +1413,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11242800'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11250200'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -1604,7 +1604,9 @@ const STACK={ufo:{s:20,n:14,squash:.55,hover:12,rod:13},
 const STK={fr:{},st:new WeakMap(),named:{}};
 function stackFrame(name,row,ai,tint){const k=name+row+'|'+ai+'|'+(tint||'');if(STK.fr[k])return STK.fr[k];const D=STACK[name],im=IMG['stack/'+name];if(!im)return null;
   const S=D.s,h=Math.round(S*D.squash),W=S+4,H=h+D.n+4,c=mk(W,H),x=c.getContext('2d');x.imageSmoothingEnabled=false;const a=ai/48*Math.PI*2;
-  for(let z=0;z<D.n;z++){x.setTransform(1,0,0,D.squash,W/2,H-2-h/2-z);x.rotate(a);x.drawImage(im,z*S,row*S,S,S,-S/2,-S/2,S,S);}
+  /* (25 Nov, his note: "weird things floating in front of the car") each slice is lifted out onto a clear picture of its own first. Turned straight out of the strip, a slice picked up the edge of the row under it: a wing or exhaust on the back edge showed again as loose pixels ahead of the nose. */
+  const one=mk(S+2,S+2),ox=one.getContext('2d');ox.imageSmoothingEnabled=false;
+  for(let z=0;z<D.n;z++){ox.clearRect(0,0,S+2,S+2);ox.drawImage(im,z*S,row*S,S,S,1,1,S,S);x.setTransform(1,0,0,D.squash,W/2,H-2-h/2-z);x.rotate(a);x.drawImage(one,-S/2-1,-S/2-1);}
   x.setTransform(1,0,0,1,0,0);
   const d=x.getImageData(0,0,W,H),p=d.data,edge=[];const A=(X,Y)=>X>=0&&Y>=0&&X<W&&Y<H&&p[(Y*W+X)*4+3]>=60;
   for(let Y=0;Y<H;Y++)for(let X=0;X<W;X++)if(!A(X,Y)&&(A(X+1,Y)||A(X-1,Y)||A(X,Y+1)||A(X,Y-1)))edge.push((Y*W+X)*4);
@@ -2658,7 +2660,7 @@ function joyPlace(){floatXTick();const el=$('#joy'),ok=[scenes.town,scenes.cabin
 let LANDPAD=0,LANDCOL=0;const NUDGE={r:0,p:0,t:0};
 /* THE TOWN PANEL, FOLDED (24 Nov, his ask "make the panel collapse into small buttons"): sideways it starts folded; the top button opens and folds it */
 let TMINI=true;try{TMINI=localStorage.getItem('m2_tmini')!=='0';}catch(e){}
-function townFoldPaint(){const h=$('#townHud'),b=$('#townFold');if(!h||!b)return;h.classList.toggle('tmini',TMINI);b.innerHTML=ic(TMINI?'menu':'right',2,'solo');b.title=TMINI?'Open the menu':'Fold the menu';}
+function townFoldPaint(){const h=$('#townHud'),b=$('#townFold');if(!h||!b)return;h.classList.toggle('tmini',TMINI);b.innerHTML=ic(TMINI?'left':'right',2,'solo');b.title=TMINI?'Open the menu':'Fold the menu';   /* (25 Nov, his ask) an arrow both ways: left = open it, right = fold it */}
 document.addEventListener('click',e=>{if(!e.target.closest('#townFold'))return;TMINI=!TMINI;try{localStorage.setItem('m2_tmini',TMINI?'1':'0');}catch(_){}sfx('click');townFoldPaint();});
 setTimeout(townFoldPaint,0);
 /* the lake's coin chip, moved to the top left (24 Nov, his ask) */
@@ -4809,14 +4811,14 @@ function netApply(){if(!NET.on)return;const pl=NET.players||{},mine=pl[NET.uid],
   others.forEach(([u,p],k)=>{keep.add(u);const m=p.m;let e=NET.ents.get(u);
     if(!e){e=wlEnt(k+1,m.x,m.y);e.remote=true;e.uid=u;e.loc=m.loc;e.ms=-1;NET.ents.set(u,e);if(NET.sawRoster){wlSay(`${String(p.n).slice(0,10)} joined.`,'good');sfx('join');}}
     e.i=k+1;e.n=String(p.n).slice(0,10);
-    if(m.s!==e.ms){e.ms=m.s;e.fish=m.f||null;if(e.loc!==m.loc||Math.hypot(e.x-m.x,e.y-m.y)>48){e.loc=m.loc;e.x=m.x;e.y=m.y;e.path=[];e.walk=false;}
+    if(m.s!==e.ms){e.ms=m.s;e.fish=m.f||null;if(typeof raceNetIn==='function'&&raceNetIn(e,m))return;   /* on the race track they are a car (race.js) */if(e.loc!==m.loc||Math.hypot(e.x-m.x,e.y-m.y)>48){e.loc=m.loc;e.x=m.x;e.y=m.y;e.path=[];e.walk=false;}
       if(!!m.car!==!!e.car)carToggle(e,!!m.car);
       if(!e.ko&&!e.act){if(Math.hypot(m.tx-e.x,m.ty-e.y)>2)wlGo(e,m.tx,m.ty);else{e.path=[];e.walk=false;if(m.dir)e.dir=m.dir;}}
       const sk=SEATK.includes(m.seat)||/^(bj\d_\d|tv\d+)$/.test(m.seat||'')?m.seat:null,cur=e.seat&&!e.seat.out?e.seat.k:null;   /* the blackjack and tavern stools too, so a shared table shows who is sat at it */
       if(sk!==cur&&!e.ko&&e.loc>=0){if(sk){const s=wlSeat(sk,e);e.path=[];e.todo=null;e.walk=false;e.act=null;e.x=s.stand[0];e.y=s.stand[1];e.seat={k:sk,t:0};if(e.loc===WL.me.loc)sfx('sit');}else e.seat={k:cur,t:0,out:true};}}});
   for(const[u,e]of[...NET.ents])if(!keep.has(u)){if(e.bubEl)e.bubEl.remove();NET.ents.delete(u);wlSay(`${e.n||'Someone'} left.`);}
   WL.bots=others.map(([u])=>NET.ents.get(u));NET.sawRoster=true;gameLobbyUI();if(WL.sel&&!WL.bots.includes(WL.sel)){WL.sel=null;wlMenu();}}
-const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:m.joyT||[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,car:m.car?1:0,seat:m.seat&&!m.seat.out?m.seat.k:null,f:m.loc===LAKE&&FISH.on?{fc:FISH.face||'back',rd:(typeof KIT!=='undefined'&&KIT.rod)||'twig',ph:FISH.ph,bx:FISH.bob?Math.round(FISH.bob.x):null,by:FISH.bob?Math.round(FISH.bob.y):null}:null,s:++NET.seq};};   /* f: fishing, so the others see your rod and float (his ask) */
+const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:m.joyT||[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,car:m.car?1:0,seat:m.seat&&!m.seat.out?m.seat.k:null,f:m.loc===LAKE&&FISH.on?{fc:FISH.face||'back',rd:(typeof KIT!=='undefined'&&KIT.rod)||'twig',ph:FISH.ph,bx:FISH.bob?Math.round(FISH.bob.x):null,by:FISH.bob?Math.round(FISH.bob.y):null}:null,r:typeof raceNetM==='function'?raceNetM():null,s:++NET.seq};};   /* r: on the race track, your car (race.js) */   /* f: fishing, so the others see your rod and float (his ask) */
 // tell everyone where I am and where I am walking to (at most about five times a second)
 function netMove(){if(!NET.on||!WL.me)return;clearTimeout(NET.mt);const send=()=>{NET.ml=performance.now();if(NET.on)NET.me.child('m').set(netM()).catch(()=>{});};
   if(performance.now()-(NET.ml||0)>180)send();else NET.mt=setTimeout(send,180);}
@@ -4824,7 +4826,7 @@ function netEv(k,to){if(!NET.on)return;const m=WL.me;NET.ref.child('ev').push({k
 function netEvent(s){const v=s.val();if(!NET.on||!v||v.by===NET.uid||!(v.ts>NET.t0))return;
   if(v.k==='dm'){if(GAME.on&&v.to===NET.uid&&!GAME.meDead){const i=GAME.idx[v.by];if(i!=null&&!T.muted.has(i)&&scene===scenes.talk){talkSay(`${PEOPLE[i].n}: ${String(v.text).slice(0,80)}`,'A private message. Tap them to reply.');T.st=10;}}return;}
   if(v.k==='haunt'){if(GAME.on&&v.to===NET.uid&&!GAME.meDead)hauntFx(HAUNTS.includes(v.h)?v.h:'ghost');return;}
-  if(v.k==='gpunch'){if(GAME.on)ghostPunched(v);return;}   // a ghost haunts you: it swoops across your screen
+  if(v.k==='gpunch'){if(GAME.on)ghostPunched(v);return;}if(v.k==='race'){if(typeof raceNetEv==='function')raceNetEv(v);return;}   /* somebody at the track started a race (race.js) */   // a ghost haunts you: it swoops across your screen
   if(scene!==scenes.town)return;const e=NET.ents.get(v.by);if(!e)return;
   if(v.k==='abd'){abSet(e,v.to===NET.uid?WL.me:NET.ents.get(v.to));return;}if(v.k==='abdx'){abDrop(e);return;}if(v.k==='abdo'){const h=e.ab&&e.ab.by;if(h&&e.ab.lift)abDrop(h);return;}   /* a UFO picks someone up / puts them down */
   if(v.k==='brag'){if(v.g==='fish'){const V=e.fv;e.fland={kind:v.fk|0,t:0,x0:V&&V.fx!=null?V.fx:e.x,y0:V&&V.fy!=null?V.fy:e.y-30};setTimeout(()=>headSay(e,bragHtml(v),{t:4.5,cls:'res'}),1250);}else headSay(e,bragHtml(v),{t:4.5,cls:'res'});return;}   /* a catch: the fish flies out of the water to them, then the name shows */                                             // what they just won, lost or caught

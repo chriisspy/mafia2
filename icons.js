@@ -78,6 +78,7 @@ vote:['...KKKK...','...KWWK...','...KRWK...','KKKKWWKKKK','KOOKKKKOOK','KUOOOOOO
 knife:['....KK....','...KSWK...','...KSWK...','...KSWK...','...KSWK...','.KKKSWKKK.','.KggggggK.','.KKKooKKK.','...KooK...','...KKKK...'],
 door:['.KKKKKKKK.','.KUOOOOoK.','.KOKKKKoK.','.KOKooKoK.','.KOKKKKoK.','.KOOOOGoK.','.KOKKKKoK.','.KOKooKoK.','.KOKKKKoK.','.KKKKKKKK.'],
 right:[E,'..KK......','..KGKK....','..KGGGKK..','..KGGGGGK.','..KgggggK.','..KgggKK..','..KgKK....','..KK......',E],
+left:[E,'......KK..','....KKGK..','..KKGGGK..','.KGGGGGK..','.KgggggK..','..KKgggK..','....KKgK..','......KK..',E],   /* (25 Nov) the right arrow mirrored: the folded menu button */
 check:[E,'........KK','.......KFK','......KFEK','.KK..KEEK.','KFEKKEEK..','KEEEEeK...','.KEeeK....','..KKK.....',E],
 cross:[E,'.KK....KK.','KTRK..KTRK','.KRRKKRRK.','..KRRRRK..','..KRRrrK..','.KRrKKrrK.','KRrK..KrrK','.KK....KK.',E],
 google:['...RRRR...','.RRRRRRRR.','RRR....RR.','GG........','GG...BBBBB','GG...BBBBB','EE......BB','EEE....BBB','.EEEEEEBB.','...EEEE...'],
