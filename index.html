@@ -1421,7 +1421,7 @@ SKINS.forEach(s=>{if(s.rar!=='common')s.from='Mafia Case';});
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11250230'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11250240'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -4137,7 +4137,7 @@ function gridPath(G,gw,gh,gs,sx,sy,tx,ty){
 const WL={me:null,bots:[],fx:[],feed:[],sel:null,pos:new Map(),shake:0,fading:false,spins:1,
   wheel:{a:0,from:0,to:0,t0:null,dur:0,busy:false,res:0,by:null}};
 try{const s=localStorage.getItem('m2_spins');if(s!=null&&!isNaN(+s))WL.spins=+s;}catch(e){}
-const SPIN_PRICE=300;   // every spin costs this (his call, 12 Nov)
+const SPIN_PRICE=200;   // every spin costs this (his call, 25 Nov; was 300)
 const wheelFree=()=>!WL.wheel.busy&&!$('#wheelModal').classList.contains('on');   // nobody is using the wheel
 const wlEnt=(i,x,y)=>({i,x,y,dir:'front',path:[],walk:false,loc:-1,act:null,ko:null,todo:null,wait:.5+Math.random()*3,phase:i*377,grudge:null,stay:0});
 const wlAll=()=>[WL.me,...WL.bots];

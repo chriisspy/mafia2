@@ -1,7 +1,7 @@
 // THE MINE + THE BLACKSMITH (24 Nov 2026, his ask): levels, pickaxes, gold chunks, crystals. Cheat-proof like the fishing:
 // the server decides what is in a level (mgo hands the phone a list of rocks and wall veins and keeps a copy), every break is
 // one roll here, a rock cannot be broken twice, a break cannot come sooner than its swings take, and a day has a top.
-//   wallet: kit.gold  gold chunks (the Blacksmith smelts 10 into 5 coins)
+//   wallet: kit.gold  gold chunks (the Blacksmith smelts 10 into 15 coins (25 Nov, his ask: 1.5 a chunk))
 //           kit.cry   crystals (the new currency)        kit.pick  your best pickaxe, 0..4 (wood, stone, iron, steel, gold)
 //           kit.sm    your gold at the Blacksmith's: { c: coins it makes, t: when he started }; ready 5 minutes later
 //           kit.cs    crystal rocks found but not broken yet, up to 3 ("eud" letters): they wait for you on levels 4 and 5
@@ -15,7 +15,7 @@ const MR = {
   rocks: 16, veins: 8, rockOdds: [[70, 28, 2], [58, 36, 6], [48, 40, 12], [40, 42, 18], [32, 44, 24]],
   cryOdds: [0, 0, 0, .003, .008], cryMix: [0, 0, 0, [75, 25, 0], [60, 30, 10]], cryYield: { e: 1, u: 2, d: 4 }, cryKeep: 3,
   goldMul: [1, 1.5, 2, 3, 4],   // round 3 (his note): gold rocks and veins pay this many times more per level
-  dayGold: 400, dayCry: 6, cryGold: 150, smeltIn: 10, smeltOut: 5, smeltMs: 300000, swingMs: 520,   // smeltMs: the Blacksmith takes 5 minutes over your gold
+  dayGold: 400, dayCry: 6, cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, swingMs: 520,   // smeltMs: the Blacksmith takes 5 minutes over your gold
   quick: .7,          // a break may come this much sooner than its swings take (lag), no sooner
   wallsPerLevel: 140  // plain walls you can dig in one visit to a level (the cave is 22 x 17)
 };

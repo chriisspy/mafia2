@@ -1,5 +1,5 @@
 {
- "made": "2026-11-25T01:08:04.740Z",
+ "made": "2026-11-25T01:18:28.955Z",
  "skins": [
   {
    "id": "brownhair",
@@ -419,7 +419,7 @@
    3
   ]
  ],
- "spinPrice": 300,
+ "spinPrice": 200,
  "dayCoins": 250,
  "flipMax": 5,
  "flipEvery": 1200000,

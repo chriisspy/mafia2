@@ -7,7 +7,7 @@
        assets/mine/rocks.png, walls.png, floor.png). Any wall beside the floor can be dug out, so you tunnel where you like.
      - 5 levels, each with its own stone. A ladder shaft goes down. Deeper = more hits, more gold in the rocks.
      - crystal rocks (emerald, ruby, diamond) are found under a rock or wall you break on levels 4 and 5, rarely. Gold pickaxe only.
-   THE BLACKSMITH: a chibi like the cast (tools/make_smith.py). He smelts gold (10 chunks = 5 coins, his numbers), sells pickaxes
+   THE BLACKSMITH: a chibi like the cast (tools/make_smith.py). He smelts gold (10 chunks = 15 coins, his numbers 25 Nov), sells pickaxes
    and swaps crystals for gold chunks.
    Server ops (functions/mine.js): mgo, mbreak, mpick, mcry, smelt, smeltGet. The server decides what is in every rock, so nothing here can be
    faked. mineLocal() = the same rules on this computer only (the ?lab on localhost, or while the ops are not deployed).
@@ -21,7 +21,7 @@ const MR = {
   rocks: 16, veins: 8, rockOdds: [[70, 28, 2], [58, 36, 6], [48, 40, 12], [40, 42, 18], [32, 44, 24]],   // per level: stone, gold, rich (out of 100)
   cryOdds: [0, 0, 0, .003, .008], cryMix: [0, 0, 0, [75, 25, 0], [60, 30, 10]], cryYield: {e: 1, u: 2, d: 4}, cryKeep: 3,   // a crystal rock under a break: the chance, which one, how many crystals
   goldMul: [1, 1.5, 2, 3, 4],                                                // round 3, his note: "the lower you go ... the more gold chunks there are in each rock": gold rocks and veins pay this many times more per level
-  dayGold: 400, dayCry: 6, cryGold: 150, smeltIn: 10, smeltOut: 5, smeltMs: 300000, swingMs: 520};   // smeltMs: he takes 5 minutes over your gold
+  dayGold: 400, dayCry: 6, cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, swingMs: 520};   // smeltMs: he takes 5 minutes over your gold
 const mHits = (k, lv, pick) => Math.max(1, Math.ceil(MR.hp[k] * ('eud'.includes(k) ? 1 : MR.lvmul[lv - 1]) / MR.picks[pick].pow));
 const isCry = k => 'eud'.includes(k);
 const CRY_NAME = {e: 'emerald', u: 'ruby', d: 'diamond'}, CRY_GLOW = {e: '90,255,170', u: '255,110,120', d: '150,225,255'};
@@ -205,7 +205,7 @@ SMH.ambT = 0;
 SMH.joy = (m, J) => { if (J.y > .5 && m.y >= SMH.door[1] - 1 && Math.abs(m.x - SMH.door[0]) < 10) { wlDoor(SOUTH); return true; } return false; };
 SMH.tap = (e, m, x, y) => { if (y > SMH.door[1] - 6 && Math.abs(x - SMH.door[0]) < 18) { wlGo(m, SMH.door[0], SMH.door[1] + 4, () => wlDoor(SOUTH)); return true; } return false; };
 
-/* HIS COUNTER: hand him your gold (10 chunks -> 5 coins, his numbers; ready in 5 minutes), collect the coins, swap crystals for gold.
+/* HIS COUNTER: hand him your gold (10 chunks -> 15 coins, his numbers; ready in 5 minutes), collect the coins, swap crystals for gold.
    THE PICKAXE WALL: buy the next pickaxe. The server does all of it. */
 const mmss = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 function smithUI() {
