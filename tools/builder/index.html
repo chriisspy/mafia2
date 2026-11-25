@@ -752,11 +752,11 @@ V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Ma
   if(drag.k==='pan'){S.px=drag.px+e.clientX-drag.sx;S.py=drag.py+e.clientY-drag.sy;draw();}
   else if(drag.k==='asize'){if(Math.abs(e.movementX)<120)drag.dx+=e.movementX;const dx=drag.dx;if(Math.abs(dx)>3)drag.moved=true;if(drag.moved){S.brush=clamp(drag.b0+Math.round(dx/6),1,64);S.sizing=[drag.x,drag.y];ui();draw();}}
   else if(drag.k==='draw'){let x=Math.floor(fx),y=Math.floor(fy);
-    /* HOLD SHIFT WHILE DRAWING (25 Nov, his ask), pressed before the click or during the stroke: it locks into a straight line from where Shift went down: across, up-down or a
-       45-degree slant, whichever the pointer is nearest. Let go of Shift and it draws freely again. */
+    /* HOLD SHIFT WHILE DRAWING (25 Nov, his ask), pressed before the click or during the stroke: it locks into a straight line from where Shift went down: across or up-down,
+       whichever way the pointer moves most. Let go of Shift and it draws freely again. */
     if(e.shiftKey){if(!drag.lock)drag.lock={ax:drag.lx,ay:drag.ly,dir:null};const L=drag.lock,dx=x-L.ax,dy=y-L.ay;
-      if(!L.dir&&Math.max(Math.abs(dx),Math.abs(dy))>=2){const a=Math.abs(Math.atan2(dy,dx)*180/Math.PI)%180,t=Math.min(a,180-a);L.dir=t<22.5?'h':t>67.5?'v':(Math.sign(dx)===Math.sign(dy)?'d1':'d2');}
-      if(!L.dir){draw();return;}if(L.dir==='h')y=L.ay;else if(L.dir==='v')x=L.ax;else{const n=Math.round((Math.abs(dx)+Math.abs(dy))/2);x=L.ax+Math.sign(dx||1)*n;y=L.ay+(L.dir==='d1'?Math.sign(dx||1):-Math.sign(dx||1))*n;}}
+      if(!L.dir&&Math.max(Math.abs(dx),Math.abs(dy))>=3)L.dir=Math.abs(dx)>=Math.abs(dy)?'h':'v';   /* (25 Nov, his note) only across or up-down, no slants */
+      if(!L.dir){draw();return;}if(L.dir==='h')y=L.ay;else x=L.ax;}
     else drag.lock=null;
     for(const[a,b]of linePts(drag.lx,drag.ly,x,y)){if(drag.pp)ppStep(drag.pp,a,b,drag.mode);else plot(a,b,drag.mode,S.brush);}drag.lx=x;drag.ly=y;draw();}
   else if(drag.k==='shape'){let x1=x,y1=y;if(e.shiftKey&&drag.kind!=='line'){const s=Math.max(Math.abs(x-drag.x0),Math.abs(y-drag.y0));x1=drag.x0+Math.sign(x-drag.x0)*s;y1=drag.y0+Math.sign(y-drag.y0)*s;}
