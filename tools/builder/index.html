@@ -740,7 +740,9 @@ V.addEventListener('pointerdown',e=>{V.setPointerCapture(e.pointerId);const[fx,f
   const mode=tool==='eraser'?'erase':rb?'bg':'fg';
   if(tool==='fill'){if(x<0||y<0||x>=d.w||y>=d.h)return;opBegin();applyMask(flood(tg[0].c,x,y),mode);opEnd();return;}
   if(tool==='pencil'||tool==='eraser'){opBegin();
-plot(x,y,mode,S.brush);
+    /* SHIFT + CLICK (25 Nov, his ask, like Photoshop): click a point, hold Shift, click another: a straight line joins them. The brush joins
+       the brush's last point, the eraser the eraser's. Keep dragging with Shift held and it carries on as a locked straight line. */
+    const L=S.lastDot;if(e.shiftKey&&L&&L.doc===d&&L.tool===tool){for(const[a,b]of linePts(L.x,L.y,x,y))plot(a,b,mode,S.brush);}else plot(x,y,mode,S.brush);
     drag={k:'draw',mode,tool,lx:x,ly:y,pp:S.pp&&S.brush===1?[[x,y]]:null,lock:e.shiftKey?{ax:x,ay:y,dir:null}:null};draw();return;}   /* Shift held before the click: straight from the start */
   if(['line','rect','ellipse'].includes(tool)){drag={k:'shape',kind:tool,mode,x0:x,y0:y};}});
 V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Math.floor(fy),d=S.doc;if(!d)return;S.hover=[x,y];
@@ -775,6 +777,7 @@ V.addEventListener('pointermove',e=>{const[fx,fy]=toDoc(e),x=Math.floor(fx),y=Ma
   else if(drag.k==='glow'){drag.g.x=Math.round(fx-drag.ox);drag.g.y=Math.round(fy-drag.oy);winSync(d,drag.g);draw();}
   else if(drag.k==='glowr'){drag.g.r=clamp(Math.round(Math.hypot(fx-drag.g.x,fy-drag.g.y)),2,300);draw();}});
 V.addEventListener('pointerup',e=>{const g=drag;drag=null;if(!g)return;
+  if(g.k==='draw')S.lastDot={x:g.lx,y:g.ly,doc:S.doc,tool:g.tool};   /* for Shift + click: the next line starts here */
   if(g.k==='rimg'||g.k==='rscale'){refKeep(S.doc);return;}
   if(g.k==='fscale'){draw();return;}
   if(g.k==='asize'){S.sizing=null;S.asizing=false;if(document.pointerLockElement)document.exitPointerLock();if(!g.moved){const col=g.alt||pickAt(g.fx,g.fy,g.x,g.y);if(col){if(g.rb)S.bg=col;else{S.fg=col;S.tile=null;}}}ui();draw();return;}
