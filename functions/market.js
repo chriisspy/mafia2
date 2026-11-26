@@ -83,10 +83,10 @@ module.exports = ({ db, tx, spend, bad, C }) => {
         if (Object.values(items).some(x => x.t === 'mk' && x.id === id)) bad('That design is already for sale.');
         it = { t, id, q: -1, price: p };
       } else await tx(uid, w => {
-        if (t === 'dec') { const id = String(d.id), q = Math.max(1, d.q | 0); w.dec = w.dec || {}; if ((w.dec[id] || 0) < q) bad('You do not have that many.'); w.dec[id] -= q; if (!w.dec[id]) delete w.dec[id]; it = { t, id, q, price: p }; }
+        if (t === 'dec') { const id = String(d.id), q = Math.max(1, d.q | 0); if ((C.decor.find(x => x.id === id) || {}).quest) bad('That cannot be sold.'); w.dec = w.dec || {}; if ((w.dec[id] || 0) < q) bad('You do not have that many.'); w.dec[id] -= q; if (!w.dec[id]) delete w.dec[id]; it = { t, id, q, price: p }; }
         else if (t === 'gold') { const q = Math.max(1, d.q | 0); if ((w.kit.gold | 0) < q) bad('You do not have that much gold.'); w.kit.gold -= q; it = { t, id: 'gold', q, price: p }; }
-        else if (t === 'fish') { const i = d.bag | 0, f = w.kit.bag[i]; if (!f) bad('That fish is gone.'); w.kit.bag.splice(i, 1); it = { t, id: 'fish' + f[0], f, q: 1, price: p }; }
-        else if (t === 'skin') { const id = String(d.id); if (!w.own[id]) bad('You do not own that outfit.'); if ((C.start || []).includes(id)) bad('Everyone starts with that one.'); delete w.own[id]; it = { t, id, q: 1, price: p }; }
+        else if (t === 'fish') { const i = d.bag | 0, f = w.kit.bag[i]; if (!f) bad('That fish is gone.'); if ((C.fishes[f[0]] || {}).rar === 'secret') bad('That cannot be sold.'); /* the Glimmer Koi: Joe buys it, a stall never sells it */ w.kit.bag.splice(i, 1); it = { t, id: 'fish' + f[0], f, q: 1, price: p }; }
+        else if (t === 'skin') { const id = String(d.id); if (!w.own[id]) bad('You do not own that outfit.'); if ((C.start || []).includes(id)) bad('Everyone starts with that one.'); if ((C.skins.find(s => s.id === id) || {}).rar === 'secret') bad('That cannot be sold.'); delete w.own[id]; it = { t, id, q: 1, price: p }; }
         else bad('Bad thing.');
         return {};
       });

@@ -20,6 +20,7 @@ FIX = {
     'golf':   {'front': [], 'right': [], 'left': []},      # sunglasses
     'fisher': {'front': [], 'right': [], 'left': []},      # sunglasses
     'batman': {'front': [], 'right': [], 'left': []},      # white mask eyes
+    'stag':   {'front': [], 'right': [], 'left': []},      # the Forest Warden (Bark Knight): glowing eyes in a mask, they never shut
     'mafia':     {'front': [[11, 17, 2, 3], [17, 17, 2, 3]]},                       # the eyes touch his moustache
     'detective': {'front': [[11, 15, 2, 3], [17, 15, 2, 3]], 'right': [[17, 16, 2, 3]], 'left': [[5, 16, 2, 3]]},   # the eye touches the hat brim
     'ferrari':   {'right': [[17, 12, 1, 3]], 'left': [[6, 12, 1, 3]]},

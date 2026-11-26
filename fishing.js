@@ -59,12 +59,46 @@ const FISHES=[
   {id:'star',name:'Movie Star',rar:'epic',min:15,max:30,val:105,str:1.05,win:.7,s:0},
   {id:'finger',name:'Battered Fish',rar:'common',min:12,max:25,val:12,str:.45,win:1,s:0},
   {id:'plug',name:'Electric Eel',rar:'rare',min:60,max:120,val:34,str:.9,win:.85,s:2},
-  {id:'sword',name:'Sword Fish',rar:'epic',min:150,max:280,val:130,str:1.35,win:.7,s:2}];
+  {id:'sword',name:'Sword Fish',rar:'epic',min:150,max:280,val:130,str:1.35,win:.7,s:2},
+  /* 26 Nov (his list): real fish, an Aussie one, easter eggs, three more legendaries. Art: Nano Banana Pro from our own fish (tools/make_new_fish.py). */
+  {id:'bream',name:'Bream',rar:'common',min:20,max:45,val:10,str:.5,win:1,s:0},
+  {id:'flathead',name:'Flathead',rar:'common',min:30,max:80,val:12,str:.55,win:1,s:1},
+  {id:'mackerel',name:'Mackerel',rar:'common',min:25,max:55,val:11,str:.6,win:1,s:1},
+  {id:'snapper',name:'Snapper',rar:'rare',min:30,max:90,val:33,str:.85,win:.85,s:1},
+  {id:'murraycod',name:'Murray Cod',rar:'rare',min:50,max:120,val:36,str:.95,win:.85,s:2},
+  {id:'tuna',name:'Yellowfin Tuna',rar:'epic',min:80,max:200,val:125,str:1.35,win:.7,s:2},
+  {id:'barra',name:'Barramundi',rar:'rare',min:55,max:120,val:35,str:.9,win:.85,s:2},
+  {id:'trolley',name:'Shopping Trolley',rar:'junk',min:95,max:95,val:3,str:0,win:1.2,s:2},
+  {id:'thong',name:'Single Thong',rar:'junk',min:27,max:27,val:2,str:0,win:1.2,s:0},
+  {id:'singbass',name:'Singing Bass',rar:'rare',min:30,max:36,val:40,str:.65,win:.85,s:1},
+  {id:'cannon',name:'Cannon Salmon',rar:'rare',min:50,max:100,val:38,str:1,win:.85,s:2},
+  {id:'hammer',name:'Hammerhead',rar:'rare',min:90,max:180,val:37,str:.95,win:.85,s:2},
+  {id:'duck',name:'Friendly Floatee',rar:'epic',min:7,max:9,val:100,str:.9,win:.7,s:0},
+  {id:'ravecrab',name:'Rave Crab',rar:'epic',min:10,max:22,val:108,str:1.1,win:.7,s:0},
+  {id:'nessie',name:'Baby Nessie',rar:'legendary',min:100,max:180,val:400,str:1.5,win:.55,s:2},
+  {id:'megtooth',name:'Megalodon Tooth',rar:'legendary',min:14,max:18,val:350,str:1.4,win:.55,s:0},
+  {id:'kraken',name:'The Kraken',rar:'legendary',min:200,max:400,val:450,str:1.65,win:.55,s:2},
+  /* THE GLIMMER KOI (26 Nov): rarity Secret. It bites only at night, and only on the Glimmer Bait from Pip (FISH_KOI below). Never rolled as a normal fish. */
+  {id:'glimkoi',name:'Glimmer Koi',rar:'secret',min:45,max:90,val:700,str:1.5,win:.5,s:1}];
 /* how likely each rarity is, by how far out the shadow lives: near the jetty, the middle, the far side */
 const FISH_ODDS=[{common:82,rare:17,epic:1,legendary:0},{common:64,rare:28,epic:7,legendary:1},{common:50,rare:32,epic:15,legendary:3}];
 /* a rare fish (or better) shows a PINK "!" when it bites, and fights harder: this much more pull (his call, 18 Nov) */
-const FISH_TOUGH={rare:1.4,epic:1.55,legendary:1.7};
-const FISH_RC={junk:'#9a8f86',common:'#7bc96f',rare:'#6fb5ff',epic:'#c58bff',legendary:'#ffcf4a'};
+const FISH_TOUGH={rare:1.4,epic:1.55,legendary:1.7,secret:1.8};
+const FISH_RC={junk:'#9a8f86',common:'#7bc96f',rare:'#6fb5ff',epic:'#c58bff',legendary:'#ffcf4a',secret:'#eaf6ff'};
+/* JUNK (26 Nov): the boot, the can, the trolley and the thong. Out of 100 casts, this many bring up junk, by how far out you cast (more by the bank);
+   a luckier rod brings up less (one less for each point of luck, never under 1). Before today the server never picked junk at all. */
+const FISH_JUNK=[8,5,3];
+/* THE GLIMMER BAIT (26 Nov, the Glimmerkin hunt): bought from Pip down the mine once he is mended (mine.js; the wallet keeps how many: kit.gb).
+   With some in your pocket a second bait chip shows at the lake: tap it and your casts use Glimmer Bait, one a cast, in place of Joe's.
+   It only glows at NIGHT (the clock in Sydney, FISH_NIGHT: from 6 in the evening to 6 in the morning; the server checks the same clock).
+   On a Glimmer cast the Glimmer Koi takes it this often, by how far out the cast lands (FISH_KOI, out of 100); the rest of the time an ordinary
+   fish comes. Without the bait, or by day, the Koi never bites. */
+const FISH_KOI=[20,35,55],FISH_NIGHT=[18,6];
+const LABF=(()=>{try{return JSON.parse(localStorage.getItem('m2lab_fish')||'null')||{};}catch(e){return{};}})();   /* the local test lab's own fishing (fishLocal below) */
+function fishNight(){if(typeof LABLOCAL!=='undefined'&&LABLOCAL&&LABF.night!=null)return!!LABF.night;   /* the lab only: LABF.night = 1 / 0 sets the clock */
+  let h=new Date().getHours();try{h=+new Intl.DateTimeFormat('en-GB',{timeZone:'Australia/Sydney',hour:'2-digit',hour12:false}).format(new Date())%24;}catch(e){}return h>=FISH_NIGHT[0]||h<FISH_NIGHT[1];}
+const glimLab=()=>typeof LABLOCAL!=='undefined'&&LABLOCAL&&typeof LABM!=='undefined';
+function glimN(){return glimLab()?LABM.gb|0:KIT.gb|0;}   /* how many Glimmer Bait you hold (the lab keeps its own beside the lab's mine: LABM.gb) */
 Object.assign(FISH,{ph:'idle',t:0,held:false,press:false,px:432,pow:0,pdir:1,tg:null,bob:null,shad:[],rip:[],spl:[],cand:null,hook:null,d:1,ten:0,burst:0,nextB:2,
   cx:432,cy:298,rods:{},rodAsk:{},spawnT:0,dip:0,reelT:0,warnT:0,land:null,mask:null,log:{},fr:0});
 try{FISH.log=JSON.parse(localStorage.getItem('m2_fish')||'{}')||{};}catch(e){}
@@ -85,7 +119,35 @@ Object.assign(SFX,{
   fish_up(){[523,659,784].forEach((f,i)=>tone(f,.09,{type:'triangle',vol:.11,at:i*.07}));}});
 
 /* ---- bait and the fish book ---- */
-function fishBait(){return KIT.bait;}   /* the server keeps it (phase 2: cheat-proof coins) */
+function fishBait(){return FISH.glim&&glimN()>0?glimN():KIT.bait;}   /* the bait your next cast uses: Joe's, or the Glimmer Bait when its chip is lit. The server keeps both (phase 2: cheat-proof coins) */
+/* the Glimmer Bait's chip: only there while you hold some. Lit = your casts use it */
+function glimPaint(){const c=$('#glimChip');if(!c)return;const n=glimN();if(!n)FISH.glim=false;c.style.display=n?'':'none';c.classList.toggle('on',!!FISH.glim);$('#glimN').textContent=n;}
+/* the server, or (in the local test lab) this computer standing in for it, like the mine's mineLocal: the lab keeps its own bag, book and catch */
+function fop(op,d){return typeof LABLOCAL!=='undefined'&&LABLOCAL?Promise.resolve().then(()=>fishLocal(op,d||{})):srv(op,d);}
+function fishLocal(op,d){const W=LABF,bad=m=>{throw new Error(m);},save=()=>{try{localStorage.setItem('m2lab_fish',JSON.stringify(W));}catch(e){}};W.bag=W.bag||[];W.fc=W.fc||{};
+  const sync=()=>{KIT.bag=W.bag.map(b=>[...b]);save();};
+  if(op==='fcast'){if(W.pend)return{k:W.pend.k};const rod=RODS.find(r=>r.id===d.rod&&KIT.rods.includes(r.id))||RODS[0];let z=Math.max(0,Math.min(2,d.z|0));if(rod.range<.85)z=Math.min(z,1);const glim=!!d.gb;
+    if(glim){if(glimN()<=0)bad('No Glimmer Bait.');if(!fishNight())bad('The Glimmer Bait only glows at night.');LABM.gb=(LABM.gb|0)-1;try{localStorage.setItem('m2lab_mine',JSON.stringify(LABM));}catch(e){}}
+    const pool=r=>FISHES.map((f,i)=>i).filter(i=>FISHES[i].rar===r),pick=a=>a[Math.floor(Math.random()*a.length)];let k;
+    if(W.next!=null&&FISHES[W.next]&&(FISHES[W.next].rar!=='secret'||glim)){k=W.next|0;}   /* the lab only: LABF.next = a fish's place in FISHES makes it the next catch (the Koi still needs the Glimmer Bait) */
+    else if(glim&&Math.random()*100<FISH_KOI[z])k=pick(pool('secret'));
+    else if(Math.random()*100<Math.max(1,FISH_JUNK[z]-rod.luck))k=pick(pool('junk'));
+    else{const B=FISH_ODDS[z],L=rod.luck,O={common:B.common-7*L,rare:B.rare+3.5*L,epic:B.epic+2.5*L,legendary:B.legendary+L};let r=Math.random()*100,rar='common';for(const q of['legendary','epic','rare','common']){if(r<O[q]){rar=q;break;}r-=O[q];}k=pick(pool(rar));}
+    W.pend={k,t:Date.now()};save();return{k};}
+  if(op==='fland'){const p=W.pend;if(!p)bad('Nothing on the line.');if(W.bag.length>=FISH_BAG)bad('Your bag is full.');const F=FISHES[p.k],pct=Math.random(),cm=Math.round(F.min+(F.max-F.min)*(pct*pct*.6+pct*.4)),g=F.rar==='junk'?F.val:Math.max(1,Math.round(F.val*(.75+.6*pct)));
+    W.bag.push([p.k,cm,g]);W.pend=null;if(W.next===p.k)delete W.next;W.fc[F.id]=1;let plaque=false;if(!W.fp&&FISHES.every(f=>W.fc[f.id])){W.fp=1;plaque=true;WALLET.dec=WALLET.dec||{};WALLET.dec.goldfishplaque=(WALLET.dec.goldfishplaque||0)+1;}sync();return{k:p.k,cm,g,plaque};}
+  if(op==='flose'){W.pend=null;save();return{};}
+  if(op==='fsell'){if(!W.bag.length)bad('Nothing to sell.');const got=W.bag.reduce((a,b)=>a+fishPay(b[2]),0);coins+=got;W.bag=[];sync();paintCoins();return{got,kept:0};}
+  bad('Unknown action.');}
+if(typeof LABLOCAL!=='undefined'&&LABLOCAL&&LABF.bag)KIT.bag=LABF.bag.map(b=>[...b]);
+/* the wallet: how many Glimmer Bait you hold, and the server's own list of what you have caught (kit.fc), which is what the Gold Fish Plaque is judged on.
+   A fish the server knows and this phone's book does not (a new phone) goes into the book. ONCE, the other way: what this phone's book already held before
+   26 Nov is told to the server (fbook), which takes the OLD fish from it on trust and none of the new ones: those have to be caught. */
+{const _wa=walletApply;walletApply=function(w){_wa(w);const k=(w&&w.kit)||{},lab=typeof LABLOCAL!=='undefined'&&LABLOCAL;KIT.gb=k.gb|0;
+  if(lab){if(LABF.bag)KIT.bag=LABF.bag.map(b=>[...b]);if(LABF.fp){WALLET.dec=WALLET.dec||{};if(!WALLET.dec.goldfishplaque)WALLET.dec.goldfishplaque=1;}}
+  else{let ch=false;for(const id of Object.keys(k.fc||{}))if(FISHES.some(f=>f.id===id)&&!(FISH.log[id]&&FISH.log[id].n)){FISH.log[id]={n:1,best:(FISH.log[id]||{}).best||0};ch=true;}if(ch)fishSaveLog();
+    if(!k.fb&&!FISH.bookAsk){FISH.bookAsk=1;const ids=Object.keys(FISH.log).filter(id=>FISH.log[id]&&FISH.log[id].n);srv('fbook',{ids}).catch(()=>{});}}
+  glimPaint();};}
 function fishUseBait(n){}   /* the server takes the bait when the cast lands (fcast) */
 function fishSaveLog(){try{localStorage.setItem('m2_fish',JSON.stringify(FISH.log));}catch(e){}}
 function fishPic(c,i,k,dark){const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,c.width,c.height);x.drawImage(IMG['fish/sheet'],i*48,0,48,32,0,0,48*k,32*k);
@@ -121,7 +183,7 @@ function fishLine(x0,y0,x1,y1,col,sag){lx.fillStyle=col;const n=Math.max(2,Math.
   for(let i=0;i<=n;i++){const k=i/n,x=Math.round(x0+(x1-x0)*k),y=Math.round(y0+(y1-y0)*k+Math.sin(k*Math.PI)*(sag||0));if(x!==qx||y!==qy){lx.fillRect(x,y,1,1);qx=x;qy=y;}}}
 
 /* ---- starting and stopping ---- */
-function fishSay(a){$('#fishLine').textContent=a;$('#fishBaitN').textContent=LAB?'99':fishBait();}   /* the lake shows ONE line of words; bait and coins are the two chips beside the buttons */
+function fishSay(a){$('#fishLine').textContent=a;$('#fishBaitN').textContent=LAB?'99':KIT.bait;glimPaint();}   /* the lake shows ONE line of words; bait and coins are the two chips beside the buttons */
 function lakeOff(){fishStop();$('#townHud').classList.remove('lake');$('#fishRodBtn').classList.remove('on');}
 function fishPh(p){const F=FISH;F.ph=p;F.t=0;
   if(p==='idle')fishSay(fishBait()?'Hold on the water to cast':'Out of bait');
@@ -139,9 +201,9 @@ function fishNear(m,face){if(!m||m.loc!==LAKE||m.ko)return null;const v=FISH_V[f
 function fishFace(m,pref){if(!m)return null;for(const f of[pref,m.dir,'back','right','left']){if(!FISH_V[f])continue;const nw=fishNear(m,f);if(nw)return{face:f,near:nw};}return null;}
 function fishStart(){const F=FISH,m=WL.me;if(F.on||!m||m.loc!==LAKE)return;F.on=true;F.held=false;F.press=false;F.bob=null;F.cand=null;F.hook=null;F.land=null;const ff=fishFace(m,F.want);F.want=null;if(!ff){F.on=false;wlSay('Stand at the edge of the water to fish.','bad');return;}F.near=ff.near;F.face=ff.face;F.px=m.x;F.py=m.y-8;m.dir=ff.face;m.walk=false;m.path=[];m.todo=null;
   $('#townHud').classList.add('fishing');paintCoins();fishPh('idle');sfx('open');netMove();}
-function fishStop(){const F=FISH;if(!F.on)return;F.on=false;setTimeout(()=>{if(typeof netMove==='function')netMove();},0);F.held=false;F.bob=null;F.hook=null;F.land=null;if(F.cand){F.cand.st='swim';F.cand=null;}
+function fishStop(){const F=FISH;if(!F.on)return;F.on=false;F.moon=null;setTimeout(()=>{if(typeof netMove==='function')netMove();},0);F.held=false;F.bob=null;F.hook=null;F.land=null;if(F.cand){F.cand.st='swim';F.cand=null;}
   $('#townHud').classList.remove('fishing');fishSay('');$('#fishModal').classList.remove('on');$('#fishBookModal').classList.remove('on');}
-function fishLose(msg){const F=FISH;if(F.sk!=null){F.sk=null;srv('flose').catch(()=>{});}if(F.cand){F.cand.st='flee';F.cand.t=0;F.cand=null;}if(F.hook){F.hook.st='flee';F.hook.t=0;F.hook=null;}F.bob=null;wlSay(msg,'bad');fishPh('idle');}
+function fishLose(msg){const F=FISH;if(F.sk!=null){F.sk=null;fop('flose').catch(()=>{});}if(F.cand){F.cand.st='flee';F.cand.t=0;F.cand=null;}if(F.hook){F.hook.st='flee';F.hook.t=0;F.hook=null;}F.bob=null;wlSay(msg,'bad');fishPh('idle');}
 
 /* ---- taps ---- */
 function fishTap(e,m,x,y){const F=FISH;
@@ -181,7 +243,8 @@ function fishTick(dt,t,m){const F=FISH;F.fr=t;F.t+=dt;F.dip=Math.max(0,F.dip-dt*
   F.shad=F.shad.filter(s=>!s.gone);
   for(const r of F.rip)r.t+=dt;F.rip=F.rip.filter(r=>r.t<r.life);for(const s of F.spl)s.t+=dt;F.spl=F.spl.filter(s=>s.t<.5);
   if(!F.on)return;const press=F.press;F.press=false;
-  if(F.ph==='idle'){if(press){if(!fishBait()){wlSay('No bait left. Fisherman Joe sells it.','bad');F.held=false;}else if(KIT.bag.length>=FISH_BAG){wlSay('Your bag is full. Sell your fish to Fisherman Joe.','bad');F.held=false;}else{F.pow=0;F.pdir=1;fishPh('charge');}}}
+  if(F.moon&&window.moonTick&&moonTick(dt,t,m,press))return;   /* the Glow Bait is on the hook (keystones.js): no fish, the Moon stone */
+  if(F.ph==='idle'){if(press){if(window.moonReady&&moonReady(m)){F.pow=0;F.pdir=1;fishPh('charge');}   /* Pip's Glow Bait is its own bait: it needs none of Joe's, and no room in the bag */else if(F.glim&&glimN()>0&&!fishNight()){wlSay('The Glimmer Bait only glows at night.','bad');F.held=false;}else if(!fishBait()){wlSay('No bait left. Fisherman Joe sells it.','bad');F.held=false;}else if(KIT.bag.length>=FISH_BAG){wlSay('Your bag is full. Sell your fish to Fisherman Joe.','bad');F.held=false;}else{F.pow=0;F.pdir=1;fishPh('charge');}}}
   else if(F.ph==='charge'){F.pow+=F.pdir*dt*.85;if(F.pow>=1){F.pow=1;F.pdir=-1;}if(F.pow<=0){F.pow=0;F.pdir=1;}
     const sd=fishSide(),ang=sd?clamp((F.py-(m.y-8))/95,-.62,.62):clamp((F.px-m.x)/95,-.62,.62);let R=38+F.pow*190*fishRod().range,tx,ty;   /* slide your finger across the way you face to swing the aim */
     for(;;){if(sd){tx=m.x+sd*(8+Math.cos(ang)*R);ty=m.y-8+Math.sin(ang)*R;}else{tx=m.x+Math.sin(ang)*R;ty=m.y-12-Math.cos(ang)*R;}if(fishWet(tx,ty)||R<24)break;R-=4;}F.tg=[tx,ty];
@@ -189,7 +252,8 @@ function fishTick(dt,t,m){const F=FISH;F.fr=t;F.t+=dt;F.dip=Math.max(0,F.dip-dt*
   else if(F.ph==='fly'){const k=Math.min(1,F.t/.55),B=F.bob;B.x=lerp(B.x0,B.x1,k);B.y=lerp(B.y0,B.y1,k);B.z=Math.sin(k*Math.PI)*34;
     if(k>=1){B.z=0;sfx('fish_plop');fishRipple(B.x,B.y,9,.8);fishRipple(B.x,B.y,5,.5);F.dip=1;F.lure=1+Math.random()*2.4;F.cand=null;
       for(const s of F.shad)if(s.st==='swim'&&Math.hypot(s.x-B.x,s.y-B.y)<11){s.st='flee';s.t=0;s.a=Math.atan2(s.y-B.y,s.x-B.x);}   /* land it ON a fish and it bolts */
-      F.sk=null;const z=(()=>{const d=FISH_ME[1]-B.y;return d<95?0:d<175?1:2;})();F.skAsk=srv('fcast',{z,rod:KIT.rod}).then(r=>{F.sk=r.k;}).catch(e=>{if(LAB&&/bait/i.test(e.message)){srv('lab',{what:'bait'}).catch(()=>{});}fishLose(e.message);});   /* the server decides the fish */
+      F.sk=null;if(window.moonCast&&moonCast(m,B)){}   /* cast off the jetty's end with the Glow Bait: the server is not asked for a fish, and none of Joe's bait is used */
+      else{const z=(()=>{const d=FISH_ME[1]-B.y;return d<95?0:d<175?1:2;})();const gb=F.glim&&glimN()>0?1:0;F.skAsk=fop('fcast',{z,rod:KIT.rod,gb}).then(r=>{F.sk=r.k;if(gb&&!glimLab())KIT.gb=Math.max(0,(KIT.gb|0)-1);glimPaint();}).catch(e=>{if(LAB&&/bait/i.test(e.message)){srv('lab',{what:'bait'}).catch(()=>{});}fishLose(e.message);});}   /* the server decides the fish */
       fishPh('wait');}}
   else if(F.ph==='wait'){const B=F.bob;
     if(press){if(F.cand&&F.cand.st==='nib'){fishLose('You pulled too early. It swam off.');}else{if(F.cand){F.cand.st='swim';F.cand=null;}F.bob=null;fishUseBait(-1);fishPh('idle');}return;}   /* nothing was on it yet: the bait comes back */
@@ -212,23 +276,27 @@ function fishTick(dt,t,m){const F=FISH;F.fr=t;F.t+=dt;F.dip=Math.max(0,F.dip-dt*
     if(F.ten>=1){sfx('fish_snap');F.hook=null;s.st='flee';s.t=0;s.a=-Math.PI/2;F.bob=null;wlSay('The line snapped!','bad');fishPh('idle');}
     else if(F.d>=1.3){fishLose('It got away.');}
     else if(F.d<=0){s.gone=true;F.hook=null;fishSplash(s.x,s.y);sfx('fish_up');F.land={kind:s.kind,x0:s.x,y0:s.y,t:0};F.bob=null;F.ph='land';F.t=0;}}
-  else if(F.ph==='land'){F.land.t+=dt;if(F.land.t>=.6&&!F.landAsk){F.landAsk=true;srv('fland').then(r=>{F.landAsk=false;F.land=null;F.sk=null;F.ph='card';fishCard(r.k,r.cm,r.g);brag('fish',{fk:r.k,cm:r.cm});netMove();}).catch(e=>{F.landAsk=false;F.land=null;F.sk=null;wlSay(e.message,'bad');fishPh('idle');});}}   /* the server puts it in your bag */
+  else if(F.ph==='land'){F.land.t+=dt;if(F.land.t>=.6&&!F.landAsk){F.landAsk=true;fop('fland').then(r=>{F.landAsk=false;F.land=null;F.sk=null;F.ph='card';if(r.plaque)F.plaque=1;fishCard(r.k,r.cm,r.g);brag('fish',{fk:r.k,cm:r.cm});netMove();}).catch(e=>{F.landAsk=false;F.land=null;F.sk=null;wlSay(e.message,'bad');fishPh('idle');});}}   /* the server puts it in your bag */
 }
 /* ---- what you caught ---- */
 function fishCard(i,cm,gain){const F=FISH,K=FISHES[i];
   const L=F.log[K.id]||(F.log[K.id]={n:0,best:0}),isNew=!L.n,rec=!isNew&&cm>L.best&&K.rar!=='junk';L.n++;L.best=Math.max(L.best,cm);fishSaveLog();
-  fishPic($('#fcCv'),i,2);$('#fcName').textContent=K.name;$('#fcName').style.color=K.rar==='junk'?'':FISH_RC[K.rar];$('#fcStage').style.setProperty('--rc',FISH_RC[K.rar]);
+  fishPic($('#fcCv'),i,2);$('#fcName').textContent=K.name;$('#fcName').style.color=K.rar==='junk'?'':FISH_RC[K.rar];$('#fcStage').style.setProperty('--rc',FISH_RC[K.rar]);$('#fishModal').classList.toggle('sec',K.rar==='secret');   /* Secret: white on near-black, like the Collection */
   $('#fcTag').textContent=isNew?'NEW':rec?'RECORD':'';$('#fcTag').style.display=isNew||rec?'':'none';
-  $('#fcInfo').innerHTML=`<b style="color:${FISH_RC[K.rar]}">${K.rar.toUpperCase()}</b> · ${cm} cm · <span class="wal">worth ${ic('coin',2)}${fishPay(gain)}</span>`;
+  $('#fcInfo').innerHTML=`<b${K.rar==='secret'?' class="secb"':` style="color:${FISH_RC[K.rar]}"`}>${K.rar.toUpperCase()}</b> · ${cm} cm · <span class="wal">worth ${ic('coin',2)}${fishPay(gain)}</span>`;
   $('#fcAgain').textContent=KIT.bag.length>=FISH_BAG?'Bag is full':fishBait()?'Cast again':'Out of bait';$('#fishModal').classList.add('on');
-  if(K.rar==='epic'||K.rar==='legendary')winSound(K.rar,.1);else sfx(K.rar==='junk'?'nope':K.rar==='rare'?'rare':'prize');
-  if(K.rar==='legendary'&&NET.on)wlSay('You caught '+K.name+'!','good');}
-function fishBook(){$('#fishBookGrid').innerHTML=FISHES.map((K,i)=>{if(K.rar==='junk')return'';   /* the book is for fish: the boot and the tin can are not in it (his call, 18 Nov) */const L=FISH.log[K.id],own=L&&L.n;
-    return `<div class="ocard fcard${own?'':' lock'}" style="--rc:${own?FISH_RC[K.rar]:'#8a7f9c'}"><canvas width="48" height="32" data-i="${i}" data-d="${own?0:1}"></canvas><span>${own?K.name:'? ? ?'}</span><em>${own?(K.rar==='junk'?'x'+L.n:L.best+' cm · x'+L.n):K.rar==='junk'?'JUNK':K.rar.toUpperCase()}</em></div>`;}).join('');
+  if(K.rar==='epic'||K.rar==='legendary'||K.rar==='secret')winSound(K.rar==='secret'?'legendary':K.rar,.1);else sfx(K.rar==='junk'?'nope':K.rar==='rare'?'rare':'prize');
+  if((K.rar==='legendary'||K.rar==='secret')&&NET.on)wlSay('You caught '+K.name+'!','good');}
+function fishBook(){$('#fishBookGrid').innerHTML=FISHES.map((K,i)=>{if(K.rar==='junk')return'';   /* the book is for fish: the boot and the tin can are not in it (his call, 18 Nov) */const L=FISH.log[K.id],own=L&&L.n;if(K.rar==='secret'&&!own)return'';   /* a Secret fish is not listed anywhere until it is yours (the Collection's rule) */
+    return `<div class="ocard fcard${own?'':' lock'}${K.rar==='secret'?' sec':''}" style="--rc:${own?FISH_RC[K.rar]:'#8a7f9c'}"><canvas width="48" height="32" data-i="${i}" data-d="${own?0:1}"></canvas><span>${own?K.name:'? ? ?'}</span><em>${own?(K.rar==='junk'?'x'+L.n:L.best+' cm · x'+L.n):K.rar==='junk'?'JUNK':K.rar.toUpperCase()}</em></div>`;}).join('');
   document.querySelectorAll('#fishBookGrid canvas').forEach(c=>fishPic(c,+c.dataset.i,1,c.dataset.d==='1'));
-  const real=FISHES.filter(K=>K.rar!=='junk'),got=real.filter(K=>FISH.log[K.id]&&FISH.log[K.id].n).length;$('#fishBookN').textContent=got+' of '+real.length;$('#fishModal').classList.remove('on');$('#fishBookModal').classList.add('on');}
-$('#fcAgain').onclick=()=>{$('#fishModal').classList.remove('on');sfx('click');fishPh('idle');};
-$('#fcBook').onclick=()=>{sfx('click');fishBook();};
+  const real=FISHES.filter(K=>K.rar!=='junk'&&(K.rar!=='secret'||(FISH.log[K.id]&&FISH.log[K.id].n))),got=real.filter(K=>FISH.log[K.id]&&FISH.log[K.id].n).length;$('#fishBookN').textContent=got+' of '+real.length;$('#fishModal').classList.remove('on');$('#fishBookModal').classList.add('on');}
+/* THE GOLD FISH PLAQUE (26 Nov): the server hands it over with the catch that fills the list (every fish, the Koi and the junk too). Its YOU GOT card
+   (mine.js itemGot) comes up when the catch card is put away. A wall decoration from then on (decor.js: goldfishplaque). */
+function fishPlaque(){const F=FISH;if(!F.plaque||typeof itemGot!=='function')return false;const im=IMG['decor/goldfishplaque'];if(!im)return false;F.plaque=0;
+  $('#fishModal').classList.remove('on');fishPh('idle');itemGot('GOLD FISH PLAQUE',im,'255,214,96');return true;}
+$('#fcAgain').onclick=()=>{if(fishPlaque())return;$('#fishModal').classList.remove('on');sfx('click');fishPh('idle');};
+$('#fcBook').onclick=()=>{if(fishPlaque())return;sfx('click');fishBook();};
 $('#fishBookX').onclick=()=>{$('#fishBookModal').classList.remove('on');if(FISH.ph==='card')fishPh('idle');};
 $('#fishBookBtn').onclick=()=>{sfx('click');fishBook();};
 $('#fishRodBtn').onclick=()=>{sfx('click');fishStart();};
@@ -248,6 +316,7 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
     lx.drawImage(wim,a*Wj.w,0,Wj.w,Wj.h,dx,dy,Wj.w,Wj.h);lx.globalAlpha=k;lx.drawImage(wim,b*Wj.w,0,Wj.w,Wj.h,dx,dy,Wj.w,Wj.h);lx.globalAlpha=1;}
   /* the fish under the water */
   for(const s of F.shad){const im=fishShadow(s.s,s.a,Math.floor(s.wig)%2);lx.globalAlpha=.44*s.born;lx.drawImage(im,X(s.x)-(im.width>>1),Y(s.y)-(im.height>>1));lx.globalAlpha=1;
+    if(FISHES[s.kind].rar==='secret'&&s.st!=='hook'&&Math.floor(t/110+s.wig)%4===0){lx.fillStyle='#bfe9ff';lx.fillRect(X(s.x)+Math.round(Math.cos(s.wig*1.7)*4),Y(s.y)+Math.round(Math.sin(s.wig*1.3)*2),1,1);}
     if(FISHES[s.kind].rar==='legendary'&&s.st!=='hook'&&Math.floor(t/140+s.wig)%9===0){lx.fillStyle='#ffe98a';lx.fillRect(X(s.x)+Math.round(Math.cos(s.wig)*3),Y(s.y)+Math.round(Math.sin(s.wig)*2),1,1);}}
   for(const r of F.rip){const k=r.t/r.life,im=fishRing(Math.max(2,Math.round(2+k*r.max)),k>.55,'#d6ecff');lx.drawImage(im,X(r.x)-(im.width>>1),Y(r.y)-(im.height>>1));}
   const sim=IMG['fish/splash'];for(const s of F.spl){const f=Math.min(4,Math.floor(s.t/.1));if(sim)lx.drawImage(sim,f*48,0,48,48,X(s.x)-24,Y(s.y)-28,48,48);}
@@ -271,6 +340,7 @@ function fishFrame(m,people,dt,t,H,img){const F=FISH;if(!F.lakeOn||!$('#townHud'
       const nx=bx+Math.round(clamp(F.ten,0,1)*(w-1));lx.fillStyle='#14203c';lx.fillRect(nx-1,by-3,3,11);lx.fillStyle='#fff';lx.fillRect(nx,by-2,1,9);}
     if(F.ph==='bite'&&Math.floor(t/90)%2){const bx=X(B?B.x:m.x)-3,by=Y(B?B.y:m.y-30)-20;   /* the "!" pops up over the fish on the hook, not over you (his call, 17 Nov) */lx.fillStyle='#14203c';lx.fillRect(bx-1,by-1,8,11);lx.fillStyle=F.cand&&FISH_TOUGH[FISHES[F.cand.kind].rar]?'#ff7ac8':'#ffd25e';   /* yellow, or PINK when what is on the hook is rare or better (his call, 18 Nov) */lx.fillRect(bx,by,6,9);lx.fillStyle='#14203c';lx.fillRect(bx+2,by+1,2,4);lx.fillRect(bx+2,by+6,2,2);}
     if(F.land){const L=F.land,k=Math.min(1,L.t/.6),fx=lerp(X(L.x0),px,k),fy=lerp(Y(L.y0),py-44,k)-Math.sin(k*Math.PI)*26;lx.drawImage(IMG['fish/sheet'],L.kind*48,0,48,32,Math.round(fx)-24,Math.round(fy)-16,48,32);}
+    if(F.moon&&window.moonDraw)moonDraw(t,m,px,py);   /* the Glow Bait's light under the float, and the Moon stone coming up (keystones.js) */
   }else if(me)rest.push(me);
   /* THE OTHERS FISHING (his ask, 18 Nov): they face the water with a rod out, the line runs to their float, bobbing */
   /* THE OTHERS FISHING (his ask, 18 Nov; smoothed 19 Nov: "really snappy, it doesn't show them pulling in the line"). Only the phase and the
@@ -359,7 +429,7 @@ function joeUI(){const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0),free=!LAB&
   $('#joeBaitN').textContent=LAB?'99':KIT.bait;$('#joeBait').disabled=!free&&coins<BAIT_PRICE;$('#joeBait').innerHTML=free?FISH_BAIT_IMG+' Take 5 on the house':FISH_BAIT_IMG+' x'+BAIT_PACK+' · '+ic('coin',2)+' '+BAIT_PRICE;$('#joeBait').dataset.free=free?'1':'';
   paintCoins();}
 $('#joeX').onclick=()=>{$('#joeModal').classList.remove('on');STALL.t=performance.now();sfx('close');};
-$('#joeSell').onclick=async()=>{const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0);if(!worth||$('#joeSell').classList.contains('busy'))return;const done=btnBusy($('#joeSell'),'…');let got=worth;try{const r=await srv('fsell',{rod:KIT.rod});if(r&&r.got>=0)got=r.got;}catch(e){done();wlSay(e.message,'bad');return;}done();sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),200+k*140);wlSay('Sold for '+got+' coins.','good');joeUI();};
+$('#joeSell').onclick=async()=>{const worth=KIT.bag.reduce((a,b)=>a+fishPay(b[2]),0);if(!worth||$('#joeSell').classList.contains('busy'))return;const done=btnBusy($('#joeSell'),'…');let got=worth;try{const r=await fop('fsell',{rod:KIT.rod});if(r&&r.got>=0)got=r.got;}catch(e){done();wlSay(e.message,'bad');return;}done();sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),200+k*140);wlSay('Sold for '+got+' coins.','good');joeUI();};
 $('#joeRods').onclick=e=>{const b=e.target.closest('button');if(!b)return;const r=RODS.find(q=>q.id===b.dataset.r);if(!r)return;
   if(!KIT.rods.includes(r.id)){if(coins<r.price)return;srv('frod',{id:r.id}).then(()=>{KIT.rod=r.id;kitSave();sfx('rare');wlSay('You bought the '+r.name+'.','good');joeUI();}).catch(e=>wlSay(e.message,'bad'));return;}else sfx('click');
   KIT.rod=r.id;kitSave();joeUI();};
@@ -367,3 +437,12 @@ $('#joeBait').onclick=()=>{if(!$('#joeBait').dataset.free&&coins<BAIT_PRICE)retu
 /* lab only: a tab straight to the lake */
 if(LAB){const b=document.createElement('button');b.className='btn';b.textContent='Fish';b.onclick=()=>go('town',()=>setTimeout(()=>wlDoor(LAKE),450));$('#tabs').appendChild(b);}
 document.querySelectorAll('.baitIc').forEach(e=>{e.innerHTML=FISH_BAIT_IMG;});
+/* the Glimmer Bait's chip, beside Joe's bait in the lake's bar (see FISH_KOI) */
+document.querySelector('#lakeBar .lchip').insertAdjacentHTML('afterend',`<button class="lchip" id="glimChip" style="display:none"><img class="bic" src="assets/fishing/bait-glim.png?v=${BUILD}" alt="Glimmer Bait"><span id="glimN">0</span></button>`);
+document.head.insertAdjacentHTML('beforeend',`<style>
+#glimChip{pointer-events:auto;cursor:pointer;background:#0b1230;color:#bfe9ff;border-color:#05060f;opacity:.7}#glimChip.on{opacity:1;border-color:#bfe9ff;box-shadow:0 0 0 2px #05060f,0 0 10px #7ec4ff,0 3px 0 #0009}
+#fishModal.sec #fcStage{background:#05060f;box-shadow:inset 0 0 0 3px #05060f,0 0 12px #7ec4ff}#fishModal.sec #fcName,#fcInfo b.secb{background:#05060f;color:#eaf6ff;border-radius:5px;padding:1px 9px 3px}#fishModal.sec #fcName{display:inline-block;margin:0 auto 4px}
+#fishBookModal .fcard.sec{background:#05060f;color:#eaf6ff}#fishBookModal .fcard.sec em{opacity:1}
+</style>`);
+$('#glimChip').onclick=()=>{const F=FISH;if(F.on&&F.ph!=='idle')return;if(!F.glim&&!fishNight()){sfx('nope');wlSay('The Glimmer Bait only glows at night.','bad');return;}F.glim=!F.glim;sfx('click');glimPaint();if(F.on)fishPh('idle');};
+glimPaint();

@@ -207,7 +207,16 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const hex=(r,g,b)=>'#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');
 const rgb=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
 const nightRGB=(r,g,b)=>((r>190&&g<120)||(b>190&&r<120&&g<170)||(r>200&&g>170&&b<110))?[r*.9,g*.9,b*.9].map(Math.round):[r*.22+4,g*.30+10,b*.46+30].map(Math.round);
-function nightC(c){const o=clone(c),x=X2(o),d=x.getImageData(0,0,o.width,o.height),p=d.data;for(let i=0;i<p.length;i+=4)if(p[i+3]===255){const n=nightRGB(p[i],p[i+1],p[i+2]);p[i]=n[0];p[i+1]=n[1];p[i+2]=n[2];}x.putImageData(d,0,0);return o;}
+/* (26 Nov, his note: what he painted looked wrong at night) GROUND paint now takes its night colour from HIS OWN night art: a table of day colour -> the
+   night colour his picture has for it (in steps of 8), learned from the town's day and night pictures when they load. nightRGB is only the fallback. */
+let NLUT=null;const NCACHE=new Map();
+function buildNLUT(day,night){const a=X2(day).getImageData(0,0,day.width,day.height).data,b=X2(night).getImageData(0,0,night.width,night.height).data,M=new Map();
+  for(let i=0;i<a.length;i+=4){const f=nightRGB(a[i],a[i+1],a[i+2]);if(Math.abs(f[0]-b[i])<=2&&Math.abs(f[1]-b[i+1])<=2&&Math.abs(f[2]-b[i+2])<=2)continue;   /* already builder paint: not his art */
+    const k=(a[i]>>3)*1024+(a[i+1]>>3)*32+(a[i+2]>>3);let e=M.get(k);if(!e)M.set(k,e=[0,0,0,0]);e[0]+=b[i];e[1]+=b[i+1];e[2]+=b[i+2];e[3]++;}
+  NLUT=[];for(const[k,e]of M)if(e[3]>=6)NLUT.push([(k>>10)*8+4,((k>>5)&31)*8+4,(k&31)*8+4,Math.round(e[0]/e[3]),Math.round(e[1]/e[3]),Math.round(e[2]/e[3])]);NCACHE.clear();}
+function nightFor(r,g,b){if(!NLUT||!NLUT.length)return nightRGB(r,g,b);const k=r*65536+g*256+b;let v=NCACHE.get(k);if(v)return v;let best=1e9;
+  for(const e of NLUT){const dd=(e[0]-r)**2+(e[1]-g)**2+(e[2]-b)**2;if(dd<best){best=dd;v=[e[3],e[4],e[5]];}}NCACHE.set(k,v);return v;}
+function nightC(c){const o=clone(c),x=X2(o),d=x.getImageData(0,0,o.width,o.height),p=d.data;for(let i=0;i<p.length;i+=4)if(p[i+3]===255){const n=nightFor(p[i],p[i+1],p[i+2]);p[i]=n[0];p[i+1]=n[1];p[i+2]=n[2];}x.putImageData(d,0,0);return o;}
 const toast=(m,bad)=>{const t=$('#toast');t.textContent=m;t.style.display='block';t.style.borderColor=bad?'var(--bad)':'var(--line)';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',bad?7000:2600);};
 const api=async(p,body,hd)=>{const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json',...(hd||{})},body:JSON.stringify(body)});const j=await r.json().catch(()=>({error:'bad answer'}));if(!r.ok||j.error)throw new Error(j.error||r.status);return j;};
 const png=c=>c.toDataURL('image/png');
@@ -347,7 +356,7 @@ async function loadLib(){let lj=[];try{lj=await (await fetch('/assets/builder/li
 async function openTown(){await readGame();
   const [day,night,blk,sheet,tj]=await Promise.all([loadImg('/assets/xmas/day-big.webp'),loadImg('/assets/xmas/night-big.webp'),loadImg('/assets/xmas/block-big.png'),loadImg('/assets/xmas/trees.png'),fetch('/assets/xmas/trees.json?t='+Date.now()).then(r=>r.json())]);
   await loadLib();
-  const d={kind:'town',name:'Town map',w:day.width,h:day.height,ox:GAME.ox,day:toC(day),night:toC(night),block:maskFrom(blk,true),props:[],opaque:true,blds:[],cab:[]};
+  const d={kind:'town',name:'Town map',w:day.width,h:day.height,ox:GAME.ox,day:toC(day),night:toC(night),block:maskFrom(blk,true),props:[],opaque:true,blds:[],cab:[]};buildNLUT(d.day,d.night);
   const sc=toC(sheet);
   for(const e of tj){const[sx,sy,w,h,x,y,base,fx,fw,kd,fade,solid,shadow,flip]=e;const id=kd||('r'+sx+'_'+sy);
     if(!LIB[id]){const c=mk(w,h);X2(c).drawImage(sc,sx,sy,w,h,0,0,w,h);addLib(id,c,{fxo:fx-x,baseo:base-y,fw});}
@@ -398,6 +407,19 @@ async function openLake(){await loadLib();let lay={};try{lay=await (await fetch(
   mark('door','Path back to the town','town','pt','#6cd6ff',{x:J.door[0],y:J.door[1]});
   for(const q of Array.isArray(lay.props)?lay.props:[]){if(!LIB[q.lib]){d.keep.push(q);continue;}d.props.push(flatP({lib:q.lib,x:q.x,y:q.y,fade:q.fade!==false,solid:q.solid!==false,shadow:q.shadow!==false,flip:!!q.flip}));}
   return d;}
+/* THE FORGOTTEN FOREST (25 Nov 2026, the Glimmerkin hunt): a map like the lake (kind 'south', d.lake, and d.dir = its own folder): assets/forest/night.png
+   (the ground), night-walk.png (WHITE = walk: the Blocked paths layer) and layout.json (the props he places, the spawn and the path back to the town; forest.js
+   reads it). The mural, the Moonmoss and the two spots kept clear for later (glade, hearth) are in layout.json too: kept as they are, not shown here. */
+const F_DEF={spawn:[770,394],door:[792,394],mural:[354,58]};
+async function openForest(){await loadLib();let lay={};try{lay=await (await fetch('/assets/forest/layout.json?t='+Date.now())).json();}catch(e){}
+  const[day,walk]=await Promise.all([loadImg('/assets/forest/night.png'),loadImg('/assets/forest/night-walk.png')]),J={...F_DEF,...lay};
+  const blk=mk(day.width,day.height);X2(blk).drawImage(maskFrom(walk,false),0,0);
+  const d={kind:'south',lake:true,dir:'assets/forest/',gnd:'night',name:'The Forgotten Forest',w:day.width,h:day.height,ox:0,day:toC(day),night:null,block:blk,props:[],opaque:true,blds:[],cab:[],lay,keep:[],marks:[]};
+  const sw=col=>{const c=mk(1,1),x=X2(c);x.fillStyle=col;x.fillRect(0,0,1,1);return png(c);},mark=(k,n,s,t,col,o)=>d.marks.push({k,n,s,t,col,thumb:sw(col),...o});
+  mark('spawn','Spawn','spawn','pt','#ffcf5e',{x:J.spawn[0],y:J.spawn[1]});
+  mark('door','Path back to the town','town','pt','#6cd6ff',{x:J.door[0],y:J.door[1]});
+  for(const q of Array.isArray(lay.props)?lay.props:[]){if(!LIB[q.lib]){d.keep.push(q);continue;}d.props.push(flatP({lib:q.lib,x:q.x,y:q.y,fade:q.fade!==false,solid:q.solid!==false,shadow:q.shadow!==false,flip:!!q.flip}));}
+  return d;}
 function lakeLayout(d){const L={...d.lay},m=k=>d.marks.find(m=>m.k===k);L.spawn=[m('spawn').x,m('spawn').y];L.door=[m('door').x,m('door').y];
   L.props=[...d.props.map(p=>({lib:p.lib,x:p.x,y:p.y,flip:!!p.flip,shadow:!!p.shadow,solid:!!p.solid,fade:!!p.fade})),...d.keep];
   return'{\n'+Object.entries(L).map(([k,v])=>'  '+JSON.stringify(k)+': '+JSON.stringify(v)).join(',\n')+'\n}\n';}
@@ -442,14 +464,14 @@ async function openSprite(path){const im=await loadImg('/'+path);return{kind:'sp
 function libDoc(id){const L=LIB[id];return{kind:'sprite',name:'Prop: '+id,libId:id,w:L.c.width,h:L.c.height,ox:0,day:L.c,night:null,block:null,props:[],opaque:false};}
 
 async function show(key){commitFloat();let d=DOCS[key];
-  try{if(!d){if(key==='town')d=await openTown();else if(key==='south')d=await openSouth();else if(key==='lake')d=await openLake();else if(key==='room')d=await openRoom();else if(key.startsWith('hall:'))d=await openHall(key.slice(5));else if(key.startsWith('lib:'))d=libDoc(key.slice(4));else if(key.startsWith('bmask:'))d=openBMask(key.slice(6));else d=await openSprite(key);DOCS[key]=d;d.key=key;await loadLayers(d);}}
+  try{if(!d){if(key==='town')d=await openTown();else if(key==='south')d=await openSouth();else if(key==='lake')d=await openLake();else if(key==='forest')d=await openForest();else if(key==='room')d=await openRoom();else if(key.startsWith('hall:'))d=await openHall(key.slice(5));else if(key.startsWith('lib:'))d=libDoc(key.slice(4));else if(key.startsWith('bmask:'))d=openBMask(key.slice(6));else d=await openSprite(key);DOCS[key]=d;d.key=key;await loadLayers(d);}}
   catch(e){toast('Could not open: '+e.message,true);return;}
   if(d.kind==='south')for(const b of d.blds){const q=DOCS[b.path];if(q){b.img=q.day;b.w=q.w;b.h=q.h;b.thumb=null;}}   /* a building picture he just edited */
   MS.clear();S.doc=d;S.sel=null;S.selProp=null;S.selCab=null;S.selBld=null;S.selMark=null;S.placing=null;S.undo=[];S.redo=[];S.play=null;$('#bPlay').classList.remove('on');
   if(!d.night){S.view='day';}if(S.layer==='block'&&!d.block)S.layer='ground';if(S.layer==='props'&&!isMap(d)&&d.kind!=='room')S.layer='ground';if(S.layer==='ref'&&(!isMap(d)||d.lake))S.layer='ground';if(S.layer==='mark'&&!d.marks)S.layer='ground';if(S.layer==='glow'&&!d.glows)S.layer='ground';S.selGlow=null;if(S.layer.startsWith('L:')&&!curL())S.layer='ground';
   if(d.kind==='bmask'){S.layer='block';S.vis.block=true;if(!['pencil','eraser','fill','rect','line'].includes(S.tool))setTool('pencil');}
   fillDocSel();fit();buildPal();ui();draw();}
-function fillDocSel(){const s=$('#docSel');const opts=[['town','Town map'],['south','The South'],['lake','The Lake'],...GAME.blds.map(b=>['hall:'+b.k,'Inside: '+b.name]),['room','Cabin room (furniture)']];
+function fillDocSel(){const s=$('#docSel');const opts=[['town','Town map'],['south','The South'],['lake','The Lake'],['forest','The Forgotten Forest'],...GAME.blds.map(b=>['hall:'+b.k,'Inside: '+b.name]),['room','Cabin room (furniture)']];
   for(const k of Object.keys(DOCS))if(!opts.some(o=>o[0]===k))opts.push([k,DOCS[k].name]);
   s.innerHTML=opts.map(([k,n])=>`<option value="${k}">${n}${DOCS[k]?.dirty?' *':''}</option>`).join('');s.value=S.doc?.key||'town';}
 
@@ -573,7 +595,7 @@ function targets(){const d=S.doc;if(S.layer==='block'&&d.block)return[{c:d.block
   if(S.layer==='ground'){if(d.night){if(S.both)return S.view==='night'?[{c:d.night,night:true,asis:true},{c:d.day,skip:true}].filter(t=>!t.skip):[{c:d.day},{c:d.night,night:true}];return[{c:S.view==='night'?d.night:d.day}];}return[{c:d.day}];}return[];}
 /* the colour a target gets for a mode ('fg','bg','erase'); null = clear to see-through */
 function colFor(t,mode){if(t.kind==='block')return mode==='fg'?[255,42,42]:null;if(mode==='erase'){if(!S.doc.opaque||t.kind==='layer')return null;mode='bg';}
-  const c=rgb(mode==='fg'?S.fg:S.bg);return t.night&&!t.asis?nightRGB(...c):c;}
+  const c=rgb(mode==='fg'?S.fg:S.bg);return t.night&&!t.asis?nightFor(...c):c;}
 let OP=null;
 function opBegin(){if(OP)return;const tg=targets();OP={tg,cl:tg.map(t=>clone(t.c)),props:JSON.stringify(snap()),bb:null};}
 function snap(){const d=S.doc;return{glows:d.glows,props:d.props.map(({hid,...q})=>q),blds:(d.blds||[]).map(b=>({k:b.k,x:b.x,y:b.y})),cab:(d.cab||[]).map(c=>[c.cx,c.top]),marks:(d.marks||[]).map(m=>[m.x,m.y,m.x2,m.y2])};}
@@ -594,7 +616,7 @@ const BR={};function brushPts(n,shape){const k=n+shape;if(BR[k])return BR[k];con
    a tile with several looks mixes them, one look per cell, the same cell always the same look */
 const TILES=[];function tileAt(x,y){const T=S.tile,w=T.w,h=T.h,v=T.vs[T.vs.length>1?Math.floor(dice(Math.floor(x/w)+911,Math.floor(y/h)+577)*T.vs.length):0],i=((y%h)*w+(x%w))*4;return v.d[i+3]<128?undefined:[v.d[i],v.d[i+1],v.d[i+2]];}
 const useTile=(t,mode)=>S.tile&&mode==='fg'&&t.kind!=='block';
-const pix=(t,mode,x,y)=>{if(!useTile(t,mode))return colFor(t,mode);const c=tileAt(x,y);return c&&t.night&&!t.asis?nightRGB(...c):c;};
+const pix=(t,mode,x,y)=>{if(!useTile(t,mode))return colFor(t,mode);const c=tileAt(x,y);return c&&t.night&&!t.asis?nightFor(...c):c;};
 /* what the brush blends with: the picture as it LOOKED when the stroke began. On a paint layer that is the ground plus every layer up to this one
    (an empty layer has nothing of its own to mix with: that is why blending did nothing there), and the mixed colour is painted onto the layer. */
 function opSrc(ti){OP.sd=OP.sd||[];if(OP.sd[ti])return OP.sd[ti];const t=OP.tg[ti],d=S.doc;let c=OP.cl[ti];
@@ -960,7 +982,7 @@ $('#bLibDel').onclick=()=>{const id=S.libPick;if(!id||!LIB[id]||LIB[id].fixed)re
 /* ---------- map size ---------- */
 $('#bExtend').onclick=()=>{const d=S.doc,l=+$('#exL').value|0,r=+$('#exR').value|0,b=+$('#exB').value|0;if(d.kind!=='town'||l+r+b<=0)return;if(!confirm(`Make the map ${d.w+l+r} × ${d.h+b}? (now ${d.w} × ${d.h}). Undo history is cleared.`))return;commitFloat();
   const grow=(c,col)=>{const o=mk(d.w+l+r,d.h+b),x=X2(o);if(col){x.fillStyle=col;x.fillRect(0,0,o.width,o.height);}x.drawImage(c,l,0);return o;};
-  for(const q of d.layers){q.c=grow(q.c,null);q.dc=q.nc=null;}d.day=grow(d.day,S.fg);d.night=grow(d.night,hex(...nightRGB(...rgb(S.fg))));d.block=grow(d.block,null);d.w+=l+r;d.h+=b;d.ox+=l;for(const p of d.props)p.x+=l;for(const g of d.glows||[])g.x+=l;d.sized=true;S.undo=[];S.redo=[];setSel(null);d.dirty=true;$('#exL').value=$('#exR').value=$('#exB').value=0;fit();ui();toast('Bigger. Paint the new ground, then Save to game.');};
+  for(const q of d.layers){q.c=grow(q.c,null);q.dc=q.nc=null;}d.day=grow(d.day,S.fg);d.night=grow(d.night,hex(...nightFor(...rgb(S.fg))));d.block=grow(d.block,null);d.w+=l+r;d.h+=b;d.ox+=l;for(const p of d.props)p.x+=l;for(const g of d.glows||[])g.x+=l;d.sized=true;S.undo=[];S.redo=[];setSel(null);d.dirty=true;$('#exL').value=$('#exR').value=$('#exB').value=0;fit();ui();toast('Bigger. Paint the new ground, then Save to game.');};
 
 /* ---------- open / new ---------- */
 $('#bOpen').onclick=async()=>{const all=await (await fetch('/api/tree')).json(),D=$('#dlg');D.innerHTML=`<h3>Open a picture</h3><input id="q" placeholder="type to search: cabin, tavern, lamp…" style="width:100%"><div id="res" style="max-height:340px;overflow:auto;margin:8px 0;min-width:460px"></div><button id="x">Close</button>`;
@@ -1090,11 +1112,11 @@ async function save(){commitFloat();let d=S.doc;if(d.libId){d.dirty=false;d=Obje
       for(const b of d.blds){const q=DOCS['bmask:'+b.k];if(q&&q.dirty){files.push({path:`assets/buildings/${b.k}-block.png`,b64:png(maskOut(b.blk,true)),mode:'L'});q.dirty=false;}}
       patch={map:{ox:d.ox,w:d.w,h:d.h},cabins:d.cab.length===GAME.doors.length?d.cab.map(c=>[c.cx,c.top]):null,buildings:d.blds.filter(b=>!b.stall).map(({k,name,x,y,w,h,fade})=>({k,name,x,y,w,h,fade})),stall:(q=>q?{x:q.x,y:q.y}:null)(d.blds.find(b=>b.stall))};
     }else if(d.kind==='south'){   /* THE SOUTH: its ground, its walk mask (white = walk) and layout.json. Nothing in index.html or the .js files. */
-      files.push({path:d.lake?'assets/fishing/lake.png':'assets/south/day.png',b64:png(FD),mode:'RGB'},{path:d.lake?'assets/fishing/lake-walk.png':'assets/south/day-walk.png',b64:png(maskOut(d.block,false)),mode:'L'});   /* THE LAKE is saved the same way, into assets/fishing (never lake-water.png) */
+      {const g=d.dir?d.dir+d.gnd:d.lake?'assets/fishing/lake':'assets/south/day';files.push({path:g+'.png',b64:png(FD),mode:'RGB'},{path:g+'-walk.png',b64:png(maskOut(d.block,false)),mode:'L'});}   /* d.dir: a map with its own folder (the Forgotten Forest: assets/forest/night.png) */   /* THE LAKE is saved the same way, into assets/fishing (never lake-water.png) */
       const libs=Object.values(LIB).filter(l=>!l.fixed);for(const l of libs)if(l.dirty)files.push({path:'assets/builder/props/'+l.id+'.png',b64:png(l.c)});
       files.push({path:'assets/builder/library.json',text:JSON.stringify(libs.map(l=>({id:l.id,fxo:l.fxo,baseo:l.baseo,fw:l.fw})))});
       for(const pth of new Set(d.blds.map(b=>b.path))){const q=DOCS[pth];if(q&&q.dirty){files.push({path:pth,b64:png(flat(q,false))});q.dirty=false;}if(q)for(const b of d.blds)if(b.path===pth){b.img=q.day;b.w=q.w;b.h=q.h;b.thumb=null;}}
-      files.push(d.lake?{path:'assets/fishing/layout.json',text:lakeLayout(d)}:{path:'assets/south/layout.json',text:southLayout(d)});
+      files.push(d.dir?{path:d.dir+'layout.json',text:lakeLayout(d)}:d.lake?{path:'assets/fishing/layout.json',text:lakeLayout(d)}:{path:'assets/south/layout.json',text:southLayout(d)});
     }else if(d.kind==='bmask'){files.push({path:`assets/buildings/${d.k}-block.png`,b64:png(maskOut(d.block,true)),mode:'L'});
     }else if(d.kind==='hall'){files.push({path:`assets/interiors/${d.k}.png`,b64:png(FD),mode:'RGB'},{path:`assets/interiors/${d.k}-walk.png`,b64:png(maskOut(d.block,false)),mode:'L'});}
     else if(d.kind==='room'){files.push({path:'assets/room-objects/room-empty.png',b64:png(FD)});const obj={},sh={};

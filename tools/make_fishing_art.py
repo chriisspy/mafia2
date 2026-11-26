@@ -16,7 +16,10 @@ from scipy import ndimage as nd
 SRC = '../mafia2-art/fishing/pl/'; OUT = 'assets/fishing/'
 FISH_ORDER = ['boot', 'can', 'minnow', 'perch', 'carp', 'sunfish', 'trout', 'pike', 'catfish', 'koi', 'eel', 'gold', 'cod',
               # 18 Nov, his ask: more fish, some real and some comical, in the style of the Koi and the Codfather (same PixelLab prompt pattern). ONLY ADD AT THE END: the bag stores a fish by its place here.
-              'bass', 'salmon', 'puffer', 'angler', 'sturgeon', 'blob', 'shark', 'sleepy', 'clown', 'star', 'finger', 'plug', 'sword']
+              'bass', 'salmon', 'puffer', 'angler', 'sturgeon', 'blob', 'shark', 'sleepy', 'clown', 'star', 'finger', 'plug', 'sword',
+              # 26 Nov: his new list + the Glimmer Koi. Nano Banana Pro's, cut by tools/make_new_fish.py (it writes these into pl/ and adds them to fish.png itself)
+              'bream', 'flathead', 'mackerel', 'snapper', 'murraycod', 'tuna', 'barra', 'trolley', 'thong', 'singbass', 'cannon', 'hammer',
+              'duck', 'ravecrab', 'nessie', 'megtooth', 'kraken', 'glimkoi']
 FLIP = {'minnow', 'cod', 'salmon'}                       # these two came out facing right
 
 def hard(im):                                  # no half see-through pixels

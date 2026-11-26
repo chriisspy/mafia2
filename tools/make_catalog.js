@@ -25,7 +25,8 @@ const CK_RAR = ev(lit(html, 'CK_RAR'));
 const WHEEL = ev(lit(html, 'WHEEL'));
 // CASE_DEF has little functions for its pools: give it what they read
 const CASE_DEF = Function('SKINS', 'ROOMS', 'CK_ITEMS', '"use strict";return (' + lit(html, 'CASE_DEF') + ')')(SKINS, ROOMS, Object.keys(CK_RAR).map(k => ({ id: 'ck_' + k, rar: CK_RAR[k] })));
-const cases = {}; for (const [k, d] of Object.entries(CASE_DEF)) cases[k] = { price: d.price, odds: d.odds, pool: d.pool().map(s => ({ id: s.id, rar: s.rar })) };
+const cases = {}; for (const [k, d] of Object.entries(CASE_DEF)) cases[k] = { price: d.price, odds: d.odds, pool: d.pool().filter(s => s.rar !== 'secret').map(s => ({ id: s.id, rar: s.rar })) };   // a Secret thing is never in a case
+for (const [k, c] of Object.entries(cases)) if (c.odds.secret || c.pool.some(s => s.rar === 'secret')) throw new Error('a Secret thing leaked into the ' + k + ' case');
 const out = {
   made: new Date().toISOString(),
   skins: SKINS, rooms: ROOMS, ckItems: Object.keys(CK_RAR).map(k => ({ id: 'ck_' + k, rar: CK_RAR[k] })),
@@ -35,9 +36,11 @@ const out = {
   flipMax: num(html, 'FLIP_MAX'), flipEvery: ev(html.match(/const FLIP_EVERY=([0-9*]+)/)[1]),
   rods: ev(lit(fish, 'RODS')).map(r => ({ id: r.id, price: r.price, luck: r.luck, pay: r.pay || 1, range: r.range })),
   fishes: ev(lit(fish, 'FISHES')).map(f => ({ id: f.id, rar: f.rar, min: f.min, max: f.max, val: f.val })),
+  fishJunk: ev(lit(fish, 'FISH_JUNK')), fishKoi: ev(lit(fish, 'FISH_KOI')), fishNight: ev(fish.match(/\bFISH_NIGHT=(\[[0-9, ]+\])/)[1]),   // junk a cast, the Glimmer Koi a Glimmer cast (by distance), the hours of night in Sydney
+  fishOld: 26,   // the fish there were before 26 Nov 2026 (boot ... sword): the only ones a phone's old fish book may hand over (fbook)
   fishOdds: ev(lit(fish, 'FISH_ODDS')), fishBag: num(fish, 'FISH_BAG'), baitPack: num(fish, 'BAIT_PACK'), baitPrice: num(fish, 'BAIT_PRICE'),
   slots: ev(lit(cas, 'SLOT_SYM')).map(s => ({ w: s.w, p: s.p })),
-  decor: JSON.parse(fs.readFileSync('assets/decor/decor.json', 'utf8')).map(d => ({ id: d.id, price: d.price })),
+  decor: JSON.parse(fs.readFileSync('assets/decor/decor.json', 'utf8')).map(d => d.quest ? { id: d.id, price: d.price, quest: 1 } : { id: d.id, price: d.price }),   // quest: given by the hunt, never sold
 };
 if (!out.caseDupe) throw new Error('missing case dupe');
 fs.writeFileSync('functions/catalog.json', JSON.stringify(out, null, 1));

@@ -163,10 +163,10 @@ let MK_INV = [];
 const mkInvSel = () => MK_INV[MK.sel];
 function mkInventory(can) {
   const out = [], me = NET.uid || 'me';
-  if (can.includes('dec')) for (const [id, n] of Object.entries((WALLET && WALLET.dec) || {})) if (n > 0) out.push({t: 'dec', id, have: n});
+  if (can.includes('dec')) for (const [id, n] of Object.entries((WALLET && WALLET.dec) || {})) if (n > 0 && !((typeof DECOR !== 'undefined' && DECOR.by[id]) || {}).quest) out.push({t: 'dec', id, have: n});   // not the hunt's plaque
   if (can.includes('gold') && typeof GOLD !== 'undefined' && GOLD.n > 0) out.push({t: 'gold', id: 'gold', have: GOLD.n});
-  if (can.includes('fish') && typeof KIT !== 'undefined') (KIT.bag || []).forEach((f, bag) => out.push({t: 'fish', id: 'fish' + f[0], f, bag, have: 1}));
-  if (can.includes('skin')) for (const s of SKINS) if (OWNED.has(s.id) && s.rar !== 'common' && s.id !== PEOPLE[0].skin) out.push({t: 'skin', id: s.id, have: 1});
+  if (can.includes('fish') && typeof KIT !== 'undefined') (KIT.bag || []).forEach((f, bag) => { if (typeof FISHES !== 'undefined' && FISHES[f[0]] && FISHES[f[0]].rar === 'secret') return; out.push({t: 'fish', id: 'fish' + f[0], f, bag, have: 1}); });   // not the Glimmer Koi
+  if (can.includes('skin')) for (const s of SKINS) if (OWNED.has(s.id) && s.rar !== 'common' && s.rar !== 'secret' && s.id !== PEOPLE[0].skin) out.push({t: 'skin', id: s.id, have: 1});
   if (can.includes('mk')) for (const id of Object.keys(DESIGNS)) if (id.startsWith('@' + me + ':')) out.push({t: 'mk', id, have: 1});
   return MK_INV = out;
 }

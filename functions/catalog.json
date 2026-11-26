@@ -1,5 +1,5 @@
 {
- "made": "2026-11-25T01:18:28.955Z",
+ "made": "2026-11-26T01:07:15.564Z",
  "skins": [
   {
    "id": "brownhair",
@@ -68,6 +68,10 @@
   {
    "id": "godfather",
    "rar": "ultra"
+  },
+  {
+   "id": "stag",
+   "rar": "secret"
   }
  ],
  "rooms": [
@@ -104,6 +108,11 @@
   {
    "id": "r_haunted",
    "rar": "legendary",
+   "base": false
+  },
+  {
+   "id": "r_temple",
+   "rar": "secret",
    "base": false
   }
  ],
@@ -635,8 +644,149 @@
    "min": 150,
    "max": 280,
    "val": 130
+  },
+  {
+   "id": "bream",
+   "rar": "common",
+   "min": 20,
+   "max": 45,
+   "val": 10
+  },
+  {
+   "id": "flathead",
+   "rar": "common",
+   "min": 30,
+   "max": 80,
+   "val": 12
+  },
+  {
+   "id": "mackerel",
+   "rar": "common",
+   "min": 25,
+   "max": 55,
+   "val": 11
+  },
+  {
+   "id": "snapper",
+   "rar": "rare",
+   "min": 30,
+   "max": 90,
+   "val": 33
+  },
+  {
+   "id": "murraycod",
+   "rar": "rare",
+   "min": 50,
+   "max": 120,
+   "val": 36
+  },
+  {
+   "id": "tuna",
+   "rar": "epic",
+   "min": 80,
+   "max": 200,
+   "val": 125
+  },
+  {
+   "id": "barra",
+   "rar": "rare",
+   "min": 55,
+   "max": 120,
+   "val": 35
+  },
+  {
+   "id": "trolley",
+   "rar": "junk",
+   "min": 95,
+   "max": 95,
+   "val": 3
+  },
+  {
+   "id": "thong",
+   "rar": "junk",
+   "min": 27,
+   "max": 27,
+   "val": 2
+  },
+  {
+   "id": "singbass",
+   "rar": "rare",
+   "min": 30,
+   "max": 36,
+   "val": 40
+  },
+  {
+   "id": "cannon",
+   "rar": "rare",
+   "min": 50,
+   "max": 100,
+   "val": 38
+  },
+  {
+   "id": "hammer",
+   "rar": "rare",
+   "min": 90,
+   "max": 180,
+   "val": 37
+  },
+  {
+   "id": "duck",
+   "rar": "epic",
+   "min": 7,
+   "max": 9,
+   "val": 100
+  },
+  {
+   "id": "ravecrab",
+   "rar": "epic",
+   "min": 10,
+   "max": 22,
+   "val": 108
+  },
+  {
+   "id": "nessie",
+   "rar": "legendary",
+   "min": 100,
+   "max": 180,
+   "val": 400
+  },
+  {
+   "id": "megtooth",
+   "rar": "legendary",
+   "min": 14,
+   "max": 18,
+   "val": 350
+  },
+  {
+   "id": "kraken",
+   "rar": "legendary",
+   "min": 200,
+   "max": 400,
+   "val": 450
+  },
+  {
+   "id": "glimkoi",
+   "rar": "secret",
+   "min": 45,
+   "max": 90,
+   "val": 700
   }
  ],
+ "fishJunk": [
+  8,
+  5,
+  3
+ ],
+ "fishKoi": [
+  20,
+  35,
+  55
+ ],
+ "fishNight": [
+  18,
+  6
+ ],
+ "fishOld": 26,
  "fishOdds": [
   {
    "common": 82,
@@ -814,6 +964,16 @@
   {
    "id": "car",
    "price": 9000
+  },
+  {
+   "id": "keystoneplaque",
+   "price": 0,
+   "quest": 1
+  },
+  {
+   "id": "goldfishplaque",
+   "price": 0,
+   "quest": 1
   }
  ]
 }

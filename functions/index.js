@@ -3,7 +3,9 @@
 // pays or costs coins asks this one function, `act`, which decides the result here and changes the wallet in one go.
 // The phone only shows what came back. Prices, odds and prizes come from catalog.json, made from the game's own files
 // by tools/make_catalog.js, so the two never drift apart.
-//   wallet/{uid} = { c: coins, own: {itemId: 1}, kit: {rods: {id: 1}, bait, bag: [[fish, cm, worth]], pend: {k, cm, g, t, z}},
+//   wallet/{uid} = { c: coins, own: {itemId: 1}, kit: {rods: {id: 1}, bait, bag: [[fish, cm, worth]], pend: {k, cm, g, t, z},
+//                           gb: Glimmer Bait (bought from Pip, functions/mine.js; spent here, one a Glimmer cast), fc: {fishId: 1} every fish ever landed,
+//                           fb: 1 once the phone's old fish book was taken in (fbook), fp: 1 once the Gold Fish Plaque was given},
 //                    day: {c, s, ckd, ck}, fl: {w, n}, dr: {b, t}, bj: {...}, ck: {t}, paid: {gameId: time}, ts }
 // Skill games (the clicker, the fishing fight, the end-of-game payout) cannot be watched from here, so they are capped
 // by time and by day instead: a cheat can only squeeze a little out of them.
@@ -24,7 +26,11 @@ const rnd = n => Math.floor(Math.random() * n);
 const pick = a => a[rnd(a.length)];
 // the day in Sydney, for the daily coins / free spin (everyone playing is in Australia)
 const dayKey = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+// night at the lake: the hours in C.fishNight ([from, to], Sydney), when the Glimmer Bait glows
+const fishNight = () => { const h = +new Intl.DateTimeFormat('en-GB', { timeZone: 'Australia/Sydney', hour: '2-digit', hour12: false }).format(new Date()) % 24; return h >= C.fishNight[0] || h < C.fishNight[1]; };
 const ALL_IDS = new Set([...C.skins.map(s => s.id), ...C.rooms.map(r => r.id), ...C.ckItems.map(c => c.id)]);
+// SECRET (26 Nov 2026): the rarity above Mythic. Only the Glimmerkin hunt gives these (functions/quest.js qking): never a case, the wheel, the lab button or a market stall
+const SECRET = new Set([...C.skins, ...C.rooms].filter(s => s.rar === 'secret').map(s => s.id));
 function fresh(claim) {
   const w = { c: 1200, own: {}, kit: { rods: { twig: 1 }, bait: 10, bag: [] }, day: {}, fl: {}, dr: { b: 0, t: 0 }, paid: {}, ts: Date.now(), born: Date.now() };
   for (const id of C.start) w.own[id] = 1;
@@ -168,12 +174,12 @@ const OPS = {
     let r = Math.random() * 100, k = 0; while (k < C.wheel.length - 1 && r >= C.wheel[k][2]) { r -= C.wheel[k][2]; k++; }
     const g = C.wheel[k]; let win = null, dupe = false;
     if (g[0] === 'c') w.c += g[1];
-    else { win = pick(C.skins.filter(s => s.rar === g[1])).id; if (w.own[win]) { dupe = true; w.c += Math.round(C.spinPrice * C.caseDupe); } else w.own[win] = 1; }
+    else { win = pick(C.skins.filter(s => s.rar === g[1] && s.rar !== 'secret')).id; if (w.own[win]) { dupe = true; w.c += Math.round(C.spinPrice * C.caseDupe); } else w.own[win] = 1; }
     return { k, win, dupe, free };
   }),
   case: (uid, d) => tx(uid, w => {
     const D = C.cases[d.kind]; if (!D) bad('No such case.'); spend(w, D.price);
-    const rar = rollRar(D.odds), win = pick(D.pool.filter(s => s.rar === rar)).id, dupe = !!w.own[win], back = Math.round(D.price * C.caseDupe);
+    const rar = rollRar(D.odds), win = pick(D.pool.filter(s => s.rar === rar && s.rar !== 'secret')).id, dupe = !!w.own[win], back = Math.round(D.price * C.caseDupe);
     if (dupe) w.c += back; else w.own[win] = 1;
     return { win, dupe, back };
   }),
@@ -200,10 +206,16 @@ const OPS = {
     const K = w.kit; if (K.pend) return { k: K.pend.k };   // the same fish waits for you till you land it or lose it (no re-rolling)
     const rod = C.rods.find(r => r.id === d.rod && K.rods[r.id]) || C.rods[0];
     let z = Math.max(0, Math.min(2, d.z | 0)); if (rod.range < .85) z = Math.min(z, 1);   // only the Steel and Golden rods reach the deep water
-    if (K.bait <= 0) bad('Out of bait.'); K.bait--;
+    // THE GLIMMER BAIT (26 Nov): d.gb = this cast uses one (kit.gb, bought from Pip) in place of Joe's bait. Only at night (Sydney's clock); a refused cast costs nothing.
+    // Only such a cast can bring the Glimmer Koi (rarity Secret): C.fishKoi out of 100 by distance. No bait or daytime: the Koi can never be picked.
+    const glim = !!d.gb; K.gb = Math.max(0, K.gb | 0);
+    if (glim) { if (K.gb <= 0) bad('No Glimmer Bait.'); if (!fishNight()) bad('The Glimmer Bait only glows at night.'); K.gb--; }
+    else { if (K.bait <= 0) bad('Out of bait.'); K.bait--; }
     const B = C.fishOdds[z], L = rod.luck + .5 * luck(w),   // drunk luck: a touch better fish (his call: slots and fishing only)
      O = { common: B.common - 7 * L, rare: B.rare + 3.5 * L, epic: B.epic + 2.5 * L, legendary: B.legendary + L };
     let r = Math.random() * 100, rar = 'common'; for (const k of ['legendary', 'epic', 'rare', 'common']) { if (r < O[k]) { rar = k; break; } r -= O[k]; }
+    if (Math.random() * 100 < Math.max(1, C.fishJunk[z] - rod.luck)) rar = 'junk';   // the boot, the can, the trolley, the thong (26 Nov: junk was never picked before)
+    if (glim && Math.random() * 100 < C.fishKoi[z]) rar = 'secret';
     const k = pick(C.fishes.map((f, i) => i).filter(i => C.fishes[i].rar === rar));
     K.pend = { k, t: Date.now() }; return { k };
   }),
@@ -212,9 +224,21 @@ const OPS = {
     const K = w.kit, p = K.pend; if (!p) bad('Nothing on the line.');
     if (Date.now() - p.t < 3500) bad('Too quick.'); if (K.bag.length >= C.fishBag) bad('Your bag is full.');
     const F = C.fishes[p.k], pct = Math.random(), cm = Math.round(F.min + (F.max - F.min) * (pct * pct * .6 + pct * .4)), g = F.rar === 'junk' ? F.val : Math.max(1, Math.round(F.val * (.75 + .6 * pct)));
-    K.bag.push([p.k, cm, g]); K.pend = null; return { k: p.k, cm, g };
+    K.bag.push([p.k, cm, g]); K.pend = null;
+    // THE GOLD FISH PLAQUE (26 Nov): kit.fc keeps every fish you have ever landed. The catch that fills the list (every fish in the catalog: the junk and the
+    // Glimmer Koi too) gives the plaque, once (kit.fp), here in the same transaction. Nothing else gives it: decor.json marks it quest (never sold, never on a stall).
+    K.fc = K.fc && typeof K.fc === 'object' ? K.fc : {}; K.fc[F.id] = 1; let plaque = false;
+    if (!K.fp && C.fishes.every(f => K.fc[f.id])) { K.fp = 1; plaque = true; w.dec = w.dec || {}; w.dec.goldfishplaque = (w.dec.goldfishplaque || 0) + 1; }
+    return { k: p.k, cm, g, plaque };
   }).catch(async e => { if (e && e.message === 'Too quick.') await flag(uid, 'fish landed too fast'); throw e; }),
   flose: (uid) => tx(uid, w => { w.kit.pend = null; return {}; }),
+  // the fish book was kept on the phone before 26 Nov. Once, a phone may hand over what its book holds: only the fish there were before that day
+  // (C.fishOld) are taken on trust; every newer one has to be landed here (fland), so the plaque cannot be had without catching them
+  fbook: (uid, d) => tx(uid, w => {
+    const K = w.kit; if (K.fb) return {}; K.fb = 1; K.fc = K.fc && typeof K.fc === 'object' ? K.fc : {};
+    for (const id of (Array.isArray(d.ids) ? d.ids.slice(0, 200) : [])) { const i = C.fishes.findIndex(f => f.id === id); if (i >= 0 && i < C.fishOld) K.fc[C.fishes[i].id] = 1; }
+    return {};
+  }),
   fsell: (uid, d) => tx(uid, w => {
     const K = w.kit, rod = C.rods.find(r => r.id === d.rod && K.rods[r.id]) || C.rods[0];
     if (!K.bag.length) bad('Nothing to sell.');
@@ -320,7 +344,7 @@ const OPS = {
   },
   // DECORATING (phase 4): buy decorations with coins (wallet.dec = how many of each you own), and save where yours stand in a world:
   //   worlds/{wid}/decor/{uid} = {in: [[item, x, y]...], out: [...]}   (in = inside your cabin, out = round it in the town). Only this server writes it.
-  decorBuy: (uid, d) => tx(uid, w => { const it = C.decor.find(x => x.id === d.id); if (!it) bad('No such thing.'); spend(w, it.price); w.dec = w.dec || {}; w.dec[it.id] = (w.dec[it.id] || 0) + 1; return {}; }),
+  decorBuy: (uid, d) => tx(uid, w => { const it = C.decor.find(x => x.id === d.id); if (!it || it.quest) bad('No such thing.'); /* a quest thing (the Keystone Plaque) is never for sale */ spend(w, it.price); w.dec = w.dec || {}; w.dec[it.id] = (w.dec[it.id] || 0) + 1; return {}; }),
   async decorSave(uid, d) {
     const wid = String(d.wid || ''); if (!/^[-\w]+$/.test(wid) || !(await db.ref('worlds/' + wid + '/members/' + uid).get()).exists()) bad('You are not in that world.');
     const own = (await db.ref('wallet/' + uid + '/dec').get()).val() || {}, used = {};
@@ -354,7 +378,7 @@ const OPS = {
   // the lab's test buttons: his account only
   lab: (uid, d) => { if (!ADMINS.has(uid)) bad('Not allowed.'); return tx(uid, w => {
     if (d.what === 'coins') w.c += 500;
-    else if (d.what === 'unlock') for (const id of ALL_IDS) w.own[id] = 1;
+    else if (d.what === 'unlock') { for (const id of ALL_IDS) if (!SECRET.has(id)) w.own[id] = 1; }   // not the Secret things: the hunt is the only way to those, even here
     else if (d.what === 'lock') { w.own = {}; for (const id of C.start) w.own[id] = 1; }
     else if (d.what === 'bait') w.kit.bait = 99;
     return {}; }); },

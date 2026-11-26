@@ -212,5 +212,19 @@
    "w": 1
   },
   "def": 3
+ },
+ {
+  "id": "keystoneplaque",
+  "name": "Keystone Plaque",
+  "price": 0,
+  "wall": 1,
+  "quest": 1
+ },
+ {
+  "id": "goldfishplaque",
+  "name": "Gold Fish Plaque",
+  "price": 0,
+  "wall": 1,
+  "quest": 1
  }
 ]

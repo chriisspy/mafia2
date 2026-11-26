@@ -5,8 +5,9 @@
 //           kit.cry   crystals (the new currency)        kit.pick  your best pickaxe, 0..4 (wood, stone, iron, steel, gold)
 //           kit.sm    your gold at the Blacksmith's: { c: coins it makes, t: when he started }; ready 5 minutes later
 //           kit.cs    crystal rocks found but not broken yet, up to 3 ("eud" letters): they wait for you from level 7 down
+//           kit.gb    Glimmer Bait you carry (bought from Pip with gbuy; the lake's fishing spends it)
 //           mine = { lv, k, t }  the level you are in: k = one letter per thing ('.' = dug out), t = when the last break was
-//           day.md / day.m / day.mc   today's date, gold chunks dug today, crystals dug today
+//           day.md / day.m / day.mc   this hour's key, gold chunks dug this hour, crystals dug this hour (the mine refills every hour)
 // MR = the numbers. THE SAME NUMBERS LIVE IN mine.js (the phone draws the hits from them): change both.
 const MR = {
   picks: [{ id: 'wood', price: 0, pow: 1 }, { id: 'stone', price: 50, pow: 2 }, { id: 'iron', price: 200, pow: 3 }, { id: 'steel', price: 700, pow: 5 }, { id: 'gold', price: 2500, pow: 8 }, { id: 'diamond', price: 3500, cry: 5, pow: 12 }],   // (25 Nov, his ask) the diamond pickaxe is CRAFTED: 3500 coins + 5 crystals
@@ -15,8 +16,9 @@ const MR = {
   rocks: 16, veins: 8, rockOdds: [[70, 28, 2], [64, 32, 4], [58, 36, 6], [53, 38, 9], [48, 40, 12], [44, 41, 15], [40, 42, 18], [36, 43, 21], [32, 44, 24], [28, 45, 27], [24, 45, 31], [20, 45, 35]],
   cryFrom: 7, cryOdds: [0, 0, 0, 0, 0, 0, .002, .003, .005, .007, .011, .015], cryMix: [0, 0, 0, 0, 0, 0, [90, 10, 0], [80, 20, 0], [70, 25, 5], [62, 30, 8], [50, 35, 15], [40, 38, 22]], cryYield: { e: 1, u: 2, d: 4 }, cryKeep: 3,
   goldMul: [1, 1.25, 1.5, 1.8, 2.1, 2.5, 3, 3.5, 4, 4.6, 5.3, 6],   // round 3 (his note): gold rocks and veins pay this many times more per level
+  bait: { n: 5, price: 150, max: 20 },   // (26 Nov) GLIMMER BAIT, sold by Pip once he is mended (gbuy): this many for this many coins, and the most you can carry
   fallLoss: .2,       // (25 Nov) passing out in the mine (mfall) costs this share of the gold chunks you carry
-  dayGold: 600, dayCry: 10, cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, swingMs: 520,   // smeltMs: the Blacksmith takes 5 minutes over your gold
+  dayGold: 1000, dayCry: 10,   /* (26 Nov, his call) the mine fills up again every HOUR, not every day, and holds more: was 600 gold a day */ cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, swingMs: 520,   // smeltMs: the Blacksmith takes 5 minutes over your gold
   quick: .7,          // a break may come this much sooner than its swings take (lag), no sooner
   wallsPerLevel: 140  // plain walls you can dig in one visit to a level (the cave is 22 x 17)
 };
@@ -27,7 +29,8 @@ const roll = odds => { let r = Math.random() * 100; for (let i = 0; i < odds.len
 
 module.exports = ({ tx, spend, bad, dayKey, flag }) => {
   const kit = w => { const K = w.kit; K.gold = K.gold | 0; K.cry = K.cry | 0; K.pick = Math.min(MR.picks.length - 1, Math.max(0, K.pick | 0)); K.cs = typeof K.cs === 'string' ? K.cs.replace(/[^eud]/g, '').slice(0, MR.cryKeep) : ''; return K; };
-  const today = w => { const k = dayKey(); if (w.day.md !== k) { w.day.md = k; w.day.m = 0; w.day.mc = 0; } w.day.m = w.day.m | 0; w.day.mc = w.day.mc | 0; };
+  const hourKey = () => 'h' + Math.floor(Date.now() / 3600000);   // the mine's limits run per clock hour (26 Nov, his call)
+  const today = w => { const k = hourKey(); if (w.day.md !== k) { w.day.md = k; w.day.m = 0; w.day.mc = 0; } w.day.m = w.day.m | 0; w.day.mc = w.day.mc | 0; };
   const quick = uid => async e => { if (e && e.message === 'Too quick.') await flag(uid, 'mined too fast'); throw e; };
   return {
     // into a level (down the shaft, back up the ladder, or in from outside): what is in it
@@ -68,6 +71,14 @@ module.exports = ({ tx, spend, bad, dayKey, flag }) => {
     mfall: (uid) => tx(uid, w => {
       const K = kit(w); if (!w.mine) bad('You are not in the mine.');
       const lost = Math.floor(K.gold * MR.fallLoss); K.gold -= lost; delete w.mine; return { lost, gold: K.gold };
+    }),
+    // GLIMMER BAIT (26 Nov 2026): Pip sells it once he is mended (quest step 4, functions/quest.js). Asked from level 12, where his den is
+    // (the same rule as qheal); never more than you can carry; the coins go with the game's own spend
+    gbuy: (uid) => tx(uid, w => {
+      const K = kit(w), B = MR.bait; if (!w.q || (w.q.s | 0) < 4) bad('Not yet.');
+      if (!w.mine || (w.mine.lv | 0) !== MR.levels) bad('You are not there.');
+      const have = Math.max(0, K.gb | 0); if (have + B.n > B.max) bad('You cannot carry more bait.');
+      spend(w, B.price); K.gb = have + B.n; return { gb: K.gb };
     }),
     // the Blacksmith sells pickaxes: you keep the best one you have bought
     mpick: (uid, d) => tx(uid, w => {
