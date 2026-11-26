@@ -26,7 +26,7 @@ const MR = {
   bait: {n: 5, price: 150, max: 20},                                          // (26 Nov) GLIMMER BAIT, sold by Pip once he is mended: this many for this many coins, and the most you can carry (op gbuy)
   crackHits: 5,                                                               // (25 Nov) the cracked wall on level 12 (THE GLIMMERKIN, further down): this many swings with any pickaxe
   hearts: 3, fallLoss: .2,                                                    // (25 Nov) 3 hearts in the mine; passing out costs this share of the gold chunks you carry
-  dayGold: 1000, dayCry: 10,   /* (26 Nov, his call) per HOUR now, was 600 a day: the same numbers as functions/mine.js */ cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, smeltPer: 60000, smeltMax: 1800000, smeltCool: 600000, swingMs: 520};   // smeltMs: he takes 5 minutes over 10 chunks, smeltPer more for every 10 after that, never over smeltMax; smeltCool: his rest after a job is done (26 Nov, his asks)
+  dayGold: Infinity, dayCry: Infinity,   /* (26 Nov, his call) NO limit and no reset any more: the same as functions/mine.js */ cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, smeltPer: 60000, smeltMax: 1800000, smeltCool: 600000, swingMs: 520};   // smeltMs: he takes 5 minutes over 10 chunks, smeltPer more for every 10 after that, never over smeltMax; smeltCool: his rest after a job is done (26 Nov, his asks)
 const mHits = (k, lv, pick) => k === 'c' ? MR.crackHits : Math.max(1, Math.ceil(MR.hp[k] * ('eud'.includes(k) ? 1 : MR.lvmul[lv - 1]) / MR.picks[pick].pow));
 const isCry = k => 'eud'.includes(k);
 const mNeed = lv => (lv - 1) >> 1;   // the pickaxe a level asks for: wood 1-2, stone 3-4, iron 5-6, steel 7-8, gold 9-10, diamond 11-12
