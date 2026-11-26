@@ -24,7 +24,8 @@ STACK.q_temple = {s: 120, n: 114, squash: .55, px: 1};   // assets/quest/temple.
 STACK.q_tdoor = {s: 16, n: 42, squash: .55, px: 1};      // rows: the left leaf, the right leaf; then the same two awake
 STACK.q_altar = {s: 48, n: 19, squash: .55, px: 1};      // rows: 0 empty, 1..4 that many stones set, 5 blazing
 
-const S_ROCK = {x: 598, y: 262};                 // the boulders' top left on the South's map (120 x 87): just above the race road
+const S_ROCK = {x: 598, y: 262};   /* (26 Nov, his ask) its place is "temple" in assets/south/layout.json, moved in the map builder; this is only the fallback */
+const rockPlace = () => { const t = window.S_LAYOUT && S_LAYOUT.temple; if (t && (t.x !== S_ROCK.x || t.y !== S_ROCK.y)) { S_ROCK.x = t.x | 0; S_ROCK.y = t.y | 0; const c = IMG['hallw/south']; if (c) c.trk = 0; } };                 // the boulders' top left on the South's map (120 x 87): just above the race road
 const rockDoor = () => [S_ROCK.x + 60, S_ROCK.y + 91];
 const T_AT = {x: 138, y: -1, foot: 178};         // the temple's baked picture: its top left in the hollow, and the row its steps end on
 const A_AT = {x: 174, y: 186, foot: 228};        // the altar's
@@ -39,7 +40,7 @@ const tplOpen = () => QUEST.s >= 6 && !TPL.anim;
 function templeLoad() {
   const L = (k, src) => load(k, src).catch(() => {});
   return Promise.all([L('stack/q_temple', 'assets/quest/temple.png'), L('stack/q_tdoor', 'assets/quest/tdoor.png'), L('stack/q_altar', 'assets/quest/altar.png'),
-    L('hall/hollow', 'assets/quest/hollow.png'), L('hwalk', 'assets/quest/hollow-walk.png'), L('hall/throne', 'assets/interiors/throne.png'), L('s/rocks', 'assets/south/rocks.png'), ...['dais', 'throne', 'pillar', 'stand', 'crys'].map(k => L('stack/q_h' + k, `assets/quest/h${k}.png`)),
+    L('hall/hollow', 'assets/quest/hollow.png'), L('hwalk', 'assets/quest/hollow-walk.png'), L('hall/throne', 'assets/interiors/throne.png'), L('s/rocks', 'assets/south/rocks.png'), L('s/rocks-shut', 'assets/south/rocks-shut.png'), ...['dais', 'throne', 'pillar', 'stand', 'crys'].map(k => L('stack/q_h' + k, `assets/quest/h${k}.png`)),
     ...['front', 'right', 'back', 'left'].map(d => L('king/' + d, `assets/final/king/${d}.png`))]).then(templeMasks);
 }
 function templeMasks() {
@@ -49,7 +50,7 @@ function templeMasks() {
 
 /* ---------- the South end: the boulders by the race road ---------- */
 function rocksMask() { const c = IMG['hallw/south']; if (!c || c.trk) return; const x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(S_ROCK.x + 6, S_ROCK.y + 34, 108, 52); c.trk = 1; SH.g = null; }   // solid, on whatever mask the South has built
-{ const so = southObjs; southObjs = function (m, dt) { const out = so(m, dt), r = IMG['s/rocks']; rocksMask(); if (r) out.push({img: r, x: S_ROCK.x, y: S_ROCK.y, base: S_ROCK.y + r.height - 2, prof: true}); return out; }; }
+{ const so = southObjs; southObjs = function (m, dt) { rockPlace(); const out = so(m, dt), r = IMG[QUEST.s >= 5 ? 's/rocks' : 's/rocks-shut'] || IMG['s/rocks']; rocksMask();   /* (26 Nov, his ask) a plain pile of boulders until you hold all four stones: then the cleft shows */ if (r) out.push({img: r, x: S_ROCK.x, y: S_ROCK.y, base: S_ROCK.y + r.height - 2, prof: true}); return out; }; }
 { const fr = SH.from; SH.from = was => was === HOLLOW ? [rockDoor()[0], rockDoor()[1] + 3, 'front'] : fr(was); }
 { const j = SH.joy; SH.joy = (m, J) => { if (QUEST.s >= 5 && J.y < -.5 && nearDoor(m, rockDoor(), 8)) { wlDoor(HOLLOW); return true; } return j(m, J); }; }   // pushed up into the cleft: only with all four stones
 { const tp = SH.tap; SH.tap = (e, m, x, y) => { if (QUEST.s >= 5 && !m.seat && x > S_ROCK.x + 34 && x < S_ROCK.x + 86 && y > S_ROCK.y + 20 && y < S_ROCK.y + 96) { const d = rockDoor(); wlGo(m, d[0], d[1], () => wlDoor(HOLLOW)); return true; } return tp(e, m, x, y); }; }

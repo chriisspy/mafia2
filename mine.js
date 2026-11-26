@@ -996,8 +996,9 @@ function denTick() {   // the pickaxe button also turns his page (for thumbs on 
 const SNIPS_ICON = pxIcon(['.....K....K.....', '....KWK..KWK....', '....KWK..KWK....', '....KWSKKSWK....', '.....KWSSWK.....', '.....KWSSWK.....', '......KWWK......', '......KBBK......', '.....KSKKSK.....', '....KSK..KSK....', '...KSK....KSK...',
   '..KSSK....KSSK..', '.KS..SK..KS..SK.', '.KS..SK..KS..SK.', '..KSSK....KSSK..', '...KK......KK...'], {K: '#1a1430', W: '#ffffff', S: '#b8c2d4', B: '#6ec8ff'});
 function itemGot(name, icon, glow, next) {   // next: what happens when the card is put away (a second thing handed over)
-  const c = $('#itCv'), x = c.getContext('2d'), sc = icon.height > 32 || icon.width > 48 ? 1 : icon.height > 21 ? 2 : 3; x.clearRect(0, 0, c.width, c.height); const g = x.createRadialGradient(48, 32, 2, 48, 32, 34); g.addColorStop(0, `rgba(${glow},.55)`); g.addColorStop(1, `rgba(${glow},0)`); x.fillStyle = g; x.fillRect(0, 0, 96, 64);
-  x.imageSmoothingEnabled = false; x.drawImage(icon, 48 - icon.width * sc / 2, 32 - icon.height * sc / 2, icon.width * sc, icon.height * sc);
+  const tall = icon.height > 32 && icon.height <= 56 && icon.width <= 48, H = tall ? icon.height * 2 + 12 : 64;   // (26 Nov) the 3D Warden stands taller than the card: the card grows for him, so he is shown at the same double size as the flat outfits were
+  const c = $('#itCv'), x = c.getContext('2d'), sc = tall ? 2 : icon.height > 32 || icon.width > 48 ? 1 : icon.height > 21 ? 2 : 3; if (c.height !== H) c.height = H; c.style.height = H * 2 + 'px'; x.clearRect(0, 0, c.width, c.height); const g = x.createRadialGradient(48, H / 2, 2, 48, H / 2, 34 + (H - 64) / 2); g.addColorStop(0, `rgba(${glow},.55)`); g.addColorStop(1, `rgba(${glow},0)`); x.fillStyle = g; x.fillRect(0, 0, 96, H);
+  x.imageSmoothingEnabled = false; x.drawImage(icon, Math.round(48 - icon.width * sc / 2), Math.round(H / 2 - icon.height * sc / 2), icon.width * sc, icon.height * sc);
   itemGot.next = next || null; $('#itName').textContent = name; document.querySelectorAll('.modal.on').forEach(q => q.classList.remove('on')); $('#itemModal').classList.add('on'); sfx('rare');
 }
 (() => {

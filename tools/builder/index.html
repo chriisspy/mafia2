@@ -374,7 +374,7 @@ async function openTown(){await readGame();
    assets/south/day.png (the ground), day-walk.png (WHITE = walk, like a room's mask) and layout.json (where everything stands; south.js reads it).
    The Blacksmith, the mine, the signpost and the 8 stalls are dragged like the town's buildings; the doors, the spawn, the road in and the race road
    are MARKS (d.marks) he drags too; props come from the same library as the town's. The red boxes under the buildings are the game's own (in code). */
-const S_DEF={blacksmith:{x:88,y:10,door:[219,172]},mine:{x:60,y:470,door:[128,598]},sign:{x:432,y:200},stalls:[[268,270],[318,270],[432,270],[482,270],[268,455],[318,455],[432,455],[482,455]],race:{x:784,y0:358,y1:438},entry:{x0:380,x1:420},spawn:[400,24]};
+const S_DEF={blacksmith:{x:88,y:10,door:[219,172]},mine:{x:60,y:470,door:[128,598]},sign:{x:432,y:200},stalls:[[268,270],[318,270],[432,270],[482,270],[268,455],[318,455],[432,455],[482,455]],race:{x:784,y0:358,y1:438},entry:{x0:380,x1:420},spawn:[400,24],temple:{x:598,y:262}};
 const S_COL=['red','blue','green'];
 async function openSouth(){await loadLib();let lay={};try{lay=await (await fetch('/assets/south/layout.json?t='+Date.now())).json();}catch(e){}
   const[day,walk]=await Promise.all([loadImg('/assets/south/day.png'),loadImg('/assets/south/day-walk.png')]),J={...S_DEF,...lay};
@@ -385,6 +385,7 @@ async function openSouth(){await loadLib();let lay={};try{lay=await (await fetch
   await add('blacksmith','Blacksmith','assets/buildings/blacksmith.png',J.blacksmith.x,J.blacksmith.y,[4,46,202,152],{fade:1,bo:100});
   await add('mine','Mine','assets/south/mine.png',J.mine.x,J.mine.y,null);
   await add('sign','Signpost','assets/south/signpost.png',J.sign.x,J.sign.y,[15,48,22,55]);
+  await add('temple','Secret temple boulders','assets/south/rocks-shut.png',J.temple.x,J.temple.y,[6,34,114,86]);   /* (26 Nov, his ask) the boulders that hide the way to the temple: temple.js reads "temple" from layout.json */
   for(let i=0;i<J.stalls.length;i++)await add('stall'+i,'Stall '+(i+1),`assets/south/stall-${S_COL[i%3]}.png`,J.stalls[i][0],J.stalls[i][1],[2,34,47,55],{si:i});
   const sw=col=>{const c=mk(1,1),x=X2(c);x.fillStyle=col;x.fillRect(0,0,1,1);return png(c);},mark=(k,n,s,t,col,o)=>d.marks.push({k,n,s,t,col,thumb:sw(col),...o});
   mark('bdoor','Blacksmith door','door','pt','#6fdc8c',{x:J.blacksmith.door[0],y:J.blacksmith.door[1],of:'blacksmith'});
@@ -427,6 +428,7 @@ function lakeLayout(d){const L={...d.lay},m=k=>d.marks.find(m=>m.k===k);L.spawn=
 function southLayout(d){markSync(d);const L={...d.lay},b=k=>d.blds.find(b=>b.k===k),m=k=>d.marks.find(m=>m.k===k),J={...S_DEF,...d.lay};
   for(const[k,dk]of[['blacksmith','bdoor'],['mine','mdoor']]){const q=b(k),dm=m(dk);L[k]={...J[k],...(q?{x:q.x,y:q.y}:{}),door:[dm.x,dm.y]};}
   {const q=b('sign');L.sign={...J.sign,...(q?{x:q.x,y:q.y}:{})};}
+  {const q=b('temple');L.temple={...J.temple,...(q?{x:q.x,y:q.y}:{})};}
   L.stalls=J.stalls.map((s,i)=>{const q=b('stall'+i);return q?[q.x,q.y]:s;});
   L.race={...J.race,x:m('race').x,y0:m('race').y,y1:m('race').y2};L.entry={...J.entry,x0:m('entry').x,x1:m('entry').x2};L.spawn=[m('spawn').x,m('spawn').y];
   L.props=[...d.props.map(p=>({lib:p.lib,x:p.x,y:p.y,flip:!!p.flip,shadow:!!p.shadow,solid:!!p.solid,fade:!!p.fade})),...d.keep];

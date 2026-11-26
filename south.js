@@ -28,7 +28,7 @@ const S_RACE = {x: 784, y0: 358, y1: 438};                                    //
 const S_ENTRY = {x0: 380, x1: 420};                                           // the road in from the town, along the top edge
 const S_PROPS = [];                                                           // {lib, x, y, flip, shadow, solid, fade}: assets/builder/props/<lib>.png
 function southLayout(L) {
-  if (!L) return; const put = (o, v) => { if (v) Object.assign(o, v); };
+  if (!L) return; window.S_LAYOUT = L; const put = (o, v) => { if (v) Object.assign(o, v); };   // S_LAYOUT: temple.js reads its boulders' place ("temple") from here
   put(S_BLD, L.blacksmith); put(S_MINE, L.mine); put(S_SIGN, L.sign); put(S_RACE, L.race); put(S_ENTRY, L.entry);
   if (Array.isArray(L.stalls) && L.stalls.length) S_STALLS.splice(0, S_STALLS.length, ...L.stalls.slice(0, 8));
   if (Array.isArray(L.spawn)) HALLS[SOUTH - 100].spawn = [L.spawn[0], L.spawn[1], 'front'];
