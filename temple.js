@@ -71,16 +71,17 @@ function peekTick(m, dt) {
   const bot = m.y - Y(m.y) + cam.lh;   // (his note: "pip should walk in from the bottom slowly creeping up") the bottom edge of the screen in the world (Y() turns world y into screen y)
   if (T >= PKT.peek && T < PKT.run) { const k = clamp((T - PKT.peek) / PKT.peekIn, 0, 1); PK.x = m.x - 14; const y0 = bot + 4, y1 = m.y + 64; PK.y = Math.round(y0 + (y1 - y0) * k); PK.dir = 'back'; PK.hop = k < 1 && T < PKT.bang ? Math.floor(T * 6) % 2 : 0; }   // tiptoes up from below, one small step at a time, and stops behind you
   if (at('turn')) { m.dir = 'front'; sfx('click'); }   // you turn round
-  if (at('bang')) { sfx('pip'); try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} }
+  if (at('bang')) { sfx('alert');   // the Mafia intro's own "!" alarm (his ask)
+    try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} }
   if (T >= PKT.bang && T < PKT.run) PK.hop = T - PKT.bang < .25 ? Math.round(Math.sin((T - PKT.bang) / .25 * Math.PI) * 6) : 0;   // a fright: one jump straight up
   if (T >= PKT.run) { const md = S_MINE.door, dx = md[0] - PK.x, dy = md[1] - PK.y, L = Math.hypot(dx, dy) || 1, v = 175 * dt;   // RUNS for the mine, little hops all the way
     PK.x += dx / L * v; PK.y += dy / L * v; PK.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy > 0 ? 'front' : 'back'); PK.hop = Math.round(Math.abs(Math.sin((T - PKT.run) * 16)) * 3); }
   if (T >= PKT.end) peekEnd();
 }
-function peekObj(t) {   // Pip, and his "!", as one thing in the South's drawn scene, drawn over everything (the edge of the screen is often a tree)
+function peekObj(t) {   // Pip, and his "!", as one thing in the South's drawn scene, in front of or behind things like anyone (his note: he walked over a tree; he cleared the path in the map builder)
   if (PK.t < PKT.peek) return null; const im = IMG['pip/' + PK.dir] || IMG['pip/front']; if (!im) return null;
   const x = Math.round(PK.x - im.width / 2), y = Math.round(PK.y - im.height - PK.hop);
-  return {img: im, x, y, base: 1e6, after: () => { if (PK.t < PKT.bang || PK.t >= PKT.run + .35) return; const e = PK.t - PKT.bang, bx = X(PK.x) - 3, by = Y(y) - 13 - (e < .12 ? 2 : 0);
+  return {img: im, x, y, base: Math.round(PK.y), after: () => { if (PK.t < PKT.bang || PK.t >= PKT.run + .35) return; const e = PK.t - PKT.bang, bx = X(PK.x) - 3, by = Y(y) - 13 - (e < .12 ? 2 : 0);
     lx.fillStyle = '#1a1430'; lx.fillRect(bx - 1, by - 1, 9, 13); lx.fillStyle = '#ffffff'; lx.fillRect(bx, by, 7, 11); lx.fillStyle = '#e83b3b'; lx.fillRect(bx + 2, by + 1, 3, 6); lx.fillRect(bx + 2, by + 8, 3, 2); }};   // a white card with a red "!": pops a little on the beat
 }
 { const so = southObjs; southObjs = function (m, dt) { peekTick(m, dt); const out = so(m, dt), p = peekObj(); if (p) out.push(p); return out; }; }
