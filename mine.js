@@ -26,7 +26,7 @@ const MR = {
   bait: {n: 5, price: 150, max: 20},                                          // (26 Nov) GLIMMER BAIT, sold by Pip once he is mended: this many for this many coins, and the most you can carry (op gbuy)
   crackHits: 5,                                                               // (25 Nov) the cracked wall on level 12 (THE GLIMMERKIN, further down): this many swings with any pickaxe
   hearts: 3, fallLoss: .2,                                                    // (25 Nov) 3 hearts in the mine; passing out costs this share of the gold chunks you carry
-  dayGold: 1000, dayCry: 10,   /* (26 Nov, his call) per HOUR now, was 600 a day: the same numbers as functions/mine.js */ cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, swingMs: 520};   // smeltMs: he takes 5 minutes over your gold
+  dayGold: 1000, dayCry: 10,   /* (26 Nov, his call) per HOUR now, was 600 a day: the same numbers as functions/mine.js */ cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, smeltPer: 60000, smeltMax: 1800000, smeltCool: 600000, swingMs: 520};   // smeltMs: he takes 5 minutes over 10 chunks, smeltPer more for every 10 after that, never over smeltMax; smeltCool: his rest after a job is done (26 Nov, his asks)
 const mHits = (k, lv, pick) => k === 'c' ? MR.crackHits : Math.max(1, Math.ceil(MR.hp[k] * ('eud'.includes(k) ? 1 : MR.lvmul[lv - 1]) / MR.picks[pick].pow));
 const isCry = k => 'eud'.includes(k);
 const mNeed = lv => (lv - 1) >> 1;   // the pickaxe a level asks for: wood 1-2, stone 3-4, iron 5-6, steel 7-8, gold 9-10, diamond 11-12
@@ -53,7 +53,7 @@ const GOLD_ICON = pxIcon(['..KKKK...', '.KYYWYK..', 'KYYYYYgK.', 'KYGYYYgK.', 'K
 const CRY_ICON = pxIcon(['...KKK...', '..KWCCK..', '.KWCCCDK.', 'KWCCCCDDK', 'KCCCCDDDK', '.KCCDDDK.', '..KCDDK..', '...KDK...', '....K....'], {K: '#1a1430', W: '#ffffff', C: '#8fe6ff', D: '#3d9fe0'});
 const iconImg = (ic, sc) => { const c = mk(ic.width * sc, ic.height * sc), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(ic, 0, 0, c.width, c.height); return `<img src="${c.toDataURL()}" style="width:${c.width}px;height:${c.height}px;image-rendering:pixelated;vertical-align:-2px" alt="">`; };
 const goldImg = sc => iconImg(GOLD_ICON, sc), cryImg = sc => iconImg(CRY_ICON, sc);
-{ const _wa = walletApply; walletApply = function (w) { _wa(w); if (!GOLD.local) { const k = (w && w.kit) || {}; GOLD.n = k.gold | 0; GOLD.cry = k.cry | 0; GOLD.pick = clamp(k.pick | 0, 0, MR.picks.length - 1); GOLD.gb = Math.max(0, k.gb | 0); GOLD.job = k.sm && k.sm.t ? {c: k.sm.c | 0, t: +k.sm.t} : null; } goldChip(); if ($('#baitModal') && $('#baitModal').classList.contains('on')) baitUI(); if ($('#smithModal').classList.contains('on')) smithUI(); if ($('#pickModal').classList.contains('on')) pickUI(); }; }
+{ const _wa = walletApply; walletApply = function (w) { _wa(w); if (!GOLD.local) { const k = (w && w.kit) || {}; GOLD.n = k.gold | 0; GOLD.cry = k.cry | 0; GOLD.pick = clamp(k.pick | 0, 0, MR.picks.length - 1); GOLD.gb = Math.max(0, k.gb | 0); GOLD.job = k.sm && k.sm.t ? {c: k.sm.c | 0, t: +k.sm.t, d: +k.sm.d || 0} : null; GOLD.smd = +k.smd || 0; } goldChip(); if ($('#baitModal') && $('#baitModal').classList.contains('on')) baitUI(); if ($('#smithModal').classList.contains('on')) smithUI(); if ($('#pickModal').classList.contains('on')) pickUI(); }; }
 function goldChip() {   // gold and crystals beside the coins, in the Blacksmith and the Mine
   const row = $('#hallBar .lrow'); if (!row) return; let c = $('#goldChip'), d = $('#cryChip');
   if (!c) { c = document.createElement('span'); c.className = 'lchip'; c.id = 'goldChip'; row.appendChild(c); d = document.createElement('span'); d.className = 'lchip'; d.id = 'cryChip'; row.appendChild(d); }
@@ -68,7 +68,7 @@ function mineLocal(op, d) {
   d = d || {}; const W = LABM, bad = m => { throw new Error(m); }, save = () => { try { localStorage.setItem('m2lab_mine', JSON.stringify(W)); } catch (e) {} };
   if (!GOLD.local) { GOLD.local = true; if (W.gold == null) { W.gold = GOLD.n; W.cry = GOLD.cry; W.pick = GOLD.pick; } }
   W.gold |= 0; W.cry |= 0; W.pick |= 0; W.cs = W.cs || ''; const day = 'h' + Math.floor(Date.now() / 3600000); if (W.dk !== day) { W.dk = day; W.m = 0; W.c = 0; }
-  const sync = () => { GOLD.n = W.gold; GOLD.cry = W.cry; GOLD.pick = W.pick; GOLD.job = W.sm || null; goldChip(); save(); };
+  const sync = () => { GOLD.n = W.gold; GOLD.cry = W.cry; GOLD.pick = W.pick; GOLD.job = W.sm || null; GOLD.smd = +W.smd || 0; goldChip(); save(); };
   const roll = odds => { let r = Math.random() * 100; for (let i = 0; i < odds.length; i++) { r -= odds[i]; if (r < 0) return i; } return 0; };
   if (op === 'mgo') { const lv = d.lv | 0; if (lv < 1 || lv > MR.levels) bad('No such level.'); if (W.pick < mNeed(lv)) bad('You need a better pickaxe to go deeper.');
     let k = ''; for (let i = 0; i < MR.rocks; i++) k += 'sgr'[roll(MR.rockOdds[lv - 1])]; for (let i = 0; i < MR.veins; i++) k += Math.random() * 100 < 10 + lv * 6 ? 'R' : 'G';
@@ -104,15 +104,26 @@ function mineLocal(op, d) {
   if (op === 'mfall') { if (!W.mine) bad('You are not in the mine.'); const lost = Math.floor(W.gold * MR.fallLoss); W.gold -= lost; delete W.mine; sync(); return {lost, gold: W.gold}; }
   if (op === 'mpick') { const t = MR.picks.findIndex(p => p.id === d.id); if (t < 0) bad('No such pickaxe.'); if (W.pick >= t) return {pick: W.pick}; const P = MR.picks[t]; if (P.cry && W.cry < P.cry) bad('You need ' + P.cry + ' crystals.'); if (coins < P.price) bad('Not enough coins.'); coins -= P.price; if (P.cry) W.cry -= P.cry; paintCoins(); W.pick = t; sync(); return {pick: t}; }
   if (op === 'mcry') { const n = d.n | 0; if (n < 1 || n > W.cry) bad('You have no crystals.'); W.cry -= n; W.gold += n * MR.cryGold; sync(); return {gold: W.gold, cry: W.cry, got: n * MR.cryGold}; }
-  if (op === 'smelt') { if (W.sm) bad('He is still working on your gold.'); const lots = Math.floor(W.gold / MR.smeltIn); if (!lots) bad('You need ' + MR.smeltIn + ' gold chunks.'); W.gold -= lots * MR.smeltIn; W.sm = {c: lots * MR.smeltOut, t: Date.now()}; sync(); return {job: W.sm, gold: W.gold}; }
-  if (op === 'smeltGet') { const J = W.sm; if (!J) bad('He has nothing of yours.'); if (Date.now() - J.t < smeltMs()) bad('Your coins are not ready yet.'); coins += J.c; paintCoins(); delete W.sm; sync(); return {coins: J.c}; }
+  if (op === 'smelt') { const now = Date.now(); if (W.sm) bad('He is still working on your gold.');   // the same order as functions/mine.js: one job, his rest, the gold you carry, the amount you chose
+    const wait = (+W.smd || 0) + smeltCool() - now; if (wait > 0) bad('He is resting. Come back in ' + Math.ceil(wait / 60000) + ' min.');
+    const max = Math.floor(W.gold / MR.smeltIn); if (!max) bad('You need ' + MR.smeltIn + ' gold chunks.');
+    const lots = d.n != null ? d.n : max; if (!Number.isInteger(lots) || lots < 1 || lots > max) bad('You do not have that much gold.');
+    W.gold -= lots * MR.smeltIn; W.sm = {c: lots * MR.smeltOut, t: now, d: smeltDur(lots)}; sync(); return {job: W.sm, gold: W.gold}; }
+  if (op === 'smeltGet') { const J = W.sm; if (!J) bad('He has nothing of yours.'); const done = J.t + jobDur(J); if (Date.now() < done) bad('Your coins are not ready yet.'); coins += J.c; paintCoins(); delete W.sm; W.smd = done; sync(); return {coins: J.c, smd: done}; }
   bad('Unknown action.');
 }
-if (typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.gold != null) { GOLD.local = true; GOLD.n = LABM.gold | 0; GOLD.cry = LABM.cry | 0; GOLD.pick = clamp(LABM.pick | 0, 0, MR.picks.length - 1); GOLD.job = LABM.sm || null; }   // the lab remembers what you dug
+if (typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.gold != null) { GOLD.local = true; GOLD.n = LABM.gold | 0; GOLD.cry = LABM.cry | 0; GOLD.pick = clamp(LABM.pick | 0, 0, MR.picks.length - 1); GOLD.job = LABM.sm || null; GOLD.smd = +LABM.smd || 0; }   // the lab remembers what you dug
 /* the lab's Glimmer Bait: the server keeps it in wallet.kit.gb (the lake reads it there), so the lab keeps its own count in the same place (and in m2lab_mine.gb, to remember it) */
 function labBait(n) { const K = WALLET.kit || (WALLET.kit = {}); if (n == null) return Math.max(0, (K.gb != null ? K.gb : LABM.gb) | 0); K.gb = LABM.gb = GOLD.gb = n; return n; }
 if (typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.gb != null) labBait(LABM.gb | 0);
 const smeltMs = () => (typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.smeltMs) || MR.smeltMs;   // the lab only: LABM.smeltMs = 30000 makes his five minutes half a minute, to watch the whole job
+/* (26 Nov, his asks) YOU CHOOSE HOW MUCH, AND HE RESTS AFTER. smeltDur = how long he takes over this many lots of 10 (the same sum as
+   functions/mine.js); a job carries its own time (J.d); GOLD.smd = when his last job was done, and for smeltCool after that he takes
+   no new one. The lab only: LABM.smeltCool = 20000 makes his ten minutes' rest twenty seconds. */
+const smeltDur = lots => Math.round(Math.min(MR.smeltMax, MR.smeltMs + (lots - 1) * MR.smeltPer) * smeltMs() / MR.smeltMs);
+const jobDur = J => J && J.d > 0 ? +J.d : smeltMs();
+const smeltCool = () => (typeof LABLOCAL !== 'undefined' && LABLOCAL && LABM.smeltCool) || MR.smeltCool;
+const coolLeft = () => GOLD.job ? 0 : Math.max(0, (+GOLD.smd || 0) + smeltCool() - Date.now());
 async function mop(op, d) {
   if ((typeof LABLOCAL !== 'undefined' && LABLOCAL) || GOLD.local) return mineLocal(op, d);
   try { return await srv(op, d); } catch (e) { if (/Unknown action/i.test(String(e && e.message))) return mineLocal(op, d); throw e; }
@@ -124,7 +135,7 @@ const PICKWALL = {x: 98, y: 25, w: 94, h: 50};   // (25 Nov) taller: the six new
 const SMITHY_OBJS = [
   {k: 'pickwall', x: PICKWALL.x, y: PICKWALL.y, wall: true}, {k: 'toolrack', x: 212, y: 30, wall: true},   // his hammers and pliers hang behind him now (his note)
   {k: 'forge', x: 18, y: 6, solid: [20, 80, 94, 122]},
-  {k: 'barrel', x: 22, y: 150, solid: [24, 182, 55, 198]}, {k: 'anvil', x: 104, y: 128, solid: [108, 160, 148, 178]},
+  {k: 'barrel', x: 22, y: 150, solid: [24, 182, 55, 198]}, {k: 'anvil', x: 98, y: 158, solid: [110, 171, 137, 184]},   // (26 Nov, his note) only the anvil now, no log under it: it stands on the floor
   {k: 'coal', x: 62, y: 158, solid: [64, 186, 95, 201]}, {k: 'counter', x: 190, y: 92, solid: [190, 120, 290, 148], smith: true},
   {k: 'grindstone', x: 248, y: 150, solid: [252, 186, 296, 205]}];
 const SMH = HALLS[SMITHY - 100];
@@ -168,22 +179,31 @@ function pickWallAfter(t) {   // the next one to buy: yellow corners blinking ro
    whatever they are up to". So where he is and what he does comes ONLY from your own job's start time (GOLD.job.t): nothing is sent
    between phones. No job = he stands behind his counter. His frames are PixelLab's (tools/make_smith.py work -> assets/final/smith/work.png). */
 const SMW = {rows: null, cell: 64, fr: {}};   // 64 px cells, his feet on row 52
-const SM_AT = {forge: [57, 127], barrel: [40, 148], anvil: [94, 172]};
-const SM_P1 = [SMITH_AT, [176, 114], [70, 128], SM_AT.forge], SM_P2 = [SM_AT.forge, SM_AT.barrel], SM_P3 = [SM_AT.barrel, [84, 152], SM_AT.anvil], SM_P4 = [SM_AT.anvil, [176, 152], [176, 114], SMITH_AT];
+const SM_AT = {forge: [57, 127], barrel: [40, 148], anvil: [94, 166]};
+const SM_P1 = [SMITH_AT, [176, 114], [70, 128], SM_AT.forge], SM_P2 = [SM_AT.forge, SM_AT.barrel], SM_P3 = [SM_AT.barrel, [84, 152], SM_AT.anvil], SM_P4 = [SM_AT.anvil, [100, 150], [176, 150], [176, 114], SMITH_AT];   // back round behind the anvil, not through it
 // the five minutes, in seconds: walk to the forge, melt, carry to the water, quench, walk to the anvil, hammer, walk back
 const SM_T = {forge: 7, carry: 100, barrel: 102, toAnvil: 170, anvil: 173, home: 292, done: 300};
 function pathAt(P, f) { const L = []; let tot = 0; for (let i = 1; i < P.length; i++) { const d = Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]); L.push(d); tot += d; }
   let d = clamp(f, 0, 1) * tot; for (let i = 0; i < L.length; i++) { if (d <= L[i] || i === L.length - 1) { const k = L[i] ? Math.min(1, d / L[i]) : 1, a = P[i], b = P[i + 1], dx = b[0] - a[0], dy = b[1] - a[1];
     return {x: a[0] + dx * k, y: a[1] + dy * k, dir: Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'east' : 'west') : dy > 0 ? 'south' : 'north'}; } d -= L[i]; } }
+/* (26 Nov) a bigger job takes longer: his WALKS keep their own pace and only the work at the forge, the water and the anvil stretches.
+   el = seconds since he started, D = the whole job in seconds; back comes the place on the five-minute plan above (SM_T). */
+function smithClock(el, D) {
+  const T = SM_T; if (D <= T.done) return el / D * T.done; if (el >= D) return T.done; if (el < 0) return -1;
+  const seg = [[0, T.forge, 0], [T.forge, T.carry, 1], [T.carry, T.barrel, 0], [T.barrel, T.toAnvil, 1], [T.toAnvil, T.anvil, 0], [T.anvil, T.home, 1], [T.home, T.done, 0]];
+  let walk = 0; for (const [a, b, w] of seg) if (!w) walk += b - a; const k = (D - walk) / (T.done - walk);
+  for (const [a, b, w] of seg) { const len = (b - a) * (w ? k : 1); if (el < len) return a + el / len * (b - a); el -= len; } return T.done;
+}
 function smithNow() {
-  const J = GOLD.job; if (!J) return {home: true}; const e = (Date.now() - J.t) / smeltMs() * SM_T.done; if (e >= SM_T.done) return {home: true, ready: true}; if (e < 0) return {home: true};
+  const J = GOLD.job; if (!J) return {home: true}; const e = smithClock((Date.now() - J.t) / 1000, jobDur(J) / 1000); if (e >= SM_T.done) return {home: true, ready: true}; if (e < 0) return {home: true};
+  const D = jobDur(J) / 1000, sk = D > SM_T.done ? (D - 20) / (SM_T.done - 20) : 1;   // sk: how much his work is stretched, so each pour and each hammer blow still takes its own real time
   const walk = (P, a, b, st) => ({...pathAt(P, (e - a) / (b - a)), anim: 'walk', st, e, se: e - a}), T = SM_T;
   if (e < T.forge) return walk(SM_P1, 0, T.forge, 'go');
-  if (e < T.carry) { const se = e - T.forge, c = se % 9; return {x: SM_AT.forge[0], y: SM_AT.forge[1], dir: 'north', anim: c < 3.2 ? 'pour' : 'idle', k: c / 3.2, st: 'forge', e, se}; }
+  if (e < T.carry) { const se = e - T.forge, c = (se * sk) % 9; return {x: SM_AT.forge[0], y: SM_AT.forge[1], dir: 'north', anim: c < 3.2 ? 'pour' : 'idle', k: c / 3.2, st: 'forge', e, se}; }
   if (e < T.barrel) return walk(SM_P2, T.carry, T.barrel, 'carry');
-  if (e < T.toAnvil) { const se = e - T.barrel; return {x: SM_AT.barrel[0], y: SM_AT.barrel[1], dir: 'south', anim: se < 26 ? 'pour' : 'idle', k: (se % 3.2) / 3.2, st: 'barrel', e, se}; }
+  if (e < T.toAnvil) { const se = e - T.barrel; return {x: SM_AT.barrel[0], y: SM_AT.barrel[1], dir: 'south', anim: se < 26 ? 'pour' : 'idle', k: ((se * sk) % 3.2) / 3.2, st: 'barrel', e, se}; }
   if (e < T.anvil) return walk(SM_P3, T.toAnvil, T.anvil, 'bar');
-  if (e < T.home) { const se = e - T.anvil, c = se % 1.1; return {x: SM_AT.anvil[0], y: SM_AT.anvil[1], dir: 'east', anim: c < .72 ? 'hammer' : 'idle', k: c / .72, st: 'anvil', e, se}; }
+  if (e < T.home) { const se = e - T.anvil, c = (se * sk) % 1.1; return {x: SM_AT.anvil[0], y: SM_AT.anvil[1], dir: 'east', anim: c < .72 ? 'hammer' : 'idle', k: c / .72, st: 'anvil', e, se}; }
   return walk(SM_P4, T.home, T.done, 'back');
 }
 function smithFrame(anim, dir, k, t) {   // one of PixelLab's frames; null = not loaded (then he is drawn standing, as before)
@@ -203,7 +223,7 @@ function smithProps(S, t) {   // the little things round him, drawn in code: the
   if (S.st === 'bar') { P1('#01032e', S.x + 3, S.y - 13, 7, 4); P1('#ffb24a', S.x + 4, S.y - 12, 5, 2); }
 }
 /* (25 Nov, his note) THE GOLD ON THE ANVIL rests ON its flat top, drawn right after the anvil so the anvil never covers it */
-const ANVIL_TOP = [116, 132];
+const ANVIL_TOP = [112, 161], ANVIL_BASE = 158 + 26 - 2;   // the anvil's flat top, where his hammer lands; ANVIL_BASE = its feet on the floor
 function anvilGold(t) { const S = smithNow(); if (S.home || S.st !== 'anvil') return;
   const q = Math.floor(t / 90), coinsK = clamp((S.se - 30) / 80, 0, 1), bx = ANVIL_TOP[0], by = ANVIL_TOP[1];   // a glowing bar that turns, blow by blow, into coins
   if (coinsK < 1) { P1('#01032e', bx, by - 1, 9, 4); P1(S.se < 40 ? '#ffb24a' : '#e8b13a', bx + 1, by, 7, 2); P1('#fff0a0', bx + 2, by, 3, 1); }
@@ -212,7 +232,7 @@ function anvilGold(t) { const S = smithNow(); if (S.home || S.st !== 'anvil') re
 }
 function smithObj(t) {   // him, out on the floor at work
   const S = smithNow(); smithSound(S); if (S.home) return null; const fr = smithFrame(S.anim, S.dir, S.k || 0, t);
-  if (fr) return {img: fr, x: Math.round(S.x) - SMW.cell / 2, y: Math.round(S.y) - 52, base: S.y, after: () => smithProps(S, t)};
+  if (fr) return {img: fr, x: Math.round(S.x) - SMW.cell / 2, y: Math.round(S.y) - 52, base: S.st === 'anvil' ? ANVIL_BASE + .5 : S.y, after: () => smithProps(S, t)};
   return {img: PX1, x: S.x, y: S.y, base: S.y, after: () => { smithSet(); if (SP.smith) drawChar({name: 'smith', dir: 'front', x: S.x, y: S.y, t: performance.now(), phase: 400, walk: S.anim === 'walk'}); smithProps(S, t); }};
 }
 const PX1 = mk(1, 1);
@@ -248,10 +268,13 @@ SMH.tap = (e, m, x, y) => { if (y > SMH.door[1] - 6 && Math.abs(x - SMH.door[0])
    THE PICKAXE WALL: buy the next pickaxe. The server does all of it. */
 const mmss = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 function smithUI() {
-  const n = GOLD.n, lots = Math.floor(n / MR.smeltIn), b = $('#smeltYes'), J = GOLD.job, left = J ? J.t + smeltMs() - Date.now() : 0;
+  const n = GOLD.n, max = Math.floor(n / MR.smeltIn), b = $('#smeltYes'), J = GOLD.job, left = J ? J.t + jobDur(J) - Date.now() : 0, cool = coolLeft();
+  if (GOLD.lots == null || GOLD.lotsMax !== max) GOLD.lots = max; GOLD.lotsMax = max; const lots = GOLD.lots = clamp(GOLD.lots | 0, max ? 1 : 0, max);   // how many lots of 10 you hand him: all of it until you pick less
+  const pick = $('#smeltPick'), show = !J && !cool && max > 1; pick.style.display = show ? '' : 'none';
+  if (show) { const r = $('#smeltN'); if (+r.max !== max) r.max = max; if (+r.value !== lots) r.value = lots; $('#smeltLess').disabled = lots <= 1; $('#smeltMore').disabled = lots >= max; }
   $('#smithGold').innerHTML = goldImg(2) + ' ' + n; $('#smithCry').innerHTML = cryImg(2) + ' ' + GOLD.cry;
-  const html = J ? (left > 0 ? `Ready in ${mmss(left)}` : `Collect ${ic('coin', 2)} ${J.c}`) : lots ? `Smelt ${lots * MR.smeltIn} ${goldImg(2)} for ${ic('coin', 2)} ${lots * MR.smeltOut}` : `Need ${MR.smeltIn} gold chunks`;
-  b.disabled = J ? left > 0 : lots < 1; if (b.dataset.h !== html) { b.dataset.h = html; b.innerHTML = html; }
+  const html = J ? (left > 0 ? `Ready in ${mmss(left)}` : `Collect ${ic('coin', 2)} ${J.c}`) : cool ? `Next smelt in ${mmss(cool)}` : lots ? `Smelt ${lots * MR.smeltIn} ${goldImg(2)} for ${ic('coin', 2)} ${lots * MR.smeltOut} <span class="smT">${mmss(smeltDur(lots))}</span>` : `Need ${MR.smeltIn} gold chunks`;
+  b.disabled = J ? left > 0 : cool > 0 || lots < 1; if (b.dataset.h !== html) { b.dataset.h = html; b.innerHTML = html; }
   const c = $('#cryYes'), ch = GOLD.cry ? `Trade ${GOLD.cry} ${cryImg(2)} for ${goldImg(2)} ${GOLD.cry * MR.cryGold}` : `1 ${cryImg(2)} = ${goldImg(2)} ${MR.cryGold}`; c.disabled = GOLD.cry < 1; if (c.dataset.h !== ch) { c.dataset.h = ch; c.innerHTML = ch; }
 }
 function pickUI() {
@@ -264,8 +287,8 @@ function smithOpen() { sfx('click'); document.querySelectorAll('.modal.on').forE
 function pickOpen() { sfx('click'); document.querySelectorAll('.modal.on').forEach(q => q.classList.remove('on')); paintCoins(); pickUI(); $('#pickModal').classList.add('on'); }
 async function smeltGo() {
   const b = $('#smeltYes'); if (b.disabled) return; b.disabled = true;
-  try { if (GOLD.job) { const r = await mop('smeltGet'); GOLD.job = null; sfx('coin'); wlSay(`The Blacksmith paid you ${r.coins} coins.`, 'good'); }
-    else { const r = await mop('smelt'); if (r.job) GOLD.job = {c: r.job.c | 0, t: Date.now()}; sfx('click'); forgeBurst(); $('#smithModal').classList.remove('on'); } }   // off he goes to the forge
+  try { if (GOLD.job) { const r = await mop('smeltGet'); GOLD.job = null; if (r.smd) GOLD.smd = +r.smd; sfx('coin'); wlSay(`The Blacksmith paid you ${r.coins} coins.`, 'good'); }
+    else { const r = await mop('smelt', {n: GOLD.lots}); if (r.job) GOLD.job = {c: r.job.c | 0, t: Date.now(), d: +r.job.d || 0}; sfx('click'); forgeBurst(); $('#smithModal').classList.remove('on'); } }   // off he goes to the forge
   catch (e) { wlSay(e.message, 'bad'); }
   smithUI();
 }
@@ -1030,15 +1053,19 @@ SFX.quench = () => { hiss(.9, {vol: .1, hp: 2500}); hiss(.4, {vol: .08, bp: 1200
 (() => {
   const ref = $('#beerModal'), d = document.createElement('div'); d.className = 'modal big panel'; d.id = 'smithModal';
   d.innerHTML = `<div class="mhead"><b>BLACKSMITH</b><span class="wal">${ic('coin', 2, 'solo')}<span class="coinN">0</span></span><span class="wal" id="smithGold"></span><span class="wal" id="smithCry"></span><button class="btn" id="smithX">${ic('cross', 2, 'solo')}</button></div>
-    <div class="small"><b>SMELT</b> · ${MR.smeltIn} gold chunks make ${MR.smeltOut} coins. It takes him 5 minutes.</div><button class="btn go wide" id="smeltYes"></button>
+    <div class="small"><b>SMELT</b> · ${MR.smeltIn} gold chunks make ${MR.smeltOut} coins.</div>
+    <div id="smeltPick"><button class="btn" id="smeltLess">-</button><input type="range" id="smeltN" min="1" max="1" step="1" value="1"><button class="btn" id="smeltMore">+</button></div><button class="btn go wide" id="smeltYes"></button>
     <div class="small" style="margin-top:14px"><b>CRYSTALS</b> · he pays in gold chunks.</div><button class="btn go wide" id="cryYes"></button>`;
   ref.parentNode.insertBefore(d, ref);
   const p = document.createElement('div'); p.className = 'modal big panel'; p.id = 'pickModal';
   p.innerHTML = `<div class="mhead"><b>PICKAXES</b><span class="wal">${ic('coin', 2, 'solo')}<span class="coinN">0</span></span><button class="btn" id="pickX">${ic('cross', 2, 'solo')}</button></div>
     <div class="small">A better one breaks rock faster and digs deeper.</div><div id="pickPicks"></div>`;
   ref.parentNode.insertBefore(p, ref);
-  const st = document.createElement('style'); st.textContent = '#smithModal .btn.wide{display:flex;width:100%;justify-content:center;align-items:center;gap:6px;font-size:17px;padding:8px 8px 11px;margin-top:6px}#smithModal .btn:disabled,#pickModal .btn:disabled{opacity:.5}#smithModal .mhead{gap:8px}#smithModal .mhead b{font-size:19px}#smithModal .mhead .wal{font-size:15px}#pickModal .jimg{width:48px;height:48px;margin:0}#smithModal,#pickModal{bottom:auto}'; document.head.appendChild(st);
-  $('#smeltYes').onclick = smeltGo; $('#cryYes').onclick = cryGo; $('#smithX').onclick = () => $('#smithModal').classList.remove('on'); $('#pickX').onclick = () => $('#pickModal').classList.remove('on');
+  const st = document.createElement('style'); st.textContent = '#smithModal .btn.wide{display:flex;width:100%;justify-content:center;align-items:center;gap:6px;font-size:17px;padding:8px 8px 11px;margin-top:6px}#smithModal .btn:disabled,#pickModal .btn:disabled{opacity:.5}#smithModal .mhead{gap:8px}#smithModal .mhead b{font-size:19px}#smithModal .mhead .wal{font-size:15px}#pickModal .jimg{width:48px;height:48px;margin:0}#smithModal,#pickModal{bottom:auto}'
+    + '#smeltPick{display:flex;align-items:center;gap:8px;margin-top:8px}#smeltPick .btn{flex:none;width:40px;font-size:20px;line-height:1;padding:5px 0 8px}#smeltYes .smT{font-size:13px;opacity:.75;margin-left:4px}'
+    + '#smeltN{flex:1;min-width:0;height:28px;margin:0;background:none;-webkit-appearance:none;appearance:none;touch-action:none}#smeltN::-webkit-slider-runnable-track{height:8px;background:#1a1430;border-radius:0;box-shadow:inset 0 0 0 2px #1a1430,inset 0 3px 0 #3a3052}#smeltN::-moz-range-track{height:8px;background:#1a1430}'
+    + '#smeltN::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:24px;margin-top:-8px;background:#ffd25e;border:3px solid #1a1430;border-radius:2px}#smeltN::-moz-range-thumb{width:12px;height:18px;background:#ffd25e;border:3px solid #1a1430;border-radius:2px}'; document.head.appendChild(st);
+  $('#smeltYes').onclick = smeltGo; $('#smeltN').oninput = e => { GOLD.lots = +e.target.value | 0; smithUI(); }; $('#smeltLess').onclick = () => { GOLD.lots--; sfx('click'); smithUI(); }; $('#smeltMore').onclick = () => { GOLD.lots++; sfx('click'); smithUI(); }; $('#cryYes').onclick = cryGo; $('#smithX').onclick = () => $('#smithModal').classList.remove('on'); $('#pickX').onclick = () => $('#pickModal').classList.remove('on');
 })();
 
 /* ---------- THE PICKAXE BUTTON (24 Nov 2026, his ask): "a button exactly like the fishing button across from the joystick that is a

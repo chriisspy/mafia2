@@ -3,7 +3,8 @@
 // one roll here, a rock cannot be broken twice, a break cannot come sooner than its swings take, and a day has a top.
 //   wallet: kit.gold  gold chunks (the Blacksmith smelts 10 into 15 coins (25 Nov, his ask: 1.5 a chunk))
 //           kit.cry   crystals (the new currency)        kit.pick  your best pickaxe, 0..4 (wood, stone, iron, steel, gold)
-//           kit.sm    your gold at the Blacksmith's: { c: coins it makes, t: when he started }; ready 5 minutes later
+//           kit.sm    your gold at the Blacksmith's: { c: coins it makes, t: when he started, d: how long it takes (ms) }; ready d later
+//           kit.smd   when his last job was DONE (start + d): a new one cannot start for 10 minutes after that (26 Nov, his ask)
 //           kit.cs    crystal rocks found but not broken yet, up to 3 ("eud" letters): they wait for you from level 7 down
 //           kit.gb    Glimmer Bait you carry (bought from Pip with gbuy; the lake's fishing spends it)
 //           mine = { lv, k, t }  the level you are in: k = one letter per thing ('.' = dug out), t = when the last break was
@@ -18,11 +19,12 @@ const MR = {
   goldMul: [1, 1.25, 1.5, 1.8, 2.1, 2.5, 3, 3.5, 4, 4.6, 5.3, 6],   // round 3 (his note): gold rocks and veins pay this many times more per level
   bait: { n: 5, price: 150, max: 20 },   // (26 Nov) GLIMMER BAIT, sold by Pip once he is mended (gbuy): this many for this many coins, and the most you can carry
   fallLoss: .2,       // (25 Nov) passing out in the mine (mfall) costs this share of the gold chunks you carry
-  dayGold: 1000, dayCry: 10,   /* (26 Nov, his call) the mine fills up again every HOUR, not every day, and holds more: was 600 gold a day */ cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, swingMs: 520,   // smeltMs: the Blacksmith takes 5 minutes over your gold
+  dayGold: 1000, dayCry: 10,   /* (26 Nov, his call) the mine fills up again every HOUR, not every day, and holds more: was 600 gold a day */ cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, smeltPer: 60000, smeltMax: 1800000, smeltCool: 600000, swingMs: 520,   // smeltMs: the Blacksmith takes 5 minutes over 10 chunks, smeltPer more for every 10 after that, never over smeltMax; smeltCool: his rest after a job is done (26 Nov)
   quick: .7,          // a break may come this much sooner than its swings take (lag), no sooner
   wallsPerLevel: 140  // plain walls you can dig in one visit to a level (the cave is 22 x 17)
 };
 const isCry = k => k === 'e' || k === 'u' || k === 'd';
+const smeltDur = lots => Math.min(MR.smeltMax, MR.smeltMs + (lots - 1) * MR.smeltPer);   // how long he takes over this many lots of 10
 const need = lv => (lv - 1) >> 1;   // the pickaxe a level asks for: wood 1-2, stone 3-4, iron 5-6, steel 7-8, gold 9-10, diamond 11-12
 const hits = (k, lv, pick) => Math.max(1, Math.ceil(MR.hp[k] * (isCry(k) ? 1 : MR.lvmul[lv - 1]) / MR.picks[pick].pow));
 const roll = odds => { let r = Math.random() * 100; for (let i = 0; i < odds.length; i++) { r -= odds[i]; if (r < 0) return i; } return 0; };
@@ -94,15 +96,20 @@ module.exports = ({ tx, spend, bad, dayKey, flag }) => {
     }),
     // SMELTING IS A JOB (round 2, his ask): he takes every 10 chunks you carry now and the coins are ready 5 minutes later (smeltGet).
     // One job at a time. The phone draws him at the forge, the water and the anvil from the job's start time.
-    smelt: (uid) => tx(uid, w => {
-      const K = kit(w); if (K.sm) bad('He is still working on your gold.');
-      const lots = Math.floor(K.gold / MR.smeltIn); if (!lots) bad('You need ' + MR.smeltIn + ' gold chunks.');
-      K.gold -= lots * MR.smeltIn; K.sm = { c: lots * MR.smeltOut, t: Date.now() }; return { job: K.sm, gold: K.gold, now: Date.now() };
+    // (26 Nov, his asks) d.n = how many lots of 10 you hand him (nothing sent = all you carry, as before); a bigger job takes longer
+    // (smeltDur); and he rests for smeltCool after a job is DONE (start + its time, not when you collect) before he takes another.
+    smelt: (uid, d) => tx(uid, w => {
+      const K = kit(w), now = Date.now(); if (K.sm) bad('He is still working on your gold.');
+      const wait = (+K.smd || 0) + MR.smeltCool - now; if (wait > 0) bad('He is resting. Come back in ' + Math.ceil(wait / 60000) + ' min.');
+      const max = Math.floor(K.gold / MR.smeltIn); if (!max) bad('You need ' + MR.smeltIn + ' gold chunks.');
+      const lots = d && d.n != null ? d.n : max; if (!Number.isInteger(lots) || lots < 1 || lots > max) bad('You do not have that much gold.');
+      K.gold -= lots * MR.smeltIn; K.sm = { c: lots * MR.smeltOut, t: now, d: smeltDur(lots) }; return { job: K.sm, gold: K.gold, now };
     }),
     smeltGet: (uid) => tx(uid, w => {
       const K = kit(w), J = K.sm; if (!J) bad('He has nothing of yours.');
-      if (Date.now() - (J.t || 0) < MR.smeltMs) bad('Your coins are not ready yet.');
-      const c = Math.max(0, J.c | 0); w.c += c; delete K.sm; return { coins: c };
+      const dur = J.d > 0 ? +J.d : MR.smeltMs, done = (+J.t || 0) + dur;
+      if (Date.now() < done) bad('Your coins are not ready yet.');
+      const c = Math.max(0, J.c | 0); w.c += c; delete K.sm; K.smd = done; return { coins: c, smd: done };
     }),
   };
 };

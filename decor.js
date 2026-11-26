@@ -92,7 +92,16 @@ function decorHut(slot){try{return(dayImg('cabins')||[]).find(o=>o.ci===slot)||n
 const DTHUMB={};const DTINT={};function decorTint(id,ok,r){const k=id+(r|0)+(ok?'+':'-');if(DTINT[k])return DTINT[k];const D=DIMG[id],im=(D&&D[r|0]&&D[r|0][0])||IMG['decor/'+id],c=mk(im.width,im.height),x=c.getContext('2d');x.drawImage(im,0,0);x.globalCompositeOperation='source-atop';x.globalAlpha=.55;x.fillStyle=ok?'#3ddc6a':'#ff3b3b';x.fillRect(0,0,c.width,c.height);return DTINT[k]=c;}
 /* what to draw: inside cabin `loc`, or everything outside. Your own come from the list being edited while you decorate. */
 /* PONDS DUG BEFORE 18 Nov sat on a grid that started at the middle of the cabin picture, 5 px off the path. Slide them onto today's grid. */
-function pondFix(list,where,slot){if(where!=='out')return list;const c=TOWN.cabins[slot];if(!c)return list;const x0=c.cx-80;for(const p of list)if(p[0]==='water')p[1]=x0+Math.floor((p[1]-x0)/PGRID)*PGRID+PGRID/2;return list;}
+/* THINGS PLACED BEFORE 26 Nov stood on a grid that started 21 px lower (it hung from the cabin's base). They slide onto today's grid here (3 px
+   at most for a thing, 5 for a pond square, all of one cabin's by the same step, so nothing drifts apart). Wall things are not on this grid. */
+function pondFix(list,where,slot){if(where!=='out')return list;const c=TOWN.cabins[slot];if(!c)return list;const[x0,y0]=decorOut(c);
+  for(const p of list){const d=DECOR.by[p[0]];if(!d||d.wall)continue;if(p[0]==='water'){p[1]=x0+Math.floor((p[1]-x0)/PGRID)*PGRID+PGRID/2;p[2]=y0+Math.round((p[2]-y0)/PGRID)*PGRID;}else p[2]=y0+Math.round((p[2]-y0)/DGRID)*DGRID;}return list;}
+/* (26 Nov, his note) THE GRID ROUND A CABIN: the same for every cabin, centred on the middle of the cabin's picture, and exactly DOUT squares out
+   from the cabin on every side. The cabin (roof and all) is 97 x 135 px, so DCAB squares; its middle is 10 px above c.top. */
+const DOUT=4,DCAB=[12,17];
+const DTOPCUT=8;   /* (26 Nov, his note) the top 8 rows go: the roof is tall in the picture, so 4 out all round left far more ground behind the cabin than in front */
+function decorOut(c){const w=(DCAB[0]+2*DOUT)*DGRID,h=(DCAB[1]+2*DOUT)*DGRID,x0=c.cx-w/2,y0=c.top-10-h/2;return[x0,y0+DTOPCUT*DGRID,x0+w,y0+h-DBOTCUT*DGRID];}
+const DBOTCUT=1;   /* (26 Nov, his note) and one row off the bottom */
 function decorObjs(where,loc){decorSync();if(!NET.world)return[];const out=[],lists=[],pond=new Set();
   for(const[uid,m]of Object.entries(WORLD.members||{})){if(where==='in'&&+m.s!==loc)continue;
     const list=DECOR.on&&uid===NET.uid&&DECOR.where===where?DECOR.list:((DECOR.all[uid]||{})[where]||[]);
@@ -108,13 +117,13 @@ function decorZone(){const wall=decorWall();
   if(DECOR.where==='in'){const fy=ROOM.floor[1];return wall?[16,fy-32,176,fy]:[16,fy,176,fy+112];}
   const c=TOWN.cabins[NET.slot],h=decorHut(NET.slot);
   if(wall&&h){const w=h.img.width,x0=h.x+Math.round(w*.14);return[x0,h.base-40,x0+Math.max(1,Math.floor(w*.72/DGRID))*DGRID,h.base-8];}   /* a wall thing: on the cabin itself (his call: this was right). None in the starter set; the prop maker will make them */
-  const bx=c.cx,by=h?Math.round(h.base):c.top+38;return[bx-80,by-80,bx+80,by+80];}   /* 80 px each way from the middle of the cabin's base: the area he chose, in squares half the size */
+  return decorOut(c);}   /* (26 Nov) 4 squares out from the cabin all round, centred on it (decorOut) */
 function decorGrid(){return{x:0,y:0,img:DBLANK,base:-1e6,after(){const[x0,y0,x1,y1]=decorZone(),g=DECOR.ghost;lx.fillStyle='rgba(255,255,255,.07)';lx.fillRect(X(x0),Y(y0),x1-x0,y1-y0);
     lx.fillStyle='rgba(255,255,255,.22)';for(let x=x0;x<=x1;x+=DGRID)lx.fillRect(X(x),Y(y0),1,y1-y0+1);for(let y=y0;y<=y1;y+=DGRID)lx.fillRect(X(x0),Y(y),x1-x0+1,1);
     if(g){lx.fillStyle=decorOk(DECOR.where,g.x,g.y)?'rgba(95,196,111,.55)':'rgba(228,84,79,.55)';const G=g.id==='water'?PGRID:DGRID;lx.fillRect(X(g.x-G/2)+1,Y(g.y-G)+1,G-1,G-1);}}};}   /* the square it will stand on: green, or red where it cannot go */
 /* where you may decorate right now: inside your own cabin, or stood near it outside */
 function decorSpot(){const m=WL.me;if(!NET.on||!NET.world||!m||GAME.on)return null;if(m.loc===NET.slot)return'in';
-  if(m.loc<0){const c=TOWN.cabins[NET.slot];if(c&&Math.abs(m.x-c.cx)<=90&&m.y>=c.top-50&&m.y<=c.top+125)return'out';}return null;}
+  if(m.loc<0){const c=TOWN.cabins[NET.slot];if(c){const[x0,y0,x1,y1]=decorOut(c);if(m.x>=x0-10&&m.x<=x1+10&&m.y>=y0-10&&m.y<=y1+35)return'out';}}return null;}   /* stood on the grid or just off it (as far below as before) */
 /* a ground thing needs open ground (not the cabin, the pond, the furniture); a wall thing needs the wall (his call) */
 function decorOk(where,x,y){const[x0,y0,x1,y1]=decorZone();if(!(x>x0&&x<x1&&y>y0&&y<=y1))return false;if(decorWall())return true;const g=DECOR.ghost;if(g&&g.id==='water'){if(DECOR.list.some(p=>p[0]==='water'&&p[1]===x&&p[2]===y))return false;
     if(where==='out')for(const[dx,dy]of[[-7,-15],[7,-15],[-7,-1],[7,-1],[0,-8]]){if(groundAt(x+dx,y+dy,1)!=='grass')return false;}}   /* not on the path */

@@ -427,7 +427,7 @@ THR.frame = (m, people, dt, t, H, img) => {
   const C = HALL.cut; if (C) hallCutTick(dt, m); kingWatch();
   const cy = HALL.cut ? lerp(500, 64, ease(clamp((HALL.cut.t - HC.go) / HC.cam, 0, 1))) : m.y - (KING.talk ? 40 : 0);   // the entrance: the camera glides up the hall ahead of you, to the throne. Talking: it lifts to show him
   HALL.camY = HALL.camY == null || HALL.cut ? cy : HALL.camY + (cy - HALL.camY) * Math.min(1, dt * 5);
-  const o = {hi: true, topCss: 96, void: '#000'}; if (HALL.cut) o.s = Math.max(2, Math.round(Math.max(1, Math.round(VW() / 190)) * 1.5));   // the entrance is shot close in: half as big again, so the glide has a hall to travel
+  const o = {hi: true, topCss: 96, void: '#000', novig: true}; if (HALL.cut) o.s = Math.max(2, Math.round(Math.max(1, Math.round(VW() / 190)) * 1.5));   // the entrance is shot close in: half as big again, so the glide has a hall to travel
   view(img, HALL.cut ? 110 : m.x, HALL.camY, 190, o);
   const K = kingSet() ? (KING.p = {name: 'king', dir: 'front', x: KING_AT[0], y: KING_AT[1], sortY: KING_AT[1], t, phase: 400, walk: false, noShadow: true}) : null;
   const hits = drawScene(K ? people.concat(K) : people, null, img, hallObjs(m, dt, t)); if (K) { crownDraw(hits.get(K), t); hits.delete(K); } wlFx(dt, m.loc); drawPuffs(dt); wlCases(dt, m.loc);
