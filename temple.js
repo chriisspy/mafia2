@@ -55,6 +55,38 @@ function rocksMask() { const c = IMG['hallw/south']; if (!c || c.trk) return; co
 { const j = SH.joy; SH.joy = (m, J) => { if (QUEST.s >= 5 && J.y < -.5 && nearDoor(m, rockDoor(), 8)) { wlDoor(HOLLOW); return true; } return j(m, J); }; }   // pushed up into the cleft: only with all four stones
 { const tp = SH.tap; SH.tap = (e, m, x, y) => { if (QUEST.s >= 5 && !m.seat && x > S_ROCK.x + 34 && x < S_ROCK.x + 86 && y > S_ROCK.y + 20 && y < S_ROCK.y + 96) { const d = rockDoor(); wlGo(m, d[0], d[1], () => wlDoor(HOLLOW)); return true; } return tp(e, m, x, y); }; }
 
+/* ---------- PIP PEEKS (26 Nov 2026, his ask) ----------
+   The first time you walk up to the boulders while they are still a plain pile (before all four Keystones): a subtitle, "What is this?", then a
+   little film. Pip creeps up slowly from the bottom of the screen for a sneaky look at you, you turn round, he gets a fright (a "!" over his head), and he
+   RUNS off toward the mine. Once a player, kept on this phone (localStorage m2_qpeek). You cannot move while it plays. */
+const PK = {t: -1, seen: false, x: 0, y: 0, dir: 'right', hop: 0};
+try { PK.seen = localStorage.getItem('m2_qpeek') === '1'; } catch (e) {}
+const PKT = {say: 0, sayOff: 2.2, peek: 2.3, peekIn: 3.4, turn: 6.0, bang: 6.4, run: 7.0, end: 8.8};   // seconds
+function peekStart(m) { PK.t = 0; m.path = []; m.todo = null; m.walk = false; m.dir = 'back'; hallBars(true); sayLine('What is this?'); }
+function peekEnd() { PK.t = -1; PK.seen = true; try { localStorage.setItem('m2_qpeek', '1'); } catch (e) {} hallBars(false); sayOff(); }
+function peekTick(m, dt) {
+  if (PK.t < 0) { if (!PK.seen && QUEST.s < 5 && m && m.loc === SOUTH && !m.seat) { const d = rockDoor(); if (Math.abs(m.x - d[0]) < 30 && m.y > d[1] - 6 && m.y < d[1] + 24) peekStart(m); } return; }
+  const t0 = PK.t; PK.t += dt; const at = k => t0 < PKT[k] && PK.t >= PKT[k], T = PK.t; m.walk = false; m.path = [];
+  if (at('sayOff')) sayOff();
+  const bot = m.y - Y(m.y) + cam.lh;   // (his note: "pip should walk in from the bottom slowly creeping up") the bottom edge of the screen in the world (Y() turns world y into screen y)
+  if (T >= PKT.peek && T < PKT.run) { const k = clamp((T - PKT.peek) / PKT.peekIn, 0, 1); PK.x = m.x - 14; const y0 = bot + 4, y1 = m.y + 64; PK.y = Math.round(y0 + (y1 - y0) * k); PK.dir = 'back'; PK.hop = k < 1 && T < PKT.bang ? Math.floor(T * 6) % 2 : 0; }   // tiptoes up from below, one small step at a time, and stops behind you
+  if (at('turn')) { m.dir = 'front'; sfx('click'); }   // you turn round
+  if (at('bang')) { sfx('pip'); try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} }
+  if (T >= PKT.bang && T < PKT.run) PK.hop = T - PKT.bang < .25 ? Math.round(Math.sin((T - PKT.bang) / .25 * Math.PI) * 6) : 0;   // a fright: one jump straight up
+  if (T >= PKT.run) { const md = S_MINE.door, dx = md[0] - PK.x, dy = md[1] - PK.y, L = Math.hypot(dx, dy) || 1, v = 175 * dt;   // RUNS for the mine, little hops all the way
+    PK.x += dx / L * v; PK.y += dy / L * v; PK.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy > 0 ? 'front' : 'back'); PK.hop = Math.round(Math.abs(Math.sin((T - PKT.run) * 16)) * 3); }
+  if (T >= PKT.end) peekEnd();
+}
+function peekObj(t) {   // Pip, and his "!", as one thing in the South's drawn scene, drawn over everything (the edge of the screen is often a tree)
+  if (PK.t < PKT.peek) return null; const im = IMG['pip/' + PK.dir] || IMG['pip/front']; if (!im) return null;
+  const x = Math.round(PK.x - im.width / 2), y = Math.round(PK.y - im.height - PK.hop);
+  return {img: im, x, y, base: 1e6, after: () => { if (PK.t < PKT.bang || PK.t >= PKT.run + .35) return; const e = PK.t - PKT.bang, bx = X(PK.x) - 3, by = Y(y) - 13 - (e < .12 ? 2 : 0);
+    lx.fillStyle = '#1a1430'; lx.fillRect(bx - 1, by - 1, 9, 13); lx.fillStyle = '#ffffff'; lx.fillRect(bx, by, 7, 11); lx.fillStyle = '#e83b3b'; lx.fillRect(bx + 2, by + 1, 3, 6); lx.fillRect(bx + 2, by + 8, 3, 2); }};   // a white card with a red "!": pops a little on the beat
+}
+{ const so = southObjs; southObjs = function (m, dt) { peekTick(m, dt); const out = so(m, dt), p = peekObj(); if (p) out.push(p); return out; }; }
+{ const j = SH.joy; SH.joy = (m, J) => PK.t >= 0 ? true : j(m, J); }   // you watch: no walking while it plays
+{ const tp = SH.tap; SH.tap = (e, m, x, y) => PK.t >= 0 ? true : tp(e, m, x, y); }
+
 /* ---------- the baked pictures ---------- */
 function tplBake() {   // once: the temple asleep and awake, where its doorway is (found by the doorway's own colour, tools/make_temple.py VOID), the four door leaves without their navy line
   if (TPL.b) return TPL.b; const f = [stackFrame('q_temple', 0, 0), stackFrame('q_temple', 1, 0)]; if (!f[0] || !f[1]) return null;
