@@ -79,24 +79,29 @@ function frPaint(){const n=Object.keys(FR.req).length;document.querySelectorAll(
   /* THE DEVICE this account is assigned to (21 Nov, his ask): its name, and Remove (signs this device out, so another one can take the account) */
   const dv=typeof DEV!=='undefined'&&DEV.cur&&DEV.cur.id?DEV.cur:null;$('#frDev').innerHTML=dv?`<h4>DEVICE</h4><div class="frow"><span class="fn">${esc(dv.name||'A device')}<small>${dv.id===DEV.id?'This device':'Another device'}</small></span>${signed&&dv.id===DEV.id?'<button class="btn" data-devoff="1">Remove</button>':''}</div>`:'';}
 /* the username pop-up: right after the Google sign-in, until there is one */
-function unAsk(rename){if($('#unameModal').classList.contains('on'))return;$('#unIn').value=rename?FR.me:String(myName||'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,16);$('#unMsg').textContent='';
+function unAsk(rename){if($('#unameModal').classList.contains('on'))return;$('#unIn').value=rename?(acctUser()&&FR.me?FR.me:String(myName||'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,16)):String(myName||'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,16);$('#unMsg').textContent='';
   $('#unameModal h3').textContent=rename?'Change your username':'Create a username';$('#unOk').textContent=rename?'Save':'Create';$('#unX').style.display=rename?'':'none';$('#unameModal').classList.add('on');setTimeout(()=>$('#unIn').focus(),50);}
 $('#unX').onclick=()=>$('#unameModal').classList.remove('on');
 /* USERNAME ONLY (27 Nov 2026, his call: "players only choose a username and that is shown as their name. no display name").
-   Signed in: your name everywhere IS your username (profiles/{uid}/u, unique, set on the server). A guest has no username: they are guest + four
-   digits (kept on the phone) until they sign in. Nothing else can be typed as a name. */
+   Signed in: your name everywhere IS your username (profiles/{uid}/u, unique, set on the server). A guest starts as guest + four digits and can
+   pick their own (kept on the phone, not unique) until they sign in. After a change you wait 3 days to change it again (his call): the server keeps that
+   clock for a signed-in player (unameAt/{uid}), the phone keeps it for a guest. */
 function nameSync(){const signed=!!acctUser();let want=myName;
   if(signed&&FR.me)want=FR.me;
-  else if(!signed){let g='';try{g=localStorage.getItem('m2_guest')||'';}catch(e){}if(!/^guest\d{4}$/.test(g)){g='guest'+(1000+Math.floor(Math.random()*9000));try{localStorage.setItem('m2_guest',g);}catch(e){}}want=g;}
+  else if(!signed){let g='';try{g=localStorage.getItem('m2_guest')||'';}catch(e){}if(!/^[a-z0-9_]{4,16}$/.test(g)){g='guest'+(1000+Math.floor(Math.random()*9000));try{localStorage.setItem('m2_guest',g);}catch(e){}}want=g;}
   if(want!==myName){myName=want;try{localStorage.setItem('m2_name',want);}catch(e){}if(typeof netProfile==='function')netProfile();}
   if(typeof homePaint==='function')homePaint();}
 /* THE "PLAYING AS" BOX: your username, and his pencil to change it */
 {const hn=$('#homeName');hn.innerHTML=`<img id="homeFace" alt=""><span class="hnt"><b id="homeNameT"></b><small id="homeUser">PLAYING AS</small></span><span class="hedit" title="Change your username">${ic('aPencil',2,'solo')}</span>`;
-  hn.onclick=async()=>{sfx('click');if(!acctUser()){await $('#homeAcct').onclick();return;}unAsk(true);};homePaint();}
+  hn.onclick=()=>{sfx('click');unAsk(true);};homePaint();}   /* the pencil always opens the username box, signed in or not (his catch: a guest's tap only tried to sign in, so nothing seemed to happen) */
 const unClean=v=>v.toLowerCase().replace(/^@/,'').replace(/[^a-z0-9_]/g,'').slice(0,16);
 $('#unIn').addEventListener('input',()=>{const i=$('#unIn'),v=unClean(i.value);if(v!==i.value)i.value=v;$('#unMsg').textContent='';});
 $('#frUser').addEventListener('input',()=>{const i=$('#frUser'),v=unClean(i.value);if(v!==i.value)i.value=v;});
 $('#unOk').onclick=async()=>{const v=unClean($('#unIn').value);if(v.length<4){$('#unMsg').textContent='At least 4 characters.';return;}
+  if(!acctUser()){let t=0;try{t=+localStorage.getItem('m2_guest_t')||0;}catch(e){}const w=t+3*864e5-Date.now();
+    if(v===myName){$('#unameModal').classList.remove('on');return;}
+    if(w>0){$('#unMsg').textContent='You can change your username again in '+(w>864e5?Math.ceil(w/864e5)+' days.':Math.max(1,Math.ceil(w/36e5))+' hours.');return;}
+    try{localStorage.setItem('m2_guest',v);localStorage.setItem('m2_guest_t',String(Date.now()));}catch(e){}$('#unameModal').classList.remove('on');sfx('rare');nameSync();return;}
   const done=btnBusy($('#unOk'),'…');try{await srv('setName',{name:v});done();$('#unameModal').classList.remove('on');sfx('rare');}catch(e){done();$('#unMsg').textContent=e.message;}};
 $('#unIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#unOk').click();});
 function frMsg(t,bad){const e=$('#frMsg');e.textContent=t||'';e.className='small'+(bad?' bad':'');}

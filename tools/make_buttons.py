@@ -68,7 +68,7 @@ css = f'''/*BTN-CSS*/
   background-origin:border-box!important;background-clip:border-box!important;background-repeat:no-repeat!important;
   {layers(0)};
   clip-path:{poly(0)}}}
-#phone .btn.dark{{background-color:#3a4467;color:#fff}}
+#phone .btn.dark,#phone .btn:has(>img[data-a=cross]:only-child){{background-color:#3a4467;color:#fff}}   /* his navy; a button that is only his close X is navy too, like his close.png */
 {SK}:active:not(:disabled),#phone .bpack:active:not(:disabled) .bprice{{transform:none!important;border-width:6px 3px 0!important;
   {layers(3)};
   clip-path:{poly(3)}}}
@@ -82,7 +82,7 @@ css = f'''/*BTN-CSS*/
 #phone:not(.land) #townHud .tpanel .tbtn.deco.deco,#phone.land #townHud.tmini .tbtn.deco.deco{{background-image:var(--art-decorate)!important}}
 #phone:not(.land) #townHud .tpanel .tbtn.coinshop.coinshop,#phone.land #townHud.tmini .tbtn.coinshop.coinshop{{background-image:var(--art-coins)!important}}
 :is({ARTLIST}):active:active{{border:0!important;clip-path:none!important;background-position:0 -48px!important;background-size:48px 96px!important}}
-#homeHud .btn.lob{{min-height:42px}}#homeHud .coinbtn{{min-height:46px}}
+#homeHud .btn.lob{{min-height:42px}}#phone .btn.lob.gold{{background-color:#ffd25e;color:#4a2a00}}
 /*END-BTN-CSS*/
 '''
 s = open(PAGE, encoding='utf-8', newline='').read()

@@ -306,9 +306,13 @@ const OPS = {
     if (!/^[a-z0-9_]+$/.test(name)) bad('Only letters, numbers and _.');
     const old = (await db.ref('profiles/' + uid + '/u').get()).val();
     if (old === name) return { name };
+    // (27 Nov 2026, his call) once you change your username you wait 3 days to change it again. Choosing your first one is not a change.
+    // unameAt/{uid} is server-only (no rule lets a phone write it), so the wait cannot be skipped.
+    const at = old ? +(await db.ref('unameAt/' + uid).get()).val() || 0 : 0, wait = at ? at + 3 * 864e5 - Date.now() : 0;
+    if (wait > 0) bad('You can change your username again in ' + (wait > 864e5 ? Math.ceil(wait / 864e5) + ' days.' : Math.max(1, Math.ceil(wait / 36e5)) + ' hours.'));
     const r = await db.ref('usernames/' + name).transaction(cur => cur === null || cur === uid ? uid : undefined);
     if (!r.committed) bad('That username is taken.');
-    const up = { ['profiles/' + uid + '/u']: name }; if (old) up['usernames/' + old] = null;
+    const up = { ['profiles/' + uid + '/u']: name }; if (old) { up['usernames/' + old] = null; up['unameAt/' + uid] = Date.now(); }
     await db.ref().update(up); return { name };
   },
   async friendAsk(uid, d) {

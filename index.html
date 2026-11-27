@@ -429,6 +429,13 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .bglint{position:absolute;inset:0;border-radius:6px;overflow:hidden;pointer-events:none}
 .bglint::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.5) 50%,transparent 60%);transform:translateX(-130%);animation:bSweep 3.2s ease-in-out infinite}
 @keyframes bSweep{0%,55%{transform:translateX(-130%)}85%,100%{transform:translateX(130%)}}
+/* GET COINS on the home screen (27 Nov 2026, his ask: "a glow or some shine pixel sparkles coming from the button subtly"): four pixel sparkles round it that
+   blink dot, plus, dot, one after the other, and a hard-edged band of light that steps across its face now and then */
+.row.gsp{position:relative}
+.gspk{position:absolute;width:9px;height:9px;pointer-events:none;z-index:2;opacity:0;background:linear-gradient(#fff,#fff) 3px 0/3px 9px no-repeat,linear-gradient(#fff,#fff) 0 3px/9px 3px no-repeat;filter:drop-shadow(0 2px 0 #d39b2a);animation:gspk 4s steps(1) infinite}   /* white, with a gold pixel under it so it reads on the cream panel */
+@keyframes gspk{0%{opacity:0}6%{opacity:1;clip-path:inset(3px)}12%{opacity:1;clip-path:none}20%{opacity:1;clip-path:inset(3px)}26%,100%{opacity:0}}
+#homeCoins{position:relative}.gshine{position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 43%,rgba(255,255,255,.55) 43% 53%,transparent 53%);transform:translateX(-110%);animation:gshine 4.6s steps(9) infinite}
+@keyframes gshine{0%,62%{transform:translateX(-110%)}88%,100%{transform:translateX(110%)}}
 #buyTerms{position:relative;z-index:1;display:block;text-align:center;margin-top:26px;font-size:14px;color:#b9a6e8}
 #phone.land #buyModal{width:auto;height:auto;margin:0;padding:10px calc(14px + var(--sr)) 10px calc(14px + var(--sl))}#phone.land #buyModal .bhead{left:calc(12px + var(--sl));right:calc(12px + var(--sr));top:10px}
 #phone.land #buyTitle{margin-bottom:22px}#phone.land #buyTitle .logoCv{width:min(250px,38%)}#phone.land #buyTerms{margin-top:14px}#phone.land .bpack .bart{height:58px}
@@ -826,7 +833,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   background-origin:border-box!important;background-clip:border-box!important;background-repeat:no-repeat!important;
   background-image:linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bl),var(--bl)),linear-gradient(var(--bl),var(--bl)),linear-gradient(var(--bl),var(--bl)),linear-gradient(var(--bh),var(--bh))!important;background-size:100% 3px,100% 3px,3px 100%,3px 100%,3px 6px,3px 6px,3px 3px,3px 3px,3px 3px,3px 3px,100% 9px,calc(100% - 12px) 3px!important;background-position:0 0px,0 100%,0 0,100% 0,3px 3px,calc(100% - 3px) 3px,3px calc(100% - 3px),calc(100% - 3px) calc(100% - 3px),3px calc(100% - 9px),calc(100% - 3px) calc(100% - 9px),0 100%,6px calc(100% - 9px)!important;
   clip-path:polygon(6px 0px,calc(100% - 6px) 0px,calc(100% - 6px) 3px,calc(100% - 3px) 3px,calc(100% - 3px) 9px,100% 9px,100% calc(100% - 6px),calc(100% - 3px) calc(100% - 6px),calc(100% - 3px) calc(100% - 3px),calc(100% - 6px) calc(100% - 3px),calc(100% - 6px) 100%,6px 100%,6px calc(100% - 3px),3px calc(100% - 3px),3px calc(100% - 6px),0 calc(100% - 6px),0 9px,3px 9px,3px 3px,6px 3px)}
-#phone .btn.dark{background-color:#3a4467;color:#fff}
+#phone .btn.dark,#phone .btn:has(>img[data-a=cross]:only-child){background-color:#3a4467;color:#fff}   /* his navy; a button that is only his close X is navy too, like his close.png */
 #phone :is(.btn,.hbig,.tbtn,.coinbtn,.gbtn,.bprice):active:not(:disabled),#phone .bpack:active:not(:disabled) .bprice{transform:none!important;border-width:6px 3px 0!important;
   background-image:linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bo),var(--bo)),linear-gradient(var(--bl),var(--bl)),linear-gradient(var(--bl),var(--bl)),linear-gradient(var(--bl),var(--bl)),linear-gradient(var(--bh),var(--bh))!important;background-size:100% 3px,100% 3px,3px 100%,3px 100%,3px 6px,3px 6px,3px 3px,3px 3px,3px 3px,3px 3px,100% 6px,calc(100% - 12px) 3px!important;background-position:0 3px,0 100%,0 0,100% 0,3px 6px,calc(100% - 3px) 6px,3px calc(100% - 3px),calc(100% - 3px) calc(100% - 3px),3px calc(100% - 6px),calc(100% - 3px) calc(100% - 6px),0 100%,6px calc(100% - 6px)!important;
   clip-path:polygon(6px 3px,calc(100% - 6px) 3px,calc(100% - 6px) 6px,calc(100% - 3px) 6px,calc(100% - 3px) 12px,100% 12px,100% calc(100% - 6px),calc(100% - 3px) calc(100% - 6px),calc(100% - 3px) calc(100% - 3px),calc(100% - 6px) calc(100% - 3px),calc(100% - 6px) 100%,6px 100%,6px calc(100% - 3px),3px calc(100% - 3px),3px calc(100% - 6px),0 calc(100% - 6px),0 12px,3px 12px,3px 6px,6px 6px)}
@@ -840,7 +847,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #phone:not(.land) #townHud .tpanel .tbtn.deco.deco,#phone.land #townHud.tmini .tbtn.deco.deco{background-image:var(--art-decorate)!important}
 #phone:not(.land) #townHud .tpanel .tbtn.coinshop.coinshop,#phone.land #townHud.tmini .tbtn.coinshop.coinshop{background-image:var(--art-coins)!important}
 :is(#phone #menuBtn,#phone #playersBtn,#phone #chatBtn,#phone:not(.land) #townHud .tpanel .tbtn:is(.shop,.coll,.daily,.coinshop,.deco),#phone.land #townHud.tmini .tbtn:is(.shop,.coll,.daily,.coinshop,.deco)):active:active{border:0!important;clip-path:none!important;background-position:0 -48px!important;background-size:48px 96px!important}
-#homeHud .btn.lob{min-height:42px}#homeHud .coinbtn{min-height:46px}
+#homeHud .btn.lob{min-height:42px}#phone .btn.lob.gold{background-color:#ffd25e;color:#4a2a00}
 /*END-BTN-CSS*/
 </style>
 <script>/* THE GAME'S FONT IS TINY5 (27 Nov 2026, his pick from the pixel font try-out, "Keep Tiny5"). It is laid over the name "Pixelify Sans", so every line of text and every canvas label uses it with no other edit (the Pixelify faces above are still declared, Tiny5 is declared last and wins). */
@@ -888,7 +895,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div class="bottom">
       <div class="panel hpanel">
         <div class="row"><button class="hname" id="homeName"><img id="homeFace" alt=""><span><small>PLAYING AS</small><b id="homeNameT">You</b></span><em>Change</em></button>
-          <span class="wal hwal"><i data-ic="coin" data-s="3" data-c="solo"></i><span class="coinN">0</span></span></div>
+          <span class="wal hwal"><i data-ic="coin" data-s="2" data-c="solo"></i><span class="coinN">0</span></span></div>
       </div>
       <div class="panel hpanel">
         <div class="hrow"><button class="hbig red" id="homeCreate">Create lobby</button><button class="hbig" id="homeJoin">Join with code</button></div>
@@ -896,13 +903,14 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
         <button class="hlink" id="homeBots">Practice town with bots</button>
       </div>
       <div class="panel hpanel">
-        <button class="coinbtn" id="homeCoins"><i data-ic="aCoin" data-s="2" data-c="solo"></i>Coin shop</button>   <!-- (27 Nov 2026, his ask) -->
-        <div class="row" style="gap:10px;margin-top:6px">
+        <div class="row" style="gap:10px">
           <button class="btn dark lob" id="homeShop"><i data-ic="aShop" data-s="2" data-c="solo"></i>Shop</button>
           <button class="btn dark lob" id="homeColl"><i data-ic="aColl" data-s="2" data-c="solo"></i>Collection</button>
         </div>
-        <div class="row" style="gap:10px;margin-top:6px">
-          <button class="btn dark lob" id="homeFlip"><i data-ic="aCoin" data-s="2" data-c="solo"></i>Coin flip</button>
+        <div class="row gsp" style="gap:10px;margin-top:6px">
+          <span class="gspk" style="left:-4px;top:-5px"></span><span class="gspk" style="left:46%;top:-6px;animation-delay:1.3s"></span><span class="gspk" style="left:19%;top:calc(100% - 4px);animation-delay:2.2s"></span><span class="gspk" style="left:-5px;top:58%;animation-delay:3s"></span>
+          <button class="btn lob gold" id="homeCoins"><span class="gshine"></span><i data-ic="aCoin" data-s="2" data-c="solo"></i>Get coins</button>   <!-- (27 Nov 2026, his call) Coin shop sits where Coin flip was, still yellow -->
+          <button class="btn dark lob" id="homeFlip" style="display:none!important"></button>   <!-- Coin flip is off the home screen (his call); the button stays, hidden, for the code that hangs things on it -->
         </div>
       </div>
       <div class="row hunder"><button class="gbtn" id="homeAcct">Sign in with Google</button><button class="btn dark hsq" id="homeSnd" title="Sound"><i data-ic="sound" data-s="3" data-c="solo"></i></button><button class="btn dark hsq" id="homeHow" title="How to play"><i data-ic="help" data-s="3" data-c="solo"></i></button></div>
@@ -970,10 +978,10 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       </div>
       <div class="row" style="margin-top:10px;gap:10px">
         <button class="tbtn daily" id="townDaily"><i data-ic="aRewards" data-s="3" data-c="solo"></i>Daily<span id="dailyDot"></span></button>
-        <button class="tbtn flip" id="townFlip"><i data-ic="coinbig" data-s="3" data-c="solo"></i>Coin flip</button>
+        <button class="tbtn flip" id="townFlip"><i data-ic="coinbig" data-s="2" data-c="solo"></i>Coin flip</button>
       </div>
       <div class="row" style="margin-top:10px;gap:10px">
-        <button class="tbtn coinshop" id="townCoins"><i data-ic="aCoin" data-s="3" data-c="solo"></i>Coin shop</button>
+        <button class="tbtn coinshop" id="townCoins"><i data-ic="aCoin" data-s="2" data-c="solo"></i>Get coins</button>
       </div>
     </div></div>
     <div class="modal panel" id="dailyModal">
@@ -1253,7 +1261,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </nav>
 </div>
 
-<script src="icons.js?v=1127173344"></script>
+<script src="icons.js?v=1127174746"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -1556,7 +1564,7 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11271743'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11271752'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD;
 /* (27 Nov 2026, his report: "sometimes when i join a world it goes black") whatever breaks is written, small, after the version number, so a screenshot of the corner says what it was */
 function errTag(where,e){try{const m=String(e&&e.message||e).slice(0,70),ln=((e&&e.stack||'').match(/:(\d+):\d+/)||[])[1]||'';if(errTag.last===where+m)return;errTag.last=where+m;document.getElementById('buildTag').textContent='v'+BUILD+' '+where+(ln?' '+ln:'')+' '+m;}catch(_){}} // which version this is, so an old cached copy is easy to spot
@@ -4698,7 +4706,7 @@ function wheelPrize(who,g,winId){
   $('#wheelPop').innerHTML=`<img class="f" src="${face(win?win.id:(PEOPLE[who.i]||PEOPLE[0]).skin)}" alt=""><div><small>${esc(wlName(who).toUpperCase())} WON</small><b${win?` style="color:${RAR_COL[win.rar]}"`:''}>${win?esc(win.name):ic('coin',2)+' '+g.v+' coins'}</b></div>`;
   $('#wheelPop').style.borderColor=win?RAR_COL[win.rar]:'#ffd25e';WL.pop=3.4;if(WL.me&&WL.me.loc<0)sfx(win?'rare':'prize');
   if(who.i!==0)return;
-  if(g.kind==='c'){$('#wheelRes').innerHTML=`${ic('coin',3)} +${g.v} coins`;}
+  if(g.kind==='c'){$('#wheelRes').innerHTML=`${ic('coin',2)} +${g.v} coins`;}
   else{const r=WL.wheel.mine||{},dupe=!!r.dupe,back=Math.round(SPIN_PRICE*CASE.dupe);paintSkin();paintCoins();   /* the server already paid it */
     $('#wheelRes').innerHTML=dupe?`${esc(win.name)} again. ${ic('coin',2)} +${back} back`:`NEW! ${esc(win.name)}`;
     showWin(win,dupe,back);$('#winAgain').style.display='none';}
