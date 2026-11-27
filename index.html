@@ -1579,7 +1579,7 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11272309'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11272310'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD;
 /* (27 Nov 2026, his report: "sometimes when i join a world it goes black") whatever breaks is written, small, after the version number, so a screenshot of the corner says what it was */
 function errTag(where,e){try{const m=String(e&&e.message||e).slice(0,70),ln=((e&&e.stack||'').match(/:(\d+):\d+/)||[])[1]||'';if(errTag.last===where+m)return;errTag.last=where+m;document.getElementById('buildTag').textContent='v'+BUILD+' '+where+(ln?' '+ln:'')+' '+m;}catch(_){}} // which version this is, so an old cached copy is easy to spot
