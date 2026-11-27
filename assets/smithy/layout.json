@@ -1,0 +1,14 @@
+{
+  "note": "THE BLACKSMITH's layout, inside (27 Nov 2026). Read by mine.js at load (smithyLayout) and edited by the map builder ('Inside: The Blacksmith'). Each thing = top left of its picture (assets/smithy/<name>.png); spawn, door; walk: 1 = the floor is assets/interiors/smithy-walk.png; props = things placed in the builder.",
+  "toolrack": [212,30],
+  "forge": [18,6],
+  "barrel": [22,150],
+  "anvil": [98,158],
+  "coal": [62,158],
+  "counter": [190,92],
+  "grindstone": [248,150],
+  "spawn": [155,204],
+  "door": [155,218],
+  "walk": 1,
+  "props": []
+}

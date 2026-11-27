@@ -89,7 +89,7 @@ function southObjs(m, dt) {
   for (const q of S_PROPS) { const im = propImg(q); if (!im) continue; const o = {img: im, x: q.x, y: q.y, base: q.y + im.base};   // his trees and bushes: walk behind them, the one you are behind fades
     if (q.fade !== false) { const hid = m.y < o.base && m.y > q.y + 6 && m.x > q.x + 3 && m.x < q.x + im.width - 3; q.a = clamp((q.a ?? 1) + (hid ? -1 : 1) * dt * 4, .45, 1); if (q.a < 1) o.alpha = q.a; }
     out.push(o); }
-  S_STALLS.forEach(([x, y], i) => { const im = IMG['s/stall-' + S_STALL_COL[window.marketCol ? marketCol(i) : i % 3]]; /* the colour its keeper picked (market.js) */ if (im) out.push({img: im, x, y, base: y + im.height - 2, prof: true, after: () => stallAfter(i, x, y)}); });
+  S_STALLS.forEach(([x, y], i) => { const im = IMG['s/stall-' + S_STALL_COL[window.marketCol ? marketCol(i) : i % 3]]; /* the colour its keeper picked (market.js) */ const sh = stallShadow(im); if (sh) out.push({img: sh, x, y, base: -1e9}); if (im) out.push({img: im, x, y, base: y + im.height - 2, prof: true, after: () => stallAfter(i, x, y)}); });
   return out;
 }
 /* CHIMNEY SMOKE (his ask, 24 Nov): soft grey puffs out of the forge chimney, rising, drifting a little with the wind, growing and fading.
@@ -130,6 +130,21 @@ function propImg(q) {
   x.putImageData(d, 0, 0); c.base = base || h - 1; return PROPC[k] = c;
 }
 function propFoot(q) { const im = propImg(q); if (!im) return null; const cx = q.x + im.width / 2, fw = clamp(Math.round(im.width * .18), 3, 10), by = q.y + im.base; return [cx - fw, by - 3, cx + fw, by + 1]; }
+/* THE STALLS' GROUND SHADOW (27 Nov 2026, his call: of the new shadows only the stalls' looked good, so only they keep it): a flat two-tone oval
+   on the ground under the stall's foot, reaching up behind its bottom edge (seen between the legs). Drawn as a ground decal before anything. */
+function stallShadow(im) {
+  if (!im) return null; if (im.__sh) return im.__sh; const P = 5, w = im.width, h = im.height, c = mk(w, h + P), cx2 = c.getContext('2d'); cx2.drawImage(im, 0, 0);
+  const src = cx2.getImageData(0, 0, w, h + P).data, A = (x, y) => src[(y * w + x) * 4 + 3], out = cx2.createImageData(w, h + P), p = out.data; let base = -1;
+  for (let y = h - 1; y >= 0 && base < 0; y--) for (let x = 0; x < w; x++) if (A(x, y) === 255) { base = y; break; }
+  if (base < 0) return im.__sh = c;
+  const bot = new Int16Array(w).fill(-99); for (let x = 0; x < w; x++) for (let y = base; y >= 0; y--) if (A(x, y) >= 200) { bot[x] = y; break; }
+  const band = Math.max(4, Math.round((base + 1) * .2)); let xl = -1, xr = -1; for (let x = 0; x < w; x++) if (bot[x] >= base - band) { if (xl < 0) xl = x; xr = x; }
+  if (xl >= 0) { const span = xr - xl + 1, D = span >= 60 ? 4 : span >= 24 ? 3 : 2, ext = Math.max(1, Math.min(3, Math.round(span * .06))), cx = (xl + xr) / 2, rx = span / 2 + ext, up = Math.max(2, Math.min(band, Math.round(span * .09)));
+    const put = (x, y, a) => { if (x < 0 || x >= w || y < 0 || y >= h + P || (y < h && A(x, y))) return; const i = (y * w + x) * 4; if (p[i + 3] >= a) return; p[i] = 18; p[i + 1] = 28; p[i + 2] = 58; p[i + 3] = a; };
+    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) { const u = Math.abs(x - cx) / rx; if (u > 1) continue; const k = Math.sqrt(1 - u * u), t = Math.round(base - up * k), b = Math.round(base + D * k);
+      for (let y = t; y <= b; y++) put(x, y, u > .86 || y === b && b > base + 1 ? 58 : 110); } }
+  const s = mk(w, h + P); s.getContext('2d').putImageData(out, 0, 0); return im.__sh = s;
+}
 function stallAfter(i, x, y) { if (window.marketStallDraw) marketStallDraw(i, x, y); }
 SH.frame = (m, people, dt, t, H, img) => {
   const tp = $('#townHud #hallBar'), r = tp && tp.getBoundingClientRect(), cr = cv.getBoundingClientRect();

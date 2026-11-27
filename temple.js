@@ -32,6 +32,23 @@ const A_AT = {x: 174, y: 186, foot: 228};        // the altar's
 const SOCK = [-14, -5, 4, 13], STONES4 = ['moon', 'fang', 'hearth', 'ember'];   // the sockets, from the altar's middle: the mural's order, left to right
 const sockAt = i => [A_AT.x + 26 + SOCK[i], A_AT.y + 16];
 const T_DOORWAY = [200, 187], T_STAND = [200, 239];   // where you stand to go in | to use the altar
+/* (27 Nov 2026, his ask) THE MAP BUILDER ("The Hidden Temple") moves these: assets/quest/hollow-layout.json overrides the numbers above at load.
+   temple, altar = each one's top left; spawn; door = where the path back down leaves; props = his own trees and rocks (drawn and made solid like the
+   forest's, south.js propImg / propFoot). TD, AD = how far the temple and the altar were moved: everything that hangs off them (the doorway, the
+   altar's stand spot and sockets, the light lines, the beam, the dust, the glows, their solid boxes) moves by the same. No file = all as it was. */
+const TD = [0, 0], AD = [0, 0], H_OUT = [200, 522], H_PROPS = [];
+const rShift = (r, d) => [r[0] + d[0], r[1] + d[1], r[2] + d[0], r[3] + d[1]], xyOk = v => Array.isArray(v) && v.length > 1 && isFinite(v[0]) && isFinite(v[1]);
+function hollowLayout(L) {
+  if (!L) return;
+  if (xyOk(L.temple)) { TD[0] = (L.temple[0] | 0) - 138; TD[1] = (L.temple[1] | 0) + 1; T_AT.x = 138 + TD[0]; T_AT.y = TD[1] - 1; T_AT.foot = 178 + TD[1]; T_DOORWAY[0] = 200 + TD[0]; T_DOORWAY[1] = 187 + TD[1]; }
+  if (xyOk(L.altar)) { AD[0] = (L.altar[0] | 0) - 174; AD[1] = (L.altar[1] | 0) - 186; A_AT.x = 174 + AD[0]; A_AT.y = 186 + AD[1]; A_AT.foot = 228 + AD[1]; T_STAND[0] = 200 + AD[0]; T_STAND[1] = 239 + AD[1]; }
+  if (xyOk(L.spawn)) HOL.spawn = [L.spawn[0] | 0, L.spawn[1] | 0, 'back']; if (xyOk(L.door)) { H_OUT[0] = L.door[0] | 0; H_OUT[1] = L.door[1] | 0; }
+  H_PROPS.splice(0, H_PROPS.length, ...(Array.isArray(L.props) ? L.props : [])); TPL.lines = null;
+}
+/* his props in a place, as things in its drawn scene: walk behind them, the one you are behind fades (the forest's own loop) */
+function propObjs(P, m, dt) { const out = []; for (const q of P) { const im = propImg(q); if (!im) continue; const o = {img: im, x: q.x, y: q.y, base: q.y + im.base};
+  if (q.fade !== false && m) { const hid = m.y < o.base && m.y > q.y + 6 && m.x > q.x + 3 && m.x < q.x + im.width - 3; q.a = clamp((q.a ?? 1) + (hid ? -1 : 1) * dt * 4, .45, 1); if (q.a < 1) o.alpha = q.a; } out.push(o); } return out; }
+const layGet = p => fetch(p + '?v=' + av(p)).then(r => r.ok ? r.json() : null).catch(() => null), propLoad = P => Promise.all([...new Set(P.map(q => q.lib))].map(k => load('sp/' + k, `assets/builder/props/${k}.png`).catch(() => {})));
 /* THE OPENING, in seconds from the server's yes */
 const TT = {stone: .5, gap: .62, blaze: 3.2, line: 4, lineD: 3, awake: 7.2, rumble: 7.6, door: 8.8, doorD: 5.4, beam: 14.9, hold: 3.4, end: 19.6};   // (26 Nov: slower and heavier. The doors take 5.4 s: the grind is timed to them)
 const TPL = {set: 0, anim: null, fly: null, pop: [], dust: [], ask: false, b: null, key: '', lines: null, camY: null, dustT: 0, hum: 0};
@@ -39,12 +56,14 @@ const tplOpen = () => QUEST.s >= 6 && !TPL.anim;
 
 function templeLoad() {
   const L = (k, src) => load(k, src).catch(() => {});
-  return Promise.all([L('stack/q_temple', 'assets/quest/temple.png'), L('stack/q_tdoor', 'assets/quest/tdoor.png'), L('stack/q_altar', 'assets/quest/altar.png'),
+  const lay = Promise.all([layGet('assets/quest/hollow-layout.json').then(hollowLayout), layGet('assets/quest/hall-layout.json').then(hallLayout)]).catch(e => console.warn(e))   /* (27 Nov 2026, his ask) the map builder's two files, before the masks are made */
+    .then(() => Promise.all([propLoad([...H_PROPS, ...TH_PROPS]), HALL.walk ? L('thwalk', 'assets/interiors/throne-walk.png') : 0]));
+  return Promise.all([lay, L('stack/q_temple', 'assets/quest/temple.png'), L('stack/q_tdoor', 'assets/quest/tdoor.png'), L('stack/q_altar', 'assets/quest/altar.png'),
     L('hall/hollow', 'assets/quest/hollow.png'), L('hwalk', 'assets/quest/hollow-walk.png'), L('hall/throne', 'assets/interiors/throne.png'), L('s/rocks', 'assets/south/rocks.png'), L('s/rocks-shut', 'assets/south/rocks-shut.png'), ...['dais', 'throne', 'pillar', 'stand', 'crys'].map(k => L('stack/q_h' + k, `assets/quest/h${k}.png`)),
     ...['front', 'right', 'back', 'left'].map(d => L('king/' + d, `assets/final/king/${d}.png`))]).then(templeMasks);
 }
 function templeMasks() {
-  const g = IMG.hwalk; if (g) { IMG['hallw/hollow'] = maskCanvas(g.width, g.height, null, [[142, 132, 258, 176], [168, 176, 232, 181], [178, 211, 222, 230]], g); HOL.g = null; }   // the temple, its steps, the altar
+  const g = IMG.hwalk; if (g) { IMG['hallw/hollow'] = maskCanvas(g.width, g.height, null, [rShift([142, 132, 258, 176], TD), rShift([168, 176, 232, 181], TD), rShift([178, 211, 222, 230], AD), ...H_PROPS.filter(q => q.solid !== false).map(propFoot).filter(Boolean)], g); HOL.g = null; }   // the temple, its steps, the altar, the feet of his props
   hallMask(); tsLoad();
 }
 
@@ -114,8 +133,8 @@ const altarRow = () => tplOpen() ? 5 : TPL.anim ? (TPL.anim.t >= TT.blaze ? 5 : 
 /* ---------- the light that runs from the altar to the doors: three lines of solid pixels, 2 wide ---------- */
 function tplLines() {
   if (TPL.lines) return TPL.lines; const walk = P => { const o = []; for (let i = 1; i < P.length; i++) { let [x, y] = P[i - 1]; const [bx, by] = P[i]; while (x !== bx || y !== by) { o.push([x, y]); x += Math.sign(bx - x); y += Math.sign(by - y); } } o.push(P[P.length - 1]); return o; };
-  const A = [[177, 221], [166, 221], [166, 189], [183, 189], [183, 104], [198, 104]];   // out of the altar's side, round to the steps, up the door's jamb, across its lintel
-  return TPL.lines = [walk(A), walk(A.map(([x, y]) => [398 - x, y])), walk([[199, 196], [199, 152]])];
+  const ax = A_AT.x, ay = A_AT.y, tx = T_AT.x, ty = T_AT.y, side = s => [[ax + 25 - s * 22, ay + 35], [ax + 25 - s * 33, ay + 35], [ax + 25 - s * 33, ty + 190], [tx + 61 - s * 16, ty + 190], [tx + 61 - s * 16, ty + 105], [tx + 61 - s, ty + 105]];   // out of the altar's side, round to the steps, up the door's jamb, across its lintel (from wherever the two stand: hollowLayout)
+  return TPL.lines = [walk(side(1)), walk(side(-1)), walk([[ax + 25, ay + 10], [ax + 25, ty + 180], [tx + 61, ty + 180], [tx + 61, ty + 153]])];
 }
 function tplLineDraw(onTemple, t) {   // the ground's part is drawn under everyone, the temple's part straight after the temple
   const A = TPL.anim, open = tplOpen(); if (!open && !(A && A.t > TT.line)) return; const L = tplLines(), n = open ? 1e9 : (A.t - TT.line) / TT.lineD * L[0].length, q = Math.floor(t / 260) % 2;
@@ -124,13 +143,13 @@ function tplLineDraw(onTemple, t) {   // the ground's part is drawn under everyo
 }
 function tplBeam(onTemple, t) {   // out of the open doors, down the steps and away over the ground: three solid bands
   const A = TPL.anim; if (!A || A.t < TT.beam) return; const e = A.t - TT.beam, out = clamp(e / .45, 0, 1), fade = clamp((e - TT.hold) / 1, 0, 1), q = Math.floor(t / 110) % 2;
-  const y0 = 152, y1 = y0 + Math.round(out * 420), band = (col, hw0, grow) => { const cut = Math.round(fade * (hw0 + 8)); lx.fillStyle = col;
-    for (let y = y0; y <= y1; y++) { if ((y < T_AT.foot) !== onTemple) continue; const hw = hw0 + Math.round(Math.max(0, y - T_AT.foot) * grow) + (y > T_AT.foot ? q : 0) - cut; if (hw > 0) lx.fillRect(X(200) - hw, Y(y), hw * 2, 1); } };
+  const y0 = 152 + TD[1], y1 = y0 + Math.round(out * 420), band = (col, hw0, grow) => { const cut = Math.round(fade * (hw0 + 8)); lx.fillStyle = col;
+    for (let y = y0; y <= y1; y++) { if ((y < T_AT.foot) !== onTemple) continue; const hw = hw0 + Math.round(Math.max(0, y - T_AT.foot) * grow) + (y > T_AT.foot ? q : 0) - cut; if (hw > 0) lx.fillRect(X(200 + TD[0]) - hw, Y(y), hw * 2, 1); } };
   band('#3f86e0', 14, .2); band('#8fd6ff', 10, .15); band('#e8fbff', 5, .09);
 }
 function tplSky(t) {   // and one straight up out of the crystal on the roof
   const A = TPL.anim; if (!A || A.t < TT.beam) return; const e = A.t - TT.beam, fade = clamp((e - TT.hold) / 1, 0, 1), q = Math.floor(t / 110) % 2, top = T_AT.y + 38, h = Math.round(clamp(e / .3, 0, 1) * 60);
-  for (const [col, hw] of [['#3f86e0', 4], ['#8fd6ff', 3], ['#e8fbff', 1]]) { const w = hw + q - Math.round(fade * 6); if (w > 0) { lx.fillStyle = col; lx.fillRect(X(200) - w, Y(top - h), w * 2, h); } }
+  for (const [col, hw] of [['#3f86e0', 4], ['#8fd6ff', 3], ['#e8fbff', 1]]) { const w = hw + q - Math.round(fade * 6); if (w > 0) { lx.fillStyle = col; lx.fillRect(X(200 + TD[0]) - w, Y(top - h), w * 2, h); } }
 }
 
 /* ---------- the altar: setting the stones ---------- */
@@ -165,7 +184,7 @@ function ksDraw(t) {   // called straight after the altar is drawn
   const A = TPL.anim; if (A && A.t < TT.blaze) for (let i = 0; i < 4; i++) { const e = A.t - TT.stone - i * TT.gap; if (e < 0) continue; const [x, y] = sockAt(i), q = e < .16 ? 3 : 1;   // the four light one by one: a hard white flash, then they stay lit
     lx.fillStyle = e < .16 ? '#ffffff' : '#b8f2ff'; lx.fillRect(X(x) - q, Y(y) - 1, q * 2 + 1, 2); if (e < .16) { lx.fillRect(X(x), Y(y) - 5, 1, 9); lx.fillRect(X(x) - 5, Y(y), 11, 1); } }
   if (A && A.t >= TT.blaze && A.t < TT.blaze + .5) { const e = (A.t - TT.blaze) / .5, rx = Math.round(10 + e * 34), ry = Math.round(rx * .55); lx.fillStyle = e < .5 ? '#ffffff' : '#8fd6ff';   // the blaze: one hard ring of pixels thrown out along the ground
-    for (let i = 0; i < 90; i++) { const a = i / 90 * 6.283; lx.fillRect(X(200 + Math.cos(a) * rx), Y(A_AT.foot - 9 + Math.sin(a) * ry), 2, 1); } }
+    for (let i = 0; i < 90; i++) { const a = i / 90 * 6.283; lx.fillRect(X(200 + AD[0] + Math.cos(a) * rx), Y(A_AT.foot - 9 + Math.sin(a) * ry), 2, 1); } }
   const F = TPL.fly; if (F) { const k = F.t / .42, [sx, sy] = sockAt(F.i); ksChip(Math.round(lerp(X(F.x0), X(sx), k)), Math.round(lerp(Y(F.y0), Y(sy), k) - Math.sin(k * Math.PI) * 16), F.i, false); }
   for (const p of TPL.pop) ksChip(X(p.x), Y(p.y) - Math.round(p.h), p.i, false);
 }
@@ -178,7 +197,7 @@ function tplTick(dt, t, m) {
   const once = (k, at, fn) => { if (A.t >= at && !A.k[k]) { A.k[k] = 1; fn(); } };
   for (let i = 0; i < 4; i++) once('s' + i, TT.stone + i * TT.gap, () => { TSN.i = i; sfx('tstone'); });
   once('blaze', TT.blaze, () => sfx('tblaze')); once('line', TT.line, () => { TSN.dur = TT.rumble - TT.line; sfx('tbuild'); }); once('awake', TT.awake, () => sfx('tawake'));   // the rumble builds under the running light
-  once('rumble', TT.rumble, () => { sfx('tquake'); try { navigator.vibrate && navigator.vibrate([120, 60, 240]); } catch (e) {} }); once('door', TT.door, () => { TSN.dur = TT.doorD; sfx('tdoors'); }); once('settle', TT.door + TT.doorD, () => { puffAt(186, 152, 10); puffAt(214, 152, 10); try { navigator.vibrate && navigator.vibrate(160); } catch (e) {} }); once('beam', TT.beam, () => { sfx('tbeam'); puffAt(200, 176, 18); });
+  once('rumble', TT.rumble, () => { sfx('tquake'); try { navigator.vibrate && navigator.vibrate([120, 60, 240]); } catch (e) {} }); once('door', TT.door, () => { TSN.dur = TT.doorD; sfx('tdoors'); }); once('settle', TT.door + TT.doorD, () => { puffAt(186 + TD[0], 152 + TD[1], 10); puffAt(214 + TD[0], 152 + TD[1], 10); try { navigator.vibrate && navigator.vibrate(160); } catch (e) {} }); once('beam', TT.beam, () => { sfx('tbeam'); puffAt(200 + TD[0], 176 + TD[1], 18); });
   if (A.t > TT.rumble && A.t < TT.beam + .6) {
     TPL.dustT -= dt; while (TPL.dustT <= 0) { TPL.dustT += A.t < TT.door ? .035 : .06;   // dust and grit off the lintel and the door's head, solid specks; a few bigger bits that bounce
       const door = Math.random() < .35, big = Math.random() < .18; TPL.dust.push({x: door ? 186 + Math.random() * 28 : 148 + Math.random() * 104, y: door ? 108 : 99 + Math.random() * 3, vx: Math.random() * 14 - 7, vy: 10 + Math.random() * 30, fl: door ? 152 + Math.random() * 22 : (Math.random() < .5 ? 152 : 178) + Math.random() * 4, t: 0, b: big ? 1 : 0, s: big ? 2 : 1, c: ['#cfe0f4', '#9fb4d6', '#6a7fae'][Math.floor(Math.random() * 3)]}); } }
@@ -259,7 +278,7 @@ function humOn() { const c = sndCtx(); if (!c) return null; const g = c.createGa
 setInterval(() => {
   const m = WL.me, c = SND.ctx, on = SND.on && scene === scenes.town && !!m, hall = on && m.loc === THRONE;
   if (hall && !AMB.hum) { AMB.hum = humOn(); if (AMB.hum) AMB.hum.g.gain.setTargetAtTime(AMB.hum.k * .2, SND.ctx.currentTime, 1.2); } else if (!hall && AMB.hum) { ambEnd(AMB.hum, on ? .5 : .08); AMB.hum = null; }
-  const A = TPL.anim, lit = on && m.loc === HOLLOW && (A ? A.t > TT.beam : QUEST.s >= 6), lv = lit ? Math.pow(clamp(1 - (Math.hypot(m.x - 200, m.y - 160) - 30) / 250, 0, 1), 1.5) : 0;   // how much of it reaches you
+  const A = TPL.anim, lit = on && m.loc === HOLLOW && (A ? A.t > TT.beam : QUEST.s >= 6), lv = lit ? Math.pow(clamp(1 - (Math.hypot(m.x - 200 - TD[0], m.y - 160 - TD[1]) - 30) / 250, 0, 1), 1.5) : 0;   // how much of it reaches you
   if (lv > 0 && !AMB.sh) AMB.sh = shimmerOn(); if (!AMB.sh) return;
   if (!lit) { ambEnd(AMB.sh, on ? .3 : .08); AMB.sh = null; return; }
   AMB.sh.g.gain.setTargetAtTime(AMB.sh.k * lv * .22, c.currentTime, .3); if (!TSN.buf.shimmer && lv > .05 && Math.random() < .3) tTone(2300 + Math.random() * 3400, .5, {vol: .02 * lv, wet: .9});   // a sparkle
@@ -270,34 +289,34 @@ function hollowObjs(m, dt, t) {
   const out = [{img: PX1, x: 0, y: 0, base: 0, after: () => { tplBeam(false, t); tplLineDraw(false, t); }}];   // on the ground, under everyone
   const im = tplImg(tplRow(), tplSlide()); if (im) out.push({img: im, x: T_AT.x, y: T_AT.y, base: T_AT.foot, after: () => { tplBeam(true, t); tplLineDraw(true, t); tplSky(t); }});
   const al = stackFrame('q_altar', altarRow(), 0); if (al) out.push({img: al, x: A_AT.x, y: A_AT.y, base: A_AT.foot, after: () => ksDraw(t)});
-  return out;
+  return out.concat(propObjs(H_PROPS, m, dt));   // his own trees and rocks (27 Nov 2026, the map builder)
 }
 HOL.from = was => was === THRONE ? [T_DOORWAY[0], T_DOORWAY[1], 'front'] : null;
 HOL.enter = () => { TPL.set = 0; TPL.fly = null; TPL.pop.length = 0; TPL.dust.length = 0; TPL.camY = null; if (TPL.anim) TPL.anim = null; };   // (walked out mid-way: nothing is half set)
 HOL.frame = (m, people, dt, t, H, img) => {
-  tplTick(dt, t, m); const A = TPL.anim, sh = tplShake(), want = A ? 170 : m.y + (LAND ? 2 : 24) - clamp((340 - m.y) / 90, 0, 1) * (LAND ? 40 : 96);   // near the temple the camera looks up at it (it is as tall as the screen); for the opening it lifts all the way, and comes back
+  tplTick(dt, t, m); const A = TPL.anim, sh = tplShake(), want = A ? 170 + TD[1] : m.y + (LAND ? 2 : 24) - clamp((340 + TD[1] - m.y) / 90, 0, 1) * (LAND ? 40 : 96);   // near the temple the camera looks up at it (it is as tall as the screen); for the opening it lifts all the way, and comes back
   TPL.camY = TPL.camY == null || (!A && Math.abs(TPL.camY - want) < 1) ? want : TPL.camY + (want - TPL.camY) * Math.min(1, dt * 2.2);
   view(img, m.x + (sh ? Math.round((Math.random() - .5) * sh * 2) : 0), TPL.camY + (sh ? Math.round((Math.random() - .5) * sh * 2) : 0), 190, {hi: true});
   if (WL.sel && WL.sel.loc === m.loc) { const q = Math.floor(t / 200) % 2; lx.strokeStyle = q ? '#ffd25e' : '#fff2a8'; lx.lineWidth = 1; lx.beginPath(); lx.ellipse(X(WL.sel.x) + .5, Y(WL.sel.y) + .5, 9 + q, 3 + q * .5, 0, 0, 7); lx.stroke(); }
   const hits = drawScene(people, null, img, hollowObjs(m, dt, t)); wlFx(dt, m.loc); drawPuffs(dt); wlCases(dt, m.loc);
   for (let i = KEYS.fx.length - 1; i >= 0; i--) { const p = KEYS.fx[i]; p.t += dt; if (p.t > p.l) { KEYS.fx.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.g || 0) * dt; lx.fillStyle = p.t / p.l < .5 ? p.c : p.d; lx.fillRect(X(p.x), Y(p.y), 1, 1); }   // sparks off a stone that sat (keystones.js's own list)
-  for (const p of TPL.dust) { lx.fillStyle = p.c; lx.fillRect(X(p.x), Y(p.y), p.s, p.s); }
-  const row = altarRow(), open = tplOpen(), wake = tplRow(), sl = tplSlide(), L = [[200, 132, 34, '120,200,255', wake ? .2 : .08, 1], [200, T_AT.y + 42, 14, '150,225,255', wake ? .5 : .14, 2], [200, A_AT.y + 16, 24, KS_GLOW, row === 5 ? .5 : .1 + row * .06, 3]];
-  if (sl > 0) L.push([200, 132, 46, '170,225,255', .25 + sl * .03, 4]); if (A && A.t > TT.beam) L.push([200, 200, 90, '150,215,255', .3 * (1 - clamp((A.t - TT.beam - TT.hold) / 1, 0, 1)), 5]);
+  for (const p of TPL.dust) { lx.fillStyle = p.c; lx.fillRect(X(p.x + TD[0]), Y(p.y + TD[1]), p.s, p.s); }   // (the dust is worked out where the temple was drawn, and shown where it stands now)
+  const row = altarRow(), open = tplOpen(), wake = tplRow(), sl = tplSlide(), tcx = 200 + TD[0], L = [[tcx, 132 + TD[1], 34, '120,200,255', wake ? .2 : .08, 1], [tcx, T_AT.y + 42, 14, '150,225,255', wake ? .5 : .14, 2], [200 + AD[0], A_AT.y + 16, 24, KS_GLOW, row === 5 ? .5 : .1 + row * .06, 3]];
+  if (sl > 0) L.push([tcx, 132 + TD[1], 46, '170,225,255', .25 + sl * .03, 4]); if (A && A.t > TT.beam) L.push([tcx, 200 + TD[1], 90, '150,215,255', .3 * (1 - clamp((A.t - TT.beam - TT.hold) / 1, 0, 1)), 5]);
   lights(L, t); lx.fillStyle = 'rgba(70,120,255,.05)'; lx.fillRect(0, 0, cam.lw, cam.lh); vignette(.5);   // the forest's own cold moon
   return hits;
 };
 HOL.joy = (m, J) => {
   if (TPL.anim) return true;
-  if (J.y > .5 && m.y > 516 && Math.abs(m.x - 200) < 16) wlDoor(SOUTH);                                              // back down the path, out through the cleft
+  if (J.y > .5 && m.y > H_OUT[1] - 6 && Math.abs(m.x - H_OUT[0]) < 16) wlDoor(SOUTH);                                              // back down the path, out through the cleft
   else if (J.y < -.5 && tplOpen() && Math.abs(m.x - T_DOORWAY[0]) < 16 && m.y < T_DOORWAY[1] + 5) wlDoor(THRONE);    // up the steps, in through the open doors
   return true;
 };
 HOL.tap = (e, m, x, y) => {
   if (TPL.anim) return true; if (m.seat) { wlUp(m); return true; }
-  if (y > 496 && Math.abs(x - 200) < 34) { wlGo(m, 200, 522, () => wlDoor(SOUTH)); return true; }
+  if (y > H_OUT[1] - 26 && Math.abs(x - H_OUT[0]) < 34) { wlGo(m, H_OUT[0], H_OUT[1], () => wlDoor(SOUTH)); return true; }
   if (x > A_AT.x && x < A_AT.x + 52 && y > A_AT.y + 4 && y < A_AT.foot + 4) { wlGo(m, T_STAND[0], T_STAND[1], () => { m.dir = 'back'; ksOpen(); }); return true; }
-  if (x > 142 && x < 258 && y > 40 && y < 184) { const open = tplOpen(); wlGo(m, T_DOORWAY[0], T_DOORWAY[1], open ? () => wlDoor(THRONE) : () => { m.dir = 'back'; }); return true; }
+  if (x > 142 + TD[0] && x < 258 + TD[0] && y > 40 + TD[1] && y < 184 + TD[1]) { const open = tplOpen(); wlGo(m, T_DOORWAY[0], T_DOORWAY[1], open ? () => wlDoor(THRONE) : () => { m.dir = 'back'; }); return true; }
   wlGo(m, x, y + 6); holdWalk(e, scenes.town, (x, y) => { const m = WL.me; if (m.loc === HOLLOW && !m.ko && !TPL.anim) wlGo(m, x, y + 6); });
   return true;
 };
@@ -335,6 +354,18 @@ const TH_DAIS = [44, 46], TH_THRONE = [88, 1];                                  
 const TH_PILLARS = [165, 223, 296, 368, 440, 509].flatMap(y => [[58, y], [162, y]]);                                    // the foot of each
 const TH_STANDS = [440, 368, 296, 227, 165, 122].flatMap(y => [[79, y], [141, y]]);                                     // in the order they catch: from the doors to the throne, a pair at a time
 const TH_CRYS = [[23, 520], [197, 520], [20, 76], [200, 76]];                                                           // the corner clusters, in the order they light
+/* (27 Nov 2026, his ask) THE MAP BUILDER ("The Throne Hall") moves these: assets/quest/hall-layout.json overrides the numbers above at load. dais, throne = each
+   picture's top left; pillars, stands, crystals = the foot of each, in the same order; spawn, door; props = his own; walk = the floor is his painted
+   mask (assets/interiors/throne-walk.png) and not the two boxes in hallMask. The King and where you stand before him move with the throne and the dais. */
+const TH_PROPS = [];
+function hallLayout(L) {
+  if (!L) return; const put = (a, v) => { if (Array.isArray(v) && v.length === a.length && v.every(xyOk)) a.splice(0, a.length, ...v.map(q => [q[0] | 0, q[1] | 0])); };
+  if (xyOk(L.dais)) { TH_DAIS[0] = L.dais[0] | 0; TH_DAIS[1] = L.dais[1] | 0; KING_STAND[0] = TH_DAIS[0] + 66; KING_STAND[1] = TH_DAIS[1] + 83; }
+  if (xyOk(L.throne)) { const x = TH_THRONE[0] = L.throne[0] | 0, y = TH_THRONE[1] = L.throne[1] | 0; KING_AT[0] = x + 22; KING_AT[1] = y + 76; THR.spots[0].hit = [x, y + 7, x + 44, y + 121]; }
+  put(TH_PILLARS, L.pillars); put(TH_STANDS, L.stands); put(TH_CRYS, L.crystals);
+  if (xyOk(L.spawn)) THR.spawn = [L.spawn[0] | 0, L.spawn[1] | 0, 'back']; if (xyOk(L.door)) THR.door = [L.door[0] | 0, L.door[1] | 0];
+  TH_PROPS.splice(0, TH_PROPS.length, ...(Array.isArray(L.props) ? L.props : [])); HALL.walk = !!L.walk;
+}
 const TH_WATER = [[14, 74, 28, 496], [192, 74, 206, 496]], TH_FALLS = [[31, 27, 44, 75], [176, 27, 189, 75]], TH_POOL = [[14, 74, 52, 86], [168, 74, 206, 86]];
 /* the entrance, in seconds: the walk and the glide, when each pair of braziers catches (as you reach it), the falls, the crystals, the crown, the end */
 const HC = {go: .8, walk: 9.6, cam: 8.8, fire: [1.9, 3.7, 5.4, 7.1, 8.6, 9.7], falls: 10.4, cry: 11.1, cryGap: .22, crown: 12.5, end: 14.1};
@@ -342,7 +373,7 @@ const HALL = {cut: null, sparks: [], seen: false, was: 0};
 try { HALL.seen = localStorage.getItem('m2_qhall') === '1'; } catch (e) {}
 function hallMask() { const th = IMG['hall/throne']; if (!th) return;
   IMG['hallw/throne'] = maskCanvas(th.width, th.height, [[34, 90, 186, 522], [104, 522, 117, 537]],   // the floor between the water's kerbs, the doorway
-    [[64, 56, 156, 109], [86, 104, 134, 122], ...TH_PILLARS.map(([x, y]) => [x - 10, y - 11, x + 10, y + 1]), ...TH_STANDS.map(([x, y]) => [x - 4, y - 5, x + 4, y + 1])]); THR.g = null; }   // the dais, its stair, the pillars' feet, the stands'
+    [rShift([20, 10, 112, 63], TH_DAIS), rShift([42, 58, 90, 76], TH_DAIS), ...TH_PILLARS.map(([x, y]) => [x - 10, y - 11, x + 10, y + 1]), ...TH_STANDS.map(([x, y]) => [x - 4, y - 5, x + 4, y + 1]), ...TH_PROPS.filter(q => q.solid !== false).map(propFoot).filter(Boolean)], (HALL.walk && IMG.thwalk) || undefined); THR.g = null; }   // the dais, its stair, the pillars' feet, the stands', his props'. (27 Nov 2026) the floor is his painted mask once the map builder has saved one
 /* how far the hall has woken: before the entrance nothing; during it, whatever its clock has reached; after it, everything */
 const hallT = () => HALL.cut ? HALL.cut.t : HALL.seen ? 1e9 : -1;
 const standLit = i => hallT() >= HC.fire[i >> 1], fallsLit = () => hallT() >= HC.falls, crysLit = i => hallT() >= HC.cry + (i >> 1) * HC.cryGap, crownLit = () => hallT() >= HC.crown;
@@ -394,14 +425,14 @@ function hallGround(t) {   // under everyone: the water, and the light on the da
 }
 function hallObjs(m, dt, t) {
   const out = [{img: PX1, x: 0, y: 0, base: 0, after: () => hallGround(t)}], F = (k, row) => stackFrame(k, row, 0);
-  const D = F('q_hdais', 0); if (D) out.push({img: D, x: TH_DAIS[0], y: TH_DAIS[1], base: 60});                                                      // the dais and its stair: you are always in front of it, or beside it
-  const Th = F('q_hthrone', crownLit() ? 1 : 0); if (Th) out.push({img: Th, x: TH_THRONE[0], y: TH_THRONE[1], base: 74});                             // the throne on it; the King sorts just in front of the throne
+  const D = F('q_hdais', 0); if (D) out.push({img: D, x: TH_DAIS[0], y: TH_DAIS[1], base: TH_DAIS[1] + 14});                                                      // the dais and its stair: you are always in front of it, or beside it
+  const Th = F('q_hthrone', crownLit() ? 1 : 0); if (Th) out.push({img: Th, x: TH_THRONE[0], y: TH_THRONE[1], base: TH_THRONE[1] + 73});                             // the throne on it; the King sorts just in front of the throne
   TH_PILLARS.forEach(([x, y], i) => { const im = F('q_hpillar', 0); if (!im) return; const o = {img: im, x: x - 14, y: y - 59, base: y};
     const P = HALL.pa || (HALL.pa = []), hid = m.y < y - 3 && m.y > y - 48 && Math.abs(m.x - x) < 13; P[i] = clamp((P[i] ?? 1) + (hid ? -1 : 1) * dt * 4, .4, 1); if (P[i] < 1) o.alpha = P[i]; out.push(o); });   // behind one: it fades, like the town's trees
   TH_STANDS.forEach(([x, y], i) => { const lit = standLit(i), im = F('q_hstand', lit ? 1 : 0); if (!im) return; const young = lit && HALL.cut && HALL.cut.t - HC.fire[i >> 1] < .5;
     out.push({img: im, x: x - 10, y: y - 25, base: y, after: lit ? () => flameDraw(x, y - 17, t, i, young) : null}); });
   TH_CRYS.forEach(([x, y], i) => { const lit = crysLit(i), im = F('q_hcrys', lit ? 1 : 0); if (im) out.push({img: im, x: x - 14, y: y - 41, base: y, after: lit ? () => { const q = Math.floor(t / 180 + i * 3) % 9; if (q < 4) { const px = X(x + [-7, 6, -3, 7][q]), py = Y(y - [26, 14, 34, 22][q]); lx.fillStyle = '#fff'; lx.fillRect(px - 1, py, 3, 1); lx.fillRect(px, py - 1, 1, 3); } } : null}); });
-  return out;
+  return out.concat(propObjs(TH_PROPS, m, dt));   // his own things (27 Nov 2026, the map builder)
 }
 function crownDraw(h, t) {   // the King's crown flaring: a hard four-point star of pixels that opens and closes over his head, then a steady glint
   const e = hallT() - HC.crown; if (e < 0 || !h) return; const cx = Math.round(h.cx), cy = Math.round(h.top) + 5, r = e < 1.2 ? Math.round(Math.sin(e / 1.2 * Math.PI) * 26) : Math.floor(t / 400) % 2 ? 3 : 2;
@@ -416,7 +447,7 @@ function hallCutEnd(skip) { const m = WL.me, C = HALL.cut; if (!C) return; HALL.
   if (m) { m.x = KING_STAND[0]; m.y = KING_STAND[1]; m.dir = 'back'; m.walk = false; m.path = []; m.todo = null; netMove(); } HALL.camY = null; if (!skip) setTimeout(kingTalk, 500); }   // control is yours again, and he speaks (skipped: he waits to be asked)
 function hallCutTick(dt, m) {
   const C = HALL.cut; C.t += dt; const once = (k, at, fn) => { if (C.t >= at && !C.k[k]) { C.k[k] = 1; fn(); } }, u = clamp((C.t - HC.go) / HC.walk, 0, 1);
-  m.x = KING_STAND[0]; m.y = lerp(516, KING_STAND[1], u); m.dir = 'back'; m.walk = u > 0 && u < 1; m.path = []; m.todo = null;   // you walk up the carpet by yourself
+  m.x = KING_STAND[0]; m.y = lerp(THR.spawn[1], KING_STAND[1], u); m.dir = 'back'; m.walk = u > 0 && u < 1; m.path = []; m.todo = null;   // you walk up the carpet by yourself
   HC.fire.forEach((at, i) => once('f' + i, at, () => { sfx('hwhoosh'); for (const j of [i * 2, i * 2 + 1]) { const [x, y] = TH_STANDS[j]; for (let k = 0; k < 12; k++) HALL.sparks.push({x: x + Math.random() * 8 - 4, y: y - 18, vx: Math.random() * 40 - 20, vy: -30 - Math.random() * 50, t: 0, l: .4 + Math.random() * .4}); } }));
   once('falls', HC.falls, () => sfx('hflare')); TH_CRYS.forEach((q, i) => { if (i % 2 === 0) once('c' + i, HC.cry + (i >> 1) * HC.cryGap, () => { TSN.i = i; sfx('hcry'); TSN.i = i + 3; sfx('hcry2'); }); });
   once('crown', HC.crown, () => { sfx('hcrown'); try { navigator.vibrate && navigator.vibrate(80); } catch (e) {} });
@@ -425,10 +456,10 @@ function hallCutTick(dt, m) {
 THR.enter = () => { HALL.sparks.length = 0; HALL.camY = null; HALL.pa = null; if (!HALL.seen && QUEST.s >= 6) { HALL.cut = {t: 0, k: {}}; hallBars(true); WL.sel = null; wlMenu(); } };
 THR.frame = (m, people, dt, t, H, img) => {
   const C = HALL.cut; if (C) hallCutTick(dt, m); kingWatch();
-  const cy = HALL.cut ? lerp(500, 64, ease(clamp((HALL.cut.t - HC.go) / HC.cam, 0, 1))) : m.y - (KING.talk ? 40 : 0);   // the entrance: the camera glides up the hall ahead of you, to the throne. Talking: it lifts to show him
+  const cy = HALL.cut ? lerp(THR.spawn[1] - 16, KING_AT[1] - 13, ease(clamp((HALL.cut.t - HC.go) / HC.cam, 0, 1))) : m.y - (KING.talk ? 40 : 0);   // the entrance: the camera glides up the hall ahead of you, to the throne. Talking: it lifts to show him
   HALL.camY = HALL.camY == null || HALL.cut ? cy : HALL.camY + (cy - HALL.camY) * Math.min(1, dt * 5);
   const o = {hi: true, topCss: 96, void: '#000', novig: true}; if (HALL.cut) o.s = Math.max(2, Math.round(Math.max(1, Math.round(VW() / 190)) * 1.5));   // the entrance is shot close in: half as big again, so the glide has a hall to travel
-  view(img, HALL.cut ? 110 : m.x, HALL.camY, 190, o);
+  view(img, HALL.cut ? KING_STAND[0] : m.x, HALL.camY, 190, o);
   const K = kingSet() ? (KING.p = {name: 'king', dir: 'front', x: KING_AT[0], y: KING_AT[1], sortY: KING_AT[1], t, phase: 400, walk: false, noShadow: true}) : null;
   const hits = drawScene(K ? people.concat(K) : people, null, img, hallObjs(m, dt, t)); if (K) { crownDraw(hits.get(K), t); hits.delete(K); } wlFx(dt, m.loc); drawPuffs(dt); wlCases(dt, m.loc);
   for (let i = HALL.sparks.length - 1; i >= 0; i--) { const p = HALL.sparks[i]; p.t += dt; if (p.t > p.l) { HALL.sparks.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 90 * dt; lx.fillStyle = p.t / p.l < .5 ? '#e8fbff' : '#6ec8ff'; lx.fillRect(X(p.x), Y(p.y), 1, 1); }

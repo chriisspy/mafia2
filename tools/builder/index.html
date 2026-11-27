@@ -419,9 +419,60 @@ async function openForest(){await loadLib();let lay={};try{lay=await (await fetc
   const sw=col=>{const c=mk(1,1),x=X2(c);x.fillStyle=col;x.fillRect(0,0,1,1);return png(c);},mark=(k,n,s,t,col,o)=>d.marks.push({k,n,s,t,col,thumb:sw(col),...o});
   mark('spawn','Spawn','spawn','pt','#ffcf5e',{x:J.spawn[0],y:J.spawn[1]});
   mark('door','Path back to the town','town','pt','#6cd6ff',{x:J.door[0],y:J.door[1]});
+  /* (27 Nov 2026, his ask: "anything we create goes in the map builder") the Moonmoss patches and the cracked Hearth stone are dragged like buildings
+     (layout.json keeps their FOOT: the middle of the bottom edge), the firefly glade is a point. The mural is gone (his ask), so it is dropped from the file. */
+  d.objs=true;const nb=x=>{const c=mk(x.width,x.height);X2(c).fillStyle='rgba(255,42,42,0)';return c;};
+  const ob=async(k,name,path,fx,fy)=>{try{const img=toC(await loadImg('/'+path));d.blds.push({k,name,path,x:Math.round(fx-img.width/2),y:fy-img.height,w:img.width,h:img.height,img,blk:nb(img),south:true,fade:0,foot:1});}catch(e){}};
+  const moss=Array.isArray(J.moss)?J.moss:[[128,470],[640,172],[556,726]];
+  for(let i=0;i<moss.length;i++)await ob('moss'+i,'Moonmoss '+(i+1),`assets/forest/moss${i%4+1}.png`,moss[i][0],moss[i][1]);
+  {const h=Array.isArray(J.hearth)?J.hearth:[605,610];await ob('hearth','Cracked Hearth stone','assets/quest/hearth-cracked.png',h[0],h[1]);}
+  {const g=Array.isArray(J.glade)?J.glade:[205,280];mark('glade','Firefly glade (the Fang stone rises here)','glade','pt','#b48cff',{x:g[0],y:g[1]});}
   for(const q of Array.isArray(lay.props)?lay.props:[]){if(!LIB[q.lib]){d.keep.push(q);continue;}d.props.push(flatP({lib:q.lib,x:q.x,y:q.y,fade:q.fade!==false,solid:q.solid!==false,shadow:q.shadow!==false,flip:!!q.flip}));}
   return d;}
 function lakeLayout(d){const L={...d.lay},m=k=>d.marks.find(m=>m.k===k);L.spawn=[m('spawn').x,m('spawn').y];L.door=[m('door').x,m('door').y];
+  if(d.objs){const ft=b=>[Math.round(b.x+b.w/2),b.y+b.h];delete L.mural;L.moss=d.blds.filter(b=>b.k.startsWith('moss')).map(ft);const h=d.blds.find(b=>b.k==='hearth');if(h)L.hearth=ft(h);if(m('glade'))L.glade=[m('glade').x,m('glade').y];}
+  L.props=[...d.props.map(p=>({lib:p.lib,x:p.x,y:p.y,flip:!!p.flip,shadow:!!p.shadow,solid:!!p.solid,fade:!!p.fade})),...d.keep];
+  return'{\n'+Object.entries(L).map(([k,v])=>'  '+JSON.stringify(k)+': '+JSON.stringify(v)).join(',\n')+'\n}\n';}
+/* THE HIDDEN TEMPLE, THE THRONE HALL, THE BLACKSMITH'S (27 Nov 2026, his ask: "anything we create" is edited here). Each is a map like the forest (kind 'south',
+   d.lake, d.dir + d.gnd = its ground and its walk mask) with d.objs: the things standing in it are dragged like the South's buildings (the "Objects" layer), and
+   Save writes d.layp, the layout file the game reads at load (temple.js hollowLayout / hallLayout, mine.js smithyLayout). A SPRITE STACK (st: [strip, slice size,
+   slices, row]) is shown as its front view, built the way the game bakes it (index.html stackFrame, turn 0). In the file a thing is its picture's top left, or
+   with off its foot; list = several of one thing, kept in the game's order. blk = its solid boxes, the game's own (in code), against the picture's top left.
+   floor = the game's own floor boxes: what the walk mask starts as until he has saved a painted one (the file then says walk: 1). */
+const PLACES={
+  hollow:{name:'The Hidden Temple',dir:'assets/quest/',gnd:'hollow',layp:'assets/quest/hollow-layout.json',def:{spawn:[200,500],door:[200,522]},doorN:'Path back to the South',doorS:'south',
+    note:"THE HIDDEN TEMPLE's layout (27 Nov 2026). Read by temple.js at load (hollowLayout) and edited by the map builder ('The Hidden Temple'). temple, altar = top left of each baked picture; spawn = where you appear coming up from the South; door = where the path back down leaves; props = the trees and rocks placed in the builder.",
+    objs:[{key:'temple',n:'Temple',st:['assets/quest/temple.png',120,114,0],at:[138,-1],bo:179,blk:[[4,133,120,177],[30,177,94,182]]},{key:'altar',n:'Keystone altar',st:['assets/quest/altar.png',48,19,0],at:[174,186],bo:42,blk:[[4,25,48,44]]}]},
+  throne:{name:'The Throne Hall',dir:'assets/interiors/',gnd:'throne',layp:'assets/quest/hall-layout.json',floor:[[34,90,186,522],[104,522,117,537]],def:{spawn:[110,516],door:[110,534]},doorN:'Door',doorS:'door',
+    note:"THE THRONE HALL's layout (27 Nov 2026). Read by temple.js at load (hallLayout) and edited by the map builder ('The Throne Hall'). dais, throne = top left of each baked picture; pillars, stands, crystals = the foot of each, in the game's order (the braziers catch a pair at a time from the doors to the throne); spawn, door; walk: 1 = the floor is assets/interiors/throne-walk.png; props = things placed in the builder.",
+    objs:[{key:'dais',n:'Dais',st:['assets/quest/hdais.png',128,12,0],at:[44,46],bo:14,blk:[[20,10,112,63],[42,58,90,76]]},{key:'throne',n:'Throne',st:['assets/quest/hthrone.png',40,56,0],at:[88,1],bo:73},
+      {key:'pillars',n:'Pillar',st:['assets/quest/hpillar.png',24,46,0],list:[165,223,296,368,440,509].flatMap(y=>[[58,y],[162,y]]),off:[14,59],bo:59,blk:[[4,48,24,60]]},
+      {key:'stands',n:'Brazier',st:['assets/quest/hstand.png',16,14,1],list:[440,368,296,227,165,122].flatMap(y=>[[79,y],[141,y]]),off:[10,25],bo:25,blk:[[6,20,14,26]]},
+      {key:'crystals',n:'Crystals',st:['assets/quest/hcrys.png',24,28,1],list:[[23,520],[197,520],[20,76],[200,76]],off:[14,41],bo:41}]},
+  smithy:{name:'Inside: The Blacksmith',dir:'assets/interiors/',gnd:'smithy',layp:'assets/smithy/layout.json',floor:[[14,82,296,214],[146,212,165,226]],def:{spawn:[155,204],door:[155,218]},doorN:'Door',doorS:'door',
+    note:"THE BLACKSMITH's layout, inside (27 Nov 2026). Read by mine.js at load (smithyLayout) and edited by the map builder ('Inside: The Blacksmith'). Each thing = top left of its picture (assets/smithy/<name>.png); spawn, door; walk: 1 = the floor is assets/interiors/smithy-walk.png; props = things placed in the builder.",
+    objs:[{key:'toolrack',n:'Tool rack',src:'assets/smithy/toolrack.png',at:[212,30],bo:-9999},{key:'forge',n:'Forge',src:'assets/smithy/forge.png',at:[18,6],blk:[[2,74,76,116]]},{key:'barrel',n:'Water barrel',src:'assets/smithy/barrel.png',at:[22,150],blk:[[2,32,33,48]]},
+      {key:'anvil',n:'Anvil',src:'assets/smithy/anvil.png',at:[98,158],blk:[[12,13,39,26]]},{key:'coal',n:'Coal',src:'assets/smithy/coal.png',at:[62,158],blk:[[2,28,33,43]]},{key:'counter',n:'Counter',src:'assets/smithy/counter.png',at:[190,92],blk:[[0,28,100,56]]},
+      {key:'grindstone',n:'Grindstone',src:'assets/smithy/grindstone.png',at:[248,150],blk:[[4,36,48,55]]}]}};
+function stackPrev(im,[,s,n,row]){const h=Math.round(s*.55),W=s+4,H=h+n+4,c=mk(W,H),x=X2(c),one=mk(s+2,s+2),ox=X2(one);x.imageSmoothingEnabled=false;ox.imageSmoothingEnabled=false;
+  for(let z=0;z<n;z++){ox.clearRect(0,0,s+2,s+2);ox.drawImage(im,z*s,row*s,s,s,1,1,s,s);x.setTransform(1,0,0,.55,W/2,H-2-h/2-z);x.drawImage(one,-s/2-1,-s/2-1);}x.setTransform(1,0,0,1,0,0);
+  const d=x.getImageData(0,0,W,H),p=d.data,A=(X,Y)=>X>=0&&Y>=0&&X<W&&Y<H&&p[(Y*W+X)*4+3]>=60,edge=[];   /* the game's navy line round it */
+  for(let Y=0;Y<H;Y++)for(let X=0;X<W;X++)if(!A(X,Y)&&(A(X+1,Y)||A(X-1,Y)||A(X,Y+1)||A(X,Y-1)))edge.push((Y*W+X)*4);for(const i of edge){p[i]=1;p[i+1]=3;p[i+2]=46;p[i+3]=255;}x.putImageData(d,0,0);return c;}
+function bldPic(b,q){if(b.st)b.img=stackPrev(q.day,b.st);else{b.img=q.day;b.w=q.w;b.h=q.h;}b.thumb=null;}   /* a thing's picture he just edited: a stack's strip is baked into its front view again */
+async function openPlace(key){await loadLib();const P=PLACES[key],xy=v=>Array.isArray(v)&&v.length>1?[v[0]|0,v[1]|0]:null;let lay={};try{const r=await fetch('/'+P.layp+'?t='+Date.now());if(r.ok)lay=await r.json();}catch(e){}
+  const g='/'+P.dir+P.gnd,day=await loadImg(g+'.png'),J={...P.def,...lay};let walk=null;if(!P.floor||lay.walk)try{walk=await loadImg(g+'-walk.png');}catch(e){}
+  const blk=mk(day.width,day.height),bx=X2(blk);if(walk)bx.drawImage(maskFrom(walk,false),0,0);else{bx.fillStyle='rgb(255,42,42)';bx.fillRect(0,0,blk.width,blk.height);for(const r of P.floor||[])bx.clearRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);}
+  const d={kind:'south',lake:true,objs:true,place:key,dir:P.dir,gnd:P.gnd,layp:P.layp,name:P.name,w:day.width,h:day.height,ox:0,day:toC(day),night:null,block:blk,props:[],opaque:true,blds:[],cab:[],lay,keep:[],marks:[]};
+  for(const o of P.objs){let src;try{src=await loadImg('/'+(o.st?o.st[0]:o.src));}catch(e){continue;}const off=o.off||[0,0],at=o.list?o.list.map((q,i)=>xy(lay[o.key]&&lay[o.key][i])||q):[xy(lay[o.key])||o.at];
+    at.forEach((q,i)=>{const img=o.st?stackPrev(src,o.st):toC(src),b=mk(img.width,img.height),x=X2(b);x.fillStyle='rgb(255,42,42)';for(const r of o.blk||[])x.fillRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);
+      d.blds.push({k:o.key+(o.list?i:''),name:o.n+(o.list?' '+(i+1):''),key:o.key,li:o.list?i:null,off,st:o.st,path:o.st?o.st[0]:o.src,x:q[0]-off[0],y:q[1]-off[1],w:img.width,h:img.height,img,blk:b,south:true,fade:0,bo:o.bo});});}
+  const sw=col=>{const c=mk(1,1),x=X2(c);x.fillStyle=col;x.fillRect(0,0,1,1);return png(c);},mark=(k,n,s,t,col,o)=>d.marks.push({k,n,s,t,col,thumb:sw(col),...o});
+  mark('spawn','Spawn','spawn','pt','#ffcf5e',{x:J.spawn[0],y:J.spawn[1]});mark('door',P.doorN,P.doorS,'pt',P.doorS==='door'?'#6fdc8c':'#6cd6ff',{x:J.door[0],y:J.door[1]});
+  for(const q of Array.isArray(lay.props)?lay.props:[]){if(!LIB[q.lib]){d.keep.push(q);continue;}d.props.push(flatP({lib:q.lib,x:q.x,y:q.y,fade:q.fade!==false,solid:q.solid!==false,shadow:q.shadow!==false,flip:!!q.flip}));}
+  return d;}
+function placeLayout(d){const P=PLACES[d.place],m=k=>d.marks.find(m=>m.k===k),at=b=>[Math.round(b.x+b.off[0]),Math.round(b.y+b.off[1])];let L={...d.lay};if(!L.note)L={note:P.note,...L};
+  for(const o of P.objs){const B=d.blds.filter(b=>b.key===o.key).sort((a,b)=>a.li-b.li);if(B.length)L[o.key]=o.list?B.map(at):at(B[0]);}
+  L.spawn=[Math.round(m('spawn').x),Math.round(m('spawn').y)];L.door=[Math.round(m('door').x),Math.round(m('door').y)];if(P.floor)L.walk=1;
   L.props=[...d.props.map(p=>({lib:p.lib,x:p.x,y:p.y,flip:!!p.flip,shadow:!!p.shadow,solid:!!p.solid,fade:!!p.fade})),...d.keep];
   return'{\n'+Object.entries(L).map(([k,v])=>'  '+JSON.stringify(k)+': '+JSON.stringify(v)).join(',\n')+'\n}\n';}
 /* layout.json again, from what is on the map now (the note and anything else in the file are kept as they were) */
@@ -466,14 +517,14 @@ async function openSprite(path){const im=await loadImg('/'+path);return{kind:'sp
 function libDoc(id){const L=LIB[id];return{kind:'sprite',name:'Prop: '+id,libId:id,w:L.c.width,h:L.c.height,ox:0,day:L.c,night:null,block:null,props:[],opaque:false};}
 
 async function show(key){commitFloat();let d=DOCS[key];
-  try{if(!d){if(key==='town')d=await openTown();else if(key==='south')d=await openSouth();else if(key==='lake')d=await openLake();else if(key==='forest')d=await openForest();else if(key==='room')d=await openRoom();else if(key.startsWith('hall:'))d=await openHall(key.slice(5));else if(key.startsWith('lib:'))d=libDoc(key.slice(4));else if(key.startsWith('bmask:'))d=openBMask(key.slice(6));else d=await openSprite(key);DOCS[key]=d;d.key=key;await loadLayers(d);}}
+  try{if(!d){if(key==='town')d=await openTown();else if(key==='south')d=await openSouth();else if(key==='lake')d=await openLake();else if(key==='forest')d=await openForest();else if(PLACES[key])d=await openPlace(key);else if(key==='room')d=await openRoom();else if(key.startsWith('hall:'))d=await openHall(key.slice(5));else if(key.startsWith('lib:'))d=libDoc(key.slice(4));else if(key.startsWith('bmask:'))d=openBMask(key.slice(6));else d=await openSprite(key);DOCS[key]=d;d.key=key;await loadLayers(d);}}
   catch(e){toast('Could not open: '+e.message,true);return;}
-  if(d.kind==='south')for(const b of d.blds){const q=DOCS[b.path];if(q){b.img=q.day;b.w=q.w;b.h=q.h;b.thumb=null;}}   /* a building picture he just edited */
+  if(d.kind==='south')for(const b of d.blds){const q=DOCS[b.path];if(q)bldPic(b,q);}   /* a building picture he just edited */
   MS.clear();S.doc=d;S.sel=null;S.selProp=null;S.selCab=null;S.selBld=null;S.selMark=null;S.placing=null;S.undo=[];S.redo=[];S.play=null;$('#bPlay').classList.remove('on');
-  if(!d.night){S.view='day';}if(S.layer==='block'&&!d.block)S.layer='ground';if(S.layer==='props'&&!isMap(d)&&d.kind!=='room')S.layer='ground';if(S.layer==='ref'&&(!isMap(d)||d.lake))S.layer='ground';if(S.layer==='mark'&&!d.marks)S.layer='ground';if(S.layer==='glow'&&!d.glows)S.layer='ground';S.selGlow=null;if(S.layer.startsWith('L:')&&!curL())S.layer='ground';
+  if(!d.night){S.view='day';}if(S.layer==='block'&&!d.block)S.layer='ground';if(S.layer==='props'&&!isMap(d)&&d.kind!=='room')S.layer='ground';if(S.layer==='ref'&&(!isMap(d)||d.lake&&!d.objs))S.layer='ground';if(S.layer==='mark'&&!d.marks)S.layer='ground';if(S.layer==='glow'&&!d.glows)S.layer='ground';S.selGlow=null;if(S.layer.startsWith('L:')&&!curL())S.layer='ground';
   if(d.kind==='bmask'){S.layer='block';S.vis.block=true;if(!['pencil','eraser','fill','rect','line'].includes(S.tool))setTool('pencil');}
   fillDocSel();fit();buildPal();ui();draw();}
-function fillDocSel(){const s=$('#docSel');const opts=[['town','Town map'],['south','The South'],['lake','The Lake'],['forest','The Forgotten Forest'],...GAME.blds.map(b=>['hall:'+b.k,'Inside: '+b.name]),['room','Cabin room (furniture)']];
+function fillDocSel(){const s=$('#docSel');const opts=[['town','Town map'],['south','The South'],['lake','The Lake'],['forest','The Forgotten Forest'],...Object.entries(PLACES).map(([k,P])=>[k,P.name]),...GAME.blds.map(b=>['hall:'+b.k,'Inside: '+b.name]),['room','Cabin room (furniture)']];
   for(const k of Object.keys(DOCS))if(!opts.some(o=>o[0]===k))opts.push([k,DOCS[k].name]);
   s.innerHTML=opts.map(([k,n])=>`<option value="${k}">${n}${DOCS[k]?.dirty?' *':''}</option>`).join('');s.value=S.doc?.key||'town';}
 
@@ -863,7 +914,7 @@ function ui(){const d=S.doc;if(!d)return;$('#cfg').style.background=S.fg;$('#cbg
   $('#vSoft').textContent=S.soft;$('#vDens').textContent=S.dens;$('#vOpac').textContent=S.opac;$('#vDet').textContent=S.detail;
   $('#tiles').innerHTML=TILES.map((T,i)=>`<div class="tl ${S.tile===T?'on':''}" data-ti="${i}" title="${T.w}×${T.h}${T.vs.length>1?', '+T.vs.length+' looks':''}. Click to paint with it, click again to stop." style="background-image:url(${T.vs[0].url})">${T.vs.length>1?'<b>'+T.vs.length+'</b>':''}</div>`).join('');
   $('#bDay').classList.toggle('on',S.view==='day');$('#bNight').classList.toggle('on',S.view==='night');$('#bNight').disabled=!d.night;$('#cBoth').disabled=!d.night;$('#cBoth').checked=S.both;
-  const Ltop=[['rimg','Reference picture'],...(d.glows?[['glow','Glows']]:[]),...(d.marks?[['mark','Doors + roads']]:[]),...(d.block?[['block','Blocked paths']]:[]),...(isMap(d)&&!d.lake?[['ref',d.kind==='south'?'Buildings + stalls':'Cabins + buildings']]:[]),...(isMap(d)||d.kind==='room'?[['props',d.kind==='room'?'Furniture':'Props']]:[])],Lbot=[['ground',d.night?'Ground':'Picture']];
+  const Ltop=[['rimg','Reference picture'],...(d.glows?[['glow','Glows']]:[]),...(d.marks?[['mark','Doors + roads']]:[]),...(d.block?[['block','Blocked paths']]:[]),...(isMap(d)&&(!d.lake||d.objs)?[['ref',d.objs?'Quest things':d.kind==='south'?'Buildings + stalls':'Cabins + buildings']]:[]),...(isMap(d)||d.kind==='room'?[['props',d.kind==='room'?'Furniture':'Props']]:[])],Lbot=[['ground',d.night?'Ground':'Picture']];
   const kids=k=>k==='props'?d.props.map((p,i)=>({id:'p'+i,o:p,n:(p.name||p.lib),th:LIB[p.lib],on:S.selProp===p})):k==='ref'?[...d.cab.map((c,i)=>({id:'c'+i,o:c,n:'Cabin '+(i+1),img:c.img,on:S.selCab===c})),...d.blds.map((b,i)=>({id:'b'+i,o:b,n:b.name,img:b.img,on:S.selBld===b}))]:k==='mark'?d.marks.map((m,i)=>({id:'m'+i,o:m,n:m.n,on:S.layer==='mark'&&S.selMark===m})):[];
   const thumb=q=>{if(q.th)return q.th.thumb||(q.th.thumb=png(q.th.c));const o=q.o;return o.thumb||(o.thumb=png(toC(q.img)));};
   const row=([k,n])=>{const ks=kids(k),op=S.open[k]&&ks.length;
@@ -1117,8 +1168,8 @@ async function save(){commitFloat();let d=S.doc;if(d.libId){d.dirty=false;d=Obje
       {const g=d.dir?d.dir+d.gnd:d.lake?'assets/fishing/lake':'assets/south/day';files.push({path:g+'.png',b64:png(FD),mode:'RGB'},{path:g+'-walk.png',b64:png(maskOut(d.block,false)),mode:'L'});}   /* d.dir: a map with its own folder (the Forgotten Forest: assets/forest/night.png) */   /* THE LAKE is saved the same way, into assets/fishing (never lake-water.png) */
       const libs=Object.values(LIB).filter(l=>!l.fixed);for(const l of libs)if(l.dirty)files.push({path:'assets/builder/props/'+l.id+'.png',b64:png(l.c)});
       files.push({path:'assets/builder/library.json',text:JSON.stringify(libs.map(l=>({id:l.id,fxo:l.fxo,baseo:l.baseo,fw:l.fw})))});
-      for(const pth of new Set(d.blds.map(b=>b.path))){const q=DOCS[pth];if(q&&q.dirty){files.push({path:pth,b64:png(flat(q,false))});q.dirty=false;}if(q)for(const b of d.blds)if(b.path===pth){b.img=q.day;b.w=q.w;b.h=q.h;b.thumb=null;}}
-      files.push(d.dir?{path:d.dir+'layout.json',text:lakeLayout(d)}:d.lake?{path:'assets/fishing/layout.json',text:lakeLayout(d)}:{path:'assets/south/layout.json',text:southLayout(d)});
+      for(const pth of new Set(d.blds.map(b=>b.path))){const q=DOCS[pth];if(q&&q.dirty){files.push({path:pth,b64:png(flat(q,false))});q.dirty=false;}if(q)for(const b of d.blds)if(b.path===pth)bldPic(b,q);}
+      files.push(d.layp?{path:d.layp,text:placeLayout(d)}:d.dir?{path:d.dir+'layout.json',text:lakeLayout(d)}:d.lake?{path:'assets/fishing/layout.json',text:lakeLayout(d)}:{path:'assets/south/layout.json',text:southLayout(d)});
     }else if(d.kind==='bmask'){files.push({path:`assets/buildings/${d.k}-block.png`,b64:png(maskOut(d.block,true)),mode:'L'});
     }else if(d.kind==='hall'){files.push({path:`assets/interiors/${d.k}.png`,b64:png(FD),mode:'RGB'},{path:`assets/interiors/${d.k}-walk.png`,b64:png(maskOut(d.block,false)),mode:'L'});}
     else if(d.kind==='room'){files.push({path:'assets/room-objects/room-empty.png',b64:png(FD)});const obj={},sh={};

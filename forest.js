@@ -59,14 +59,15 @@ function forestLoad() {
   const L = (k, src) => load(k, src).catch(() => {});
   const lay = fetch('assets/forest/layout.json?v=' + av('assets/forest/layout.json')).then(r => r.json()).then(J => { forestLayout(J);
     return Promise.all([...new Set(F_PROPS.map(q => q.lib))].map(k => L('sp/' + k, `assets/builder/props/${k}.png`))); }).catch(() => {});
-  return Promise.all([lay, L('hall/forest', 'assets/forest/night.png'), L('fwalk', 'assets/forest/night-walk.png'), L('f/mural', 'assets/forest/mural.png'), L('f/map', 'assets/forest/map.png'),
+  return Promise.all([lay, L('hall/forest', 'assets/forest/night.png'), L('fwalk', 'assets/forest/night-walk.png'),   /* (27 Nov 2026, his ask) the stone mural with the 4 shapes is gone: it looked like the keystone altar, and that is only at the temple */
+L('f/map', 'assets/forest/map.png'),
     L('f/gap-day', 'assets/forest/gap-day.png'), L('f/gap-night', 'assets/forest/gap-night.png'), ...[1, 2, 3, 4].map(i => L('f/moss' + i, `assets/forest/moss${i}.png`)),
     ...['front', 'right', 'back', 'left'].map(d => L('pipw/' + d, `assets/final/pip/well-${d}.png`)),   // Pip, mended (mine.js draws him)
   ]).then(forestMask);
 }
 function forestMask() {   // the walk mask, with the mural and the feet of his trees cut out of it
-  const g = IMG.fwalk; if (!g) return; const mu = IMG['f/mural'], mw = mu ? mu.width : 91, mh = mu ? mu.height : 42;
-  IMG['hallw/forest'] = maskCanvas(g.width, g.height, null, [[F_MURAL.x - 1, F_MURAL.y, F_MURAL.x + mw + 1, F_MURAL.y + mh + 3], ...F_PROPS.filter(q => q.solid !== false).map(propFoot).filter(Boolean)], g);
+  const g = IMG.fwalk; if (!g) return;
+  IMG['hallw/forest'] = maskCanvas(g.width, g.height, null, [...F_PROPS.filter(q => q.solid !== false).map(propFoot).filter(Boolean)], g);
   FRH.g = null;
 }
 

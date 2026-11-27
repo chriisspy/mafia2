@@ -1,0 +1,8 @@
+{
+  "note": "THE HIDDEN TEMPLE's layout (27 Nov 2026). Read by temple.js at load (hollowLayout) and edited by the map builder ('The Hidden Temple'). temple, altar = top left of each baked picture; spawn = where you appear coming up from the South; door = where the path back down leaves; props = the trees and rocks placed in the builder.",
+  "temple": [138,-1],
+  "altar": [174,186],
+  "spawn": [200,500],
+  "door": [200,522],
+  "props": []
+}

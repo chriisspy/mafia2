@@ -34,7 +34,9 @@ const CRY_NAME = {e: 'emerald', u: 'ruby', d: 'diamond'}, CRY_GLOW = {e: '90,255
 
 function mineLoad() {
   const L = (k, src) => load(k, src).catch(() => {});
-  return Promise.all([L('hall/smithy', 'assets/interiors/smithy.png'), L('smith/front', 'assets/final/smith/front.png'),
+  const lay = fetch('assets/smithy/layout.json?v=' + av('assets/smithy/layout.json')).then(r => r.ok ? r.json() : null).then(smithyLayout).catch(e => console.warn(e))   /* (27 Nov 2026, his ask) the map builder's file, before the mask is made */
+    .then(() => Promise.all([...new Set(SM_PROPS.map(q => q.lib))].map(k => L('sp/' + k, `assets/builder/props/${k}.png`)).concat(SM_D.walk ? [L('smwalk', 'assets/interiors/smithy-walk.png')] : [])));
+  return Promise.all([lay, L('hall/smithy', 'assets/interiors/smithy.png'), L('smith/front', 'assets/final/smith/front.png'),
     L('mine/rocks', 'assets/mine/rocks.png'), L('mine/props', 'assets/mine/props.png'), L('smith/work', 'assets/final/smith/work.png'),
     fetch('assets/final/smith/work.json?v=' + BUILD).then(r => r.json()).then(j => { SMW.rows = j.rows; SMW.cell = j.cell; }).catch(() => {}), L('mine/walls', 'assets/mine/walls.png'), L('mine/floor', 'assets/mine/floor.png'), L('mine/lift', 'assets/mine/lift.png'),
     ...['forge', 'anvil', 'counter', 'toolrack', 'barrel', 'coal', 'grindstone', 'coins'].map(k => L('sm/' + k, `assets/smithy/${k}.png`)),
@@ -42,7 +44,7 @@ function mineLoad() {
     ...['wood', 'stone', 'iron', 'steel', 'gold', 'diamond'].flatMap(k => [L('pick/' + k, `assets/mine/picks/${k}.png`), L('pick/' + k + '-swing', `assets/mine/picks/${k}-swing.png`)])]).then(mineMasks);
 }
 function mineMasks() {
-  const sm = IMG['hall/smithy']; if (sm) IMG['hallw/smithy'] = maskCanvas(sm.width, sm.height, [[14, 82, 296, 214], [146, 212, 165, 226]], SMITHY_OBJS.filter(o => o.solid).map(o => o.solid));
+  const sm = IMG['hall/smithy']; if (sm) IMG['hallw/smithy'] = maskCanvas(sm.width, sm.height, [[14, 82, 296, 214], [146, 212, 165, 226]], [...SMITHY_OBJS.filter(o => o.solid).map(o => o.solid), ...SM_PROPS.filter(q => q.solid !== false).map(propFoot).filter(Boolean)], (SM_D.walk && IMG.smwalk) || undefined);   // (27 Nov 2026) the floor is his painted mask once the map builder has saved one; the feet of his props are solid
   HALLS[SMITHY - 100].g = null; mineGeo(1); mineFill('');   // a first cave, so the place always has a floor to stand on
 }
 
@@ -223,7 +225,7 @@ function smithProps(S, t) {   // the little things round him, drawn in code: the
   if (S.st === 'bar') { P1('#01032e', S.x + 3, S.y - 13, 7, 4); P1('#ffb24a', S.x + 4, S.y - 12, 5, 2); }
 }
 /* (25 Nov, his note) THE GOLD ON THE ANVIL rests ON its flat top, drawn right after the anvil so the anvil never covers it */
-const ANVIL_TOP = [112, 161], ANVIL_BASE = 158 + 26 - 2;   // the anvil's flat top, where his hammer lands; ANVIL_BASE = its feet on the floor
+const ANVIL_TOP = [112, 161]; let ANVIL_BASE = 158 + 26 - 2;   // the anvil's flat top, where his hammer lands; ANVIL_BASE = its feet on the floor
 function anvilGold(t) { const S = smithNow(); if (S.home || S.st !== 'anvil') return;
   const q = Math.floor(t / 90), coinsK = clamp((S.se - 30) / 80, 0, 1), bx = ANVIL_TOP[0], by = ANVIL_TOP[1];   // a glowing bar that turns, blow by blow, into coins
   if (coinsK < 1) { P1('#01032e', bx, by - 1, 9, 4); P1(S.se < 40 ? '#ffb24a' : '#e8b13a', bx + 1, by, 7, 2); P1('#fff0a0', bx + 2, by, 3, 1); }
@@ -242,7 +244,7 @@ function smithSound(S) {   // only while you are in his shop: the hammer rings, 
   if (S.st === 'anvil' && S.anim === 'hammer') { const hit = S.k > .55; if (hit && !smithSound.h) sfx('anvil'); smithSound.h = hit; } else smithSound.h = 0;
   if (S.st === 'barrel' && S.anim === 'pour' && S.k > .3) { if (!smithSound.q || performance.now() - smithSound.q > 3000) { smithSound.q = performance.now(); sfx('quench'); } }
 }
-SMH.objs = (t) => SMITHY_OBJS.map(o => {
+SMH.objs = (t, dt) => SMITHY_OBJS.map(o => {
   const im = o.k === 'pickwall' ? pickWall() : IMG['sm/' + o.k]; if (!im) return null;
   const r = {img: im, x: o.x, y: o.y, base: o.wall ? 0 : o.y + im.height - 2};
   if (o.k === 'pickwall') r.after = () => pickWallAfter(t);
@@ -251,13 +253,26 @@ SMH.objs = (t) => SMITHY_OBJS.map(o => {
     const cp = IMG['sm/coins']; if (S.ready && cp) lx.drawImage(cp, X(COIN_PILE[0] - (cp.width >> 1)), Y(COIN_PILE[1] - cp.height)); };   // your coins, waiting ON the counter top (PixelLab pile, 25 Nov)
   if (o.k === 'forge') r.after = () => forgeFire(t);
   if (o.k === 'anvil') r.after = () => anvilGold(t);
-  return r; }).filter(Boolean).concat(smithObj(t) || []);
+  return r; }).filter(Boolean).concat(smithObj(t) || [], typeof propObjs === 'function' ? propObjs(SM_PROPS, WL.me, dt || 0) : []);   // his own props (27 Nov 2026, the map builder; temple.js propObjs)
 function forgeFire(t) {   // a few solid embers hopping in the forge's mouth
-  const k = Math.floor(t / 110); for (let i = 0; i < 5; i++) { const ph = (k + i * 7) % 9; lx.fillStyle = ph % 3 ? '#ffb24a' : '#ffe9a8'; lx.fillRect(X(46 + ((i * 7 + k) % 22)), Y(72 - ph), 1, 1); }
+  const k = Math.floor(t / 110); for (let i = 0; i < 5; i++) { const ph = (k + i * 7) % 9; lx.fillStyle = ph % 3 ? '#ffb24a' : '#ffe9a8'; lx.fillRect(X(46 + smD('forge')[0] + ((i * 7 + k) % 22)), Y(72 + smD('forge')[1] - ph), 1, 1); }
 }
-SMH.lights = (fl) => { const S = smithNow(), L = [[57, 66, 58, '255,140,60', .24 + .14 * fl + (S.st === 'forge' ? .1 : 0), 1], [240, 104, 30, '255,210,140', .08, 2], [70, 18, 16, '255,214,130', .12, 3], [240, 18, 16, '255,214,130', .12, 4]];
+SMH.lights = (fl) => { const S = smithNow(), L = [[57 + smD('forge')[0], 66 + smD('forge')[1], 58, '255,140,60', .24 + .14 * fl + (S.st === 'forge' ? .1 : 0), 1], [240 + smD('counter')[0], 104 + smD('counter')[1], 30, '255,210,140', .08, 2], [70, 18, 16, '255,214,130', .12, 3], [240, 18, 16, '255,214,130', .12, 4]];
   if (S.st === 'anvil' && S.se < 60) L.push([ANVIL_TOP[0] + 4, ANVIL_TOP[1], 14, '255,170,70', .25, 5]); if (S.st === 'carry' || (S.st === 'barrel' && S.anim === 'pour')) L.push([S.x, S.y - 12, 12, '255,170,70', .25, 6]); return L; };
 SMH.enter = () => { goldChip.sig = ''; goldChip(); $('#hallLine').textContent = ''; };
+/* (27 Nov 2026, his ask) THE MAP BUILDER ("Inside: The Blacksmith") moves the furniture: assets/smithy/layout.json overrides SMITHY_OBJS at load (forge, barrel,
+   anvil, coal, counter, grindstone, toolrack = each picture's top left; spawn, door; props = his own; walk = the floor is his painted mask,
+   assets/interiors/smithy-walk.png). SM_D = how far each was moved: its solid box, and whatever is done AT it (his spots and paths at the forge, the water
+   and the anvil, the gold on the anvil, his place behind the counter and the coins on it, the fire and the glows) move by the same. Read once. */
+const SM_D = {}, SM_PROPS = [], smD = k => SM_D[k] || [0, 0];
+function smithyLayout(L) {
+  if (!L) return; const ok = v => Array.isArray(v) && v.length > 1 && isFinite(v[0]) && isFinite(v[1]), sh = (d, ...P) => { for (const p of P) { p[0] += d[0]; p[1] += d[1]; } };
+  for (const o of SMITHY_OBJS) { const v = L[o.k]; if (o.k === 'pickwall' || !ok(v)) continue; const d = SM_D[o.k] = [(v[0] | 0) - o.x, (v[1] | 0) - o.y]; o.x += d[0]; o.y += d[1]; if (o.solid) o.solid = [o.solid[0] + d[0], o.solid[1] + d[1], o.solid[2] + d[0], o.solid[3] + d[1]]; }
+  sh(smD('forge'), SM_AT.forge, SM_P1[2]); sh(smD('barrel'), SM_AT.barrel); sh(smD('anvil'), SM_AT.anvil, SM_P3[1], SM_P4[1], ANVIL_TOP); ANVIL_BASE += smD('anvil')[1];
+  { const d = smD('counter'), s = SMH.spots[0]; sh(d, SMITH_AT, SM_P1[1], SM_P4[2], SM_P4[3], COIN_PILE, s.stand); s.hit = [s.hit[0] + d[0], s.hit[1] + d[1], s.hit[2] + d[0], s.hit[3] + d[1]]; }
+  if (ok(L.spawn)) SMH.spawn = [L.spawn[0] | 0, L.spawn[1] | 0]; if (ok(L.door)) SMH.door = [L.door[0] | 0, L.door[1] | 0];
+  SM_PROPS.splice(0, SM_PROPS.length, ...(Array.isArray(L.props) ? L.props : [])); SM_D.walk = !!L.walk;
+}
 SMH.spots = [{k: 'smith', hit: [196, 78, 290, 148], stand: [240, 156], dir: 'back', use: () => smithOpen()},
   {k: 'picks', hit: [PICKWALL.x, PICKWALL.y - 4, PICKWALL.x + PICKWALL.w, PICKWALL.y + PICKWALL.h + 6], stand: [PICKWALL.x + PICKWALL.w / 2, 88], dir: 'back', use: () => pickOpen()}];
 SMH.ambT = 0;
