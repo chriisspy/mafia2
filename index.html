@@ -401,6 +401,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #townToast.on{opacity:1;transform:translate(-50%,0)}#townToast.bad{border-color:#e4544f;color:#ffd9d6}#townToast.good{border-color:#6fd08a;color:#dcffe6}
 #wheelPop,#casePop{position:absolute;transform:translate(-50%,-100%);display:none;align-items:center;gap:8px;white-space:nowrap;background:#0b0918f0;color:#fff;border:3px solid #ffd25e;border-radius:6px;box-shadow:0 0 0 3px #0b0918,0 5px 0 #0009;padding:5px 12px 6px 6px;z-index:4;font-size:18px;font-weight:700;line-height:1.1}
 #wheelPop.on,#casePop.on{display:flex}#wheelPop img.f,#casePop img.f{width:36px;height:36px;image-rendering:pixelated}#wheelPop small,#casePop small{display:block;font-size:11px;font-weight:600;letter-spacing:1px;color:#ffe9a8}#wheelPop b,#casePop b{display:flex;align-items:center;gap:5px}#casePop img.rm{border-radius:3px}
+#buyModal{z-index:12}#buyPacks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}.bpack{display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff6df;border:3px solid var(--wood);border-radius:6px;padding:10px 4px;font:700 20px "Pixelify Sans";color:var(--text);box-shadow:0 3px 0 #0004;cursor:pointer}.bpack .btn{font-size:16px;padding:6px 10px 9px}.bpack:disabled{opacity:.5}#buyTerms{display:block;text-align:center;margin-top:8px;font-size:14px;color:var(--text);opacity:.7}
 #wheelModal{text-align:center}#wheelModal .mhead{text-align:left}
 #wheelCv{display:block;width:min(303px,78%);margin:8px auto 2px;image-rendering:pixelated}
 #wheelRes{min-height:30px;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
@@ -1048,6 +1049,11 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
       <button class="btn red wide" id="flipGo">Flip</button>
       <div class="small" id="flipSub"></div></div>
     </div>
+    <div class="modal panel" id="buyModal">   <!-- BUY COINS (27 Nov 2026, his ask): Stripe Checkout, functions/coins.js -->
+      <div class="mhead"><b>COINS</b><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><button class="btn" id="buyX"><i data-ic="cross" data-c="solo"></i></button></div>
+      <div id="buyPacks"><button class="bpack" data-p="p1"><i data-ic="coin" data-s="4" data-c="solo"></i><b>1,000</b><span class="btn go">$2.50</span></button><button class="bpack" data-p="p2"><i data-ic="coin" data-s="4" data-c="solo"></i><b>2,500</b><span class="btn go">$5</span></button><button class="bpack" data-p="p3"><i data-ic="coin" data-s="4" data-c="solo"></i><b>6,500</b><span class="btn go">$10</span></button></div>
+      <a id="buyTerms" href="terms.html" target="_blank" rel="noopener">Refunds and terms</a>
+    </div>
     <div class="modal panel" id="fishModal">
       <div class="mhead"><b>YOU CAUGHT</b><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span></div>
       <div id="fcStage"><canvas id="fcCv" width="96" height="64"></canvas><div id="fcTag">NEW</div></div>
@@ -1458,7 +1464,7 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11271133'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11271216'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -4869,6 +4875,17 @@ function netLoad(){if(NET.ready)return NET.ready;
    outfits come over once (capped by the server). */
 async function srv(op,d){await netLoad();if(!NET.fn)NET.fn=NET.app.functions('asia-southeast1').httpsCallable('act');
   try{return(await NET.fn({op,dev:DEV.id,devName:DEV.name,...(d||{})})).data||{};}catch(e){const m=String(e&&e.message||'');throw new Error(/internal|network|deadline|unavailable/i.test(m)||!m?'No connection. Try again.':m);}}
+/* BUY COINS (27 Nov 2026, his ask: $2.50 = 1,000, $5 = 2,500, $10 = 6,500, AUD). Tap the coins on the home screen. The server (functions/coins.js, `buy`)
+   makes a Stripe Checkout page for the pack and the phone goes there; after paying Stripe sends it back with ?paid=..., and the coins arrive by
+   themselves when Stripe tells the server (the wallet watcher shows them). Prices live on the server; the buttons only name a pack. */
+function buyOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));$('#buyModal').classList.add('on');}
+$('#buyX').onclick=()=>$('#buyModal').classList.remove('on');
+const BUY_OPEN=false;   /* the shop is in Stripe TEST mode until his account is verified and the live keys are in: until then only the lab on this computer can open it */
+if(BUY_OPEN||LABLOCAL)document.querySelectorAll('.hwal').forEach(e=>{e.onclick=buyOpen;e.style.cursor='pointer';});
+$('#buyPacks').onclick=async e=>{const b=e.target.closest('.bpack');if(!b||b.disabled)return;const all=[...document.querySelectorAll('#buyPacks .bpack')];all.forEach(q=>q.disabled=true);
+  try{await netLoad();const r=(await NET.app.functions('asia-southeast1').httpsCallable('buy')({pack:b.dataset.p,back:location.href})).data||{};if(!r.url)throw new Error('');location.href=r.url;}
+  catch(err){const m=String(err&&err.message||'');toast(/internal|network|deadline|unavailable|not-found/i.test(m)||!m?'The shop is not open right now. Try again later.':m);all.forEach(q=>q.disabled=false);}};
+{const q=new URLSearchParams(location.search);if(q.get('paid')){toast('Thanks! Your coins are on the way.');q.delete('paid');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q.toString().replace(/=(&|$)/g,'$1'):''));}}
 /* ================= ONE DEVICE PER ACCOUNT (21 Nov 2026, his call, against scripts farming one account on many phones) =================
    This browser has its own id (kept in its storage). The server gives the account to the first device that plays and refuses
    every other one (functions/index.js, `act`); device/{uid} = {id, name, at} says which. A refused device shows #devModal:

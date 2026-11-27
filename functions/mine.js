@@ -11,11 +11,11 @@
 //           day.md / day.m / day.mc   this hour's key, gold chunks dug this hour, crystals dug this hour (the mine refills every hour)
 // MR = the numbers. THE SAME NUMBERS LIVE IN mine.js (the phone draws the hits from them): change both.
 const MR = {
-  picks: [{ id: 'wood', price: 0, pow: 1 }, { id: 'stone', price: 50, pow: 2 }, { id: 'iron', price: 200, pow: 3 }, { id: 'steel', price: 700, pow: 5 }, { id: 'gold', price: 2500, pow: 8 }, { id: 'diamond', price: 3500, cry: 5, pow: 12 }],   // (25 Nov, his ask) the diamond pickaxe is CRAFTED: 3500 coins + 5 crystals
+  picks: [{ id: 'wood', price: 0, pow: 1 }, { id: 'stone', price: 250, pow: 2 }, { id: 'iron', price: 500, pow: 3 }, { id: 'steel', price: 1000, pow: 5 }, { id: 'gold', price: 2500, pow: 8 }, { id: 'diamond', price: 3500, cry: 5, pow: 12 }],   // (25 Nov, his ask) the diamond pickaxe is CRAFTED: 3500 coins + 5 crystals
   levels: 12, lvmul: [1, 1.3, 1.7, 2.2, 2.8, 3.5, 4.4, 5.4, 6.6, 8, 9.6, 11.5],   // (25 Nov, his ask) 12 levels, two to a pickaxe (need)
   hp: { s: 3, g: 4, r: 6, w: 4, G: 5, R: 7, e: 30, u: 36, d: 44 },   // s stone, g gold rock, r rich rock, w plain wall, G gold vein, R rich vein, e emerald, u ruby, d diamond
   rocks: 16, veins: 8, rockOdds: [[70, 28, 2], [64, 32, 4], [58, 36, 6], [53, 38, 9], [48, 40, 12], [44, 41, 15], [40, 42, 18], [36, 43, 21], [32, 44, 24], [28, 45, 27], [24, 45, 31], [20, 45, 35]],
-  cryFrom: 7, cryOdds: [0, 0, 0, 0, 0, 0, .002, .003, .005, .007, .011, .015], cryMix: [0, 0, 0, 0, 0, 0, [90, 10, 0], [80, 20, 0], [70, 25, 5], [62, 30, 8], [50, 35, 15], [40, 38, 22]], cryYield: { e: 1, u: 2, d: 4 }, cryKeep: 3,
+  cryFrom: 7, cryOdds: [0, 0, 0, 0, 0, 0, 1 / 350, 1 / 250, 1 / 175, 1 / 120, 1 / 85, 1 / 60]   /* (27 Nov 2026, his call) 1 in 350 rocks on level 7, easier each level down */, cryMix: [0, 0, 0, 0, 0, 0, [90, 10, 0], [80, 20, 0], [70, 25, 5], [62, 30, 8], [50, 35, 15], [40, 38, 22]], cryYield: { e: 1, u: 2, d: 4 }, cryKeep: 3,
   goldMul: [1, 1.25, 1.5, 1.8, 2.1, 2.5, 3, 3.5, 4, 4.6, 5.3, 6],   // round 3 (his note): gold rocks and veins pay this many times more per level
   bait: { n: 5, price: 150, max: 20 },   // (26 Nov) GLIMMER BAIT, sold by Pip once he is mended (gbuy): this many for this many coins, and the most you can carry
   fallLoss: .2,       // (25 Nov) passing out in the mine (mfall) costs this share of the gold chunks you carry

@@ -408,4 +408,16 @@ exports.act = onCall({ region: 'asia-southeast1', maxInstances: 10 }, async req 
   const r = await f(uid, d) || {};
   return r;
 });
+// BUYING COINS (27 Nov 2026): functions/coins.js. Its own two functions, so `act` never needs the Stripe secrets:
+//   buy = the phone asks for a Stripe Checkout page for a pack; stripeHook = Stripe tells us it was paid (the coins are added there).
+const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
+const STRIPE_SK = defineSecret('STRIPE_SK'), STRIPE_WH = defineSecret('STRIPE_WH');
+const COINS = require('./coins.js')({ db, bad, tx, SK: () => STRIPE_SK.value() });
+exports.buy = onCall({ region: 'asia-southeast1', maxInstances: 5, secrets: [STRIPE_SK] }, async req => {
+  const uid = req.auth && req.auth.uid; if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
+  const d = req.data || {}; d._google = !!(req.auth.token && req.auth.token.firebase && req.auth.token.firebase.sign_in_provider === 'google.com');
+  return COINS.ops.coinBuy(uid, d);
+});
+exports.stripeHook = onRequest({ region: 'asia-southeast1', maxInstances: 5, secrets: [STRIPE_WH] }, (req, res) => COINS.hook(req, res, () => STRIPE_WH.value()));
 exports.ping = onCall({ region: 'asia-southeast1' }, req => ({ ok: true, uid: req.auth ? req.auth.uid : null, t: Date.now() }));

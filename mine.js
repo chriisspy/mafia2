@@ -15,13 +15,13 @@
    MR = the numbers. THE SAME NUMBERS LIVE IN functions/mine.js: change both. */
 
 const MR = {
-  picks: [{id: 'wood', name: 'Wooden pickaxe', price: 0, pow: 1}, {id: 'stone', name: 'Stone pickaxe', price: 50, pow: 2}, {id: 'iron', name: 'Iron pickaxe', price: 200, pow: 3},
-    {id: 'steel', name: 'Steel pickaxe', price: 700, pow: 5}, {id: 'gold', name: 'Gold pickaxe', price: 2500, pow: 8},
+  picks: [{id: 'wood', name: 'Wooden pickaxe', price: 0, pow: 1}, {id: 'stone', name: 'Stone pickaxe', price: 250, pow: 2}, {id: 'iron', name: 'Iron pickaxe', price: 500, pow: 3},
+    {id: 'steel', name: 'Steel pickaxe', price: 1000, pow: 5}, {id: 'gold', name: 'Gold pickaxe', price: 2500, pow: 8},
     {id: 'diamond', name: 'Diamond pickaxe', price: 3500, cry: 5, pow: 12}],   // (25 Nov, his ask) crafted: 3500 coins + 5 crystals   // pickaxe n digs down to level n + 1; only the last one breaks crystal
   levels: 12, lvmul: [1, 1.3, 1.7, 2.2, 2.8, 3.5, 4.4, 5.4, 6.6, 8, 9.6, 11.5],   // (25 Nov, his ask) 12 levels, two to a pickaxe (mNeed); lvmul = how much harder each level's stone is
   hp: {s: 3, g: 4, r: 6, w: 4, G: 5, R: 7, e: 30, u: 36, d: 44},            // s stone, g gold rock, r rich rock, w plain wall, G gold vein, R rich vein, e emerald, u ruby, d diamond
   rocks: 16, veins: 8, rockOdds: [[70, 28, 2], [64, 32, 4], [58, 36, 6], [53, 38, 9], [48, 40, 12], [44, 41, 15], [40, 42, 18], [36, 43, 21], [32, 44, 24], [28, 45, 27], [24, 45, 31], [20, 45, 35]],   // per level: stone, gold, rich (out of 100)
-  cryFrom: 7, cryOdds: [0, 0, 0, 0, 0, 0, .002, .003, .005, .007, .011, .015], cryMix: [0, 0, 0, 0, 0, 0, [90, 10, 0], [80, 20, 0], [70, 25, 5], [62, 30, 8], [50, 35, 15], [40, 38, 22]], cryYield: {e: 1, u: 2, d: 4}, cryKeep: 3,   // a crystal rock under a break: the chance, which one, how many crystals
+  cryFrom: 7, cryOdds: [0, 0, 0, 0, 0, 0, 1 / 350, 1 / 250, 1 / 175, 1 / 120, 1 / 85, 1 / 60]   /* (27 Nov 2026, his call) 1 in 350 rocks on level 7, easier each level down */, cryMix: [0, 0, 0, 0, 0, 0, [90, 10, 0], [80, 20, 0], [70, 25, 5], [62, 30, 8], [50, 35, 15], [40, 38, 22]], cryYield: {e: 1, u: 2, d: 4}, cryKeep: 3,   // a crystal rock under a break: the chance, which one, how many crystals
   goldMul: [1, 1.25, 1.5, 1.8, 2.1, 2.5, 3, 3.5, 4, 4.6, 5.3, 6],                                                // round 3, his note: "the lower you go ... the more gold chunks there are in each rock": gold rocks and veins pay this many times more per level
   bait: {n: 5, price: 150, max: 20},                                          // (26 Nov) GLIMMER BAIT, sold by Pip once he is mended: this many for this many coins, and the most you can carry (op gbuy)
   crackHits: 5,                                                               // (25 Nov) the cracked wall on level 12 (THE GLIMMERKIN, further down): this many swings with any pickaxe
