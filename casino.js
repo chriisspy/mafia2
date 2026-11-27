@@ -319,12 +319,12 @@ function slotLever(){const{ox,oy}=SLV,px=ox+121,py=oy+132,len=31;return{px,py,le
 /* ---- spinning ---- */
 async function slotSpin(){const a=slotAmt();if(SLOT.busy||SLOT.ask)return;
   if(coins<a){SLOT.msg={s:'NEED '+a,c:'#ff7a7a',until:SLOT.t+2.2};sfx('nope');return;}
-  SLOT.ask=true;let R;try{R=await srv('slot',{amt:a});}catch(e){SLOT.ask=false;SLOT.msg={s:'TRY AGAIN',c:'#ff7a7a',until:SLOT.t+2.2};sfx('nope');return;}SLOT.ask=false;   /* the server spins it */
+  SLOT.ask=true;coinHold(coins-a);let R;try{R=await srv('slot',{amt:a});}catch(e){SLOT.ask=false;coinFree();SLOT.msg={s:'TRY AGAIN',c:'#ff7a7a',until:SLOT.t+2.2};sfx('nope');return;}SLOT.ask=false;   /* the server spins it */
   SLOT.bet=a;SLOT.res=R.res;SLOT.srvWin=R.win|0;SLOT.busy=true;SLOT.win=0;SLOT.end=null;SLOT.msg=null;$('#slotWord').innerHTML='';
   try{localStorage.setItem('m2_slot_stake',String(a));}catch(e){}
   sfx('sl_spin');
   SLOT.reels.forEach((r,i)=>{const n=r.strip.length;let j=Math.round(r.p)+16+i*7;while(r.strip[((j%n)+n)%n]!==SLOT.res[i])j++;r.p=Math.round(r.p);r.p0=r.p;r.p1=j;r.t0=SLOT.t;r.T=.95+i*.45;r.done=false;});}
-function slotEnd(){const m=slotPays(SLOT.res),w=SLOT.srvWin|0;SLOT.busy=false;SLOT.win=w;SLOT.end={t:SLOT.t,m};brag('slot',{n:w-(SLOT.bet|0)});
+function slotEnd(){const m=slotPays(SLOT.res),w=SLOT.srvWin|0;SLOT.busy=false;SLOT.win=w;coinFree();   /* the reels have stopped: now the balance shows (index.html coinHold) */SLOT.end={t:SLOT.t,m};brag('slot',{n:w-(SLOT.bet|0)});
   if(w){sfx('cas_win');if(m>=80)sfx('bj_bj');SLOT.flash=m>=80?.6:.3;const{ox,oy}=SLV,J=SLOT.j;
     for(let k=0;k<(m>=80?70:30);k++){const a=-Math.PI*(.15+.7*Math.random()),sp=40+Math.random()*70;SLOT.parts.push({x:ox+J.hx+J.hw/2,y:oy+J.hy+J.hh-6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:1+Math.random()*.8,t:0,c:k%3});}
     for(let k=0;k<Math.min(6,2+m/40);k++)setTimeout(()=>sfx('coin'),300+k*140);

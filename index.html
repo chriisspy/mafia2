@@ -1564,7 +1564,7 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11271752'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11271758'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD;
 /* (27 Nov 2026, his report: "sometimes when i join a world it goes black") whatever breaks is written, small, after the version number, so a screenshot of the corner says what it was */
 function errTag(where,e){try{const m=String(e&&e.message||e).slice(0,70),ln=((e&&e.stack||'').match(/:(\d+):\d+/)||[])[1]||'';if(errTag.last===where+m)return;errTag.last=where+m;document.getElementById('buildTag').textContent='v'+BUILD+' '+where+(ln?' '+ln:'')+' '+m;}catch(_){}} // which version this is, so an old cached copy is easy to spot
@@ -2413,7 +2413,14 @@ try{const o=JSON.parse(localStorage.getItem('m2_owned')||'null');if(Array.isArra
   const c=localStorage.getItem('m2_coins');if(c!=null&&!isNaN(+c))coins=+c;
   const k=localStorage.getItem('m2_skin');if(k&&OWNED.has(k)){PEOPLE[0].skin=k;skinIdx=SKINS.findIndex(s=>s.id===k);}}catch(e){}
 function saveInv(){try{localStorage.setItem('m2_skin',PEOPLE[0].skin);localStorage.setItem('m2_room',myRoom);}catch(e){}if(typeof homePaint==='function'){try{localStorage.setItem('m2_wts',String(Date.now()+NET.off));}catch(e){}homePaint();netProfile();}}
-function paintCoins(){document.querySelectorAll('.coinN').forEach(e=>e.textContent=coins);}
+/* THE COIN COUNT WAITS FOR THE RESULT (27 Nov 2026, his catch: "coin flip and slots show if you won or not before the animation ends by showing your coin
+   balance go down or up the second you press"). The server settles a bet the moment it is placed, and the wallet watcher showed that straight away.
+   Now a game HOLDS the shown number (your coins less the stake) from the press until its result is on the screen, then lets the real one through.
+   Only the number on the screen waits: `coins` itself is always the real balance. A hold lets go by itself after 15 s, so it can never stick. */
+var COINHOLD={v:null,t:0};
+function coinHold(v){COINHOLD.v=Math.max(0,Math.floor(v)||0);clearTimeout(COINHOLD.t);COINHOLD.t=setTimeout(coinFree,15000);paintCoins();}
+function coinFree(){clearTimeout(COINHOLD.t);if(COINHOLD.v==null)return;COINHOLD.v=null;paintCoins();}
+function paintCoins(){const n=COINHOLD.v!=null?COINHOLD.v:coins;document.querySelectorAll('.coinN').forEach(e=>e.textContent=n);}
 function wear(id){if(!OWNED.has(id))return;PEOPLE[0].skin=id;skinIdx=SKINS.findIndex(s=>s.id===id);paintSkin();puffAt(280,104);saveInv();}
 function setRoom(id){if(!OWNED.has(id)||!ROOM_BY[id])return;const was=ROOM_BY[myRoom]&&ROOM_BY[myRoom].hut;myRoom=id;sfx('door');saveInv();if((ROOM_BY[id].hut||was)&&IMG.townBase)loadCabins().then(buildTown);}   /* a room with its own hut: the town is redrawn with it */
 function openColl(){const g=$('#collGrid');
@@ -4705,7 +4712,7 @@ function wheelPrize(who,g,winId){
   const win=g.kind==='o'?(SKINS.find(s=>s.id===winId)||SKINS.find(s=>s.rar===g.v)):null;
   $('#wheelPop').innerHTML=`<img class="f" src="${face(win?win.id:(PEOPLE[who.i]||PEOPLE[0]).skin)}" alt=""><div><small>${esc(wlName(who).toUpperCase())} WON</small><b${win?` style="color:${RAR_COL[win.rar]}"`:''}>${win?esc(win.name):ic('coin',2)+' '+g.v+' coins'}</b></div>`;
   $('#wheelPop').style.borderColor=win?RAR_COL[win.rar]:'#ffd25e';WL.pop=3.4;if(WL.me&&WL.me.loc<0)sfx(win?'rare':'prize');
-  if(who.i!==0)return;
+  if(who.i!==0)return;coinFree();   /* the wheel has stopped: now the balance shows */
   if(g.kind==='c'){$('#wheelRes').innerHTML=`${ic('coin',2)} +${g.v} coins`;}
   else{const r=WL.wheel.mine||{},dupe=!!r.dupe,back=Math.round(SPIN_PRICE*CASE.dupe);paintSkin();paintCoins();   /* the server already paid it */
     $('#wheelRes').innerHTML=dupe?`${esc(win.name)} again. ${ic('coin',2)} +${back} back`:`NEW! ${esc(win.name)}`;
@@ -4755,14 +4762,14 @@ function flipShow(){const F=FLIP;if(!F.face){F.face={h:flipFace('tophat'),t:flip
   clearInterval(F.tick);let last=performance.now();F.tick=setInterval(()=>{const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;if(!$('#flipModal').classList.contains('on')&&!F.busy){clearInterval(F.tick);F.tick=null;return;}flipDraw(dt);},16);}
 function flipOpen(){const F=FLIP;if(F.busy)return;F.mode='solo';F.won=null;F.t=0;F.a1=F.side==='h'?0:Math.PI;flipShow();}
 async function flipGo(){const F=FLIP;if(F.mode==='duel'){if(!F.busy)$('#flipModal').classList.remove('on');return;}
-  F.price=flipAmt();F.pays=F.price*2;if(F.busy||F.ask||coins<F.price||!flipsLeft())return;F.ask=true;flipUI();let R;try{R=await srv('flip',{side:F.side,amt:F.price});}catch(e){F.ask=false;flipUI();$('#flipSub').textContent=e.message;return;}F.ask=false;   /* the server flips it */
+  F.price=flipAmt();F.pays=F.price*2;if(F.busy||F.ask||coins<F.price||!flipsLeft())return;F.ask=true;coinHold(coins-F.price);flipUI();let R;try{R=await srv('flip',{side:F.side,amt:F.price});}catch(e){F.ask=false;coinFree();flipUI();$('#flipSub').textContent=e.message;return;}F.ask=false;   /* the server flips it */
   F.res=R.res==='t'?'t':'h';F.busy=true;   /* drunk luck: 50% -> 53% at most */F.won=null;F.parts=[];F.t=0;F.hf=0;$('#flipWord').innerHTML='';F.a0=F.side==='h'?0:Math.PI;F.a1=(F.res==='h'?0:Math.PI)+Math.PI*10;sfx('swish');flipUI();}
 // one on one: o = {amt, res, mine: my side, opp: their name, h / t: who is heads and who is tails}
 function duelStart(o){const F=FLIP;Object.assign(F,{mode:'duel',amt:o.amt,opp:o.opp,side:o.mine,res:o.res,busy:true,won:null,t:-.8,hf:0});
   F.a0=F.side==='h'?0:Math.PI;F.a1=(F.res==='h'?0:Math.PI)+Math.PI*10;
   for(const[id,e,s]of[['#fvH',o.h,'h'],['#fvT',o.t,'t']]){const el=$(id);el.classList.toggle('me',s===o.mine);el.querySelector('img').src=face(PEOPLE[e.i]?PEOPLE[e.i].skin:'beanie');el.querySelector('span').textContent=wlName(e);}
   flipShow();sfx('swish');}
-function flipLand(){const F=FLIP,won=F.res===F.side,duel=F.mode==='duel',gain=duel?F.amt:F.pays;F.busy=false;F.won=won;if(!duel)brag('flip',{n:won?F.pays-F.price:-F.price});F.t=0;F.a1=F.res==='h'?0:Math.PI;sfx('shove');
+function flipLand(){const F=FLIP,won=F.res===F.side,duel=F.mode==='duel',gain=duel?F.amt:F.pays;F.busy=false;F.won=won;coinFree();   /* the coin has landed: now the balance shows */if(!duel)brag('flip',{n:won?F.pays-F.price:-F.price});F.t=0;F.a1=F.res==='h'?0:Math.PI;sfx('shove');
   if(won){F.flash=.07;sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),260+k*150);
     for(let k=0;k<34;k++){const a=-Math.PI*(.12+.76*Math.random()),sp=50+Math.random()*80;F.parts.push({x:52,y:62,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:1.1+Math.random()*.7,t:0,c:k%3});}
     $('#flipWord').innerHTML=pxWord('YOU WIN',6,'legendary')+pxWord('+'+gain,6,'good',.4);}
@@ -4798,9 +4805,9 @@ function duelNet(v,e){const name=wlName(e),id=String(v.id||'');
   const o=DUEL.out;if(!o||o.id!==id||o.to!==v.by)return;clearTimeout(DUEL.t);DUEL.out=null;DUEL.msg='';
   if(v.k==='flipno'){DUEL.msg=v.why==='poor'?name+' does not have '+o.amt+' coins.':v.why==='busy'?name+' is busy.':name+' said no.';if($('#duelModal').classList.contains('on'))duelPaint();else wlSay(DUEL.msg);return;}
   if(v.k==='flipyes'){if(coins<o.amt||FLIP.busy){duelEv('flipcancel',v.by,{id});if($('#duelModal').classList.contains('on'))duelPaint();return;}
-    srv('duelgo',{to:v.by,amt:o.amt}).then(r=>{const res=r.res==='t'?'t':'h';duelEv('flipgo',v.by,{id,amt:o.amt,res});duelStart({amt:o.amt,res,mine:'h',opp:name,h:WL.me,t:e});}).catch(err=>{duelEv('flipcancel',v.by,{id});wlSay(err.message,'bad');});}}   /* the server flips it and moves the coins */
+    coinHold(coins);srv('duelgo',{to:v.by,amt:o.amt}).then(r=>{const res=r.res==='t'?'t':'h';duelEv('flipgo',v.by,{id,amt:o.amt,res});duelStart({amt:o.amt,res,mine:'h',opp:name,h:WL.me,t:e});}).catch(err=>{coinFree();duelEv('flipcancel',v.by,{id});wlSay(err.message,'bad');});}}   /* the server flips it and moves the coins */
 $('#daYes').onclick=()=>{const a=DUEL.ask;if(!a||a.wait)return;if(coins<a.amt){duelEv('flipno',a.by,{id:a.id,why:'poor'});duelAskHide();return;}
-  a.wait=true;$('#daYes').disabled=true;$('#daLine').textContent='Starting…';srv('duelok',{from:a.by,amt:a.amt}).then(()=>duelEv('flipyes',a.by,{id:a.id})).catch(e=>{duelEv('flipno',a.by,{id:a.id,why:'poor'});duelAskHide();wlSay(e.message,'bad');});clearTimeout(DUEL.askT);DUEL.askT=setTimeout(()=>{if(DUEL.ask&&DUEL.ask.id===a.id){duelAskHide();wlSay(a.name+' is not there any more.');}},7000);};
+  a.wait=true;$('#daYes').disabled=true;$('#daLine').textContent='Starting…';coinHold(coins);srv('duelok',{from:a.by,amt:a.amt}).then(()=>duelEv('flipyes',a.by,{id:a.id})).catch(e=>{coinFree();duelEv('flipno',a.by,{id:a.id,why:'poor'});duelAskHide();wlSay(e.message,'bad');});clearTimeout(DUEL.askT);DUEL.askT=setTimeout(()=>{if(DUEL.ask&&DUEL.ask.id===a.id){duelAskHide();wlSay(a.name+' is not there any more.');}},7000);};
 $('#daNo').onclick=()=>{const a=DUEL.ask;if(!a)return;if(!a.wait)duelEv('flipno',a.by,{id:a.id,why:'no'});duelAskHide();};
 document.querySelectorAll('#duelStakes button').forEach(b=>b.onclick=()=>{DUEL.stake=+b.dataset.a;$('#duelAmt').value='';sfx('copy');duelPaint();});
 $('#duelAmt').addEventListener('input',duelPaint);
@@ -4846,7 +4853,7 @@ function wheelUI(){paintCoins();dayPaint();const b=$('#wheelSpin'),W=WL.wheel,fr
   $('#wheelOdds').innerHTML=[['COINS',WHEEL.filter(w=>w[0]==='c').reduce((t,w)=>t+w[2],0),''],...[['common',''],['rare','rare'],['epic','epic'],['legendary','legendary']].map(([r,c])=>[r.toUpperCase(),WHEEL.filter(w=>w[1]===r).reduce((t,w)=>t+w[2],0),c])].map(o=>`<span class="rar ${o[2]}">${o[0]} ${o[1]}%</span>`).join('');}
 function wheelOpen(){$('#wheelRes').innerHTML='';wheelUI();$('#wheelModal').classList.add('on');}
 $('#wheelX').onclick=()=>$('#wheelModal').classList.remove('on');
-$('#wheelSpin').onclick=async()=>{const W=WL.wheel,free=daySpin();if(W.busy||W.ask||(!free&&coins<SPIN_PRICE))return;W.ask=true;$('#wheelRes').innerHTML='';let r;try{r=await srv('wheel');}catch(e){W.ask=false;$('#wheelRes').textContent=e.message;wheelUI();return;}W.ask=false;W.mine=r;wheelSpin(WL.me,{k:r.k,f:.2+Math.random()*.6,win:r.win});wheelUI();};   /* the server spun it (his call: cheat-proof) */   /* today's first spin is free */
+$('#wheelSpin').onclick=async()=>{const W=WL.wheel,free=daySpin();if(W.busy||W.ask||(!free&&coins<SPIN_PRICE))return;W.ask=true;$('#wheelRes').innerHTML='';coinHold(free?coins:coins-SPIN_PRICE);let r;try{r=await srv('wheel');}catch(e){W.ask=false;coinFree();$('#wheelRes').textContent=e.message;wheelUI();return;}W.ask=false;W.mine=r;wheelSpin(WL.me,{k:r.k,f:.2+Math.random()*.6,win:r.win});wheelUI();};   /* the server spun it (his call: cheat-proof) */   /* today's first spin is free */
 $('#spinTest').onclick=()=>{srv('lab',{what:'coins'}).catch(e=>toast(e.message));};
 
 scenes.town={hud:'#townHud',
