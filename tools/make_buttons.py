@@ -25,9 +25,22 @@ def pressed(im):
     o.paste(im.crop((0, 12, 16, 13)), (0, 13)); o.paste(im.crop((0, 14, 16, 16)), (0, 14))
     return o
 
+def trophy():
+    """THE LEADERBOARD BUTTON (board.js): his own picture if he has drawn one (mafia2-art/buttons/leaderboard-stroke.png). Until then: his menu button with
+    the icon wiped off its face, and a little gold cup with a dark outline drawn on it (mine, in his coin's golds: he may want to redraw it)."""
+    if os.path.exists(SRC + 'leaderboard-stroke.png'): return Image.open(SRC + 'leaderboard-stroke.png').convert('RGBA')
+    im = Image.open(SRC + 'menu-stroke.png').convert('RGBA'); F = (0x3a, 0x44, 0x67, 255)
+    for y in range(1, 13):
+        for x in (range(2, 14) if y in (1, 2, 12) else range(1, 15)): im.putpixel((x, y), F)
+    K, G, Y, S = (0x18, 0x14, 0x25, 255), (0xfd, 0xd5, 0x31, 255), (0xff, 0xfb, 0xe0, 255), (0xe5, 0xae, 0x58, 255)
+    for yy, row in enumerate(['..KKKKKK..', '.KGGGGGGK.', 'KKGYGGGSKK', 'KGKYGGGSKG', '.KKGGGGSK.', '..KKGGKK..', '...KGSK...', '..KGGGSK..', '..KKKKKK..']):
+        for xx, ch in enumerate(row):
+            if ch != '.': im.putpixel((3 + xx, 2 + yy), {'K': K, 'G': G, 'Y': Y, 'S': S}[ch])
+    im.putpixel((12, 5), K)   # the right handle's outer edge, to match the left one
+    return im
 uris = {}
-for a, b in ART:
-    im = Image.open(SRC + a + '.png').convert('RGBA')
+for a, b in ART + (('', 'leaderboard'),):
+    im = trophy() if b == 'leaderboard' else Image.open(SRC + a + '.png').convert('RGBA')
     for x in range(2, 14):                                # the faint highlight on the bare face only: never over his icon
         r, g, bl, al = im.getpixel((x, 12))
         if (r, g, bl) in FACE: im.putpixel((x, 12), tuple(round(c + (255 - c) * HL / 255) for c in (r, g, bl)) + (255,))
@@ -59,7 +72,7 @@ def layers(t):
     return ('background-image:' + ','.join(f'linear-gradient({c},{c})' for c, _, _ in S) + '!important;background-size:' + ','.join(z for _, z, _ in S)
             + '!important;background-position:' + ','.join(p for _, _, p in S) + '!important')
 SK = '#phone :is(.btn,.hbig,.tbtn,.coinbtn,.gbtn,.bprice)'
-ARTLIST = ('#phone #menuBtn,#phone #playersBtn,#phone #chatBtn,'
+ARTLIST = ('#phone #menuBtn,#phone #playersBtn,#phone #chatBtn,#phone #boardBtn,'
            '#phone:not(.land) #townHud .tpanel .tbtn:is(.shop,.coll,.daily,.coinshop,.deco),#phone.land #townHud.tmini .tbtn:is(.shop,.coll,.daily,.coinshop,.deco)')
 css = f'''/*BTN-CSS*/
 /* HIS BUTTONS: this whole block is written by tools/make_buttons.py (read its top). Do not edit it here: change that file and run it. */
@@ -75,7 +88,7 @@ css = f'''/*BTN-CSS*/
 #phone .bpack:active:not(:disabled){{transform:none!important}}
 :is({ARTLIST}){{width:48px;height:48px;flex:0 0 48px;padding:0!important;border:0!important;background:0 0/48px 96px no-repeat!important;background-origin:border-box!important;background-clip:border-box!important;clip-path:none!important;image-rendering:pixelated;font-size:0!important}}
 :is({ARTLIST})>:is(img,canvas){{display:none!important}}
-#phone #menuBtn#menuBtn{{background-image:var(--art-menu)!important}}#phone #playersBtn#playersBtn{{background-image:var(--art-people)!important}}#phone #chatBtn#chatBtn{{background-image:var(--art-chat)!important}}
+#phone #menuBtn#menuBtn{{background-image:var(--art-menu)!important}}#phone #playersBtn#playersBtn{{background-image:var(--art-people)!important}}#phone #chatBtn#chatBtn{{background-image:var(--art-chat)!important}}#phone #boardBtn#boardBtn{{background-image:var(--art-leaderboard)!important}}
 #phone:not(.land) #townHud .tpanel .tbtn.shop.shop,#phone.land #townHud.tmini .tbtn.shop.shop{{background-image:var(--art-shop)!important}}
 #phone:not(.land) #townHud .tpanel .tbtn.coll.coll,#phone.land #townHud.tmini .tbtn.coll.coll{{background-image:var(--art-collection)!important}}
 #phone:not(.land) #townHud .tpanel .tbtn.daily.daily,#phone.land #townHud.tmini .tbtn.daily.daily{{background-image:var(--art-rewards)!important}}

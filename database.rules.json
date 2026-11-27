@@ -172,6 +172,18 @@
           ".write": "auth != null && (root.child('worlds').child($wid).child('meta').child('owner').val() === auth.uid || (auth.uid === $uid && !newData.exists()))"
         }
       }
+    },
+    "lb": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": false
+      }
+    },
+    "lbwin": {
+      "$wid": {
+        ".read": "auth != null",
+        ".write": false
+      }
     }
   }
 }

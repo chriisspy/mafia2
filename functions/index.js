@@ -22,6 +22,12 @@ const FISH_DAY = 10000;
 const PROP_PRICE = 7500, PROP_MAX = 48;                       // the prop maker (phase 5): what a drawing costs, and its biggest side                                    // coins carried over from a phone, once, at most
 
 const bad = m => { throw new HttpsError('failed-precondition', m); };
+// THE LEADERBOARD (27 Nov 2026, functions/board.js) counts the coins you make by PLAYING. These are the ops whose change in coins counts, up or down:
+// the daily coins, the wheel, the casino games (a loss counts against you), selling fish, the clicker, the game payout, smelting. Shops, cases,
+// gifts, market trades and bought coins are not in it. ALS carries "which op is running" down to tx() without a global (requests run side by side).
+const { AsyncLocalStorage } = require('async_hooks');
+const ALS = new AsyncLocalStorage();
+const EARN = new Set(['daily', 'wheel', 'flip', 'slot', 'bj', 'bjt', 'fsell', 'ckend', 'gpay', 'duelok', 'duelgo', 'smeltGet']);
 const rnd = n => Math.floor(Math.random() * n);
 const pick = a => a[rnd(a.length)];
 // the day in Sydney, for the daily coins / free spin (everyone playing is in Australia)
@@ -54,15 +60,16 @@ function spend(w, n) { if (!(n > 0) || !Number.isFinite(n)) bad('Bad amount.'); 
 function rollRar(odds) { let r = Math.random(), rar = Object.keys(odds)[0]; for (const [k, q] of Object.entries(odds)) { if (r < q) { rar = k; break; } r -= q; } return rar; }
 // the wallet changes in one transaction: fn(w) changes it and returns what the phone needs to know
 async function tx(uid, fn) {
-  let out, err;
+  let out, err, c0 = 0, c1 = 0;
   const res = await db.ref('wallet/' + uid).transaction(cur => {
-    err = null;
+    err = null; c0 = c1 = 0;
     if (cur === null) return { probe: 1 };   // nothing cached yet: this guess never sticks (the wallet exists), the database answers with the real one
-    try { const w = norm(cur); out = fn(w); w.ts = Date.now(); delete w.probe; return w; }
+    try { const w = norm(cur); c0 = w.c | 0; out = fn(w); c1 = w.c | 0; w.ts = Date.now(); delete w.probe; return w; }
     catch (e) { err = e; return; }   // abort: nothing changes
   });
   if (err) throw err;
   if (!res.committed) bad('Try again.');
+  const ctx = ALS.getStore(); if (ctx && EARN.has(ctx.op) && c1 !== c0) await BOARD.earn(uid, c1 - c0).catch(() => {});   // the leaderboard's "coins earned this month"
   return out;
 }
 // THE TRIPWIRE (21 Nov, after a friend ran a script): things no real phone ever sends are written to flags/{uid} (nobody can read it but him)
@@ -178,10 +185,11 @@ const OPS = {
     return { k, win, dupe, free };
   }),
   case: (uid, d) => tx(uid, w => {
-    const D = C.cases[d.kind]; if (!D) bad('No such case.'); spend(w, D.price);
+    const D = C.cases[d.kind]; if (!D) bad('No such case.');
+    const free = !!(w.fc && w.fc[d.kind] > 0); if (free) { w.fc[d.kind]--; if (!w.fc[d.kind]) delete w.fc[d.kind]; } else spend(w, D.price);   // a free one first (the leaderboard's prize)
     const rar = rollRar(D.odds), win = pick(D.pool.filter(s => s.rar === rar && s.rar !== 'secret')).id, dupe = !!w.own[win], back = Math.round(D.price * C.caseDupe);
     if (dupe) w.c += back; else w.own[win] = 1;
-    return { win, dupe, back };
+    return { win, dupe, back, free };
   }),
   flip: (uid, d) => tx(uid, w => {
     const side = d.side === 't' ? 't' : 'h', n = bet(d.amt), win0 = Math.floor(Date.now() / C.flipEvery);
@@ -396,6 +404,9 @@ Object.assign(OPS, require('./race.js')({ tx, spend, bad }));
 Object.assign(OPS, require('./mine.js')({ tx, spend, bad, dayKey, flag }));
 // the Glimmerkin (25 Nov): the secret hunt's steps, in order: functions/quest.js
 Object.assign(OPS, require('./quest.js')({ tx, bad }));
+// the world leaderboard (27 Nov): coins earned this month, time played, the monthly prize: functions/board.js
+const BOARD = require('./board.js')({ db, bad, tx, C });
+Object.assign(OPS, BOARD.ops);
 
 exports.act = onCall({ region: 'asia-southeast1', maxInstances: 10 }, async req => {
   const uid = req.auth && req.auth.uid; if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
@@ -409,7 +420,7 @@ exports.act = onCall({ region: 'asia-southeast1', maxInstances: 10 }, async req 
   else if (DEV_REQUIRED) throw new HttpsError('failed-precondition', 'Update the game first.');
   if (d.op !== 'init') { const has = (await db.ref('wallet/' + uid + '/ts').get()).exists(); if (!has) await OPS.init(uid, {}); }
   d._google = !!(req.auth.token && req.auth.token.firebase && req.auth.token.firebase.sign_in_provider === 'google.com');
-  const r = await f(uid, d) || {};
+  const r = await ALS.run({ op: d.op }, () => f(uid, d)) || {};
   return r;
 });
 // BUYING COINS (27 Nov 2026): functions/coins.js. Its own two functions, so `act` never needs the Stripe secrets:
