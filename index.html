@@ -1464,7 +1464,7 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11271216'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11271226'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
@@ -4880,7 +4880,7 @@ async function srv(op,d){await netLoad();if(!NET.fn)NET.fn=NET.app.functions('as
    themselves when Stripe tells the server (the wallet watcher shows them). Prices live on the server; the buttons only name a pack. */
 function buyOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));$('#buyModal').classList.add('on');}
 $('#buyX').onclick=()=>$('#buyModal').classList.remove('on');
-const BUY_OPEN=false;   /* the shop is in Stripe TEST mode until his account is verified and the live keys are in: until then only the lab on this computer can open it */
+const BUY_OPEN=true;   /* (27 Nov 2026) LIVE: his Stripe account takes payments and the live keys are in. false = closed for players (the lab on this computer can still open it) */
 if(BUY_OPEN||LABLOCAL)document.querySelectorAll('.hwal').forEach(e=>{e.onclick=buyOpen;e.style.cursor='pointer';});
 $('#buyPacks').onclick=async e=>{const b=e.target.closest('.bpack');if(!b||b.disabled)return;const all=[...document.querySelectorAll('#buyPacks .bpack')];all.forEach(q=>q.disabled=true);
   try{await netLoad();const r=(await NET.app.functions('asia-southeast1').httpsCallable('buy')({pack:b.dataset.p,back:location.href})).data||{};if(!r.url)throw new Error('');location.href=r.url;}
