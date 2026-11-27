@@ -60,10 +60,16 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 const frFace=p=>p&&p.p?p.p:face((p&&p.skin)||'beanie');
 const frSay=(t,bad)=>{if(scene===scenes.town)wlSay(t,bad?'bad':'good');else toast(t);};
 /* who your friends are, who asked you, and coins arriving: live, for whoever is signed in */
-function frWatch(){const u=acctUser(),uid=u?u.uid:null;if(uid===FR.uid)return;for(const r of FR.refs)r.off();FR.refs=[];FR.uid=uid;FR.list={};FR.req={};frPaint();
+function frWatch(){const u=acctUser(),uid=u?u.uid:null;if(uid===FR.uid)return;for(const r of FR.refs)r.off();FR.refs=[];FR.uid=uid;FR.me='';FR.list={};FR.req={};frPaint();
   if(!uid||!NET.db)return;
-  NET.db.ref('profiles/'+uid).update({n:myName,p:(u&&u.photoURL)||'',skin:PEOPLE[0].skin}).catch(()=>{});
-  const me=NET.db.ref('profiles/'+uid+'/u');me.on('value',s=>{FR.me=s.val()||'';frPaint();if(!FR.me&&FR.uid===uid)unAsk();else{$('#unameModal').classList.remove('on');}nameSync();},()=>{});FR.refs.push(me);
+  const profile=NET.db.ref('profiles/'+uid);
+  profile.update({p:u.photoURL||'',skin:PEOPLE[0].skin}).catch(()=>{});
+  const me=profile.child('u');me.on('value',s=>{
+    if(FR.uid!==uid||acctUser()?.uid!==uid)return;
+    FR.me=s.val()||'';nameSync();frPaint();
+    if(!FR.me)unAsk();
+    else{$('#unameModal').classList.remove('on');profile.child('n').set(FR.me).catch(()=>{});}
+  },()=>{});FR.refs.push(me);
   const a=NET.db.ref('friends/'+uid),b=NET.db.ref('freq/'+uid),g=NET.db.ref('gifts/'+uid);
   a.on('value',s=>{FR.list=s.val()||{};frProfiles();},()=>{});b.on('value',s=>{FR.req=s.val()||{};frPaint();},()=>{});
   g.on('child_added',s=>{const v=s.val()||{};s.ref.remove().catch(()=>{});if(v.amt>0){sfx('rare');for(let k=0;k<3;k++)setTimeout(()=>sfx('coin'),200+k*140);frSay(`${ic('coin',2)} ${esc(v.n||'A friend')} sent you ${v.amt} coins`);}},()=>{});
@@ -86,11 +92,43 @@ $('#unX').onclick=()=>$('#unameModal').classList.remove('on');
    Signed in: your name everywhere IS your username (profiles/{uid}/u, unique, set on the server). A guest starts as guest + four digits and can
    pick their own (kept on the phone, not unique) until they sign in. After a change you wait 3 days to change it again (his call): the server keeps that
    clock for a signed-in player (unameAt/{uid}), the phone keeps it for a guest. */
-function nameSync(){const signed=!!acctUser();let want=myName;
-  if(signed&&FR.me)want=FR.me;
-  else if(!signed){let g='';try{g=localStorage.getItem('m2_guest')||'';}catch(e){}if(!/^[a-z0-9_]{4,16}$/.test(g)){g='guest'+(1000+Math.floor(Math.random()*9000));try{localStorage.setItem('m2_guest',g);}catch(e){}}want=g;}
-  if(want!==myName){myName=want;try{localStorage.setItem('m2_name',want);}catch(e){}if(typeof netProfile==='function')netProfile();}
-  if(typeof homePaint==='function')homePaint();}
+function guestUsername(){
+  const valid=n=>/^[a-z0-9_]{4,16}$/.test(n);
+  let name='';
+  try{
+    name=localStorage.getItem('m2_guest')||'';
+    if(!valid(name)||/^guest\d{4}$/.test(name)){
+      const prior=(localStorage.getItem('m2_name')||'').trim().toLowerCase();
+      const account=localStorage.getItem('m2_name_uid')||localStorage.getItem('m2_acct');
+      if(!account&&valid(prior)&&prior!=='player'&&!/^guest\d{4}$/.test(prior))name=prior;
+    }
+  }catch(e){}
+  if(!valid(name))name='guest'+(1000+Math.floor(Math.random()*9000));
+  try{localStorage.setItem('m2_guest',name);}catch(e){}
+  return name;
+}
+function nameUse(name,uid){
+  const changed=name!==myName;
+  myName=name;
+  try{
+    localStorage.setItem('m2_name',name);
+    if(uid)localStorage.setItem('m2_name_uid',uid);
+    else localStorage.removeItem('m2_name_uid');
+  }catch(e){}
+  if(changed)netProfile();
+  homePaint();
+}
+function nameSync(){
+  const user=NET.auth?.currentUser;
+  if(!user)return;   // Firebase has not restored the account yet.
+  if(user.isAnonymous)nameUse(guestUsername());
+  else if(FR.uid===user.uid&&FR.me)nameUse(FR.me,user.uid);
+}
+async function nameLoad(user){
+  if(user.isAnonymous){nameUse(guestUsername());return;}
+  const name=(await NET.db.ref('profiles/'+user.uid+'/u').get()).val();
+  if(name&&NET.auth.currentUser?.uid===user.uid)nameUse(name,user.uid);
+}
 /* THE "PLAYING AS" BOX: your username, and his pencil to change it */
 {const hn=$('#homeName');hn.innerHTML=`<img id="homeFace" alt=""><span class="hnt"><b id="homeNameT"></b><small id="homeUser">PLAYING AS</small></span><span class="hedit" title="Change your username">${ic('aPencil',2,'solo')}</span>`;
   hn.onclick=()=>{sfx('click');unAsk(true);};homePaint();}   /* the pencil always opens the username box, signed in or not (his catch: a guest's tap only tried to sign in, so nothing seemed to happen) */
@@ -101,7 +139,7 @@ $('#unOk').onclick=async()=>{const v=unClean($('#unIn').value);if(v.length<4){$(
   if(!acctUser()){let t=0;try{t=+localStorage.getItem('m2_guest_t')||0;}catch(e){}const w=t+3*864e5-Date.now();
     if(v===myName){$('#unameModal').classList.remove('on');return;}
     if(w>0){$('#unMsg').textContent='You can change your username again in '+(w>864e5?Math.ceil(w/864e5)+' days.':Math.max(1,Math.ceil(w/36e5))+' hours.');return;}
-    try{localStorage.setItem('m2_guest',v);localStorage.setItem('m2_guest_t',String(Date.now()));}catch(e){}$('#unameModal').classList.remove('on');sfx('rare');nameSync();return;}
+    try{localStorage.setItem('m2_guest',v);localStorage.setItem('m2_guest_t',String(Date.now()));}catch(e){}$('#unameModal').classList.remove('on');sfx('rare');nameUse(v);return;}
   const done=btnBusy($('#unOk'),'…');try{await srv('setName',{name:v});done();$('#unameModal').classList.remove('on');sfx('rare');}catch(e){done();$('#unMsg').textContent=e.message;}};
 $('#unIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#unOk').click();});
 function frMsg(t,bad){const e=$('#frMsg');e.textContent=t||'';e.className='small'+(bad?' bad':'');}

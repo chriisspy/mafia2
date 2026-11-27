@@ -65,7 +65,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 function worldWatch(){const u=acctUser(),uid=u?u.uid:null;if(uid===WORLD.uid)return worldHome();
   for(const r of WORLD.watch)r.off();WORLD.watch=[];WORLD.uid=uid;WORLD.mine={};WORLD.inv={};WORLD.owned=null;
   if(!uid||!NET.db)return worldHome();
-  NET.db.ref('profiles/'+uid).update({n:myName,p:wPhoto(),skin:PEOPLE[0].skin}).catch(()=>{});
+  NET.db.ref('profiles/'+uid).update({p:wPhoto(),skin:PEOPLE[0].skin}).catch(()=>{});
   const r1=NET.db.ref('userWorlds/'+uid),r2=NET.db.ref('owned/'+uid);r1.on('value',s=>{WORLD.mine=s.val()||{};worldHome();},()=>{});r2.on('value',s=>{WORLD.owned=s.val();worldHome();},()=>{});WORLD.watch.push(r1,r2);
   WORLD.invE={};WORLD.invU={};const invAll=()=>{WORLD.inv={...WORLD.invE,...WORLD.invU};worldHome();};
   if(wEmail()){const r3=NET.db.ref('invitesByEmail/'+ekey(wEmail()));r3.on('value',s=>{WORLD.invE=s.val()||{};invAll();},()=>{});WORLD.watch.push(r3);}

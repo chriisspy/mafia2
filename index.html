@@ -1564,7 +1564,7 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11271951'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11272003'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD;
 /* (27 Nov 2026, his report: "sometimes when i join a world it goes black") whatever breaks is written, small, after the version number, so a screenshot of the corner says what it was */
 function errTag(where,e){try{const m=String(e&&e.message||e).slice(0,70),ln=((e&&e.stack||'').match(/:(\d+):\d+/)||[])[1]||'';if(errTag.last===where+m)return;errTag.last=where+m;document.getElementById('buildTag').textContent='v'+BUILD+' '+where+(ln?' '+ln:'')+' '+m;}catch(_){}} // which version this is, so an old cached copy is easy to spot
@@ -4425,22 +4425,48 @@ function placeName(ci){if(ci===LAKE)return'Fishing Lake';if(ci>=100){const H=hal
   const o=CABIN_OF.indexOf(ci);return o===0?'Your Cabin':o>0?PEOPLE[o].n+"'s Cabin":'Empty Cabin';}
 function placeShow(ci){const b=$('#townHud .title.banner');if(!b)return;$('#placeName').textContent=placeName(ci);$('#townCount').style.display=ci<0?'':'none';b.classList.remove('place');void b.offsetWidth;b.classList.add('place');}
 /* THE PLAYER LIST (his ask, 18 Nov): the person button under the menu; everyone here, and what they are doing under their name */
+const PL_NAMES=new Map();
+function plWatchNames(ids){
+  for(const [uid,entry] of PL_NAMES)if(!ids.has(uid)){entry.stop();PL_NAMES.delete(uid);}
+  if(!NET.db)return;
+  for(const uid of ids){
+    if(uid===NET.uid||PL_NAMES.has(uid))continue;
+    const ref=NET.db.ref('profiles/'+uid+'/u'),entry={name:null};
+    const update=s=>{entry.name=s.val()||'';};
+    entry.stop=()=>ref.off('value',update);
+    PL_NAMES.set(uid,entry);
+    ref.on('value',update,()=>{entry.name='';});
+  }
+}
+function plName(uid,fallback){
+  if(uid===NET.uid)return myName;
+  const entry=PL_NAMES.get(uid);
+  if(entry?.name)return entry.name;
+  if(entry?.name===null&&/^guest\d{4}$/i.test(fallback||''))return '…';
+  return fallback||'Player';
+}
 function plDoing(loc,uid){if(GAME.on)return'Playing Mafia';if(loc==null||loc<0)return'In the town';if(loc===LAKE)return'Fishing at the lake';
   if(loc>=100){const H=hallOf(loc);return H?'At '+H.name.replace(/^The /,'the '):'Somewhere';}
-  if(NET.world&&typeof WORLD!=='undefined'){const e=Object.entries(WORLD.members||{}).find(([u,m])=>+m.s===loc);if(!e)return'In an empty cabin';if(e[0]===uid)return uid===NET.uid?'In your cabin':'In their cabin';return'Visiting '+(e[1].n||'Player')+"'s cabin";}
+  if(NET.world&&typeof WORLD!=='undefined'){const e=Object.entries(WORLD.members||{}).find(([u,m])=>+m.s===loc);if(!e)return'In an empty cabin';if(e[0]===uid)return uid===NET.uid?'In your cabin':'In their cabin';return'Visiting '+plName(e[0],e[1].n)+"'s cabin";}
   const o=CABIN_OF.indexOf(loc);return o<0?'In an empty cabin':(PEOPLE[o]||{}).uid===uid||(o===0&&uid===NET.uid)?(uid===NET.uid?'In your cabin':'In their cabin'):'Visiting '+PEOPLE[o].n+"'s cabin";}
 function plPaint(){const L=$('#plList');if(!L)return;const rows=[],here=new Set();
   const row=(img,n,doing,off)=>`<div class="plr${off?' off':''}"><img src="${esc(img||'')}" alt="" referrerpolicy="no-referrer"><span class="pt"><b>${esc(n)}</b><small>${esc(doing)}</small></span></div>`;
-  if(WL.me){here.add(NET.uid);rows.push(row(face(PEOPLE[0].skin),(PEOPLE[0].n||myName)+' (you)',plDoing(WL.me.loc,NET.uid)));}
-  for(const e of WL.bots){if(!e||!e.remote)continue;here.add(e.uid);rows.push(row(face((PEOPLE[e.i]||{}).skin),e.n||'Player',plDoing(e.loc,e.uid)));}
-  if(NET.world&&typeof WORLD!=='undefined')for(const[u,m]of Object.entries(WORLD.members||{}))if(!here.has(u))rows.push(row(SP[m.skin]?face(m.skin):(typeof wFace==='function'?wFace(m):''),m.n||'Player','Offline',1));
+  const members=NET.world&&typeof WORLD!=='undefined'?Object.entries(WORLD.members||{}):[];
+  const peers=WL.bots.filter(e=>e?.remote&&e.uid);
+  plWatchNames(new Set([...members.map(([uid])=>uid),...peers.map(e=>e.uid)]));
+  if(WL.me){here.add(NET.uid);rows.push(row(face(PEOPLE[0].skin),myName+' (you)',plDoing(WL.me.loc,NET.uid)));}
+  for(const e of peers){
+    here.add(e.uid);
+    rows.push(row(face((PEOPLE[e.i]||{}).skin),plName(e.uid,NET.players?.[e.uid]?.n||e.n),plDoing(e.loc,e.uid)));
+  }
+  for(const [uid,m] of members)if(!here.has(uid))rows.push(row(SP[m.skin]?face(m.skin):wFace(m),plName(uid,m.n),'Offline',1));
   const own=NET.world&&typeof WORLD!=='undefined'&&WORLD.meta&&WORLD.meta.owner===NET.uid;   /* (his ask) the owner can invite from here */
   L.innerHTML=rows.join('')+(own?'<button class="btn red" id="plInvite">Invite</button>':'');}
 function plSync(){const b=$('#playersBtn'),c=$('#chatBtn');if(!b)return;const on=!!(NET.on&&scene===scenes.town),ch=on||(LAB&&scene===scenes.town);   /* (26 Nov) the lab has the chat too, to look at it */if((b.style.display!=='none')!==on)b.style.display=on?'':'none';if((c.style.display!=='none')!==ch)c.style.display=ch?'':'none';if(!on)$('#playersModal').classList.remove('on');if(!ch&&$('#chatBox').classList.contains('on')){$('#chatBox').classList.remove('on');chatTyping(false);}if(!ch&&typeof chatPopOff==='function')chatPopOff();}
 $('#playersBtn').onclick=()=>{const M=$('#playersModal');if(M.classList.contains('on')){M.classList.remove('on');return;}document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));sfx('click');plPaint();M.classList.add('on');};
 $('#plList').addEventListener('click',e=>{if(!e.target.closest('#plInvite'))return;sfx('click');$('#playersModal').classList.remove('on');worldPanel();setTimeout(()=>{const i=$('#wmUser');if(i){i.scrollIntoView({block:'center'});i.focus();}},60);});   /* opens the world window at the email box */
 $('#playersX').onclick=()=>{sfx('close');$('#playersModal').classList.remove('on');};
-setInterval(()=>{plSync();if($('#playersModal').classList.contains('on'))plPaint();},1000);
+setInterval(()=>{plSync();if($('#playersModal').classList.contains('on'))plPaint();else if(PL_NAMES.size)plWatchNames(new Set());},1000);
 /* OVER THEIR HEADS (his ask, 18 Nov): what someone says in chat, and what they just won or lost (slots, the coin flip, blackjack, the
    knives, a fish), shows over their head for a few seconds, for everyone in the same place. e.bub = {html, t, cls}; drawn as little panels. */
 function headSay(e,html,o){if(!e||!html)return;o=o||{};e.bub={html,t:o.t||4.5,cls:o.cls||''};}
@@ -4987,6 +5013,7 @@ function netLoad(){if(NET.ready)return NET.ready;
     NET.app=app;NET.auth=app.auth();NET.db=app.database();
     let user=await new Promise(r=>{const un=NET.auth.onAuthStateChanged(u=>{un();r(u);});});   // a Google sign-in from last time is still there
     if(!user)user=(await NET.auth.signInAnonymously()).user;NET.uid=user.uid;
+    if(typeof nameLoad==='function')await nameLoad(user);
     NET.db.ref('.info/serverTimeOffset').on('value',s=>NET.off=s.val()||0);netProfile();walletWatch();})();
   NET.ready.catch(()=>{NET.ready=null;});return NET.ready;}
 /* ================= THE WALLET LIVES ON THE SERVER (18 Nov 2026, phase 2, his call: cheat-proof coins) =================
@@ -5469,7 +5496,7 @@ function acctUI(){const u=acctUser(),b=$('#homeAcct');walletWatch();if(window.wo
 function acctYay(){sfx('rare');const b=$('#homeAcct');b.classList.remove('yay');void b.offsetWidth;b.classList.add('yay');
   for(let k=0;k<14;k++){const i=document.createElement('i'),a=k/14*Math.PI*2,r=60+Math.random()*50;i.className='spk';i.style.background=['#5fc46f','#ffd25e','#2f7a45','#fff2a8'][k%4];
     i.style.setProperty('--dx',Math.round(Math.cos(a)*r*1.6)+'px');i.style.setProperty('--dy',Math.round(Math.sin(a)*r*.7)+'px');b.appendChild(i);setTimeout(()=>i.remove(),800);}}
-async function acctSync(){const u=acctUser();if(!u)return;const s=(await NET.db.ref('users/'+u.uid).get()).val();let lt=0,acct='';try{lt=+localStorage.getItem('m2_wts')||0;acct=localStorage.getItem('m2_acct')||'';}catch(e){}
+async function acctSync(){const u=acctUser();if(!u)return;const [snap]=await Promise.all([NET.db.ref('users/'+u.uid).get(),nameLoad(u)]);const s=snap.val();let lt=0,acct='';try{lt=+localStorage.getItem('m2_wts')||0;acct=localStorage.getItem('m2_acct')||'';}catch(e){}
   if(s){(s.owned||[]).forEach(id=>{if(SKINS.some(k=>k.id===id)||ROOM_BY[id])OWNED.add(id);});
     if(acct===u.uid&&(+s.ts||0)>lt+3000){if(s.room&&ROOM_BY[s.room]&&OWNED.has(s.room))myRoom=s.room;if(s.skin&&OWNED.has(s.skin)){PEOPLE[0].skin=s.skin;skinIdx=SKINS.findIndex(k=>k.id===s.skin);}}}   // played somewhere else since: that wallet is newer
   try{localStorage.setItem('m2_acct',u.uid);}catch(e){}saveInv();paintCoins();paintSkin();}
