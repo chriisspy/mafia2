@@ -795,6 +795,13 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 /* (27 Nov 2026, his ask) THE CHAT BOX IS DARK, like the chat button (.btn.dark): navy panel, sand text, gold names */
 #phone #chatBox,#phone.xmas #chatBox{background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-image:none!important;border-radius:6px;box-shadow:inset 0 -6px 0 #1b1532,inset 0 2px 0 #3d3466,0 5px 0 #0008}
 #phone #chatBox::before,#phone #chatBox::after{display:none!important}
+/* (27 Nov 2026, his ask) OPEN, THE CHAT FILLS THE TOP HALF of the screen (the keyboard takes the bottom half on a phone), with a close X top right.
+   Turned on its side the screen is too short for that: there it keeps its old size and just gains the X. */
+#phone #chatBox.on{display:flex;flex-direction:column;top:calc(10px + env(safe-area-inset-top));bottom:50%;left:10px;right:10px;z-index:30}   /* full width, over the buttons on the left too (his word) */
+#phone #chatBox .chHead{display:flex;justify-content:flex-end;flex:none;margin-bottom:4px}
+#phone #chatX{width:36px;height:36px;padding:0;flex:none;display:flex;align-items:center;justify-content:center}
+#phone #chatLog{flex:1;min-height:0;max-height:none}#phone #chatBox .chRow,#phone #chatTyping{flex:none}
+#phone.land #chatBox.on{top:10px;bottom:auto;left:calc(63px + var(--sl));right:auto;z-index:24}#phone.land #chatLog{flex:none;max-height:150px}
 #phone #chatLog{color:#f6dfae}#phone #chatLog b{color:#ffd25e}
 #phone #chatTxt{background:#16112b;color:#f6dfae;border:3px solid #0f0b1e;caret-color:#ffd25e}#phone #chatTxt::placeholder{color:#8f84b8}
 /* A NEW MESSAGE POPS UP AT THE TOP (his ask): see-through black with a navy line, quiet. Tap it and the chat box opens. Only while the box is shut. */
@@ -1233,7 +1240,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div id="questList"></div>
   </div>
   <button id="chatPop"></button>
-  <div class="panel" id="chatBox"><div id="chatLog"></div><div id="chatTyping"></div><div class="chRow"><input id="chatTxt" maxlength="80" placeholder="Say something" autocomplete="off" enterkeyhint="send"><button class="btn red" id="chatGo">Send</button></div></div>
+  <div class="panel" id="chatBox"><div class="chHead"><button class="btn dark" id="chatX"><i data-ic="cross" data-c="solo"></i></button></div><div id="chatLog"></div><div id="chatTyping"></div><div class="chRow"><input id="chatTxt" maxlength="80" placeholder="Say something" autocomplete="off" enterkeyhint="send"><button class="btn red" id="chatGo">Send</button></div></div>
   <div class="modal panel" id="playersModal"><div class="mhead"><b>PLAYERS</b><button class="btn" id="playersX"><i data-ic="cross" data-c="solo"></i></button></div><div id="plList"></div></div>
   <div class="modal panel" id="menuModal">
     <div class="mhead"><b>MENU</b><button class="btn" id="menuX"><i data-ic="cross" data-c="solo"></i></button></div>
@@ -1564,7 +1571,7 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11272003'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11272255'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD;
 /* (27 Nov 2026, his report: "sometimes when i join a world it goes black") whatever breaks is written, small, after the version number, so a screenshot of the corner says what it was */
 function errTag(where,e){try{const m=String(e&&e.message||e).slice(0,70),ln=((e&&e.stack||'').match(/:(\d+):\d+/)||[])[1]||'';if(errTag.last===where+m)return;errTag.last=where+m;document.getElementById('buildTag').textContent='v'+BUILD+' '+where+(ln?' '+ln:'')+' '+m;}catch(_){}} // which version this is, so an old cached copy is easy to spot
@@ -4502,7 +4509,7 @@ $('#chatPop').onclick=()=>{chatPopOff();if(!$('#chatBox').classList.contains('on
 function chatSend(){const i=$('#chatTxt'),t=i.value.replace(/\s+/g,' ').trim().slice(0,80),m=WL.me;if(!t||!m)return;i.value='';sfx('click');chatTyping(false);
   headSay(m,esc(t),{t:5.5,cls:'say'});chatLog('You',t);if(NET.on)NET.ref.child('ev').push({k:'chat',by:NET.uid,t,x:Math.round(m.x),y:Math.round(m.y),loc:m.loc,ts:TS()}).catch(()=>{});}
 $('#chatBtn').onclick=()=>{const B=$('#chatBox'),on=!B.classList.contains('on');B.classList.toggle('on',on);chatPopOff();$('#chatBtn').classList.remove('new');sfx('click');if(on){chatDown();chatTyLine();setTimeout(()=>{$('#chatTxt').focus();chatDown();},30);}else{$('#chatTxt').blur();chatTyping(false);}};
-$('#chatGo').onclick=chatSend;
+$('#chatGo').onclick=chatSend;$('#chatX').onclick=()=>{if($('#chatBox').classList.contains('on'))$('#chatBtn').click();};   /* the X closes it the same way the chat button does */
 $('#chatTxt').addEventListener('input',()=>chatTyping(!!$('#chatTxt').value.trim()));$('#chatTxt').addEventListener('blur',()=>chatTyping(false));
 $('#chatTxt').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){$('#chatBox').classList.remove('on');$('#chatTxt').blur();chatTyping(false);}});
 $('#chatTxt').addEventListener('keyup',e=>e.stopPropagation());
