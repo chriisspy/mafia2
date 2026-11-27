@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#231850">
+<title>Back to MAFIA</title>
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#130f25;color:#fff;font:18px system-ui,sans-serif;text-align:center}
+  main{max-width:28rem;padding:2rem}a{color:#ffd25e}
+</style>
+<main><p id="message">Taking you back to MAFIA…</p><a id="back" href="./">Return to MAFIA</a></main>
+<script>
+  const q=new URLSearchParams(location.search),paid=q.has('paid');
+  const msg={type:'m2-checkout-return',paid};
+  if(window.opener&&!window.opener.closed){
+    try{window.opener.postMessage(msg,location.origin);window.close();}catch(e){}
+    setTimeout(()=>{if(!window.closed)document.querySelector('#message').textContent=paid?'Payment complete. You can close this tab.':'Checkout closed. You can close this tab.';},400);
+  }else{
+    const target=new URL('./',location.href);
+    if(paid)target.searchParams.set('paid',q.get('paid'));
+    location.replace(target.href);
+  }
+</script>
+</html>

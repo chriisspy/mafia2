@@ -19,12 +19,12 @@ module.exports = ({ db, bad, tx, SK }) => {
       if (!d._google) bad('Sign in with Google to buy coins.');
       const P = PACKS[d.pack]; if (!P) bad('No such pack.');
       const back = String(d.back || ''); if (!BACK_OK.test(back)) bad('Bad page.');
-      const base = back.split(/[?#]/)[0], keep = back.includes('?lab') ? '?lab&' : '?';
+      const base = back.split(/[?#]/)[0];
       const s = await stripe('checkout/sessions', {
         mode: 'payment', 'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'aud', 'line_items[0][price_data][unit_amount]': String(P.aud),
         'line_items[0][price_data][product_data][name]': P.coins.toLocaleString('en-AU') + ' MAFIA 2 coins',
         client_reference_id: uid, 'metadata[uid]': uid, 'metadata[pack]': d.pack, 'metadata[coins]': String(P.coins),
-        success_url: base + keep + 'paid={CHECKOUT_SESSION_ID}', cancel_url: base + (keep === '?lab&' ? '?lab' : '') });
+        success_url: base + 'checkout-return.html?paid={CHECKOUT_SESSION_ID}', cancel_url: base + 'checkout-return.html?cancel=1'});
       return { url: s.url };
     } };
   // the webhook: Stripe's signature (t=..., v1=...) over "t.rawBody" with the webhook secret, at most 5 minutes old

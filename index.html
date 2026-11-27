@@ -4961,6 +4961,10 @@ async function srv(op,d){await netLoad();if(!NET.fn)NET.fn=NET.app.functions('as
    makes a Stripe Checkout page for the pack and the phone goes there; after paying Stripe sends it back with ?paid=..., and the coins arrive by
    themselves when Stripe tells the server (the wallet watcher shows them). Prices live on the server; the buttons only name a pack. */
 const BUY={tw:0,fx:0,wait:null,parts:[]};
+window.addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='m2-checkout-return')return;
+  if(!e.data.paid){try{localStorage.removeItem('m2_buy');}catch(_){}return;}
+  try{const w=JSON.parse(localStorage.getItem('m2_buy')||'null');if(w&&Date.now()-w.t<36e5)BUY.wait=w;localStorage.removeItem('m2_buy');}catch(_){}
+  const B=BUY.wait;if(B&&WALLET.ok&&coins>=B.c+B.n){BUY.wait=null;buyFx(B.n);}});
 function buyOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));const M=$('#buyModal');M.classList.add('on');{const c=$('#buyTitle canvas');c.style.animation='none';void c.offsetWidth;c.style.animation='';drawLogo(c,performance.now());}sfx('coin');
   /* slow gold sparkles drifting up behind the cards (3 screen pixels a dot, like the win screens) */
   const cvs=$('#buyTw'),W=Math.ceil(M.clientWidth/3),H=Math.ceil(M.clientHeight/3),g=cvs.getContext('2d');cvs.width=W;cvs.height=H;const P=[];
@@ -4974,10 +4978,12 @@ if(BUY_OPEN||LABLOCAL)document.querySelectorAll('.hwal').forEach(e=>{e.onclick=b
 $('#homeCoins').onclick=buyOpen;$('#townCoins').onclick=buyOpen;
 $('#buyPacks').onclick=async e=>{const b=e.target.closest('.bpack');if(!b||b.disabled)return;const n=+b.dataset.n,all=[...document.querySelectorAll('#buyPacks .bpack')];
   if(LABLOCAL){buyShut();buyFx(n);return;}   /* the lab on this computer cannot pay: a tap just plays the show, to look at it */
+  const checkout=window.open('about:blank','_blank');
   all.forEach(q=>q.disabled=true);
   try{await netLoad();const r=(await NET.app.functions('asia-southeast1').httpsCallable('buy')({pack:b.dataset.p,back:location.href})).data||{};if(!r.url)throw new Error('');
-    try{localStorage.setItem('m2_buy',JSON.stringify({n,c:coins,t:Date.now()}));}catch(_){}location.href=r.url;}
-  catch(err){const m=String(err&&err.message||'');toast(/internal|network|deadline|unavailable|not-found/i.test(m)||!m?'The shop is not open right now. Try again later.':m);all.forEach(q=>q.disabled=false);}};
+    try{localStorage.setItem('m2_buy',JSON.stringify({n,c:coins,t:Date.now()}));}catch(_){}
+    if(checkout)checkout.location.replace(r.url);else location.href=r.url;}
+  catch(err){if(checkout)checkout.close();const m=String(err&&err.message||'');toast(/internal|network|deadline|unavailable|not-found/i.test(m)||!m?'The shop is not open right now. Try again later.':m);all.forEach(q=>q.disabled=false);}};
 /* back from Stripe (?paid=...): the show plays the moment the wallet really has the coins (Stripe tells the server, the wallet watcher tells the phone) */
 {const q=new URLSearchParams(location.search);if(q.get('paid')){try{const w=JSON.parse(localStorage.getItem('m2_buy')||'null');if(w&&Date.now()-w.t<36e5)BUY.wait=w;localStorage.removeItem('m2_buy');}catch(_){}
     if(!BUY.wait)toast('Thanks! Your coins are on the way.');q.delete('paid');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q.toString().replace(/=(&|$)/g,'$1'):''));}}
@@ -5073,6 +5079,8 @@ async function netBack(code){await netLoad();const r=NET.db.ref('lobbies/'+code)
   await netEnter(code,ps.val()||{});return true;}
 const freeSlot=pl=>{const used=new Set(Object.entries(pl).filter(([u])=>u!==NET.uid).map(([,p])=>p.slot));let s=0;while(used.has(s))s++;return s;};
 async function netEnter(code,pl,fresh,opt){NET.myAt=null;NET.code=code;NET.path=(opt&&opt.path)||'lobbies/'+code;NET.world=(opt&&opt.world)||null;NET.ref=NET.db.ref((opt&&opt.path)||'lobbies/'+code);NET.slot=opt&&opt.slot!=null?opt.slot:freeSlot(pl);NET.me=NET.ref.child('players/'+NET.uid);   /* worlds (worlds.js): your own cabin every time */
+  /* Keep enough to restore the lobby after an external checkout navigation too. A game in progress uses m2_game below. */
+  try{localStorage.setItem('m2_lobby',NET.world?'w:'+NET.world:code);}catch(e){}
   const c=TOWN.cabins[NET.slot];
   await NET.me.onDisconnect().remove();
   await NET.me.set({n:myName,skin:PEOPLE[0].skin,room:myRoom,slot:NET.slot,v:BUILD,at:TS(),lr:NET.lr||null,m:{x:c.cx,y:c.top+40,tx:c.cx,ty:c.top+40,loc:-1,dir:'front',s:0}});
@@ -5085,7 +5093,7 @@ async function netEnter(code,pl,fresh,opt){NET.myAt=null;NET.code=code;NET.path=
   NET.ref.child('game').on('value',s=>gameSync(s.val()));
   try{history.replaceState(null,'','#'+code);}catch(e){}
   if(!GAME.on)go('town');}
-function netLeave(){$('#phone').classList.remove('ingame');try{localStorage.removeItem('m2_game');}catch(e){}if(NET.on){NET.on=false;try{NET.ref.child('players').off();NET.ref.child('ev').off();NET.ref.child('act').off();NET.ref.child('mchat').off();NET.ref.child('game').off();NET.me.onDisconnect().cancel();NET.me.remove();}catch(e){}}
+function netLeave(){$('#phone').classList.remove('ingame');try{localStorage.removeItem('m2_game');localStorage.removeItem('m2_lobby');}catch(e){}if(NET.on){NET.on=false;try{NET.ref.child('players').off();NET.ref.child('ev').off();NET.ref.child('act').off();NET.ref.child('mchat').off();NET.ref.child('game').off();NET.me.onDisconnect().cancel();NET.me.remove();}catch(e){}}
   Object.assign(GAME,{on:false,id:null,g:null,key:''});V.dead=new Set();V.ring=[];viewRole='civilian';$('#townStart').style.display='none';
   NET.code=null;NET.world=null;if(window.worldOff)worldOff();NET.ents.clear();NET.players=null;NET.sig=null;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
   PEOPLE.length=0;LAB_PEOPLE.forEach((p,i)=>PEOPLE.push(i?{...p}:{...p,skin:SKINS[skinIdx]&&OWNED.has(SKINS[skinIdx].id)?SKINS[skinIdx].id:p.skin}));CABIN_OF.length=0;CABIN_OF.push(...LAB_CABINS);buildTown();go('home');}
@@ -5845,6 +5853,9 @@ let OBJ_META={};
     let back='';try{back=localStorage.getItem('m2_game')||'';}catch(e){}
     if(!LAB&&/^w:/.test(back)){homeDo(()=>worldEnter(back.slice(2),true),null,$('#homeJoin'),'Back to your game…').then(()=>{if(!NET.on){try{localStorage.removeItem('m2_game');}catch(e){}usual();}else acctUI();});return;}
     if(!LAB&&/^[A-Z]{4}$/.test(back)){homeDo(()=>netBack(back),null,$('#homeJoin'),'Back to your game…').then(()=>{if(!NET.on)usual();else acctUI();});return;}   /* the tab was shut in the middle of a game */
+    let lobby='';try{lobby=localStorage.getItem('m2_lobby')||'';}catch(e){}
+    if(!LAB&&/^[A-Z]{4}$/.test(lobby)){homeDo(()=>netJoin(lobby),null,$('#homeJoin'),'Back to your lobby…').then(()=>{if(!NET.on){try{localStorage.removeItem('m2_lobby');}catch(e){}usual();}else acctUI();});return;}
+    if(!LAB&&/^w:/.test(lobby)){homeDo(()=>worldEnter(lobby.slice(2)),null,$('#homeJoin'),'Back to your world…').then(()=>{if(!NET.on){try{localStorage.removeItem('m2_lobby');}catch(e){}usual();}else acctUI();});return;}
     usual();});   // an invite link: the code is already typed in
   requestAnimationFrame(loop);
 })();
