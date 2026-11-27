@@ -14,7 +14,15 @@ from PIL import Image
 SRC, OUT, PAGE = '../mafia2-art/buttons/', 'assets/buttons/', 'index.html'
 os.makedirs(OUT, exist_ok=True)
 HL = 28                                                   # the highlight: white at HL / 255 (his note: "more subtle")
-FACE = {(0x3a, 0x44, 0x67), (0x3b, 0x43, 0x67)}           # his navy face
+FACE = {(0x3a, 0x44, 0x67), (0x3b, 0x43, 0x67), (0xff, 0xd2, 0x5e)}   # his navy face (and the gold one below)
+# (28 Nov 2026, his ask) THE COIN SHOP BUTTON IS YELLOW: his navy button recoloured to the game's gold (the Get coins button's colours); his coin and outline untouched
+GOLD = {(0x3a, 0x44, 0x67): (0xff, 0xd2, 0x5e), (0x3b, 0x43, 0x67): (0xff, 0xd2, 0x5e), (0x25, 0x2b, 0x43): (0xd3, 0x9b, 0x2a), (0x26, 0x2b, 0x41): (0xd3, 0x9b, 0x2a), (0x50, 0x59, 0x78): (0xe8, 0xb2, 0x3e)}
+def gold(im):
+    for y in range(16):
+        for x in range(16):
+            r, g, b, a = im.getpixel((x, y))
+            if a and (r, g, b) in GOLD: im.putpixel((x, y), GOLD[(r, g, b)] + (a,))
+    return im
 ART = (('menu-stroke', 'menu'), ('people-stroke', 'people'), ('chat-stroke', 'chat'), ('shop-stroke', 'shop'), ('collection-stroke', 'collection'),
        ('rewards-stroke', 'rewards'), ('coins-stroke', 'coins'), ('decorate-or-edit-stroke', 'decorate'))
 
@@ -41,6 +49,7 @@ def trophy():
 uris = {}
 for a, b in ART + (('', 'leaderboard'),):
     im = trophy() if b == 'leaderboard' else Image.open(SRC + a + '.png').convert('RGBA')
+    if b == 'coins': im = gold(im)
     for x in range(2, 14):                                # the faint highlight on the bare face only: never over his icon
         r, g, bl, al = im.getpixel((x, 12))
         if (r, g, bl) in FACE: im.putpixel((x, 12), tuple(round(c + (255 - c) * HL / 255) for c in (r, g, bl)) + (255,))
