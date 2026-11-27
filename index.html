@@ -783,6 +783,16 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #phone.xmas #chatBox{border-color:var(--wood);border-image:none!important;box-shadow:inset 0 0 0 3px var(--wood2),inset 0 -6px 0 var(--paper2),0 5px 0 #0008}
 #chatLog{max-height:210px;font-size:15px}#chatLog div{padding:2px 0}
 #phone.land #chatBox{left:calc(63px + var(--sl));width:min(440px,64%);top:10px}#phone.land #chatLog{max-height:150px}
+/* (27 Nov 2026, his ask) THE CHAT BOX IS DARK, like the chat button (.btn.dark): navy panel, sand text, gold names */
+#phone #chatBox,#phone.xmas #chatBox{background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-image:none!important;border-radius:6px;box-shadow:inset 0 -6px 0 #1b1532,inset 0 2px 0 #3d3466,0 5px 0 #0008}
+#phone #chatBox::before,#phone #chatBox::after{display:none!important}
+#phone #chatLog{color:#f6dfae}#phone #chatLog b{color:#ffd25e}
+#phone #chatTxt{background:#16112b;color:#f6dfae;border:3px solid #0f0b1e;caret-color:#ffd25e}#phone #chatTxt::placeholder{color:#8f84b8}
+/* A NEW MESSAGE POPS UP AT THE TOP (his ask): see-through black with a navy line, quiet. Tap it and the chat box opens. Only while the box is shut. */
+#chatPop{position:absolute;left:63px;right:10px;top:calc(66px + env(safe-area-inset-top));z-index:23;display:none;text-align:left;font:600 15px 'Pixelify Sans';color:#f6dfae;background:rgba(0,0,0,.58);border:2px solid #2b3a78;border-radius:6px;padding:6px 10px 7px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chatPop b{color:#ffd25e;font-weight:700}#chatPop.on{display:block;animation:chPop .22s ease-out}#chatPop.out{opacity:0;transition:opacity .35s}
+@keyframes chPop{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+#phone.land #chatPop{left:calc(63px + var(--sl));right:auto;max-width:min(440px,64%);top:10px}
 #chatTyping{display:flex;align-items:baseline;gap:5px;font:600 13px 'Pixelify Sans';opacity:.7;text-align:left;margin:-2px 0 6px;white-space:nowrap;overflow:hidden}#chatTyping:empty{display:none}
 .tyd{display:inline-flex;gap:3px;align-items:flex-end;height:9px;vertical-align:baseline}.tyd i{display:block;width:4px;height:4px;background:currentColor;animation:tyd .9s steps(1) infinite}.tyd i:nth-child(2){animation-delay:.15s}.tyd i:nth-child(3){animation-delay:.3s}
 @keyframes tyd{0%{transform:translateY(0);opacity:.4}34%{transform:translateY(-4px);opacity:1}67%{transform:translateY(0);opacity:.4}}
@@ -1189,6 +1199,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div class="mhead"><b>QUEST LAB</b><button class="btn" id="questX"><i data-ic="cross" data-c="solo"></i></button></div>
     <div id="questList"></div>
   </div>
+  <button id="chatPop"></button>
   <div class="panel" id="chatBox"><div id="chatLog"></div><div id="chatTyping"></div><div class="chRow"><input id="chatTxt" maxlength="80" placeholder="Say something" autocomplete="off" enterkeyhint="send"><button class="btn red" id="chatGo">Send</button></div></div>
   <div class="modal panel" id="playersModal"><div class="mhead"><b>PLAYERS</b><button class="btn" id="playersX"><i data-ic="cross" data-c="solo"></i></button></div><div id="plList"></div></div>
   <div class="modal panel" id="menuModal">
@@ -1520,8 +1531,10 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11271244'; // changes every push, so phones never show an old picture from their cache
-document.getElementById('buildTag').textContent='v'+BUILD; // which version this is, so an old cached copy is easy to spot
+const BUILD='11271253'; // changes every push, so phones never show an old picture from their cache
+document.getElementById('buildTag').textContent='v'+BUILD;
+/* (27 Nov 2026, his report: "sometimes when i join a world it goes black") whatever breaks is written, small, after the version number, so a screenshot of the corner says what it was */
+function errTag(where,e){try{const m=String(e&&e.message||e).slice(0,70),ln=((e&&e.stack||'').match(/:(\d+):\d+/)||[])[1]||'';if(errTag.last===where+m)return;errTag.last=where+m;document.getElementById('buildTag').textContent='v'+BUILD+' '+where+(ln?' '+ln:'')+' '+m;}catch(_){}} // which version this is, so an old cached copy is easy to spot
 /* ================= CABIN ROOMS (12 Nov 2026): what the Cabin Case holds =================
    Each room is ONE picture of the whole room in the game's 195x242 grid (assets/rooms/<id>.png, shrunk from his
    Higgsfield pictures by tools/make_rooms.py). The game cuts the furniture out of that picture itself with the masks of
@@ -4382,7 +4395,7 @@ function plPaint(){const L=$('#plList');if(!L)return;const rows=[],here=new Set(
   if(NET.world&&typeof WORLD!=='undefined')for(const[u,m]of Object.entries(WORLD.members||{}))if(!here.has(u))rows.push(row(SP[m.skin]?face(m.skin):(typeof wFace==='function'?wFace(m):''),m.n||'Player','Offline',1));
   const own=NET.world&&typeof WORLD!=='undefined'&&WORLD.meta&&WORLD.meta.owner===NET.uid;   /* (his ask) the owner can invite from here */
   L.innerHTML=rows.join('')+(own?'<button class="btn red" id="plInvite">Invite</button>':'');}
-function plSync(){const b=$('#playersBtn'),c=$('#chatBtn');if(!b)return;const on=!!(NET.on&&scene===scenes.town),ch=on||(LAB&&scene===scenes.town);   /* (26 Nov) the lab has the chat too, to look at it */if((b.style.display!=='none')!==on)b.style.display=on?'':'none';if((c.style.display!=='none')!==ch)c.style.display=ch?'':'none';if(!on)$('#playersModal').classList.remove('on');if(!ch&&$('#chatBox').classList.contains('on')){$('#chatBox').classList.remove('on');chatTyping(false);}}
+function plSync(){const b=$('#playersBtn'),c=$('#chatBtn');if(!b)return;const on=!!(NET.on&&scene===scenes.town),ch=on||(LAB&&scene===scenes.town);   /* (26 Nov) the lab has the chat too, to look at it */if((b.style.display!=='none')!==on)b.style.display=on?'':'none';if((c.style.display!=='none')!==ch)c.style.display=ch?'':'none';if(!on)$('#playersModal').classList.remove('on');if(!ch&&$('#chatBox').classList.contains('on')){$('#chatBox').classList.remove('on');chatTyping(false);}if(!ch&&typeof chatPopOff==='function')chatPopOff();}
 $('#playersBtn').onclick=()=>{const M=$('#playersModal');if(M.classList.contains('on')){M.classList.remove('on');return;}document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));sfx('click');plPaint();M.classList.add('on');};
 $('#plList').addEventListener('click',e=>{if(!e.target.closest('#plInvite'))return;sfx('click');$('#playersModal').classList.remove('on');worldPanel();setTimeout(()=>{const i=$('#wmUser');if(i){i.scrollIntoView({block:'center'});i.focus();}},60);});   /* opens the world window at the email box */
 $('#playersX').onclick=()=>{sfx('close');$('#playersModal').classList.remove('on');};
@@ -4414,22 +4427,26 @@ function chatTyLine(){const el=$('#chatTyping');if(!el||!$('#chatBox').classList
 setInterval(chatTyLine,400);
 const chatDown=()=>{const L=$('#chatLog');L.scrollTop=L.scrollHeight;};   /* the newest message in view */
 function chatLog(n,t){CHAT.log.push([n,t]);if(CHAT.log.length>40)CHAT.log.shift();const L=$('#chatLog');L.innerHTML=CHAT.log.map(([a,b])=>`<div><b>${esc(a)}:</b> ${esc(b)}</div>`).join('');chatDown();requestAnimationFrame(chatDown);
-  if(!$('#chatBox').classList.contains('on')&&n!=='You')$('#chatBtn').classList.add('new');}
+  if(!$('#chatBox').classList.contains('on')&&n!=='You'){$('#chatBtn').classList.add('new');chatPop(n,t);}}
+function chatPop(n,t){const el=$('#chatPop');if(!el||$('#chatBtn').style.display==='none')return;el.innerHTML=`<b>${esc(n)}:</b> ${esc(t)}`;el.classList.remove('on','out');void el.offsetWidth;el.classList.add('on');
+  clearTimeout(CHAT.popT);CHAT.popT=setTimeout(()=>{el.classList.add('out');CHAT.popT=setTimeout(chatPopOff,360);},4500);}
+function chatPopOff(){clearTimeout(CHAT.popT);const el=$('#chatPop');if(el)el.classList.remove('on','out');}
+$('#chatPop').onclick=()=>{chatPopOff();if(!$('#chatBox').classList.contains('on'))$('#chatBtn').click();};
 function chatSend(){const i=$('#chatTxt'),t=i.value.replace(/\s+/g,' ').trim().slice(0,80),m=WL.me;if(!t||!m)return;i.value='';sfx('click');chatTyping(false);
   headSay(m,esc(t),{t:5.5,cls:'say'});chatLog('You',t);if(NET.on)NET.ref.child('ev').push({k:'chat',by:NET.uid,t,x:Math.round(m.x),y:Math.round(m.y),loc:m.loc,ts:TS()}).catch(()=>{});}
-$('#chatBtn').onclick=()=>{const B=$('#chatBox'),on=!B.classList.contains('on');B.classList.toggle('on',on);$('#chatBtn').classList.remove('new');sfx('click');if(on){chatDown();chatTyLine();setTimeout(()=>{$('#chatTxt').focus();chatDown();},30);}else{$('#chatTxt').blur();chatTyping(false);}};
+$('#chatBtn').onclick=()=>{const B=$('#chatBox'),on=!B.classList.contains('on');B.classList.toggle('on',on);chatPopOff();$('#chatBtn').classList.remove('new');sfx('click');if(on){chatDown();chatTyLine();setTimeout(()=>{$('#chatTxt').focus();chatDown();},30);}else{$('#chatTxt').blur();chatTyping(false);}};
 $('#chatGo').onclick=chatSend;
 $('#chatTxt').addEventListener('input',()=>chatTyping(!!$('#chatTxt').value.trim()));$('#chatTxt').addEventListener('blur',()=>chatTyping(false));
 $('#chatTxt').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){$('#chatBox').classList.remove('on');$('#chatTxt').blur();chatTyping(false);}});
 $('#chatTxt').addEventListener('keyup',e=>e.stopPropagation());
 function wlDoor(ci){if(WL.fading)return;WL.fading=true;sfx('door');const xf=$('#xfade');xf.classList.add('on');
-  setTimeout(()=>{const m=WL.me,was=m.loc;m.seat=null;m.loc=ci;m.path=[];m.todo=null;m.walk=false;WL.sel=null;wlMenu();
+  setTimeout(()=>{try{const m=WL.me,was=m.loc;m.seat=null;m.loc=ci;m.path=[];m.todo=null;m.walk=false;WL.sel=null;wlMenu();
     {const H=ci>=100?hallOf(ci):null,on=!!H&&H.k!=='lake';$('#townHud').classList.toggle('hall',on);if(on){$('#hallLine').textContent='';paintCoins();}}
     if(ci>=100){const H=hallOf(ci),sp=(H.from&&H.from(was))||H.spawn;m.x=sp[0];m.y=sp[1];m.dir=sp[2]||'back';$('#phone').style.background=H.out?'':'#000';wlHead(H.name,H.hint||(H.k==='lake'?'Tap the water to fish. Walk down to leave.':'Walk to the door to leave'));if(H.enter)H.enter(was);WL.ambT=.2;if(H.k==='casino')sfx('cas_win');if(H.k==='lake'){FISH.cx=m.x;FISH.cy=m.y-60;music('lake');}}
     else if(ci>=0){m.x=98;m.y=190;m.dir='back';$('#phone').style.background=ROOM_VOID;const o=CABIN_OF.indexOf(ci);
       wlHead(o===0?'Your cabin':o>0?`${PEOPLE[o].n}'s cabin`:'An empty cabin','Walk to the door to leave');}
     else{if(was===LAKE){lakeOff();m.x=JETTY[0]-22;m.y=JETTY[1];music(SCENE_TUNE.town);}else if(was>=100){const H0=hallOf(was),d=H0&&H0.back?H0.back:BUILDINGS[was-100]?bldDoor(BUILDINGS[was-100]):[280,436];m.x=d[0];m.y=d[1];}   /* never stuck on black: a place with no door in the town drops you in the square */else{const c=TOWN.cabins[was];m.x=c.cx;m.y=c.top+38;}m.dir=was===LAKE?'left':'front';$('#phone').style.background='';wlHead();}
-    placeShow(ci);netMove();xf.classList.remove('on');setTimeout(()=>WL.fading=false,230);},240);}
+    placeShow(ci);netMove();}catch(e){console.error('door',ci,e);errTag('door:'+ci,e);}finally{xf.classList.remove('on');setTimeout(()=>WL.fading=false,230);}},240);}
 function wlBotDoor(b,ci){const was=b.loc;b.path=[];b.todo=null;b.walk=false;
   if(ci>=0){b.loc=ci;b.x=98;b.y=190;b.dir='back';b.stay=2+Math.floor(Math.random()*3);if(WL.me.loc===ci)wlSay(`${wlName(b)} came in.`);}
   else{const c=TOWN.cabins[was];b.loc=-1;b.x=c.cx;b.y=c.top+38;b.dir='front';if(WL.me.loc===was)wlSay(`${wlName(b)} left.`);}}
@@ -5718,16 +5735,17 @@ $('#townCodeBox').onclick=()=>{if(!NET.on)return;if(NET.world){sfx('click');worl
 /* ---------- shell ---------- */
 function go(name,after){
   const xf=$('#xfade');xf.classList.add('on');
-  setTimeout(()=>{
-    if(scene&&scene.leave)scene.leave();
+  setTimeout(()=>{try{   /* the fade must ALWAYS lift: one error in here used to leave the screen black until the browser was restarted */
+    try{if(scene&&scene.leave)scene.leave();}catch(e){console.error('leave',e);errTag('leave',e);}
     document.querySelectorAll('.hud').forEach(h=>h.classList.remove('on'));document.querySelectorAll('.modal').forEach(m=>m.classList.remove('on'));
     scene=scenes[name];if(scene.hud)$(scene.hud).classList.add('on');scene.enter&&scene.enter();music(SCENE_TUNE[name]||null);
     document.querySelectorAll('#tabs .btn').forEach(b=>b.classList.toggle('sel',b.dataset.s===name));
     if(LAB)try{localStorage.setItem('m2lab_scene',name);}catch(e){}
-    xf.classList.remove('on');if(after)after();
+    }catch(e){console.error('go',name,e);errTag('go:'+name,e);}finally{xf.classList.remove('on');}if(after)after();
   },scene?200:0);
 }
 document.querySelectorAll('#tabs .btn[data-s]').forEach(b=>b.onclick=()=>go(b.dataset.s));
+{let since=0;setInterval(()=>{const xf=$('#xfade');if(!xf.classList.contains('on')){since=0;return;}if(!since){since=Date.now();return;}if(Date.now()-since>4000){xf.classList.remove('on');WL.fading=false;since=0;errTag('fade','stuck');}},1000);}   /* never black for good */
 /* lab only: THE FILMS LIST (13 Nov, his call): every night film, each with the ending you want, one tap away */
 const FILMS=[['NEW FILMS'],['The Note','note',['dead','doc','guard']],['The Pillow','home',['pillow']],['The Third Shadow','porch',['third']],['The Argument','argue',['quiet']],['The Bin','bin',['quiet']],
   ['THE OTHERS'],['A knock at the door','home',['dead','doc']],['A walk','walk',['dead','doc','guard']],['Garden / firewood','chore',['dead','doc','guard']],['On the porch','porch',['dead','doc','guard']],
@@ -5762,7 +5780,7 @@ let lastInput=performance.now();for(const ev of['pointerdown','pointermove','key
 function quiet(now){if(scene!==scenes.town||now-lastInput<4000||JOY.on||WL.fading||(WL.wheel&&WL.wheel.busy)||(typeof GAME!=='undefined'&&GAME.on))return false;
   const m=WL.me;if(!m||m.loc===106||(typeof FISH!=='undefined'&&FISH.on)||(typeof PICK!=='undefined'&&PICK.held)||(typeof DIG!=='undefined'&&DIG.on))return false;
   for(const e of wlAll())if(e.loc===m.loc&&(e.walk||(e.path&&e.path.length)))return false;return true;}
-function loop(now){if(now-last<(quiet(now)?30:15)){requestAnimationFrame(loop);return;}const dt=Math.min(.05,(now-last)/1000);last=now;if(scene&&IMG.town){try{scene.frame(dt,now);}catch(e){if(loop.err!==String(e)){loop.err=String(e);console.warn('frame',e);}}   /* one bad frame must never stop the picture for good */
+function loop(now){if(now-last<(quiet(now)?30:15)){requestAnimationFrame(loop);return;}const dt=Math.min(.05,(now-last)/1000);last=now;if(scene&&IMG.town){try{scene.frame(dt,now);}catch(e){if(loop.err!==String(e)){loop.err=String(e);console.warn('frame',e);errTag('frame',e);}}   /* one bad frame must never stop the picture for good */
   joyPlace();}requestAnimationFrame(loop);}
 
 let OBJ_META={};
