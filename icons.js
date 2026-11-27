@@ -100,9 +100,13 @@ rec:[E,E,'...KKKK...','..KTRRRK..','..KRWRRK..','..KRRRrK..','..KRrrrK..','...KK
 ICONS.left=ICONS.right.map(r=>[...r].reverse().join(''));
 ICONS.down=ICONS.right.map((_,y)=>ICONS.right.map(r=>r[y]).join(''));
 ICONS.up=[...ICONS.down].reverse();
+/* THE COIN IS HIS OWN ART (27 Nov 2026, his ask: "replace all of the coin icons in the game" with mafia2-art/NEW-COIN.png, 20 x 19, kept here as a 20 x 20 picture
+   and at assets/icons/coin.png). 'coin' and 'coinbig' both show it, always at a whole number of screen pixels per art pixel (20, 40, 60...) so it stays crisp.
+   The old grid 'coin' above is still there for anything that reads the grids. */
+const ART={coin:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABtUlEQVR42q2Uv0sCYRjHv6dHCacmFVJDkpPW0BA6BA0NDdLUJI3R4FhTg2t/gGD/RNLUIE4NgkKEZ1AK4eKFS3n+4DhR8ECu4bjX9z3vtKhne++e9/N+n58cFtiaP6zT554qcfP8uUUguZTBRCiQ75v7j3PBnBPo8+UYAOAeizOXxHc/Ti5atmDOCpOUJoTaA8DfzE3FZDkG91hE8EBhoBwNk0sZBlTMLtnCjq405kxDeeZVoQD3eAqLJsK2wGJWItBWJQBAIf9cdKim5dO6IwwAookw8mmj+KG4AvF2m+SeKPQ0U6QA3o1lctl3egdPM0XOnbcB5TMNvT/0GTncWdnSX6sJAqNDNWHWSn81IgAATW0jFFdI6LHLD7hknbdtDavqRRaKK+gPfUYOzRet9lOYqXBVGMDVUyVu7/yZaQm+U3Nsm25ZY1TR4fZUieNpx/VDA1CvehFNGNUsZiVLhSMzypiiMI39FGCa2q51NLXNqOuWNexej+wbu1UJEEejcRtEgTVM0+pVL4CR8yzfnwVtx4udlGlukznZfpat28YJbMKSOXnxtpkHphX9ah/+dWP/u30DySLRzs5V+g4AAAAASUVORK5CYII='};ART.coinbig=ART.coin;const ART_N=20;
 const URLS={};
 function url(name){
-  if(URLS[name])return URLS[name];
+  if(ART[name])return ART[name];if(URLS[name])return URLS[name];
   const g=ICONS[name],c=document.createElement('canvas');c.width=c.height=g.length;   // most icons are 10 by 10; the newer shaded ones are 16 by 16
  const x=c.getContext('2d');
   g.forEach((row,y)=>[...row].forEach((ch,i)=>{if(ch==='.')return;x.fillStyle=PAL[ch]||'#f0f';x.fillRect(i,y,1,1);}));
@@ -111,7 +115,8 @@ function url(name){
 // ic('lock') -> an <img> at button size; ic('skull',3) for headings; pass 'solo' or 'after' as the third argument
 // for an icon on its own, or one that comes after its label
 window.ic=function(name,scale,cls){const s=Math.max(2,scale||2);if(!ICONS[name])return'';
+  if(ART[name]){const want=ICONS[name].length>GRID?ICONS[name].length*Math.max(1,s-1):GRID*s,k=Math.max(1,Math.round(want/ART_N));return `<img class="ic${cls?' '+cls:''}" src="${ART[name]}" width="${ART_N*k}" height="${ART_N*k}" alt="">`;}
   const n=ICONS[name].length,px=n>GRID?Math.max(1,s-1):s;   // a 16-grid icon at scale 3 is 32px (2px pixels), beside 30px for the 10-grid ones
   return `<img class="ic${cls?' '+cls:''}" src="${url(name)}" width="${n*px}" height="${n*px}" alt="">`;};
-window.M2_ICONS=ICONS;window.M2_PAL=PAL;
+window.M2_ICONS=ICONS;window.M2_PAL=PAL;window.M2_COIN=ART.coin;
 })();
