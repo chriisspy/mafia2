@@ -104,6 +104,9 @@ ICONS.up=[...ICONS.down].reverse();
    and at assets/icons/coin.png). 'coin' and 'coinbig' both show it, always at a whole number of screen pixels per art pixel (20, 40, 60...) so it stays crisp.
    The old grid 'coin' above is still there for anything that reads the grids. */
 const ART={coin:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABtUlEQVR42q2Uv0sCYRjHv6dHCacmFVJDkpPW0BA6BA0NDdLUJI3R4FhTg2t/gGD/RNLUIE4NgkKEZ1AK4eKFS3n+4DhR8ECu4bjX9z3vtKhne++e9/N+n58cFtiaP6zT554qcfP8uUUguZTBRCiQ75v7j3PBnBPo8+UYAOAeizOXxHc/Ti5atmDOCpOUJoTaA8DfzE3FZDkG91hE8EBhoBwNk0sZBlTMLtnCjq405kxDeeZVoQD3eAqLJsK2wGJWItBWJQBAIf9cdKim5dO6IwwAookw8mmj+KG4AvF2m+SeKPQ0U6QA3o1lctl3egdPM0XOnbcB5TMNvT/0GTncWdnSX6sJAqNDNWHWSn81IgAATW0jFFdI6LHLD7hknbdtDavqRRaKK+gPfUYOzRet9lOYqXBVGMDVUyVu7/yZaQm+U3Nsm25ZY1TR4fZUieNpx/VDA1CvehFNGNUsZiVLhSMzypiiMI39FGCa2q51NLXNqOuWNexej+wbu1UJEEejcRtEgTVM0+pVL4CR8yzfnwVtx4udlGlukznZfpat28YJbMKSOXnxtpkHphX9ah/+dWP/u30DySLRzs5V+g4AAAAASUVORK5CYII='};ART.coinbig=ART.coin;const ART_N=20;
+/* HIS MENU ICONS (27 Nov 2026: mafia2-art/buttons/*-icon.png, also at assets/buttons/ic-*.png): shop, collection, rewards, coin, social.
+   Each is cut to its own drawing and shown at 3 screen pixels a dot (2 at the smallest scale), the game's own pixel size, like his buttons. */
+const ART16={aShop:{u:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAv0lEQVR42n2OMQsBcRyGn78ufAalzmCQ1Wi6y2RgsjCYDBj4SMrEZCU3XRkoMplQYrIw6ZbXoJO4PMuv3vft6YckJKFeR+p19KbVlGpVhb2RBP2uHtsNwWTGJ/FKCYDk3DexcPSPh1tUjMsZ4Mf2nVlTfwmA1vtIm9kdXzebd9VIHxieMpHDsLMAU3Zs4R0ih2XHZjjAWAC3e0CxkALAadfhusAbvV653QMggQXgry5vQ2455juDDCabdwHEf8wTX4Jfpfrbs4kAAAAASUVORK5CYII=',w:10,h:10},aColl:{u:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAJCAYAAAALpr0TAAAAlklEQVR42oWOMQrCUBBE30rKNCKiF/hY5BgB40k8ilfwLGJaK+sUGrCxSSCVGkQhWYvPDx81+pqdYQdmRFUBSHIUYGOQb15UlSRHDwUAzKb2Oj+uS/aLicj8qF2oj3C7Y8AfhllGU90QE8UK8FynH6HR+cR1tQQgADsW7Hif9nLH/X9Wt/Wj04E/+J3G02KimL5qlwF4AT/TMpHNy9aLAAAAAElFTkSuQmCC',w:10,h:9},aRewards:{u:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAKCAYAAACJxx+AAAAAlklEQVR42qWMMQrCQAAE5yQg9n7hbM7SH9w//IAoFuIj/EB63yNCoiBISo2gsVACGhHWIniVaOE2O7ssiyQkoTzWJ8Y6j/JY1nlpO1GVDmtO+7LOY6zzAErmHczzyqO8ANAb3QCM0Xgg3pp2a5+tQxVRnKj2OwCaZQvuR6okC4MGP/T/IFotkhDamyUAxeEcOmOd17eHFykzS3jx7lfWAAAAAElFTkSuQmCC',w:8,h:10},aCoin:{u:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAJCAYAAAAPU20uAAAAoUlEQVR42l2QIQ7CQBBF3zTIikoSsF1T1wPUrEBzAizoWq6Ar+ACHKKmBkNIKtZUr6ghQawfBHRD+9SIl/eTEVXlhzI2RNZHARBVhbFRXnf+Cd6R7h4iqqq4AwBD1wJgKhulZMoOXYs5ecz+TPAulpJZd2xYTq2mw1SW0F8BSLdFFCQvrA63DUuCd5R1huSFBdDn5T0TyjoDkEn4/mGOAHwA30w4GS7NNF0AAAAASUVORK5CYII=',w:8,h:9},aSocial:{u:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAgElEQVR42n3OsQ3CMBSE4f85Q9BQu8oYmYEloCCT0DAFK8AUiMKiRlYipYEmobCOAtkSEPG6u++KZ5Kg3QiA3d6Aj2zarpUedwDcOPLsO/KFOOBy+MbS/0MA549hFkIcWFVLTBK+bnReTD94vZzMpPfDvm50SDeAggBlkEdAQYAXBSdBaW10h8AAAAAASUVORK5CYII=',w:8,h:8}};
 const URLS={};
 function url(name){
   if(ART[name])return ART[name];if(URLS[name])return URLS[name];
@@ -114,7 +117,9 @@ function url(name){
 }
 // ic('lock') -> an <img> at button size; ic('skull',3) for headings; pass 'solo' or 'after' as the third argument
 // for an icon on its own, or one that comes after its label
-window.ic=function(name,scale,cls){const s=Math.max(2,scale||2);if(!ICONS[name])return'';
+window.ic=function(name,scale,cls){const s=Math.max(2,scale||2);
+  if(ART16[name]){const A=ART16[name],k=s>=3?3:2;return `<img class="ic${cls?' '+cls:''}" src="${A.u}" width="${A.w*k}" height="${A.h*k}" alt="">`;}
+  if(!ICONS[name])return'';
   if(ART[name]){const want=ICONS[name].length>GRID?ICONS[name].length*Math.max(1,s-1):GRID*s,px=want<=24?20:want<=34?30:ART_N*Math.round(want/ART_N);   /* (his note) 40 was too big on the small buttons: those slots get 30. Big ones stay whole multiples (40, 60) */
     return `<img class="ic${cls?' '+cls:''}" src="${ART[name]}" width="${px}" height="${px}" alt="">`;}
   const n=ICONS[name].length,px=n>GRID?Math.max(1,s-1):s;   // a 16-grid icon at scale 3 is 32px (2px pixels), beside 30px for the 10-grid ones

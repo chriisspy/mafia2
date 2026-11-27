@@ -5,7 +5,7 @@
    Database (written only by the server, functions/index.js): friends/{uid}/{friend} true, freq/{uid}/{from} {n, p, skin},
    gifts/{uid}/{id} {from, n, amt} (the phone deletes a gift once it has shown it). Names and pictures: profiles/{uid}. */
 const FR={uid:null,refs:[],list:{},req:{},prof:{},to:null,stake:500};
-document.querySelector('#homeFlip').insertAdjacentHTML('afterend',`<button class="btn dark lob" id="homeFriends"><i data-ic="heart" data-s="3" data-c="solo"></i>Social<em class="frDot"></em></button>`);
+document.querySelector('#homeFlip').insertAdjacentHTML('afterend',`<button class="btn dark lob" id="homeFriends"><i data-ic="aSocial" data-s="2" data-c="solo"></i>Social<em class="frDot"></em></button>`);
 document.querySelector('#menuHow').insertAdjacentHTML('beforebegin',`<button class="btn mrow" id="menuFriends">Social<em class="frDot"></em></button>`);
 document.querySelector('#menuModal').insertAdjacentHTML('afterend',`<div class="modal big panel" id="friendsModal">
   <div class="mhead"><b>SOCIAL</b><button class="btn" id="frX"><i data-ic="cross" data-c="solo"></i></button></div>
