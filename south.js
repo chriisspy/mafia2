@@ -154,6 +154,7 @@ SH.frame = (m, people, dt, t, H, img) => {
   // a tag over the road out to the race track, like the FISH tag over the jetty
   const tag = (wx, wy, txt, col) => { const w = txt.length * 4 + 1, fx0 = X(wx) - Math.floor(w / 2), fy0 = Y(wy) + Math.round(Math.sin(t * .005) * 1.5);
     lx.fillStyle = '#1a1430'; lx.fillRect(fx0 - 1, fy0 - 1, w + 2, 9); lx.fillRect(fx0 + Math.floor(w / 2) - 1, fy0 + 8, 3, 2); lx.fillStyle = col; lx.fillRect(fx0, fy0, w, 7); lx.fillStyle = '#fff'; pxText(lx, txt, fx0 + 1, fy0 + 1); };
+  if (window.plMarks || typeof plMarks === 'function') plMarks(t);   // (28 Nov, his ask) players near you but off the screen show on the edge, as in the town
   tag(S_RACE.x - 14, S_RACE.y0 - 12, 'RACE', '#4f9be0');   // only the road out gets a tag: the shop sign and the mine say what they are
   lx.fillStyle = 'rgba(255,236,190,.06)'; lx.fillRect(0, 0, cam.lw, cam.lh);
   return hits;

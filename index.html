@@ -798,6 +798,12 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 /* (27 Nov 2026, his ask) OPEN, THE CHAT FILLS THE TOP HALF of the screen (the keyboard takes the bottom half on a phone), with a close X top right.
    Turned on its side the screen is too short for that: there it keeps its old size and just gains the X. */
 #phone #chatBox.on{display:flex;flex-direction:column;top:calc(10px + env(safe-area-inset-top));bottom:50%;left:10px;right:10px;z-index:30}   /* full width, over the buttons on the left too (his word) */
+/* (28 Nov 2026, his ask) OPEN, THE CHAT IS SEE-THROUGH so the game shows behind it. Press it to type and it goes solid (.solid); once the message
+   is sent it is see-through again. */
+#phone #chatBox.on:not(.solid){background:rgba(42,35,70,.78);box-shadow:0 5px 0 #0004}
+#phone #chatBox.on:not(.solid) #chatTxt{background:rgba(22,17,43,.8)}
+#phone #chatBox.on:not(.solid) #chatLog{text-shadow:0 1px 0 #0f0b1e,1px 0 0 #0f0b1e,-1px 0 0 #0f0b1e,0 -1px 0 #0f0b1e}
+#phone #chatBox{transition:background-color .15s}
 #phone #chatBox .chHead{display:flex;justify-content:flex-end;flex:none;margin-bottom:4px}
 #phone #chatX{width:36px;height:36px;padding:0;flex:none;display:flex;align-items:center;justify-content:center}
 #phone #chatLog{flex:1;min-height:0;max-height:none}#phone #chatBox .chRow,#phone #chatTyping{flex:none}
@@ -1571,7 +1577,7 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11272255'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11272304'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD;
 /* (27 Nov 2026, his report: "sometimes when i join a world it goes black") whatever breaks is written, small, after the version number, so a screenshot of the corner says what it was */
 function errTag(where,e){try{const m=String(e&&e.message||e).slice(0,70),ln=((e&&e.stack||'').match(/:(\d+):\d+/)||[])[1]||'';if(errTag.last===where+m)return;errTag.last=where+m;document.getElementById('buildTag').textContent='v'+BUILD+' '+where+(ln?' '+ln:'')+' '+m;}catch(_){}} // which version this is, so an old cached copy is easy to spot
@@ -4506,16 +4512,16 @@ function chatPop(n,t){const el=$('#chatPop');if(!el||$('#chatBtn').style.display
   clearTimeout(CHAT.popT);CHAT.popT=setTimeout(()=>{el.classList.add('out');CHAT.popT=setTimeout(chatPopOff,360);},4500);}
 function chatPopOff(){clearTimeout(CHAT.popT);const el=$('#chatPop');if(el)el.classList.remove('on','out');}
 $('#chatPop').onclick=()=>{chatPopOff();if(!$('#chatBox').classList.contains('on'))$('#chatBtn').click();};
-function chatSend(){const i=$('#chatTxt'),t=i.value.replace(/\s+/g,' ').trim().slice(0,80),m=WL.me;if(!t||!m)return;i.value='';sfx('click');chatTyping(false);
+function chatSend(){const i=$('#chatTxt'),t=i.value.replace(/\s+/g,' ').trim().slice(0,80),m=WL.me;if(!t||!m)return;i.value='';sfx('click');chatTyping(false);if(window.chatSolid)chatSolid(false);
   headSay(m,esc(t),{t:5.5,cls:'say'});chatLog('You',t);if(NET.on)NET.ref.child('ev').push({k:'chat',by:NET.uid,t,x:Math.round(m.x),y:Math.round(m.y),loc:m.loc,ts:TS()}).catch(()=>{});}
-$('#chatBtn').onclick=()=>{const B=$('#chatBox'),on=!B.classList.contains('on');B.classList.toggle('on',on);chatPopOff();$('#chatBtn').classList.remove('new');sfx('click');if(on){chatDown();chatTyLine();setTimeout(()=>{$('#chatTxt').focus();chatDown();},30);}else{$('#chatTxt').blur();chatTyping(false);}};
-$('#chatGo').onclick=chatSend;$('#chatX').onclick=()=>{if($('#chatBox').classList.contains('on'))$('#chatBtn').click();};   /* the X closes it the same way the chat button does */
+$('#chatBtn').onclick=()=>{const B=$('#chatBox'),on=!B.classList.contains('on');B.classList.toggle('on',on);B.classList.remove('solid');chatPopOff();$('#chatBtn').classList.remove('new');sfx('click');if(on){chatDown();chatTyLine();setTimeout(()=>{$('#chatTxt').focus();chatDown();},30);}else{$('#chatTxt').blur();chatTyping(false);}};
+$('#chatGo').onclick=chatSend;{const B=$('#chatBox'),sol=on=>B.classList.toggle('solid',on);B.addEventListener('pointerdown',e=>{if(!e.target.closest('#chatX,#chatGo'))sol(true);});$('#chatTxt').addEventListener('input',()=>{if($('#chatTxt').value)sol(true);});window.chatSolid=sol;}   /* press the chat (or type) = solid */$('#chatX').onclick=()=>{if($('#chatBox').classList.contains('on'))$('#chatBtn').click();};   /* the X closes it the same way the chat button does */
 $('#chatTxt').addEventListener('input',()=>chatTyping(!!$('#chatTxt').value.trim()));$('#chatTxt').addEventListener('blur',()=>chatTyping(false));
 $('#chatTxt').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){$('#chatBox').classList.remove('on');$('#chatTxt').blur();chatTyping(false);}});
 $('#chatTxt').addEventListener('keyup',e=>e.stopPropagation());
 function wlDoor(ci){if(WL.fading)return;WL.fading=true;sfx('door');const xf=$('#xfade');xf.classList.add('on');
   setTimeout(()=>{try{const m=WL.me,was=m.loc;m.seat=null;m.loc=ci;m.path=[];m.todo=null;m.walk=false;WL.sel=null;wlMenu();
-    {const H=ci>=100?hallOf(ci):null,on=!!H&&H.k!=='lake';$('#townHud').classList.toggle('hall',on);if(on){$('#hallLine').textContent='';paintCoins();}}
+    {const H=ci>=100?hallOf(ci):null,on=!!H&&H.k!=='lake'&&H.k!=='south';$('#townHud').classList.toggle('hall',on);   /* (28 Nov, his ask) the South keeps the town's bottom buttons */if(on){$('#hallLine').textContent='';paintCoins();}}
     if(ci>=100){const H=hallOf(ci),sp=(H.from&&H.from(was))||H.spawn;m.x=sp[0];m.y=sp[1];m.dir=sp[2]||'back';$('#phone').style.background=H.out?'':'#000';wlHead(H.name,H.hint||(H.k==='lake'?'Tap the water to fish. Walk down to leave.':'Walk to the door to leave'));if(H.enter)H.enter(was);WL.ambT=.2;if(H.k==='casino')sfx('cas_win');if(H.k==='lake'){FISH.cx=m.x;FISH.cy=m.y-60;music('lake');}}
     else if(ci>=0){m.x=98;m.y=190;m.dir='back';$('#phone').style.background=ROOM_VOID;const o=CABIN_OF.indexOf(ci);
       wlHead(o===0?'Your cabin':o>0?`${PEOPLE[o].n}'s cabin`:'An empty cabin','Walk to the door to leave');}
