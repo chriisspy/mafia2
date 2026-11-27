@@ -24,6 +24,22 @@ module.exports = ({ db, bad, tx, C }) => {
   // what a player made in a given month, wherever that month is kept on their card
   const inMonth = (s, mo) => s && s.mo === mo ? { e: s.e | 0, mt: s.mt | 0 } : s && s.pm && s.pm.mo === mo ? { e: s.pm.e | 0, mt: s.pm.mt | 0 } : { e: 0, mt: 0 };
   const ops = {
+    // Members can see coin totals for their world. The wallets themselves stay private.
+    lbBalances: async (uid, d) => {
+      const wid = String(d.wid || '');
+      if (!/^[-\w]{5,40}$/.test(wid)) bad('Bad world.');
+      const joined = id => db.ref(`userWorlds/${id}/${wid}`).get();
+      const [members, ownMembership] = await Promise.all([db.ref(`worlds/${wid}/members`).get(), joined(uid)]);
+      if (!members.child(uid).exists() || !ownMembership.exists()) bad('You are not in that world.');
+      const ids = Object.keys(members.val()).slice(0, 12);
+      const entries = await Promise.all(ids.map(async id => {
+        // A world owner can edit the roster. The member's own join record confirms they joined.
+        if (id !== uid && !(await joined(id)).exists()) return [id, null];
+        const balance = (await db.ref(`wallet/${id}/c`).get()).val();
+        return [id, Number.isSafeInteger(balance) && balance >= 0 ? balance : null];
+      }));
+      return { balances: Object.fromEntries(entries) };
+    },
     // one more minute of play, and what the card shows beside the numbers: device, coins held, username, outfit
     beat: async (uid, d) => {
       const a = CATS.has(d.a) ? d.a : '', sk = /^[a-z0-9_]{1,24}$/.test(String(d.sk || '')) ? String(d.sk) : null;

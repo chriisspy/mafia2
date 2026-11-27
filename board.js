@@ -4,10 +4,10 @@
    casino and racing. First is gold, second silver, third bronze. The rows are live: when someone passes someone, the two rows slide past each other
    (each row is moved by transform to its rank, so a change of rank IS the animation), the climber flashes with an arrow.
    THE PRIZE: last month's winner of a world with at least 4 people who played collects 1 of each case (free to open in the Shop) and 500 coins.
-   The numbers are the server's (functions/board.js, lb/{uid}): the phone only tells it "one more minute, doing this" (lbBeat) and reads the cards.
+   The server supplies play stats from lb/{uid} and current balances from the world members' wallets.
    THE LAB (this computer only) has no world: it shows eight pretend players whose scores keep moving, to look at the board and the swaps. */
 (()=>{
-const LB={refs:[],rows:{},els:{},rank:{},win:undefined,mock:null,t:0,wid:null};
+const LB={refs:[],rows:{},els:{},rank:{},win:undefined,mock:null,t:0,wid:null,balances:null,balanceTimer:0};
 const CATS=[['fish','Fishing'],['mine','Mining'],['click','Chrispy Clicker'],['casino','Casino'],['race','Racing']];
 /* (27 Nov 2026, his ask) each is a very small solid icon, not a word: a fish, a pickaxe, the little Chrispy character, a spade, a car. One flat shape each,
    drawn here as a grid, 2 screen pixels a dot, used as a mask so it takes the row's own text colour (dark on gold, light on navy). */
@@ -78,7 +78,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 function people(){   // [{id, n, sk, e, t, d, co, k, me}] : this world's members with their cards, or the lab's pretend players
   if(LB.mock)return LB.mock;
   const mo=monthKey(),M=(typeof WORLD!=='undefined'&&WORLD.members)||{},me=NET.uid;
-  return Object.entries(M).map(([id,m])=>{const s=LB.rows[id]||{};return{id,n:s.n||m.n||'Player',sk:s.sk||m.skin||'beanie',e:s.mo===mo?s.e|0:0,t:s.t|0,d:s.d||'',co:s.co|0,k:s.k||{},me:id===me,has:!!LB.rows[id]};});
+  return Object.entries(M).map(([id,m])=>{const s=LB.rows[id]||{};return{id,n:s.n||m.n||'Player',sk:s.sk||m.skin||'beanie',e:s.mo===mo?s.e|0:0,t:s.t|0,d:s.d||'',co:LB.balances?.values[id],k:s.k||{},me:id===me};});
 }
 function mockMake(){const N=['mrmafia','lily_x','big_tom','sunnyd','ava_k','benji','noodle','the_don'],D=['iPhone (Safari)','Desktop (Chrome)','Android (Chrome)','iPad (Safari)','Desktop (Edge)','iPhone (Chrome)'],S=SKINS.filter(s=>SP[s.id]).map(s=>s.id);
   return N.map((n,i)=>({id:'m'+i,n,sk:S[(i*3)%S.length]||'beanie',e:Math.round(4200-i*480+Math.random()*300),t:900-i*90+Math.round(Math.random()*200),d:D[i%D.length],co:Math.round(800+Math.random()*9000),
@@ -95,8 +95,11 @@ function render(){const L=$('#lbList');if(!$('#boardModal').classList.contains('
     if(fresh){el=LB.els[p.id]=document.createElement('div');el.className='lbRow';el.style.transform=`translateY(${i*ROWH}px)`;L.appendChild(el);}
     const was=LB.rank[p.id];el.className='lbRow'+(i<3?' r'+(i+1):'')+(p.me?' me':'');
     const cats=CATS.map(([k,n])=>`<span title="${n}"><i class="lbI" style="width:${CATM[k].w}px;height:${CATM[k].h}px;-webkit-mask-image:url(${CATM[k].u});mask-image:url(${CATM[k].u})"></i>${hrs(p.k[k])}</span>`).join('');
+    const held=p.co==null
+      ? (LB.balances?.loading?'<small aria-label="Loading balance">HAS …</small>':'<small aria-label="Balance unavailable">HAS —</small>')
+      : `<small>HAS ${p.co.toLocaleString('en-AU')}</small>`;
     const html=`<span class="lbRank">${i+1}</span><img class="lbFace" src="${face(SP[p.sk]?p.sk:'beanie')}" alt=""><span class="lbWho"><b>${esc(p.n)}</b><small>${esc(p.d||'')}${p.d?' · ':''}${hrs(p.t)} played</small></span>
-      <span class="lbEarn"><b>${ic('coin',2,'solo')}${num(p.e)}</b><small>HAS ${num(p.co)}</small></span><span class="lbCats">${cats}</span>`;
+      <span class="lbEarn"><b>${ic('coin',2,'solo')}${num(p.e)}</b>${held}</span><span class="lbCats">${cats}</span>`;
     if(el._h!==html){el._h=html;el.innerHTML=html;}
     el.style.transform=`translateY(${i*ROWH}px)`;
     if(!fresh&&was!=null&&was!==i){el.classList.add(i<was?'up':'down');if(i<was){el.insertAdjacentHTML('beforeend',`<span class="lbArrow">▲ ${was-i}</span>`);el._h=null;sfx('tick');}
@@ -115,13 +118,35 @@ function last(){const el=$('#lbLast');if(LB.mock||!LB.wid){el.innerHTML='';retur
   const b=$('#lbClaim');if(b)b.onclick=async()=>{const fin=btnBusy(b,'…');try{await srv('lbClaim',{wid:LB.wid});fin();LB.win={uid:NET.uid};last();boardShut();if(typeof buyFx==='function')buyFx(500);}catch(e){fin();toast(e.message);}};}
 
 /* ---------- opening and shutting ---------- */
+function watchBalances(wid){
+  const state=LB.balances={values:{},loading:true,pending:false};
+  async function refresh(){
+    if(state.pending||NET.world!==wid||document.visibilityState!=='visible'||!$('#boardModal').classList.contains('on'))return;
+    state.pending=true;
+    try{
+      const {balances}=await srv('lbBalances',{wid});
+      state.values=balances||{};
+    }catch(e){/* Keep any balances already loaded. The next refresh retries. */}
+    finally{
+      state.pending=state.loading=false;
+      if(LB.balances===state&&NET.world===wid)render();
+    }
+  }
+  refresh();
+  LB.balanceTimer=setInterval(refresh,15000);
+}
 function watch(){unwatch();const wid=NET.world;LB.wid=wid||null;LB.rows={};LB.win=undefined;
   if(!wid||!NET.db){if(typeof LABLOCAL!=='undefined'&&LABLOCAL){LB.mock=mockMake();LB.t=setInterval(()=>{const m=LB.mock[Math.floor(Math.random()*LB.mock.length)];m.e+=Math.round(150+Math.random()*900);m.t+=1;m.co+=120;render();},2600);}return;}
   LB.mock=null;
   for(const id of Object.keys(WORLD.members||{})){const r=NET.db.ref('lb/'+id);r.on('value',s=>{const v=s.val();if(v)LB.rows[id]=v;else delete LB.rows[id];render();},()=>{});LB.refs.push(r);}
   const w=NET.db.ref('lbwin/'+wid+'/'+prevKey());w.on('value',s=>{LB.win=s.val()||null;last();},()=>{LB.win=null;});LB.refs.push(w);
+  watchBalances(wid);
   lbBeat(true);}
-function unwatch(){for(const r of LB.refs)r.off();LB.refs=[];clearInterval(LB.t);LB.t=0;LB.mock=null;}
+function unwatch(){
+  for(const r of LB.refs)r.off();
+  LB.refs=[];clearInterval(LB.t);LB.t=0;LB.mock=null;
+  clearInterval(LB.balanceTimer);LB.balanceTimer=0;LB.balances=null;LB.wid=null;
+}
 function boardOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));LB.els={};LB.rank={};$('#lbList').innerHTML='';$('#boardModal').classList.add('on');sfx('click');
   {const c=$('#lbTitle canvas');c.style.animation='none';void c.offsetWidth;c.style.animation='';drawLogo(c,performance.now());}
   watch();render();}
@@ -130,7 +155,9 @@ $('#boardBtn').onclick=boardOpen;$('#boardX').onclick=boardShut;
 window.boardOpen=boardOpen;
 /* the button shows with the players button (in a world's town), and in the lab's town */
 {const _p=plSync;window.plSync=plSync=function(){_p.apply(this,arguments);const b=$('#boardBtn'),on=!!((NET.on&&NET.world||(typeof LABLOCAL!=='undefined'&&LABLOCAL&&LAB))&&scene===scenes.town);
-  if((b.style.display!=='none')!==on)b.style.display=on?'':'none';if(!on&&$('#boardModal').classList.contains('on')&&scene!==scenes.town)boardShut();};}
+  if((b.style.display!=='none')!==on)b.style.display=on?'':'none';
+  if((LB.wid||LB.mock)&&(!on||!$('#boardModal').classList.contains('on')||(LB.wid&&LB.wid!==NET.world)))boardShut();
+};}
 
 /* ---------- THE CLOCK: one more minute of play, and what you are doing (the server counts it, never faster than real time) ---------- */
 function doing(){const m=WL&&WL.me,H=m&&m.loc>=100?hallOf(m.loc):null,k=H&&H.k,on=id=>{const e=$(id);return!!(e&&e.classList.contains('on'));};
