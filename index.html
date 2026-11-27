@@ -404,14 +404,15 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #wheelPop,#casePop{position:absolute;transform:translate(-50%,-100%);display:none;align-items:center;gap:8px;white-space:nowrap;background:#0b0918f0;color:#fff;border:3px solid #ffd25e;border-radius:6px;box-shadow:0 0 0 3px #0b0918,0 5px 0 #0009;padding:5px 12px 6px 6px;z-index:4;font-size:18px;font-weight:700;line-height:1.1}
 #wheelPop.on,#casePop.on{display:flex}#wheelPop img.f,#casePop img.f{width:36px;height:36px;image-rendering:pixelated}#wheelPop small,#casePop small{display:block;font-size:11px;font-weight:600;letter-spacing:1px;color:#ffe9a8}#wheelPop b,#casePop b{display:flex;align-items:center;gap:5px}#casePop img.rm{border-radius:3px}
 /* THE COIN SHOP (27 Nov 2026, his ask): a full dark screen, gold on navy. Three cards: 1, 2, 3 coins. The middle one is bigger, glows and wears a VALUE tag. */
-#buyModal{left:0;right:0;top:0;bottom:0;padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));z-index:31;overflow:hidden;color:#f6dfae;
+#buyModal{left:0!important;right:0!important;top:0!important;bottom:0!important;max-height:none!important;border-radius:0;   /* (27 Nov, his catch: "cuts off at the bottom") the game lifts every .modal off the bottom edge; this one is the whole screen */
+  padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));z-index:31;overflow:hidden;color:#f6dfae;
   background:radial-gradient(120% 70% at 50% 38%,#3a2a66 0,#1c1538 55%,#0c0919 100%)}
 #buyModal.on{display:flex;flex-direction:column;align-items:center;justify-content:center}
 #buyTw{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none}
 #buyModal .bhead{position:absolute;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:center;z-index:2}
 #buyModal .bhead .wal{background:#0c0919;border:2px solid #5b4a8a;border-radius:5px;padding:4px 10px;color:#ffd25e;font-size:18px;display:inline-flex;align-items:center;gap:6px}
 #buyModal .bhead .btn{padding:5px 8px 8px}
-#buyTitle{position:relative;z-index:1;margin-bottom:26px;filter:drop-shadow(0 0 10px #ffcf4a88)}
+#buyTitle{position:relative;z-index:1;margin-bottom:52px;width:100%}#buyTitle .logoCv{width:min(276px,74%)}   /* (27 Nov, his note) a tad smaller, and higher above the cards */
 #buyPacks{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1.14fr 1fr;gap:9px;align-items:center;width:100%;max-width:400px}
 .bpack{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 4px 10px;border:3px solid #5b4a8a;border-radius:9px;cursor:pointer;color:#f6dfae;font:700 22px "Pixelify Sans";
   background:linear-gradient(180deg,#372b63 0,#221a44 60%,#191233 100%);box-shadow:0 0 0 3px #0c0919,inset 0 2px 0 #6a58a4,inset 0 -6px 0 #120d26,0 6px 0 3px #05040c;transition:transform .08s}
@@ -429,7 +430,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 .bglint::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.5) 50%,transparent 60%);transform:translateX(-130%);animation:bSweep 3.2s ease-in-out infinite}
 @keyframes bSweep{0%,55%{transform:translateX(-130%)}85%,100%{transform:translateX(130%)}}
 #buyTerms{position:relative;z-index:1;display:block;text-align:center;margin-top:26px;font-size:14px;color:#b9a6e8}
-#phone.land #buyTitle{margin-bottom:14px}#phone.land #buyTerms{margin-top:14px}#phone.land .bpack .bart{height:58px}
+#phone.land #buyModal{width:auto;height:auto;margin:0;padding:10px calc(14px + var(--sr)) 10px calc(14px + var(--sl))}#phone.land #buyModal .bhead{left:calc(12px + var(--sl));right:calc(12px + var(--sr));top:10px}
+#phone.land #buyTitle{margin-bottom:22px}#phone.land #buyTitle .logoCv{width:min(250px,38%)}#phone.land #buyTerms{margin-top:14px}#phone.land .bpack .bart{height:58px}
 /* BOUGHT COINS: the Legendary win's show (rays, flash, shake) with coins instead of confetti: they burst out, rain down and pile up along the bottom */
 #buyFx{position:absolute;inset:0;z-index:40;display:none;overflow:hidden;background:rgba(8,6,20,.94);cursor:pointer;--rc:#6a58a4;   /* (27 Nov, his note) the rays are faint and violet, not gold: gold rays behind gold coins and a gold number clashed */--delay:1.1s;--sh:13px}
 #buyFx.on{display:block}
@@ -712,8 +714,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 /* the welcome screen: the sign on the left, the panels on the right */
 #phone.land #homeHud .logo,#phone.land #lobbyHud .logo{top:26px;right:calc(var(--colw) + 26px + var(--sr));left:var(--sl)}
 /* the pop-up panels: in the middle, never taller than the screen (the full-screen ones stay full screen) */
-#phone.land .modal:not(#propModal):not(#flipModal):not(#bjModal):not(#slotModal):not(#knifeModal):not(#menuModal):not(#spyModal){left:var(--sl);right:var(--sr);top:0;bottom:0!important;margin:auto;transform:none;width:min(440px,calc(100% - 28px - var(--sl) - var(--sr)));height:fit-content;max-height:calc(100% - 20px);overflow-y:auto;padding-top:12px;padding-bottom:12px}
-#phone.land .modal.big:not(#propModal):not(#flipModal):not(#bjModal):not(#slotModal):not(#knifeModal):not(#menuModal):not(#spyModal){width:min(660px,calc(100% - 28px - var(--sl) - var(--sr)))}
+#phone.land .modal:not(#propModal):not(#flipModal):not(#bjModal):not(#slotModal):not(#knifeModal):not(#menuModal):not(#spyModal):not(#buyModal){left:var(--sl);right:var(--sr);top:0;bottom:0!important;margin:auto;transform:none;width:min(440px,calc(100% - 28px - var(--sl) - var(--sr)));height:fit-content;max-height:calc(100% - 20px);overflow-y:auto;padding-top:12px;padding-bottom:12px}
+#phone.land .modal.big:not(#propModal):not(#flipModal):not(#bjModal):not(#slotModal):not(#knifeModal):not(#menuModal):not(#spyModal):not(#buyModal){width:min(660px,calc(100% - 28px - var(--sl) - var(--sr)))}
 #phone.land #howX{top:14px;right:calc(50% - min(330px,50% - 14px) + 6px)}
 #phone.land #sheet{left:auto;right:calc(8px + var(--sr));bottom:var(--lb);width:min(296px,38%);max-height:calc(100% - var(--lb) - 12px);overflow-y:auto}
 #phone.land #clk{display:none;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-auto-rows:min-content;align-content:center;justify-content:center;gap:6px 14px;padding:8px calc(14px + var(--sr)) 8px calc(14px + var(--sl))}
@@ -1116,7 +1118,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
     <div class="modal" id="buyModal">   <!-- THE COIN SHOP (27 Nov 2026, his ask: "way nicer, premium": one, two, three coins; the middle one glows with a VALUE tag). Stripe Checkout, functions/coins.js -->
       <canvas id="buyTw"></canvas>
       <div class="bhead"><span class="wal"><i data-ic="coin" data-c="solo"></i><span class="coinN">0</span></span><button class="btn dark" id="buyX"><i data-ic="cross" data-c="solo"></i></button></div>
-      <div id="buyTitle"></div>
+      <div id="buyTitle"><canvas class="logoCv" data-word="COIN SHOP" data-pal="coin" width="94" height="16"></canvas></div>
       <div id="buyPacks"><button class="bpack" data-p="p1" data-n="1000"><span class="bart"><span style="left:6px;top:4px"><i data-ic="coin" data-s="5" data-c="solo"></i></span></span><b>1,000</b><small>COINS</small><span class="bprice">$2.50</span></button><button class="bpack mid" data-p="p2" data-n="2500"><em class="btag">VALUE</em><span class="bglint"></span><span class="bart"><span style="left:2px;top:20px"><i data-ic="coin" data-s="4" data-c="solo"></i></span><span style="left:30px;top:6px;animation-delay:.35s"><i data-ic="coin" data-s="4" data-c="solo"></i></span></span><b>2,500</b><small>COINS</small><span class="bprice">$5</span></button><button class="bpack" data-p="p3" data-n="6500"><span class="bart"><span style="left:-4px;top:26px"><i data-ic="coin" data-s="4" data-c="solo"></i></span><span style="left:36px;top:26px;animation-delay:.5s"><i data-ic="coin" data-s="4" data-c="solo"></i></span><span style="left:16px;top:2px;animation-delay:.25s"><i data-ic="coin" data-s="4" data-c="solo"></i></span></span><b>6,500</b><small>COINS</small><span class="bprice">$10</span></button></div>
       <a id="buyTerms" href="terms.html" target="_blank" rel="noopener">Refunds and terms</a>
     </div>
@@ -1228,7 +1230,7 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
   </nav>
 </div>
 
-<script src="icons.js?v=11271257"></script>
+<script src="icons.js?v=1127130325"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -1531,7 +1533,7 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11271259'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11271307'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD;
 /* (27 Nov 2026, his report: "sometimes when i join a world it goes black") whatever breaks is written, small, after the version number, so a screenshot of the corner says what it was */
 function errTag(where,e){try{const m=String(e&&e.message||e).slice(0,70),ln=((e&&e.stack||'').match(/:(\d+):\d+/)||[])[1]||'';if(errTag.last===where+m)return;errTag.last=where+m;document.getElementById('buildTag').textContent='v'+BUILD+' '+where+(ln?' '+ln:'')+' '+m;}catch(_){}} // which version this is, so an old cached copy is easy to spot
@@ -4959,7 +4961,7 @@ async function srv(op,d){await netLoad();if(!NET.fn)NET.fn=NET.app.functions('as
    makes a Stripe Checkout page for the pack and the phone goes there; after paying Stripe sends it back with ?paid=..., and the coins arrive by
    themselves when Stripe tells the server (the wallet watcher shows them). Prices live on the server; the buttons only name a pack. */
 const BUY={tw:0,fx:0,wait:null,parts:[]};
-function buyOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));const M=$('#buyModal');$('#buyTitle').innerHTML=pxWord('COIN SHOP',6,'legendary');M.classList.add('on');sfx('coin');
+function buyOpen(){document.querySelectorAll('.modal.on').forEach(q=>q.classList.remove('on'));const M=$('#buyModal');M.classList.add('on');{const c=$('#buyTitle canvas');c.style.animation='none';void c.offsetWidth;c.style.animation='';drawLogo(c,performance.now());}sfx('coin');
   /* slow gold sparkles drifting up behind the cards (3 screen pixels a dot, like the win screens) */
   const cvs=$('#buyTw'),W=Math.ceil(M.clientWidth/3),H=Math.ceil(M.clientHeight/3),g=cvs.getContext('2d');cvs.width=W;cvs.height=H;const P=[];
   clearInterval(BUY.tw);BUY.tw=setInterval(()=>{if(!M.classList.contains('on')){clearInterval(BUY.tw);return;}
@@ -5455,11 +5457,20 @@ const LOGO_F={
   M:['XXX.....XXX','XXXX...XXXX','XXXXX.XXXXX','XXX.XXX.XXX','XXX..X..XXX','XXX.....XXX','XXX.....XXX','XXX.....XXX','XXX.....XXX','XXX.....XXX','XXX.....XXX'],
   A:['..XXXXX..','.XXXXXXX.','XXX...XXX','XXX...XXX','XXX...XXX','XXXXXXXXX','XXXXXXXXX','XXX...XXX','XXX...XXX','XXX...XXX','XXX...XXX'],
   F:['XXXXXXXX','XXXXXXXX','XXX.....','XXX.....','XXXXXXX.','XXXXXXX.','XXX.....','XXX.....','XXX.....','XXX.....','XXX.....'],
-  I:['XXXXX','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','XXXXX']};
+  I:['XXXXX','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','.XXX.','XXXXX'],
+  /* (27 Nov 2026, his ask: the COIN SHOP heading in the MAFIA logo's style) */
+  C:['.XXXXXXX.','XXXXXXXXX','XXX...XXX','XXX......','XXX......','XXX......','XXX......','XXX......','XXX...XXX','XXXXXXXXX','.XXXXXXX.'],
+  O:['.XXXXXXX.','XXXXXXXXX','XXX...XXX','XXX...XXX','XXX...XXX','XXX...XXX','XXX...XXX','XXX...XXX','XXX...XXX','XXXXXXXXX','.XXXXXXX.'],
+  N:['XXX....XXX','XXXX...XXX','XXXXX..XXX','XXXXXX.XXX','XXX.XXXXXX','XXX..XXXXX','XXX...XXXX','XXX....XXX','XXX....XXX','XXX....XXX','XXX....XXX'],
+  S:['.XXXXXXX.','XXXXXXXXX','XXX...XXX','XXX......','XXXXXXXX.','.XXXXXXXX','......XXX','......XXX','XXX...XXX','XXXXXXXXX','.XXXXXXX.'],
+  H:['XXX...XXX','XXX...XXX','XXX...XXX','XXX...XXX','XXXXXXXXX','XXXXXXXXX','XXX...XXX','XXX...XXX','XXX...XXX','XXX...XXX','XXX...XXX'],
+  P:['XXXXXXXX.','XXXXXXXXX','XXX...XXX','XXX...XXX','XXX...XXX','XXXXXXXXX','XXXXXXXX.','XXX......','XXX......','XXX......','XXX......'],
+  ' ':['....','....','....','....','....','....','....','....','....','....','....']};
 /* colour sets to try (12 Nov): face = 11 bands top to bottom, rim = the light top edge, body = the 3D block (near, far) */
 const LOGO_PALS={
   /* his pick (12 Nov): Blood, one flat red with real shading instead of stripes: light top edges, a glint on each top-left
      corner, lighter left edges, darker right and bottom edges */
+  coin:{flat:{base:'#ffc93d',top:'#fff2a8',glint:'#ffffff',left:'#ffdb6b',right:'#e0a02c',bottom:'#b8741e'},body:['#7a3d12','#4a2208']},   /* the COIN SHOP heading */
   red:{flat:{base:'#d9343c',top:'#ff7f72',glint:'#ffd9d2',left:'#ec4f4f',right:'#ab2230',bottom:'#8c1a29'},body:['#5e1020','#360816']},
   gold:{face:['#fff6c8','#ffe98a','#ffdb4d','#ffd03d','#ffc02e','#f9ac28','#f29a24','#e98820','#dc761d','#c9631a','#b35218'],rim:'#fffbe8',body:['#9a2338','#5e1429']},
   blood:{face:['#ffd6cc','#ffb3a3','#ff8a78','#f8665a','#ec4a46','#dd3a3c','#c92e35','#b3242f','#9c1c2a','#851626','#6e1122'],rim:'#ffe9e4',body:['#3e0a18','#24060f']},
@@ -5468,7 +5479,7 @@ const LOGO_PALS={
   cream:{face:['#fffaf0','#fff1d6','#f9e6bf','#f6dfae','#f0d39c','#e9c88a','#e0b977','#d5a966','#c89757','#b9854a','#a8743f'],rim:'#ffffff',body:['#e4544f','#a92b2c']},
   neon:{face:['#fff0fb','#ffd1f2','#ffaeea','#ff8ae0','#ff6ad6','#f64fcb','#e33ac0','#cb2bb4','#b021a6','#941a97','#7a1588'],rim:'#fff7fd','body':['#2f1a6e','#1a0f44']}};
 let LOGO_PAL='red';try{const s=new URLSearchParams(location.search).get('logo');if(LOGO_PALS[s])LOGO_PAL=s;}catch(e){}   /* to try a colour: add ?logo=blood (or noir, steel, cream, neon) to the link */
-function drawLogo(cv,t,pal){const P=LOGO_PALS[pal||cv.dataset.pal||LOGO_PAL],LOGO_FACE=P.face,F=P.flat,word='MAFIA',H=11,D=2,O=1,TOP=2,GAP=2,x=cv.getContext('2d');
+function drawLogo(cv,t,pal){const P=LOGO_PALS[pal||cv.dataset.pal||LOGO_PAL],LOGO_FACE=P.face,F=P.flat,word=cv.dataset.word||'MAFIA',H=11,D=2,O=1,TOP=2,GAP=2,x=cv.getContext('2d');
   let W=0;for(const ch of word)W+=LOGO_F[ch][0].length;W+=GAP*(word.length-1);const CW=W+O*2,CH=H+O*2+D+TOP;
   if(cv.width!==CW||cv.height!==CH){cv.width=CW;cv.height=CH;}
   const face=new Map(),key=(a,b)=>a+','+b,s=(t/1000)%4.2;let ox=O;

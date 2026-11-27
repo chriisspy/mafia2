@@ -115,7 +115,8 @@ function url(name){
 // ic('lock') -> an <img> at button size; ic('skull',3) for headings; pass 'solo' or 'after' as the third argument
 // for an icon on its own, or one that comes after its label
 window.ic=function(name,scale,cls){const s=Math.max(2,scale||2);if(!ICONS[name])return'';
-  if(ART[name]){const want=ICONS[name].length>GRID?ICONS[name].length*Math.max(1,s-1):GRID*s,k=Math.max(1,Math.round(want/ART_N));return `<img class="ic${cls?' '+cls:''}" src="${ART[name]}" width="${ART_N*k}" height="${ART_N*k}" alt="">`;}
+  if(ART[name]){const want=ICONS[name].length>GRID?ICONS[name].length*Math.max(1,s-1):GRID*s,px=want<=24?20:want<=34?30:ART_N*Math.round(want/ART_N);   /* (his note) 40 was too big on the small buttons: those slots get 30. Big ones stay whole multiples (40, 60) */
+    return `<img class="ic${cls?' '+cls:''}" src="${ART[name]}" width="${px}" height="${px}" alt="">`;}
   const n=ICONS[name].length,px=n>GRID?Math.max(1,s-1):s;   // a 16-grid icon at scale 3 is 32px (2px pixels), beside 30px for the 10-grid ones
   return `<img class="ic${cls?' '+cls:''}" src="${url(name)}" width="${n*px}" height="${n*px}" alt="">`;};
 window.M2_ICONS=ICONS;window.M2_PAL=PAL;window.M2_COIN=ART.coin;
