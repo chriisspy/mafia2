@@ -14,10 +14,12 @@ from PIL import Image
 SRC, OUT, PAGE = '../mafia2-art/buttons/', 'assets/buttons/', 'index.html'
 os.makedirs(OUT, exist_ok=True)
 HL = 28                                                   # the highlight: white at HL / 255 (his note: "more subtle")
-FACE = {(0x3a, 0x44, 0x67), (0x3b, 0x43, 0x67), (0xff, 0xd2, 0x5e)}   # his navy face (and the gold one below)
+FACE = {(0x3a, 0x44, 0x67), (0x3b, 0x43, 0x67), (0xff, 0xd2, 0x5e), (0xf0, 0x6f, 0xa8)}   # his navy face (and the gold and pink ones below)
 # (28 Nov 2026, his ask) THE COIN SHOP BUTTON IS YELLOW: his navy button recoloured to the game's gold (the Get coins button's colours); his coin and outline untouched
 GOLD = {(0x3a, 0x44, 0x67): (0xff, 0xd2, 0x5e), (0x3b, 0x43, 0x67): (0xff, 0xd2, 0x5e), (0x25, 0x2b, 0x43): (0xd3, 0x9b, 0x2a), (0x26, 0x2b, 0x41): (0xd3, 0x9b, 0x2a), (0x50, 0x59, 0x78): (0xe8, 0xb2, 0x3e)}
-def gold(im):
+# (28 Nov 2026, his ask) THE DECORATE BUTTON IS PINK, the same way
+PINK = {(0x3a, 0x44, 0x67): (0xf0, 0x6f, 0xa8), (0x3b, 0x43, 0x67): (0xf0, 0x6f, 0xa8), (0x25, 0x2b, 0x43): (0xb8, 0x47, 0x7c), (0x26, 0x2b, 0x41): (0xb8, 0x47, 0x7c), (0x50, 0x59, 0x78): (0xd4, 0x5c, 0x94)}
+def gold(im, GOLD=GOLD):
     for y in range(16):
         for x in range(16):
             r, g, b, a = im.getpixel((x, y))
@@ -50,6 +52,7 @@ uris = {}
 for a, b in ART + (('', 'leaderboard'),):
     im = trophy() if b == 'leaderboard' else Image.open(SRC + a + '.png').convert('RGBA')
     if b == 'coins': im = gold(im)
+    if b == 'decorate': im = gold(im, PINK)
     for x in range(2, 14):                                # the faint highlight on the bare face only: never over his icon
         r, g, bl, al = im.getpixel((x, 12))
         if (r, g, bl) in FACE: im.putpixel((x, 12), tuple(round(c + (255 - c) * HL / 255) for c in (r, g, bl)) + (255,))
