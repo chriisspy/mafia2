@@ -67,16 +67,16 @@
 
   /* ---------- the Collection: PETS, under the sets ---------- */
   const st = document.createElement('style');
-  st.textContent = `#kpPets{margin-bottom:12px}.ptG{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+  st.textContent = `#kpPets{margin:14px 0 4px}.ptG{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
 .ptC{display:flex;flex-direction:column;align-items:center;gap:3px;background:#fff6df;border:3px solid var(--wood);border-radius:6px;padding:6px 4px 7px;min-width:0}
 .ptC canvas{width:66px;height:84px;image-rendering:pixelated}.ptC b{font:700 13px 'Pixelify Sans';white-space:nowrap}
 .ptC .btn{width:100%;font-size:13px;padding:3px 2px 7px;display:inline-flex;align-items:center;justify-content:center;gap:3px;--accent:#5fc46f}
 .ptC.out{background:#e6f3dc;border-color:#3e8948}.ptC.no canvas{filter:brightness(.25) saturate(0)}`;
   document.head.appendChild(st);
-  const host = $('#kpSets') || $('#collModal .mhead'); host.insertAdjacentHTML('afterend', '<div id="kpPets"></div>');
+  const host = $('#kpSets') || $('#collGrid') || $('#collModal .mhead'); host.insertAdjacentHTML('afterend', '<div id="kpPets"></div>');
   const cryIc = () => typeof CRY_ICON !== 'undefined' ? `<img src="${CRY_ICON.toDataURL()}" alt="" style="width:${CRY_ICON.width * 2}px;height:${CRY_ICON.height * 2}px;image-rendering:pixelated">` : 'crystals';
   function petsPaint() { const box = $('#kpPets'); if (!box) return; const cry = typeof GOLD !== 'undefined' ? GOLD.cry | 0 : 0;
-    box.innerHTML = '<div class="kpH" style="margin-top:0">PETS</div><div class="ptG">' + Object.keys(PETS).map(id => { const [n, c] = PETS[id], own = !!P.own[id], out = P.id === id;
+    box.innerHTML = '<div class="small"><b>PETS</b> · one follows you.</div><div class="ptG">' + Object.keys(PETS).map(id => { const [n, c] = PETS[id], own = !!P.own[id], out = P.id === id;
       return `<div class="ptC${out ? ' out' : ''}${own ? '' : ' no'}"><canvas width="33" height="42" data-p="${id}"></canvas><b>${own ? n : '???'}</b>
 <button class="btn go" data-p="${id}" data-a="${own ? (out ? 'off' : 'on') : 'buy'}" ${own || cry >= c ? '' : 'disabled'}>${own ? (out ? 'Following' : 'Follow') : c + ' ' + cryIc()}</button></div>`; }).join('') + '</div>'; }
   // the little turntables: only while the Collection is open

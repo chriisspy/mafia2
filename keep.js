@@ -26,10 +26,10 @@
   st.textContent = `
 #dailyModal{max-height:calc(100% - 24px);overflow:auto;scrollbar-width:none}#dailyModal::-webkit-scrollbar{display:none}
 #kpCal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
-.kpD{display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff6df;border:3px solid var(--wood);border-radius:6px;padding:4px 0 5px;font:700 11px 'Pixelify Sans';color:var(--text);min-width:0}
+.kpD{display:flex;flex-direction:column;align-items:center;gap:2px;background:#332b57;border:3px solid #0f0b1e;border-radius:6px;padding:4px 0 5px;font:700 11px 'Pixelify Sans';color:#fff;min-width:0}
 .kpD small{font:700 9px 'Pixelify Sans';letter-spacing:.5px;opacity:.7}.kpD b{font:700 12px 'Pixelify Sans'}
 .kpD .pic{height:22px;display:flex;align-items:center;justify-content:center}
-.kpD.done{background:#cfe9c0;border-color:#3e8948}.kpD.now{background:#ffe08a;border-color:#1a1430;box-shadow:0 0 0 2px #ffd25e}
+.kpD.done{background:#2f5a3a;border-color:#3e8948}.kpD.now{background:#ffe08a;color:#1a1430;border-color:#1a1430;box-shadow:0 0 0 2px #ffd25e}
 .kpD.lock{opacity:.55}
 .kpH{font:700 13px 'Pixelify Sans';letter-spacing:1.5px;text-align:left;margin:12px 2px 0;opacity:.75}
 .kpT{display:flex;align-items:center;gap:8px;background:#fff6df;border:3px solid var(--wood);border-radius:6px;padding:6px 8px 7px;margin-top:6px;text-align:left}
@@ -87,30 +87,33 @@
 
   /* ---------- SETS, at the top of the Collection: how far along each one is, its title to collect, and the title you wear ---------- */
   const KEEP_SETS = {rods: ['Fishing rods', 'Master Angler'], fish: ['Every fish', 'Fish Whisperer'], pick: ['Pickaxes', 'Gold Digger'], common: ['Common outfits', 'Regular'], rare: ['Rare outfits', 'Head Turner'], epic: ['Epic outfits', 'Showstopper'], legendary: ['Legendary outfits', 'Legend']};
-  /* (28 Nov, his note: "clean up the SETS section. its way too messy and so much text. simplify that UI") Seven small TILES in a row or two: a picture
-     of what the set is, its title, and how far along. No rows, no bars, no buttons. Tap a finished one to collect its title and wear it; tap the one you
-     wear to take it off. Grey = not finished, gold = ready to collect, green with WEARING = the title you have on. */
-  const px = (rows, col) => { const c = mk(rows[0].length, rows.length), x = c.getContext('2d'); x.fillStyle = col; rows.forEach((r, y) => [...r].forEach((ch, i) => { if (ch === '#') x.fillRect(i, y, 1, 1); })); return c.toDataURL(); };
-  const SHAPE = {rods: ['.......##', '......##.', '.....##..', '....##...', '...##....', '..##.....', '.##......', '##.......', '#........'], fish: ['..###...#', '.#####.##', '#########', '#########', '.#####.##', '..###...#'],
-    pick: ['..#####..', '.#######.', '##..#..##', '#...#...#', '....#....', '....#....', '....#....', '....#....'], shirt: ['##.....##', '####.####', '#########', '.#######.', '.#######.', '.#######.', '.#######.', '.#######.']};
-  const TINT = {rods: '#b86f3d', fish: '#3b7bd6', pick: '#6b7396', common: '#63c74d', rare: '#3b9bff', epic: '#b06bff', legendary: '#ffb020'};
-  const pic = id => `<img src="${px(SHAPE[SHAPE[id] ? id : 'shirt'], TINT[id])}" alt="" style="height:24px;image-rendering:pixelated">`;
+  /* TITLES (28 Nov, his notes: first "way too messy and so much text", then "the titles should show what the title actually looks like and i can
+     select which one i want. these should be under the character skins in collection"). Each title is drawn AS THE TAG IT IS: the gold plate that sits
+     beside your name on the leaderboard. They sit in a row or two under the outfits. Tap one you have to wear it (tap it again to take it off: it gets a yellow stroke, nothing moves); one you
+     have finished but not collected glows, and a tap collects and wears it; one you have not earned is grey with how far along you are. */
   const st2 = document.createElement('style');
-  st2.textContent = `#kpSets{margin-bottom:12px}.stG{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
-.stT{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;background:#efe3c6;border:3px solid var(--wood);border-radius:6px;padding:8px 2px 5px;min-width:0;font-family:'Pixelify Sans';color:var(--text);cursor:default}
-.stT b{font:700 11px 'Pixelify Sans';line-height:1.05;text-align:center;min-height:23px;display:flex;align-items:center}.stT small{font:700 11px 'Pixelify Sans';opacity:.65}
-.stT img{opacity:.45}.stT.ready,.stT.got{cursor:pointer}.stT.ready img,.stT.got img{opacity:1}
-.stT.ready{background:#ffe08a;border-color:#1a1430;box-shadow:0 0 0 2px #ffd25e}.stT.got{background:#fff6df}
-.stT.worn{background:#e6f3dc;border-color:#3e8948}.stT.worn::before{content:'WEARING';position:absolute;top:-8px;left:50%;transform:translateX(-50%);font:700 8px 'Pixelify Sans';letter-spacing:1px;color:#fff;background:#1a1430;border-radius:3px;padding:1px 4px}`;
+  st2.textContent = `#kpSets{margin:14px 0 4px}.stG{display:flex;flex-wrap:wrap;gap:10px 8px;margin-top:8px}
+.stT{position:relative;flex:none;width:max-content;display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;margin:0;cursor:default;font-family:'Pixelify Sans';-webkit-tap-highlight-color:transparent}
+.stT .stTag{font:700 14px 'Pixelify Sans';letter-spacing:.5px;color:#4a2a00;background:#ffd25e;border:3px solid #0f0b1e;border-radius:5px;padding:2px 8px 4px;white-space:nowrap;box-shadow:inset 0 -3px 0 #d39b2a}
+.stT small{font:700 11px 'Pixelify Sans';color:#8d86a8}
+.stT.lock .stTag{color:#8d86a8;background:#3d3466;box-shadow:inset 0 -3px 0 #2a2346}
+.stT.ready,.stT.got,.stT.worn{cursor:pointer}.stT.ready .stTag{animation:stGlow 1s steps(2) infinite}
+@keyframes stGlow{50%{box-shadow:inset 0 -3px 0 #d39b2a,0 0 0 3px #fff2a8}}
+.stT.worn .stTag{box-shadow:inset 0 -3px 0 #d39b2a,0 0 0 3px #ffe45c}`;   /* (his note) the one you wear: a yellow stroke round it and nothing else, so no tag ever moves */
   document.head.appendChild(st2);
-  $('#collModal .mhead').insertAdjacentHTML('afterend', '<div id="kpSets"></div>');
+  ($('#collGrid') || $('#collModal .mhead')).insertAdjacentHTML('afterend', '<div id="kpSets"></div>');   // under the outfits
   let SETS = null;
   function setsPaint() { const box = $('#kpSets'); if (!SETS) { box.innerHTML = ''; return; }
-    box.innerHTML = '<div class="kpH" style="margin-top:0">TITLES</div><div class="stG">' + SETS.sets.map(s => { const k = KEEP_SETS[s.id]; if (!k) return ''; const full = s.n >= s.of, worn = SETS.title === s.id;
-      return `<button class="stT${worn ? ' worn' : s.got ? ' got' : full ? ' ready' : ''}" data-s="${s.id}" data-a="${s.got ? (worn ? 'off' : 'wear') : full ? 'claim' : ''}">${pic(s.id)}<b>${k[1]}</b><small>${s.got ? '' : s.n + '/' + s.of}</small></button>`; }).join('') + '</div>'; }
+    box.innerHTML = '<div class="small"><b>TITLES</b> · tap one to wear it.</div><div class="stG">' + SETS.sets.map(s => { const k = KEEP_SETS[s.id]; if (!k) return ''; const full = s.n >= s.of, worn = SETS.title === s.id;
+      return `<button class="stT ${worn ? 'worn' : s.got ? 'got' : full ? 'ready' : 'lock'}" data-s="${s.id}" data-a="${s.got ? (worn ? 'off' : 'wear') : full ? 'claim' : ''}"><span class="stTag">${k[1]}</span>${s.got || full ? '' : `<small>${s.n}/${s.of}</small>`}</button>`; }).join('') + '</div>'; }
   async function setsLoad() { try { SETS = await srv('sets'); } catch (e) { SETS = null; } setsPaint(); }
-  $('#kpSets').addEventListener('click', async e => { const b = e.target.closest('button[data-s]'); if (!b || !b.dataset.a || b.dataset.busy) return; const id = b.dataset.s, a = b.dataset.a; b.dataset.busy = '1';
-    try { if (a === 'claim') { await srv('setClaim', {id}); sfx('rare'); await srv('titleSet', {id}); } else { await srv('titleSet', {id: a === 'wear' ? id : ''}); sfx('click'); } } catch (er) { wlSay(er.message, 'bad'); } setsLoad(); });
+  /* (his note: "a slight lag when selecting a tag, it takes a second") The tap shows AT ONCE: the screen is changed first and the server is told after.
+     Taps are sent one after another in the order made; if the server says no, the real state is fetched and shown. */
+  let sendQ = Promise.resolve();
+  $('#kpSets').addEventListener('click', e => { const b = e.target.closest('button[data-s]'); if (!b || !b.dataset.a || !SETS) return; const id = b.dataset.s, a = b.dataset.a, row = SETS.sets.find(x => x.id === id);
+    if (a === 'claim') { if (row) row.got = true; SETS.title = id; sfx('rare'); } else { SETS.title = a === 'wear' ? id : ''; sfx('click'); }
+    setsPaint();
+    sendQ = sendQ.then(async () => { try { if (a === 'claim') await srv('setClaim', {id}); await srv('titleSet', {id: a === 'off' ? '' : id}); } catch (er) { wlSay(er.message, 'bad'); await setsLoad(); } }); });
   { const oc = openColl; openColl = function () { const r = oc.apply(this, arguments); setsPaint(); setsLoad(); return r; };
     document.querySelectorAll('button').forEach(b => { if (b.onclick === oc) b.onclick = () => openColl(); }); }   // buttons that were handed the old function itself
   window.keepSets = v => { SETS = v; setsPaint(); };   // the lab: show a made-up set list
