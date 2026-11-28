@@ -70,6 +70,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .lbArrow{position:absolute;right:8px;top:4px;font:700 13px "Pixelify Sans";color:#3cf06a;text-shadow:0 2px 0 #0c0919;animation:lbArrow 1.6s steps(8) forwards;pointer-events:none}
 .lbRow.r1 .lbArrow,.lbRow.r2 .lbArrow,.lbRow.r3 .lbArrow{color:#0b7a2c;text-shadow:none}
 @keyframes lbArrow{0%{opacity:0;transform:translateY(8px)}15%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0}}
+.lbTi{font:700 11px "Pixelify Sans";font-style:normal;letter-spacing:.5px;color:#4a2a00;background:#ffd25e;border:2px solid #0f0b1e;border-radius:4px;padding:0 4px 1px;vertical-align:1px;white-space:nowrap}   /* the title they wear (keep.js: sets) */
 .lbNone{text-align:center;font:600 14px "Pixelify Sans";opacity:.7;padding:30px 10px}
 #phone.land #boardModal{padding:8px calc(14px + var(--sr)) 8px calc(14px + var(--sl))}#phone.land #lbTitle{margin:2px 0 4px}#phone.land #lbTitle .logoCv{width:min(210px,30%)}#phone.land #lbPrize{margin-bottom:10px}#phone.land #lbScroll{max-width:560px}
 </style>`);
@@ -78,7 +79,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 function people(){   // [{id, n, sk, e, t, d, co, k, me}] : this world's members with their cards, or the lab's pretend players
   if(LB.mock)return LB.mock;
   const mo=monthKey(),M=(typeof WORLD!=='undefined'&&WORLD.members)||{},me=NET.uid;
-  return Object.entries(M).map(([id,m])=>{const s=LB.rows[id]||{};return{id,n:s.n||m.n||'Player',sk:s.sk||m.skin||'beanie',e:s.mo===mo?s.e|0:0,t:s.t|0,d:s.d||'',co:LB.balances?.values[id],k:s.k||{},me:id===me};});
+  return Object.entries(M).map(([id,m])=>{const s=LB.rows[id]||{};return{id,n:s.n||m.n||'Player',sk:s.sk||m.skin||'beanie',e:s.mo===mo?s.e|0:0,t:s.t|0,d:s.d||'',ti:s.ti||'',co:LB.balances?.values[id],k:s.k||{},me:id===me};});
 }
 function mockMake(){const N=['mrmafia','lily_x','big_tom','sunnyd','ava_k','benji','noodle','the_don'],D=['iPhone (Safari)','Desktop (Chrome)','Android (Chrome)','iPad (Safari)','Desktop (Edge)','iPhone (Chrome)'],S=SKINS.filter(s=>SP[s.id]).map(s=>s.id);
   return N.map((n,i)=>({id:'m'+i,n,sk:S[(i*3)%S.length]||'beanie',e:Math.round(4200-i*480+Math.random()*300),t:900-i*90+Math.round(Math.random()*200),d:D[i%D.length],co:Math.round(800+Math.random()*9000),
@@ -98,7 +99,7 @@ function render(){const L=$('#lbList');if(!$('#boardModal').classList.contains('
     const held=p.co==null
       ? (LB.balances?.loading?'<small aria-label="Loading balance">HAS …</small>':'<small aria-label="Balance unavailable">HAS —</small>')
       : `<small>HAS ${p.co.toLocaleString('en-AU')}</small>`;
-    const html=`<span class="lbRank">${i+1}</span><img class="lbFace" src="${face(SP[p.sk]?p.sk:'beanie')}" alt=""><span class="lbWho"><b>${esc(p.n)}</b><small>${esc(p.d||'')}${p.d?' · ':''}${hrs(p.t)} played</small></span>
+    const html=`<span class="lbRank">${i+1}</span><img class="lbFace" src="${face(SP[p.sk]?p.sk:'beanie')}" alt=""><span class="lbWho"><b>${esc(p.n)}${p.ti?` <em class="lbTi">${esc(p.ti)}</em>`:''}</b><small>${esc(p.d||'')}${p.d?' · ':''}${hrs(p.t)} played</small></span>
       <span class="lbEarn"><b>${ic('coin',2,'solo')}${num(p.e)}</b>${held}</span><span class="lbCats">${cats}</span>`;
     if(el._h!==html){el._h=html;el.innerHTML=html;}
     el.style.transform=`translateY(${i*ROWH}px)`;

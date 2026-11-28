@@ -59,17 +59,21 @@ const luck = w => Math.min(1, Math.max(0, beers(w) - 2) / 4);
 function spend(w, n) { if (!(n > 0) || !Number.isFinite(n)) bad('Bad amount.'); if (w.c < n) bad('Not enough coins.'); w.c -= n; }
 function rollRar(odds) { let r = Math.random(), rar = Object.keys(odds)[0]; for (const [k, q] of Object.entries(odds)) { if (r < q) { rar = k; break; } r -= q; } return rar; }
 // the wallet changes in one transaction: fn(w) changes it and returns what the phone needs to know
+let KEEP = null;   // set once the ops are assembled (below)
 async function tx(uid, fn) {
-  let out, err, c0 = 0, c1 = 0;
+  let out, err, c0 = 0, c1 = 0, did = false; const ctx = ALS.getStore();
   const res = await db.ref('wallet/' + uid).transaction(cur => {
     err = null; c0 = c1 = 0;
     if (cur === null) return { probe: 1 };   // nothing cached yet: this guess never sticks (the wallet exists), the database answers with the real one
-    try { const w = norm(cur); c0 = w.c | 0; out = fn(w); c1 = w.c | 0; w.ts = Date.now(); delete w.probe; return w; }
+    try { const w = norm(cur); c0 = w.c | 0; out = fn(w); c1 = w.c | 0; did = false;
+      if (ctx && !ctx.bumped && KEEP) { KEEP.bump(w, uid, ctx.op); did = true; }   // the daily tasks count the op in this same write (functions/keep.js), once an op
+      w.ts = Date.now(); delete w.probe; return w; }
     catch (e) { err = e; return; }   // abort: nothing changes
   });
   if (err) throw err;
   if (!res.committed) bad('Try again.');
-  const ctx = ALS.getStore(); if (ctx && EARN.has(ctx.op) && c1 !== c0) await BOARD.earn(uid, c1 - c0).catch(() => {});   // the leaderboard's "coins earned this month"
+  if (did) ctx.bumped = true;
+  if (ctx && EARN.has(ctx.op) && c1 !== c0) await BOARD.earn(uid, c1 - c0).catch(() => {});   // the leaderboard's "coins earned this month"
   return out;
 }
 // THE TRIPWIRE (21 Nov, after a friend ran a script): things no real phone ever sends are written to flags/{uid} (nobody can read it but him)
@@ -410,6 +414,9 @@ Object.assign(OPS, require('./quest.js')({ tx, bad }));
 // the world leaderboard (27 Nov): coins earned this month, time played, the monthly prize: functions/board.js
 const BOARD = require('./board.js')({ db, bad, tx, C });
 Object.assign(OPS, BOARD.ops);
+// the 7-day streak (it replaces the flat `daily` above) and the daily tasks (28 Nov): functions/keep.js
+KEEP = require('./keep.js')({ tx, bad, C, dayKey, db });
+Object.assign(OPS, KEEP.ops);
 
 exports.act = onCall({ region: 'asia-southeast1', maxInstances: 10 }, async req => {
   const uid = req.auth && req.auth.uid; if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
