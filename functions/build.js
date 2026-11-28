@@ -7,6 +7,11 @@
 // A tree you chop is a stump for REGROW, then stands again. The server keeps which of YOUR trees are down (kit.ch = {tree: when}), so a tree
 // cannot be chopped twice before it grows back, and SWING keeps anyone from chopping faster than the swings take. (Each player has their own trees:
 // what you chop is down for you alone. The South is shared and there are 89 pines; nobody should find the wood all gone.)
+// (28 Nov 2026, his ask: "when it hits the floor the logs break up and walking over them collects them".) Chopping no longer pays wood by itself:
+//   chop    fells the tree and leaves its LOGS on the ground: kit.logs = {tree: pieces}. Two or three pieces, one wood each.
+//   logTake {i, n} picks up n of tree i's pieces (all of them if n is left out): only then are they in kit.wood.
+// Logs stay until they are taken (they are in the wallet, so the phone shows them again after a reload). A tree that has grown back cannot be
+// chopped again while its last logs still lie there.
 //
 // PROJECTS (he approved this list of six on 28 Nov): the world's OWNER picks one from the catalog; everyone in the world chips in coins and materials;
 // one project at a time; when it is paid for it is BUILT, for good.
@@ -26,7 +31,8 @@
 //   projCancel the owner takes the site away: it is removed FIRST (so nothing can be refunded twice), then each giver gets back exactly what they gave.
 // The phone carries the same catalog for the words and the pictures (build.js: PROJECTS). Change one, change the other.
 module.exports = ({ tx, bad, spend, db }) => {
-  const AXE = 300, REGROW = 5 * 60000, SWING = 1100, TREES = 400;   // coins; ms a stump lasts; least ms between two chops; the highest tree number the phone may name
+  const AXE = 300, REGROW = 5 * 60000, SWING = 2500, TREES = 400;   // coins; ms a stump lasts; least ms between two chops (28 Nov: five slower swings now, so 2500, was 1100); the highest tree number the phone may name
+  const logsOf = K => { const L = K.logs && typeof K.logs === 'object' ? K.logs : {}; for (const k of Object.keys(L)) if (!(L[k] > 0)) delete L[k]; return L; };   // tree -> pieces lying there
   // id: what it costs. c = coins. Anything with a perk is in PERKS.
   const PROJECTS = {
     fountain: { c: 1000, stone: 60, wood: 10 },
@@ -49,8 +55,14 @@ module.exports = ({ tx, bad, spend, db }) => {
       if (!Number.isInteger(i) || i < 0 || i >= TREES) bad('No such tree.'); if (now - (K.cht || 0) < SWING) bad('Too quick.');
       const C = K.ch && typeof K.ch === 'object' ? K.ch : {}; for (const k of Object.keys(C)) if (now - C[k] >= REGROW) delete C[k];   // the ones that have grown back
       if (C[i]) bad('That tree is still growing back.');
-      const got = 2 + (Math.random() < .35 ? 1 : 0); C[i] = now; K.ch = C; K.cht = now; K.wood = (K.wood | 0) + got;
-      return { got, wood: K.wood, i, until: now + REGROW }; }),
+      const L = logsOf(K); if (L[i]) bad('Pick up its logs first.');
+      const got = 2 + (Math.random() < .35 ? 1 : 0); C[i] = now; K.ch = C; K.cht = now; L[i] = got; K.logs = L;   // the wood is on the ground, not in the kit: logTake
+      return { got, wood: K.wood | 0, i, until: now + REGROW }; }),
+    logTake: (uid, d) => tx(uid, w => { const K = w.kit, i = d.i; if (!Number.isInteger(i) || i < 0 || i >= TREES) bad('No such tree.');
+      const L = logsOf(K), have = L[i] | 0; if (have <= 0) bad('No logs there.');
+      const n = Number.isInteger(d.n) && d.n > 0 ? Math.min(d.n, have) : have; if (have - n > 0) L[i] = have - n; else delete L[i];
+      if (Object.keys(L).length) K.logs = L; else delete K.logs; K.wood = (K.wood | 0) + n;
+      return { got: n, wood: K.wood, i, left: have - n }; }),
     // the owner starts one: nothing already going, and not one the town already has
     projStart: async (uid, d) => { const wid = String(d.wid || ''), id = String(d.id || ''), x = Math.round(+d.x), y = Math.round(+d.y); if (!PROJECTS[id]) bad('No such building.');
       if (!(x >= -200 && x <= 900 && y >= -50 && y <= 1100)) bad('It cannot go there.');

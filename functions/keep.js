@@ -74,7 +74,18 @@ module.exports = ({ tx, bad, C, dayKey, db }) => {
   // was found (op eggHatch) into a pet you do not have yet, the rarer ones less often (EGG_ODDS); with all four already, it gives EGG_CRY crystals.
   const EGG_MS = 60 * 60000, EGG_CRY = 2, EGG_ODDS = { alien: 50, chicken: 30, golem: 15, dragon: 5 }, EGG_MINE = 1 / 300, EGG_LAKE = 1 / 120;
   const eggRoll = (w, where) => { const K = w.kit; if (K.egg || Math.random() >= (where === 'lake' ? EGG_LAKE : EGG_MINE)) return false; K.egg = { t: Date.now() }; return true; };
+  // THE CRYSTAL SHOP (28 Nov): things only crystals buy, that the others see on you: trails and name colours. wallet.cx = {'t_id' | 'n_id': 1};
+  // wallet.trail / wallet.nc = the one that is on. The phone carries the same list (cx.js). The prices are mine.
+  // THE BIG ONES (28 Nov, his ask: "WAY more worth it... like how the Godfather has a car and the Alien can abduct people"; his picks 2, 8, 11, 14, 18, 19):
+  //   p = POWERS and RIDES you own and use in the town (shrink ray, banana peel, jetpack, dragon mount): nothing to switch on here
+  //   e = GRAND ENTRANCES (wallet.ent = the one that is on)     c = CABINS (wallet.cab)
+  const CX = { t: { sparkle: 3, frost: 4, hearts: 4, ember: 6, rainbow: 10 }, n: { gold: 2, ice: 2, pink: 2, lime: 2, ruby: 3 },
+    p: { peel: 4, shrink: 6, jet: 10, mount: 15 }, e: { bolt: 5, beam: 5, fall: 5 }, c: { crystal: 12 } };
+  const CXF = { t: 'trail', n: 'nc', e: 'ent', c: 'cab' }, cxK = d => (Object.prototype.hasOwnProperty.call(CX, d.k) ? d.k : 't');
   const ops = {
+    cxBuy: (uid, d) => tx(uid, w => { const k = cxK(d), id = String(d.id || ''), c = Object.prototype.hasOwnProperty.call(CX[k], id) ? CX[k][id] : 0; if (!c) bad('No such thing.'); w.cx = w.cx || {}; const key = k + '_' + id; if (w.cx[key]) bad('You already have that.');
+      if ((w.kit.cry | 0) < c) bad('You need ' + c + ' crystals.'); w.kit.cry -= c; w.cx[key] = 1; if (CXF[k]) w[CXF[k]] = id; return { id, cry: w.kit.cry }; }),
+    cxSet: (uid, d) => tx(uid, w => { const k = cxK(d), id = String(d.id || ''), f = CXF[k]; if (!f) bad('Nothing to switch.'); if (id && !(w.cx && w.cx[k + '_' + id])) bad('You do not have that.'); if (id) w[f] = id; else delete w[f]; return { id }; }),
     petBuy: (uid, d) => tx(uid, w => { const id = String(d.id || ''), c = PETS[id]; if (!c) bad('No such pet.'); w.pets = w.pets || {}; if (w.pets[id]) bad('You already have that pet.');
       if ((w.kit.cry | 0) < c) bad('You need ' + c + ' crystals.'); w.kit.cry -= c; w.pets[id] = 1; w.pet = id; return { pet: id, cry: w.kit.cry }; }),
     eggHatch: (uid) => tx(uid, w => { const K = w.kit, E = K.egg; if (!E) bad('You have no egg.'); if (Date.now() - (+E.t || 0) < EGG_MS) bad('It is not ready to hatch yet.');
