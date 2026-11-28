@@ -69,9 +69,19 @@ module.exports = ({ tx, bad, C, dayKey, db }) => {
   };
   // PETS (batch 2): bought with crystals (his rule), one follows you. The phone carries the same list (pets.js). The prices are mine.
   const PETS = { alien: 2, chicken: 3, golem: 8, dragon: 12 };
+  // PET EGGS (28 Nov, his ask: "pets from eggs (can be found in the mines, fishing lake rarely, etc)"). A rock you break or a fish you land may leave an
+  // EGG (kit.egg = { t: when found }): one at a time. functions/mine.js mbreak and index.js fland roll for it with eggRoll(). It hatches EGG_MS after it
+  // was found (op eggHatch) into a pet you do not have yet, the rarer ones less often (EGG_ODDS); with all four already, it gives EGG_CRY crystals.
+  const EGG_MS = 60 * 60000, EGG_CRY = 2, EGG_ODDS = { alien: 50, chicken: 30, golem: 15, dragon: 5 }, EGG_MINE = 1 / 300, EGG_LAKE = 1 / 120;
+  const eggRoll = (w, where) => { const K = w.kit; if (K.egg || Math.random() >= (where === 'lake' ? EGG_LAKE : EGG_MINE)) return false; K.egg = { t: Date.now() }; return true; };
   const ops = {
     petBuy: (uid, d) => tx(uid, w => { const id = String(d.id || ''), c = PETS[id]; if (!c) bad('No such pet.'); w.pets = w.pets || {}; if (w.pets[id]) bad('You already have that pet.');
       if ((w.kit.cry | 0) < c) bad('You need ' + c + ' crystals.'); w.kit.cry -= c; w.pets[id] = 1; w.pet = id; return { pet: id, cry: w.kit.cry }; }),
+    eggHatch: (uid) => tx(uid, w => { const K = w.kit, E = K.egg; if (!E) bad('You have no egg.'); if (Date.now() - (+E.t || 0) < EGG_MS) bad('It is not ready to hatch yet.');
+      w.pets = w.pets || {}; const pool = Object.keys(EGG_ODDS).filter(id => !w.pets[id]); delete K.egg;
+      if (!pool.length) { K.cry = (K.cry | 0) + EGG_CRY; return { cry: EGG_CRY }; }
+      let r = Math.random() * pool.reduce((a, id) => a + EGG_ODDS[id], 0), pet = pool[0]; for (const id of pool) { r -= EGG_ODDS[id]; if (r < 0) { pet = id; break; } }
+      w.pets[pet] = 1; w.pet = pet; return { pet }; }),
     petSet: (uid, d) => tx(uid, w => { const id = String(d.id || ''); if (id && !(w.pets && w.pets[id])) bad('You do not have that pet.'); if (id) w.pet = id; else delete w.pet; return { pet: id }; }),
     daily: (uid) => tx(uid, w => { const k = dayKey(); if (w.day.c === k) bad('Already collected today.');
       const n = w.day.c === prevKey(k) ? ((w.day.n | 0) % 7) + 1 : 1, P = w.perk || {}, got = STREAK[n - 1] + (P.bakery ? 50 : 0); w.day.c = k; w.day.n = n; w.c += got;   // +50 with a world's Bakery (functions/build.js)
@@ -94,5 +104,5 @@ module.exports = ({ tx, bad, C, dayKey, db }) => {
       await tx(uid, w => { if (id && !(w.ti && w.ti[id])) bad('You have not earned that title.'); if (id) w.title = id; else delete w.title; return {}; });
       await db.ref('lb/' + uid + '/ti').set(id ? SETS[id][0] : null).catch(() => {}); return { title: id }; },
   };
-  return { ops, bump };
+  return { ops, bump, eggRoll };
 };

@@ -244,7 +244,8 @@ const OPS = {
     // Glimmer Koi too) gives the plaque, once (kit.fp), here in the same transaction. Nothing else gives it: decor.json marks it quest (never sold, never on a stall).
     K.fc = K.fc && typeof K.fc === 'object' ? K.fc : {}; K.fc[F.id] = 1; let plaque = false;
     if (!K.fp && C.fishes.every(f => K.fc[f.id])) { K.fp = 1; plaque = true; w.dec = w.dec || {}; w.dec.goldfishplaque = (w.dec.goldfishplaque || 0) + 1; }
-    return { k: p.k, cm, g, plaque };
+    const egg = !!(global.M2_EGG && global.M2_EGG(w, 'lake'));   // a pet egg, now and then (functions/keep.js eggRoll)
+    return { k: p.k, cm, g, plaque, egg };
   }).catch(async e => { if (e && e.message === 'Too quick.') await flag(uid, 'fish landed too fast'); throw e; }),
   flose: (uid) => tx(uid, w => { w.kit.pend = null; return {}; }),
   // the fish book was kept on the phone before 26 Nov. Once, a phone may hand over what its book holds: only the fish there were before that day
@@ -418,6 +419,7 @@ Object.assign(OPS, BOARD.ops);
 // the 7-day streak (it replaces the flat `daily` above) and the daily tasks (28 Nov): functions/keep.js
 KEEP = require('./keep.js')({ tx, bad, C, dayKey, db });
 Object.assign(OPS, KEEP.ops);
+global.M2_EGG = KEEP.eggRoll;   // the mine and the lake roll for a pet egg with it
 // materials for world projects (28 Nov, batch 3): the axe and chopping wood: functions/build.js (stone comes from functions/mine.js mbreak)
 Object.assign(OPS, require('./build.js')({ tx, bad, spend, db }).ops);
 

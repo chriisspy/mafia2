@@ -5,11 +5,17 @@
    You buy one with CRYSTALS (his rule: buying pets costs crystals) in the Collection, under the sets. The server keeps what you own and which
    one is out (functions/keep.js: petBuy, petSet; wallet.pets = {id: 1}, wallet.pet = the one following you).
    Other players see your pet: its id rides in what you already send about yourself (index.html netM: pt), and each phone walks it after you itself.
-   NOT HERE YET: finding eggs in the mine and at the lake. */
+   EGGS (28 Nov, his ask): a rock you break in the mine, or a fish you land at the lake, may now and then leave a PET EGG (the server rolls: functions/
+   keep.js eggRoll). You carry one at a time. It sits first in the PETS row with how long is left; after an hour, tap Hatch: a pet you do not have yet
+   (the rarer ones less often), or 2 crystals if you have all four. */
 (() => {
   /* id: [name, crystals]. The prices are mine (he gave none): the same list as the server's PETS. */
   const PETS = {alien: ['Blob', 2], chicken: ['Don Cluck', 3], golem: ['Crag', 8], dragon: ['Shard', 12]};   // (the flame skull was made, then taken out: his word, "looks bad")
-  const P = {id: null, own: {}, x: 0, y: 0, loc: null, a: 0, moving: false, last: 0, ready: {}};
+  const P = {id: null, own: {}, x: 0, y: 0, loc: null, a: 0, moving: false, last: 0, ready: {}, egg: null};
+  const EGG_MS = 60 * 60000;   // the server's own (functions/keep.js)
+  const EGG = (() => { const R = ['...KKKK...', '..KWWWWK..', '.KWWYYWWK.', '.KWYYWWWK.', 'KWWWWWPPWK', 'KWPPWWWPWK', 'KWWPWWWWWK', 'KSWWWWYYSK', '.KSWWWYSK.', '.KSSWWSSK.', '..KKSSKK..', '....KK....'],
+      C = {K: '#181425', W: '#fff7e6', Y: '#ffd25e', P: '#c79bff', S: '#d9c9a8'}, c = mk(10, R.length), x = c.getContext('2d'); R.forEach((r, y) => [...r].forEach((ch, i) => { if (C[ch]) { x.fillStyle = C[ch]; x.fillRect(i, y, 1, 1); } })); return c; })();   // a speckled egg, in the style of his icons
+  const eggLeft = () => P.egg ? Math.max(0, (+P.egg.t || 0) + EGG_MS - Date.now()) : 0;
   const key = id => 'pet_' + id;
 
   // the strips: each one is registered as a stack the moment its picture is in (px: 1 = at the cast's own pixel size)
@@ -63,7 +69,8 @@
   window.petOut = () => P.id;   // what netM() tells the others (index.html)
 
   // the wallet says what you own and which one is out
-  { const wa = walletApply; walletApply = function (w) { wa(w); P.own = (w && w.pets) || {}; const was = P.id; P.id = w && w.pet && PETS[w.pet] ? w.pet : null; petsPaint(); if (was !== P.id && typeof netMove === 'function') netMove(); }; }   // tell the others the moment it changes
+  { const wa = walletApply; walletApply = function (w) { wa(w); P.own = (w && w.pets) || {}; const had = !!P.egg; P.egg = (w && w.kit && w.kit.egg) || null;
+      if (P.egg && !had && P.seen && window.itemGot) itemGot('A PET EGG', EGG, '255,210,94');   /* you just found one (not on the first wallet of the session) */ P.seen = true; const was = P.id; P.id = w && w.pet && PETS[w.pet] ? w.pet : null; petsPaint(); if (was !== P.id && typeof netMove === 'function') netMove(); }; }   // tell the others the moment it changes
 
   /* ---------- the Collection: PETS, under the sets ---------- */
   const st = document.createElement('style');
@@ -71,21 +78,29 @@
 .ptC{display:flex;flex-direction:column;align-items:center;gap:3px;background:#fff6df;border:3px solid var(--wood);border-radius:6px;padding:6px 4px 7px;min-width:0}
 .ptC canvas{width:66px;height:84px;image-rendering:pixelated}.ptC b{font:700 13px 'Pixelify Sans';white-space:nowrap}
 .ptC .btn{width:100%;font-size:13px;padding:3px 2px 7px;display:inline-flex;align-items:center;justify-content:center;gap:3px;--accent:#5fc46f}
-.ptC.out{background:#e6f3dc;border-color:#3e8948}.ptC.no canvas{filter:brightness(.25) saturate(0)}`;
+.ptC.out{background:#e6f3dc;border-color:#3e8948}.ptC.egg{border-color:#ffd25e}.ptC.no canvas{filter:brightness(.25) saturate(0)}`;
   document.head.appendChild(st);
   const host = $('#kpSets') || $('#collGrid') || $('#collModal .mhead'); host.insertAdjacentHTML('afterend', '<div id="kpPets"></div>');
   const cryIc = () => typeof CRY_ICON !== 'undefined' ? `<img src="${CRY_ICON.toDataURL()}" alt="" style="width:${CRY_ICON.width * 2}px;height:${CRY_ICON.height * 2}px;image-rendering:pixelated">` : 'crystals';
   function petsPaint() { const box = $('#kpPets'); if (!box) return; const cry = typeof GOLD !== 'undefined' ? GOLD.cry | 0 : 0;
-    box.innerHTML = '<div class="small"><b>PETS</b> · one follows you.</div><div class="ptG">' + Object.keys(PETS).map(id => { const [n, c] = PETS[id], own = !!P.own[id], out = P.id === id;
+    const left = eggLeft(), mins = Math.ceil(left / 60000), egg = P.egg ? `<div class="ptC egg"><canvas width="33" height="42" data-egg="1"></canvas><b>Egg</b><button class="btn go" data-a="hatch" ${left ? 'disabled' : ''}>${left ? (mins >= 60 ? '1h' : mins + 'm') : 'Hatch'}</button></div>` : '';
+    box.innerHTML = '<div class="small"><b>PETS</b> · one follows you.</div><div class="ptG">' + egg + Object.keys(PETS).map(id => { const [n, c] = PETS[id], own = !!P.own[id], out = P.id === id;
       return `<div class="ptC${out ? ' out' : ''}${own ? '' : ' no'}"><canvas width="33" height="42" data-p="${id}"></canvas><b>${own ? n : '???'}</b>
 <button class="btn go" data-p="${id}" data-a="${own ? (out ? 'off' : 'on') : 'buy'}" ${own || cry >= c ? '' : 'disabled'}>${own ? (out ? 'Following' : 'Follow') : c + ' ' + cryIc()}</button></div>`; }).join('') + '</div>'; }
   // the little turntables: only while the Collection is open
   setInterval(() => { if (!$('#collModal').classList.contains('on')) return; const t = performance.now(), ai = Math.floor(t / 90) % 48;
-    document.querySelectorAll('#kpPets canvas').forEach(c => { const im = frame(c.dataset.p, MOVE[c.dataset.p](t, true).row, ai); if (!im) return; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, c.width, c.height); x.drawImage(im, Math.round((c.width - im.width) / 2), c.height - im.height); }); }, 90);
-  $('#kpPets').addEventListener('click', async e => { const b = e.target.closest('button[data-p]'); if (!b || b.disabled) return; const id = b.dataset.p, a = b.dataset.a, done = btnBusy(b, '…');
+    document.querySelectorAll('#kpPets canvas').forEach(c => { if (c.dataset.egg) { const x = c.getContext('2d'), wob = eggLeft() ? 0 : Math.round(Math.sin(t * .02) * 1.5); x.imageSmoothingEnabled = false; x.clearRect(0, 0, c.width, c.height); x.drawImage(EGG, 6 + wob, 12, 20, 24); return; }   /* the egg rocks when it is ready */
+      const im = frame(c.dataset.p, MOVE[c.dataset.p](t, true).row, ai); if (!im) return; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, c.width, c.height); x.drawImage(im, Math.round((c.width - im.width) / 2), c.height - im.height); }); }, 90);
+  $('#kpPets').addEventListener('click', async e => { const h = e.target.closest('button[data-a=hatch]');
+    if (h) { if (h.disabled) return; const done = btnBusy(h, '…'); try { const r = await srv('eggHatch'); sfx('rare'); P.egg = null;
+        if (r.pet && PETS[r.pet] && window.itemGot && frame(r.pet, 0, 0)) itemGot(PETS[r.pet][0].toUpperCase(), frame(r.pet, 0, 0), '140,220,255'); else if (r.cry) wlSay('+' + r.cry + ' crystals', 'good'); }
+      catch (er) { wlSay(er.message, 'bad'); } done(); petsPaint(); return; }
+    const b = e.target.closest('button[data-p]'); if (!b || b.disabled) return; const id = b.dataset.p, a = b.dataset.a, done = btnBusy(b, '…');
     try { if (a === 'buy') { await srv('petBuy', {id}); sfx('rare'); if (window.itemGot && frame(id, 0, 0)) itemGot(PETS[id][0].toUpperCase(), frame(id, 0, 0), '140,220,255'); } else { await srv('petSet', {id: a === 'on' ? id : ''}); sfx('click'); } }
     catch (er) { wlSay(er.message, 'bad'); } done(); petsPaint(); });
   { const oc = openColl; openColl = function () { const r = oc.apply(this, arguments); petsPaint(); return r; };
     document.querySelectorAll('button').forEach(b => { if (b.onclick === oc) b.onclick = () => openColl(); }); }
+  setInterval(() => { if (P.egg && $('#collModal').classList.contains('on')) { const b = $('#kpPets button[data-a=hatch]'); if (b && !b.classList.contains('busy') && !!eggLeft() !== b.disabled) petsPaint(); else if (b && b.disabled) { const m = Math.ceil(eggLeft() / 60000); b.textContent = m >= 60 ? '1h' : m + 'm'; } } }, 5000);
+  window.eggLab = ago => { P.egg = ago == null ? null : {t: Date.now() - ago}; petsPaint(); };   // the lab: an egg found `ago` ms ago
   window.petsLab = (id, own) => { P.own = own || {alien: 1, chicken: 1, golem: 1, dragon: 1}; P.id = id || null; petsPaint(); if (typeof netMove === 'function') netMove(); };   // the lab: try a pet without buying it
 })();

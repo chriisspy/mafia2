@@ -68,7 +68,8 @@ module.exports = ({ tx, spend, bad, dayKey, flag }) => {
       // now and then, deep down, a crystal rock sits under what you broke. It is kept for you (kit.cs) until you break it.
       let grow = null;
       if (!isCry(k) && lv >= MR.cryFrom && K.cs.length < MR.cryKeep && M.k.length < 60 && Math.random() < MR.cryOdds[lv - 1]) { const c = 'eud'[roll(MR.cryMix[lv - 1])]; K.cs += c; grow = { i: M.k.length, k: c }; M.k += c; }
-      return { got, gc, st, gold: K.gold, cry: K.cry, grow, cap: w.day.m >= MR.dayGold };
+      const egg = !!(global.M2_EGG && global.M2_EGG(w, 'mine'));   // a pet egg, now and then (functions/keep.js eggRoll)
+      return { got, gc, st, egg, gold: K.gold, cry: K.cry, grow, cap: w.day.m >= MR.dayGold };
     }).catch(quick(uid)),
     // PASSED OUT (25 Nov, his ask: risk in the deep levels): no hearts left, so you drop a fifth of the gold chunks you carry (never
     // crystals, never coins) and are outside again. The phone only says that it happened: how much goes is worked out here.
