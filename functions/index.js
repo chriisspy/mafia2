@@ -174,6 +174,9 @@ const OPS = {
     const c = d && d.claim; if (!had && c && (+c.coins > 5000 || (Array.isArray(c.owned) && c.owned.length > 12))) await flag(uid, 'init claim ' + (+c.coins | 0) + ' coins, ' + (Array.isArray(c.owned) ? c.owned.length : 0) + ' items');
     return {};
   },
+  // THE CHICKEN SCHNITZEL (28 Nov 2026): 50 coins at the Tavern; the next hit in the mine costs no heart (the phone says when it was used). One at a time.
+  schnitzel: (uid) => tx(uid, w => { if (w.sch) bad('You already had one.'); spend(w, 50); w.sch = 1; return {}; }),
+  schUse: (uid) => tx(uid, w => { delete w.sch; return {}; }),
   beer: (uid) => tx(uid, w => { spend(w, 5); w.dr = { b: Math.min(10, beers(w) + 1), t: Date.now() }; return {}; }),
   daily: (uid) => tx(uid, w => { const k = dayKey(); if (w.day.c === k) bad('Already collected today.'); w.day.c = k; w.c += C.dayCoins; return { got: C.dayCoins }; }),
   wheel: (uid) => tx(uid, w => {

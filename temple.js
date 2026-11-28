@@ -80,9 +80,12 @@ function rocksMask() { const c = IMG['hallw/south']; if (!c || c.trk) return; co
    RUNS off toward the mine. Once a player, kept on this phone (localStorage m2_qpeek). You cannot move while it plays. */
 const PK = {t: -1, seen: false, x: 0, y: 0, dir: 'right', hop: 0};
 try { PK.seen = localStorage.getItem('m2_qpeek') === '1'; } catch (e) {}
-const PKT = {say: 0, sayOff: 2.2, peek: 2.3, peekIn: 3.4, turn: 6.0, bang: 6.4, run: 7.0, end: 8.8};   // seconds
-function peekStart(m) { PK.t = 0; m.path = []; m.todo = null; m.walk = false; m.dir = 'back'; hallBars(true); sayLine('What is this?'); }
-function peekEnd() { PK.t = -1; PK.seen = true; try { localStorage.setItem('m2_qpeek', '1'); } catch (e) {} hallBars(false); sayOff(); }
+/* (28 Nov 2026, his ask: "make it easier for the players to know that Pip ran into the mines... the cutscene cuts to the mine entrance and Pip going in")
+   After he bolts, the picture CUTS to the mine's entrance (PK.cam: south.js points the camera there), Pip comes running in from the boulders' side,
+   along the ground in front of it, hops up to the doorway and is gone inside it (only then does he pass behind the entrance's picture). A beat on the empty doorway, then back to you. */
+const PKT = {say: 0, sayOff: 2.2, peek: 2.3, peekIn: 3.4, turn: 6.0, bang: 6.4, run: 7.0, cut: 8.1, hold: .9, end: 12};   // seconds (end: only a stop in case he never arrives)
+function peekStart(m) { PK.t = 0; PK.cam = null; PK.in = 0; m.path = []; m.todo = null; m.walk = false; m.dir = 'back'; hallBars(true); sayLine('What is this?'); }
+function peekEnd() { PK.t = -1; PK.cam = null; PK.in = 0; PK.seen = true; try { localStorage.setItem('m2_qpeek', '1'); } catch (e) {} hallBars(false); sayOff(); }
 function peekTick(m, dt) {
   if (PK.t < 0) { if (!PK.seen && QUEST.s < 5 && m && m.loc === SOUTH && !m.seat) { const d = rockDoor(); if (Math.abs(m.x - d[0]) < 30 && m.y > d[1] - 6 && m.y < d[1] + 24) peekStart(m); } return; }
   const t0 = PK.t; PK.t += dt; const at = k => t0 < PKT[k] && PK.t >= PKT[k], T = PK.t; m.walk = false; m.path = [];
@@ -93,12 +96,20 @@ function peekTick(m, dt) {
   if (at('bang')) { sfx('alert');   // the Mafia intro's own "!" alarm (his ask)
     try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} }
   if (T >= PKT.bang && T < PKT.run) PK.hop = T - PKT.bang < .25 ? Math.round(Math.sin((T - PKT.bang) / .25 * Math.PI) * 6) : 0;   // a fright: one jump straight up
-  if (T >= PKT.run) { const md = S_MINE.door, dx = md[0] - PK.x, dy = md[1] - PK.y, L = Math.hypot(dx, dy) || 1, v = 175 * dt;   // RUNS for the mine, little hops all the way
+  if (T >= PKT.cut) {   // the cut to the mine: he runs in from the boulders' side, up to the doorway and in
+    const md = S_MINE.door, rk = rockDoor(), ax = rk[0] - md[0], ay = rk[1] - md[1], al = Math.hypot(ax, ay) || 1;
+    if (!PK.cam) { PK.cam = [md[0], md[1] - 26]; PK.x = md[0] + (ax < 0 ? -140 : 140); PK.y = md[1] + 8; PK.leg = 0; }   // (his note: he went BEHIND the entrance at the start) he comes along the ground IN FRONT of it, from the boulders' side, level with the doorway
+    if (!PK.in) { const tgt = PK.leg ? [md[0], md[1] - 12] : md, dx = tgt[0] - PK.x, dy = tgt[1] - PK.y, L = Math.hypot(dx, dy) || 1, v = (PK.leg ? 60 : 120) * dt;
+      if (L <= v) { PK.x = tgt[0]; PK.y = tgt[1]; if (PK.leg) { PK.in = T; sfx('door'); } else PK.leg = 1; } else { PK.x += dx / L * v; PK.y += dy / L * v; }
+      PK.dir = PK.leg ? 'back' : Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy > 0 ? 'front' : 'back'); PK.hop = Math.round(Math.abs(Math.sin((T - PKT.cut) * 16)) * 3); }
+    else if (T >= PK.in + PKT.hold) { peekEnd(); return; }
+  }
+  else if (T >= PKT.run) { const md = S_MINE.door, dx = md[0] - PK.x, dy = md[1] - PK.y, L = Math.hypot(dx, dy) || 1, v = 175 * dt;   // RUNS for the mine, little hops all the way
     PK.x += dx / L * v; PK.y += dy / L * v; PK.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy > 0 ? 'front' : 'back'); PK.hop = Math.round(Math.abs(Math.sin((T - PKT.run) * 16)) * 3); }
   if (T >= PKT.end) peekEnd();
 }
 function peekObj(t) {   // Pip, and his "!", as one thing in the South's drawn scene, in front of or behind things like anyone (his note: he walked over a tree; he cleared the path in the map builder)
-  if (PK.t < PKT.peek) return null; const im = IMG['pip/' + PK.dir] || IMG['pip/front']; if (!im) return null;
+  if (PK.t < PKT.peek || PK.in) return null; const im = IMG['pip/' + PK.dir] || IMG['pip/front']; if (!im) return null;
   const x = Math.round(PK.x - im.width / 2), y = Math.round(PK.y - im.height - PK.hop);
   return {img: im, x, y, base: Math.round(PK.y), after: () => { if (PK.t < PKT.bang || PK.t >= PKT.run + .35) return; const e = PK.t - PKT.bang, bx = X(PK.x) - 3, by = Y(y) - 13 - (e < .12 ? 2 : 0);
     lx.fillStyle = '#1a1430'; lx.fillRect(bx - 1, by - 1, 9, 13); lx.fillStyle = '#ffffff'; lx.fillRect(bx, by, 7, 11); lx.fillStyle = '#e83b3b'; lx.fillRect(bx + 2, by + 1, 3, 6); lx.fillRect(bx + 2, by + 8, 3, 2); }};   // a white card with a red "!": pops a little on the beat
@@ -441,7 +452,7 @@ function crownDraw(h, t) {   // the King's crown flaring: a hard four-point star
 }
 /* ---------- THE ENTRANCE ---------- */
 function hallBars(on) { let a = $('#hbarT'); if (!a) { for (const k of ['T', 'B']) { const d = document.createElement('div'); d.className = 'bar ' + k.toLowerCase(); d.id = 'hbar' + k; d.style.zIndex = 20; $('#townHud').appendChild(d); } a = $('#hbarT'); void a.offsetWidth; }
-  a.classList.toggle('on', on); $('#hbarB').classList.toggle('on', on); for (const id of ['#joy', '#mapBtn']) { const e = $(id); if (e) e.style.visibility = on ? 'hidden' : ''; } }   // nothing on the picture but the picture
+  a.classList.toggle('on', on); $('#hbarB').classList.toggle('on', on); for (const id of ['#joy', '#mapBtn', '#townHud .tpanel']) {   /* (28 Nov, his ask) the bottom buttons too: the South shows them now */ const e = $(id); if (e) e.style.visibility = on ? 'hidden' : ''; } }   // nothing on the picture but the picture
 function hallCutEnd(skip) { const m = WL.me, C = HALL.cut; if (!C) return; HALL.cut = null; HALL.seen = true; try { localStorage.setItem('m2_qhall', '1'); } catch (e) {} hallBars(false);
   const xf = $('#xfade'); xf.classList.add('on'); setTimeout(() => xf.classList.remove('on'), 260);   // the close-up lets go under a blink
   if (m) { m.x = KING_STAND[0]; m.y = KING_STAND[1]; m.dir = 'back'; m.walk = false; m.path = []; m.todo = null; netMove(); } HALL.camY = null; if (!skip) setTimeout(kingTalk, 500); }   // control is yours again, and he speaks (skipped: he waits to be asked)

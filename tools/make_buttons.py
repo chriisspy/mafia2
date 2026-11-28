@@ -48,9 +48,21 @@ def trophy():
             if ch != '.': im.putpixel((3 + xx, 2 + yy), {'K': K, 'G': G, 'Y': Y, 'S': S}[ch])
     im.putpixel((12, 5), K)   # the right handle's outer edge, to match the left one
     return im
+def mapbtn():
+    """THE MAP BUTTON (map.js, 28 Nov 2026): his own picture if he draws one (mafia2-art/buttons/map-stroke.png). Until then: his menu button with the icon
+    wiped off its face and a little folded map drawn on it (mine: parchment, a dotted path, a red X; he may want to redraw it)."""
+    if os.path.exists(SRC + 'map-stroke.png'): return Image.open(SRC + 'map-stroke.png').convert('RGBA')
+    im = Image.open(SRC + 'menu-stroke.png').convert('RGBA'); F = (0x3a, 0x44, 0x67, 255)
+    for y in range(1, 13):
+        for x in (range(2, 14) if y in (1, 2, 12) else range(1, 15)): im.putpixel((x, y), F)
+    C = {'K': (0x18, 0x14, 0x25, 255), 'P': (0xf0, 0xd9, 0xa0, 255), 'p': (0xc9, 0xa4, 0x68, 255), 'd': (0x8a, 0x5a, 0x2b, 255), 'r': (0xe4, 0x3b, 0x44, 255), 'g': (0x5f, 0xc4, 0x6f, 255)}
+    for yy, row in enumerate(['KKKK....KKKK', 'KPPPKKKKPPPK', 'KPgPpPPPpPPK', 'KPPPpPPdprPK', 'KPPdpPdPpPPK', 'KPdPpdPPprPK', 'KPPPpPPPpPPK', 'KKKKpPPPpKKK', '....KKKKK...']):
+        for xx, ch in enumerate(row):
+            if ch != '.': im.putpixel((2 + xx, 2 + yy), C[ch])
+    return im
 uris = {}
-for a, b in ART + (('', 'leaderboard'),):
-    im = trophy() if b == 'leaderboard' else Image.open(SRC + a + '.png').convert('RGBA')
+for a, b in ART + (('', 'leaderboard'), ('', 'map')):
+    im = trophy() if b == 'leaderboard' else mapbtn() if b == 'map' else Image.open(SRC + a + '.png').convert('RGBA')
     if b == 'coins': im = gold(im)
     if b == 'decorate': im = gold(im, PINK)
     for x in range(2, 14):                                # the faint highlight on the bare face only: never over his icon
@@ -85,7 +97,7 @@ def layers(t):
             + '!important;background-position:' + ','.join(p for _, _, p in S) + '!important')
 SK = '#phone :is(.btn,.hbig,.tbtn,.coinbtn,.gbtn,.bprice)'
 ARTLIST = ('#phone #menuBtn,#phone #playersBtn,#phone #chatBtn,#phone #boardBtn,'
-           '#phone:not(.land) #townHud .tpanel .tbtn:is(.shop,.coll,.daily,.coinshop,.deco),#phone.land #townHud.tmini .tbtn:is(.shop,.coll,.daily,.coinshop,.deco)')
+           '#phone:not(.land) #townHud .tpanel .tbtn:is(.shop,.coll,.daily,.coinshop,.deco,.map),#phone.land #townHud.tmini .tbtn:is(.shop,.coll,.daily,.coinshop,.deco,.map)')
 css = f'''/*BTN-CSS*/
 /* HIS BUTTONS: this whole block is written by tools/make_buttons.py (read its top). Do not edit it here: change that file and run it. */
 #phone{{--bo:#181425;--bl:rgba(20,14,36,.376);--bh:rgba(255,255,255,{HL/255:.3f});{''.join(f'--art-{k}:{v};' for k, v in uris.items())}}}
@@ -94,7 +106,7 @@ css = f'''/*BTN-CSS*/
   {layers(0)};
   clip-path:{poly(0)}}}
 #phone .btn.dark,#phone .btn:has(>img[data-a=cross]:only-child){{background-color:#3a4467;color:#fff}}   /* his navy; a button that is only his close X is navy too, like his close.png */
-{SK}:active:not(:disabled),#phone .bpack:active:not(:disabled) .bprice{{transform:none!important;border-width:6px 3px 0!important;
+{SK}:active:not(:disabled),#phone #flipModal .fside.sel.sel,#phone .bpack:active:not(:disabled) .bprice{{transform:none!important;border-width:6px 3px 0!important;
   {layers(3)};
   clip-path:{poly(3)}}}
 #phone .bpack:active:not(:disabled){{transform:none!important}}
@@ -106,6 +118,7 @@ css = f'''/*BTN-CSS*/
 #phone:not(.land) #townHud .tpanel .tbtn.daily.daily,#phone.land #townHud.tmini .tbtn.daily.daily{{background-image:var(--art-rewards)!important}}
 #phone:not(.land) #townHud .tpanel .tbtn.deco.deco,#phone.land #townHud.tmini .tbtn.deco.deco{{background-image:var(--art-decorate)!important}}
 #phone:not(.land) #townHud .tpanel .tbtn.coinshop.coinshop,#phone.land #townHud.tmini .tbtn.coinshop.coinshop{{background-image:var(--art-coins)!important}}
+#phone:not(.land) #townHud .tpanel .tbtn.map.map,#phone.land #townHud.tmini .tbtn.map.map{{background-image:var(--art-map)!important}}
 :is({ARTLIST}):active:active{{border:0!important;clip-path:none!important;background-position:0 -48px!important;background-size:48px 96px!important}}
 #homeHud .btn.lob{{min-height:42px}}#phone .btn.lob.gold{{background-color:#ffd25e;color:#4a2a00}}
 /*END-BTN-CSS*/

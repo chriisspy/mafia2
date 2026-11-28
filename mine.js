@@ -811,12 +811,14 @@ function mineHazObjs(objs, t) {
 
 /* ---------- getting hurt ---------- */
 const HEART_ROWS = ['.KK.KK.', 'KRRKRRK', 'KRWRRRK', 'KRRRRRK', '.KRRRK.', '..KRK..', '...K...'];
-const HEART = [pxIcon(HEART_ROWS, {K: '#1a1430', R: '#ff4a5a', W: '#ffd0d6'}), pxIcon(HEART_ROWS, {K: '#1a1430', R: '#3a2a4a', W: '#3a2a4a'})];
-function mineHearts() { const el = $('#mineHp'); if (!el || el.dataset.n === String(MN.hp)) return; el.dataset.n = String(MN.hp); let s = ''; for (let i = 0; i < MR.hearts; i++) s += iconImg(HEART[i < MN.hp ? 0 : 1], 2); el.innerHTML = s; }
+const HEART = [pxIcon(HEART_ROWS, {K: '#1a1430', R: '#ff4a5a', W: '#ffd0d6'}), pxIcon(HEART_ROWS, {K: '#1a1430', R: '#3a2a4a', W: '#3a2a4a'}),
+  pxIcon(HEART_ROWS, {K: '#1a1430', R: '#ffc93c', W: '#fff6c2'})];   // [2] gold: a chicken schnitzel from the Tavern is in you (index.html: schnOn), the next hit costs no heart
+function mineHearts() { const el = $('#mineHp'), g = typeof schnOn === 'function' && schnOn(), key = MN.hp + (g ? 'g' : ''); if (!el || el.dataset.n === key) return; el.dataset.n = key; let s = ''; for (let i = 0; i < MR.hearts; i++) s += iconImg(HEART[i < MN.hp ? (g ? 2 : 0) : 1], 2); el.innerHTML = s; }
 function mineHeal() { MN.hp = MR.hearts; MN.inv = 0; MN.flash = 0; MN.out = false; }
 function mineHurt(hx, hy, kind) {
   const M = MN, m = WL.me; if (M.inv > 0 || M.out || !m) return;
-  M.hp = Math.max(0, M.hp - 1); M.inv = HZ.inv; M.flash = .3; M.shake = .25; sfx(kind === 'lava' ? 'mburn' : 'mhurt'); DIG.on = null; PICK.held = false; m.path = []; m.todo = null; m.walk = false;
+  if (!(typeof schnUsed === 'function' && schnUsed())) M.hp = Math.max(0, M.hp - 1);   // (28 Nov) a schnitzel takes this hit: no heart lost, and the hearts are red again
+  M.inv = HZ.inv; M.flash = .3; M.shake = .25; sfx(kind === 'lava' ? 'mburn' : 'mhurt'); DIG.on = null; PICK.held = false; m.path = []; m.todo = null; m.walk = false;
   let dx, dy; if (kind !== 'fall' && M.safe) { dx = M.safe[0] - m.x; dy = M.safe[1] - m.y; } else { dx = m.x - hx; dy = m.y - 3 - hy; }   // back the way you came; a falling rock throws you off it
   let L = Math.hypot(dx, dy); if (L < .5) { dx = 0; dy = 1; L = 1; } const far = kind === 'fall' ? 12 : clamp(L + 3, 8, 22);
   m.nudge = {t: 0, vx: dx / L * far * 10, vy: dy / L * far * 10};   // wlStep slides you (never through a wall)

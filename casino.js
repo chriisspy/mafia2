@@ -252,7 +252,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 #flipModal .stakes button,#flipModal .stakes input,#flipModal #flipGo{border-radius:0!important;clip-path:polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px),0 4px,4px 4px)}
 </style>`);
 /* Heads and Tails as round arcade buttons, just the hat or the sword on them (his ask, 18 Nov) */
-document.querySelectorAll('#flipSides .fside').forEach(b=>{const h=b.dataset.s==='h';b.innerHTML=`<span class="ab">${ic(h?'tophat':'knife',4)}</span>${h?'Heads':'Tails'}`;});
+document.querySelectorAll('#flipSides .fside').forEach(b=>{const h=b.dataset.s==='h';b.innerHTML=`<span class="ab">${ic(h?'tophat':'knife',2)}</span>${h?'Heads':'Tails'}`;});
 
 /* ================= THE SLOT MACHINES, UP CLOSE (18 Nov 2026) =================
    His ask: "the same principles as the coin flip. machine frame, custom UI/buttons. make it so the lever is actually pullable, and the

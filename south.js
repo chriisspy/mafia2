@@ -148,7 +148,8 @@ function stallShadow(im) {
 function stallAfter(i, x, y) { if (window.marketStallDraw) marketStallDraw(i, x, y); }
 SH.frame = (m, people, dt, t, H, img) => {
   const tp = $('#townHud #hallBar'), r = tp && tp.getBoundingClientRect(), cr = cv.getBoundingClientRect();
-  view(img, m.x, m.y + (LAND ? 2 : 24), 190, {hi: true});   /* (24 Nov, his ask) the bottom of the map is the bottom of the screen: the camera never shows the empty space past it */
+  const pc = typeof PK !== 'undefined' && PK.t >= 0 && PK.cam;   // Pip's cutscene looks at the mine's entrance for a moment (temple.js)
+  view(img, pc ? pc[0] : m.x, (pc ? pc[1] : m.y) + (LAND ? 2 : 24), 190, {hi: true});   /* (24 Nov, his ask) the bottom of the map is the bottom of the screen: the camera never shows the empty space past it */
   if (WL.sel && WL.sel.loc === m.loc) { const q = Math.floor(t / 200) % 2; lx.strokeStyle = q ? '#ffd25e' : '#fff2a8'; lx.lineWidth = 1; lx.beginPath(); lx.ellipse(X(WL.sel.x) + .5, Y(WL.sel.y) + .5, 9 + q, 3 + q * .5, 0, 0, 7); lx.stroke(); }
   const hits = drawScene(people, null, img, southObjs(m, dt)); wlFx(dt, m.loc); drawPuffs(dt); wlCases(dt, m.loc);
   // a tag over the road out to the race track, like the FISH tag over the jetty
