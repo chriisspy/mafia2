@@ -4,7 +4,8 @@
    drawn by the game's own stackFrame, so they turn in real 3D like the Alien and the Getaway Car. assets/pets/<id>.png, pets.json.
    You buy one with CRYSTALS (his rule: buying pets costs crystals) in the Collection, under the sets. The server keeps what you own and which
    one is out (functions/keep.js: petBuy, petSet; wallet.pets = {id: 1}, wallet.pet = the one following you).
-   NOT HERE YET: finding eggs in the mine and at the lake, and other players seeing your pet (it needs the world's presence data). */
+   Other players see your pet: its id rides in what you already send about yourself (index.html netM: pt), and each phone walks it after you itself.
+   NOT HERE YET: finding eggs in the mine and at the lake. */
 (() => {
   /* id: [name, crystals]. The prices are mine (he gave none): the same list as the server's PETS. */
   const PETS = {alien: ['Blob', 2], chicken: ['Don Cluck', 3], golem: ['Crag', 8], dragon: ['Shard', 12]};   // (the flame skull was made, then taken out: his word, "looks bad")
@@ -34,30 +35,35 @@
      (a door, the South) it is simply beside you again on the other side. */
   /* (his note, 28 Nov: "a slight delay in the pets following you and the walk start and stop") It does not move the instant you do: it notices you have
      gone (GO further than it likes), waits a beat (WAIT), then picks up speed; and when you stop it runs on a little and slows down to a halt beside you,
-     never dead on the spot. P.v = how fast it is going now, eased towards how fast it wants to go. */
-  function step(m, t) { const dt = Math.min(.05, (t - P.last) / 1000 || 0); P.last = t;
-    if (P.loc !== m.loc || Math.hypot(P.x - m.x, P.y - m.y) > 150) { P.loc = m.loc; P.x = m.x - 14; P.y = m.y + 2; P.v = 0; P.go = false; P.wait = 0; }
-    const dx = m.x - P.x, dy = m.y - P.y, d = Math.hypot(dx, dy) || 1, KEEP = 20, GO = 30, WAIT = .32;
-    if (!P.go) { if (d > GO) { P.wait = (P.wait || 0) + dt; if (P.wait >= WAIT) P.go = true; } else P.wait = 0; }
-    else if (d <= KEEP) { P.go = false; P.wait = 0; }
-    const want = P.go ? Math.min(105, 34 + (d - KEEP) * 3.2) : 0;                 // further behind = faster, so it always catches up
-    P.v = (P.v || 0) + (want - (P.v || 0)) * Math.min(1, dt * (P.go ? 4.5 : 6));   // ease in, ease out
-    if (P.v < 2) P.v = 0;
-    if (P.v > 0 && d > 14) { const s = Math.min(P.v * dt, d - 14);   /* never closer than 14: it stops beside you, not on you */ P.x += dx / d * s; P.y += dy / d * s; if (P.go) P.a = Math.atan2(dy, dx) - Math.PI / 2; }
-    P.moving = P.v > 14; }
-  function objs2(m, t) { if (!P.id || !m) return []; step(m, t);
-    const M = MOVE[P.id](t, P.moving), ai = ((Math.round(P.a / (Math.PI * 2) * 48) + (M.yaw | 0)) % 48 + 48) % 48, im = frame(P.id, M.row, ai); if (!im) return [];
-    const D = STACK[key(P.id)], h = Math.round(D.s * D.squash), out = [];
-    if (M.shadow) out.push({img: SHADOW, x: Math.round(P.x - 7), y: Math.round(P.y - 4), base: Math.round(P.y) - 1});   // under it, drawn first
-    out.push({img: im, x: Math.round(P.x - im.width / 2 + (M.sway | 0)), y: Math.round(P.y - im.height + 2 + h / 2 - (M.lift | 0)), base: Math.round(P.y)});
+     never dead on the spot. S.v = how fast it is going now, eased towards how fast it wants to go.
+     (28 Nov, his ask: "make other players see your pet") S is kept on whoever it follows (e.pf), so every player in the place has their own. */
+  function step(S, m, t) { const dt = Math.min(.05, (t - (S.last || t)) / 1000 || 0); S.last = t;
+    if (S.loc !== m.loc || Math.hypot(S.x - m.x, S.y - m.y) > 150) { S.loc = m.loc; S.x = m.x - 14; S.y = m.y + 2; S.v = 0; S.go = false; S.wait = 0; S.a = S.a || 0; }
+    const dx = m.x - S.x, dy = m.y - S.y, d = Math.hypot(dx, dy) || 1, KEEP = 20, GO = 30, WAIT = .32;
+    if (!S.go) { if (d > GO) { S.wait = (S.wait || 0) + dt; if (S.wait >= WAIT) S.go = true; } else S.wait = 0; }
+    else if (d <= KEEP) { S.go = false; S.wait = 0; }
+    const want = S.go ? Math.min(105, 34 + (d - KEEP) * 3.2) : 0;                 // further behind = faster, so it always catches up
+    S.v = (S.v || 0) + (want - (S.v || 0)) * Math.min(1, dt * (S.go ? 4.5 : 6));   // ease in, ease out
+    if (S.v < 2) S.v = 0;
+    if (S.v > 0 && d > 14) { const k = Math.min(S.v * dt, d - 14);   /* never closer than 14: it stops beside you, not on you */ S.x += dx / d * k; S.y += dy / d * k; if (S.go) S.a = Math.atan2(dy, dx) - Math.PI / 2; }
+    S.moving = S.v > 14; }
+  function objs2(id, m, t) { if (!id || !PETS[id] || !m) return []; const S = m.pf || (m.pf = {}); step(S, m, t);
+    const M = MOVE[id](t + (m.i | 0) * 137, S.moving), ai = ((Math.round(S.a / (Math.PI * 2) * 48) + (M.yaw | 0)) % 48 + 48) % 48, im = frame(id, M.row, ai); if (!im) return [];
+    const D = STACK[key(id)], h = Math.round(D.s * D.squash), out = [];
+    if (M.shadow) out.push({img: SHADOW, x: Math.round(S.x - 7), y: Math.round(S.y - 4), base: Math.round(S.y) - 1});   // under it, drawn first
+    out.push({img: im, x: Math.round(S.x - im.width / 2 + (M.sway | 0)), y: Math.round(S.y - im.height + 2 + h / 2 - (M.lift | 0)), base: Math.round(S.y)});
     return out; }
-  // it is one more thing in whatever scene is being drawn, sorted with the people (in front of you when it is nearer the camera)
+  // each pet is one more thing in whatever scene is being drawn, sorted with the people: yours, and the pet of every other player in the same place
   { const ds = drawScene; drawScene = function (people, occ, img, objs) { const m = WL.me;
-      if (P.id && m && people && people.includes && scene === scenes.town) { const o = objs2(m, performance.now()); if (o.length) objs = [...(objs || []), ...o]; }
+      if (m && people && people.includes && scene === scenes.town) { const t = performance.now(), add = [];
+        if (P.id) add.push(...objs2(P.id, m, t));
+        for (const e of WL.bots || []) if (e && e.remote && e.pet && e.loc === m.loc && !e.car) add.push(...objs2(e.pet, e, t));
+        if (add.length) objs = [...(objs || []), ...add]; }
       return ds.call(this, people, occ, img, objs); }; }
+  window.petOut = () => P.id;   // what netM() tells the others (index.html)
 
   // the wallet says what you own and which one is out
-  { const wa = walletApply; walletApply = function (w) { wa(w); P.own = (w && w.pets) || {}; P.id = w && w.pet && PETS[w.pet] ? w.pet : null; petsPaint(); }; }
+  { const wa = walletApply; walletApply = function (w) { wa(w); P.own = (w && w.pets) || {}; const was = P.id; P.id = w && w.pet && PETS[w.pet] ? w.pet : null; petsPaint(); if (was !== P.id && typeof netMove === 'function') netMove(); }; }   // tell the others the moment it changes
 
   /* ---------- the Collection: PETS, under the sets ---------- */
   const st = document.createElement('style');
@@ -81,5 +87,5 @@
     catch (er) { wlSay(er.message, 'bad'); } done(); petsPaint(); });
   { const oc = openColl; openColl = function () { const r = oc.apply(this, arguments); petsPaint(); return r; };
     document.querySelectorAll('button').forEach(b => { if (b.onclick === oc) b.onclick = () => openColl(); }); }
-  window.petsLab = (id, own) => { P.own = own || {alien: 1, chicken: 1, golem: 1, dragon: 1}; P.id = id || null; petsPaint(); };   // the lab: try a pet without buying it
+  window.petsLab = (id, own) => { P.own = own || {alien: 1, chicken: 1, golem: 1, dragon: 1}; P.id = id || null; petsPaint(); if (typeof netMove === 'function') netMove(); };   // the lab: try a pet without buying it
 })();

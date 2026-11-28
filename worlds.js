@@ -203,3 +203,48 @@ $('#mafiaX').onclick=()=>$('#mafiaModal').classList.remove('on');
 $('#townStart').addEventListener('click',()=>$('#mafiaModal').classList.remove('on'));$('#townDev').addEventListener('click',()=>$('#mafiaModal').classList.remove('on'));
 {const _g=gameLobbyUI;window.gameLobbyUI=gameLobbyUI=function(){_g.apply(this,arguments);const can=$('#townStart').style.display!=='none'||$('#townDev').style.display!=='none';$('#townMafia').style.display=can?'flex':'none';if(!can)$('#mafiaModal').classList.remove('on');};
  const _h=wlHead;window.wlHead=wlHead=function(a,b){_h.apply(this,arguments);document.querySelector('#townHud .tpanel .thead').classList.toggle('quiet',a!=='A game is on');   /* only that one is news; cabin names and "walk to the door" are gone (his call) */};}
+
+/* ================= YOUR LAST WORLD, WHEN THE GAME OPENS (28 Nov 2026, his call) =================
+   "it's making players auto join a world when the app opens up. it shouldn't be automatic: it should load the world (we need to build a loader
+   showing it is loading a world) then the person can choose to join."
+   So: the game opens on the home screen. If you were in a world last time, a card comes up LOADING it (three hopping squares). When it has the
+   world it shows its picture, its name and who is in it right now, with JOIN and NOT NOW. Nothing is entered until you tap Join.
+   The same loader shows whenever a world is being entered (Join here, or Enter on a world's card on the home screen).
+   (A GAME you were in the middle of, m2_game, still takes you straight back: the others are waiting on you.) */
+(() => {
+  const st = document.createElement('style');
+  st.textContent = `#worldBackModal{top:50%;bottom:auto!important;transform:translateY(-50%);left:0;right:0;margin:0 auto;width:min(320px,calc(100% - 32px));z-index:40;padding:12px 12px 16px;
+  background:#2a2346;color:#f6dfae;border:3px solid #0f0b1e;border-radius:6px;box-shadow:inset 0 -6px 0 #1b1532,inset 0 2px 0 #3d3466,0 6px 0 #0008}
+#wbShot{height:120px;border:3px solid #0f0b1e;border-radius:6px;background:#16112b center/cover no-repeat;image-rendering:pixelated;display:flex;align-items:center;justify-content:center}
+#wbShot.load{background-image:none!important}
+.wbDots{display:none;gap:8px}#wbShot.load .wbDots{display:flex}
+.wbDots i{width:12px;height:12px;background:#ffd25e;border:3px solid #0f0b1e;animation:wbHop .72s steps(4) infinite}.wbDots i:nth-child(2){animation-delay:.12s}.wbDots i:nth-child(3){animation-delay:.24s}
+@keyframes wbHop{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-12px)}}
+#wbName{font:700 22px 'Pixelify Sans';color:#ffd25e;text-shadow:0 2px 0 #0f0b1e;letter-spacing:.5px;margin:10px 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#wbSub{font:600 14px 'Pixelify Sans';color:#b9a8e0;min-height:18px;margin-bottom:12px}
+#wbRow{display:flex;gap:8px}#wbRow .btn{flex:1;font-size:18px;padding:7px 6px 12px}#wbRow.load{visibility:hidden}`;
+  document.head.appendChild(st);
+  document.querySelector('#nameModal').insertAdjacentHTML('afterend', `<div class="modal" id="worldBackModal"><div id="wbShot" class="load"><span class="wbDots"><i></i><i></i><i></i></span></div>
+<div id="wbName">LOADING WORLD</div><div id="wbSub"></div><div id="wbRow" class="load"><button class="btn red" id="wbYes">Join</button><button class="btn dark" id="wbNo">Not now</button></div></div>`);
+  const M = $('#worldBackModal'), B = {wid: null, ask: false};
+  const show = (name, sub, loading, shot) => { $('#wbShot').classList.toggle('load', loading); $('#wbShot').style.backgroundImage = !loading && shot ? `url('${shot}')` : '';
+    $('#wbName').textContent = name; $('#wbSub').textContent = sub || ''; $('#wbRow').classList.toggle('load', loading || !B.ask); M.classList.add('on'); };
+  const hide = () => { M.classList.remove('on'); B.ask = false; };
+  const forget = () => { try { localStorage.removeItem('m2_lobby'); } catch (e) {} };
+  const shotOf = w => worldShotOf(w) || (XMAS ? 'assets/xmas/day-big.webp' : 'assets/town4/day.png');
+  // the game has just opened and you were in this world last time: load it, show it, and wait to be told
+  window.worldBack = async wid => { B.wid = wid; B.ask = false; show('LOADING WORLD', '', true);
+    try { await netLoad(); let u = acctUser(); for (let i = 0; i < 40 && !u; i++) { await new Promise(r => setTimeout(r, 150)); u = acctUser(); }   // signing back in takes a moment
+      if (!u) throw 0;
+      const w = (await NET.db.ref('worlds/' + wid).get()).val(); if (!w || !w.members || !w.members[u.uid]) throw 0;
+      if (NET.on || B.wid !== wid) { hide(); return; }                               // you went somewhere yourself while it loaded
+      const here = Object.keys((w.live && w.live.players) || {}).length;
+      B.ask = true; show((w.meta && w.meta.name) || 'Your world', here ? here + (here === 1 ? ' player' : ' players') + ' here now' : 'Nobody here right now', false, shotOf(wid)); }
+    catch (e) { forget(); hide(); } };
+  $('#wbNo').onclick = () => { sfx('click'); forget(); hide(); };
+  $('#wbYes').onclick = () => { if (NET.busy || !B.wid) return; sfx('click'); homeDo(() => worldEnter(B.wid), null, $('#wbYes'), 'Joining…').then(() => { if (!NET.on) forget(); hide(); }); };
+  // the loader, whenever a world is being entered
+  { const we = worldEnter; worldEnter = async function (wid, back) { const v = (WORLD.mine && WORLD.mine[wid]) || {}, was = B.ask; B.ask = false;
+      if (!back) show(B.wid === wid && was ? $('#wbName').textContent : (v.name || 'LOADING WORLD'), 'Loading…', true);
+      try { return await we.apply(this, arguments); } finally { if (!back) hide(); } }; }
+})();

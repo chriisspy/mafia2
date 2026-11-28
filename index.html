@@ -833,6 +833,8 @@ h2 img.ic,h3 img.ic{vertical-align:-6px;margin-right:8px}
 #phone #chatBox{transition:background-color .15s}
 /* (28 Nov, his ask) nothing shows through the open chat: the buttons and the pills it covers are hidden while it is open (upright only) */
 #phone:not(.land):has(#chatBox.on) :is(#menuBtn,#playersBtn,#chatBtn,#boardBtn,#top){visibility:hidden}
+/* (28 Nov) and the chat, people and trophy buttons never sit on top of an open screen (they covered the Collection's and the Blacksmith's headings) */
+#phone:not(.land):has(.modal.on) :is(#playersBtn,#chatBtn,#boardBtn){visibility:hidden}
 #phone #chatBox .chHead{display:flex;justify-content:flex-end;flex:none;margin-bottom:4px}
 #phone #chatX{width:36px;height:36px;padding:0;flex:none;display:flex;align-items:center;justify-content:center}
 #phone #chatLog{flex:1;min-height:0;max-height:none}#phone #chatBox .chRow,#phone #chatTyping{flex:none}
@@ -1607,7 +1609,7 @@ const hidden=s=>s.rar==='secret'&&!OWNED.has(s.id);   /* a secret thing is not l
 const OWNED=new Set(SKINS.filter(s=>s.rar==='common').map(s=>s.id).concat('r_classic')); // what this player has unlocked: the common outfits to start, the rest come from the Mafia case
 const ROLE_SPR={mafia:'mafia',doctor:'doctor',jester:'jester',detective:'detective'};
 const IMG={};
-const BUILD='11281501'; // changes every push, so phones never show an old picture from their cache
+const BUILD='11281509'; // changes every push, so phones never show an old picture from their cache
 document.getElementById('buildTag').textContent='v'+BUILD;
 /* (27 Nov 2026, his report: "sometimes when i join a world it goes black") whatever breaks is written, small, after the version number, so a screenshot of the corner says what it was */
 function errTag(where,e){try{const m=String(e&&e.message||e).slice(0,70),ln=((e&&e.stack||'').match(/:(\d+):\d+/)||[])[1]||'';if(errTag.last===where+m)return;errTag.last=where+m;document.getElementById('buildTag').textContent='v'+BUILD+' '+where+(ln?' '+ln:'')+' '+m;}catch(_){}} // which version this is, so an old cached copy is easy to spot
@@ -5252,14 +5254,14 @@ function netApply(){if(!NET.on)return;const pl=NET.players||{},mine=pl[NET.uid],
   others.forEach(([u,p],k)=>{keep.add(u);const m=p.m;let e=NET.ents.get(u);
     if(!e){e=wlEnt(k+1,m.x,m.y);e.remote=true;e.uid=u;e.loc=m.loc;e.ms=-1;NET.ents.set(u,e);if(NET.sawRoster){wlSay(`${String(p.n).slice(0,10)} joined.`,'good');sfx('join');}}
     e.i=k+1;e.n=String(p.n).slice(0,10);e.ty=+p.ty||0;   /* typing in the chat (chatTy) */
-    if(m.s!==e.ms){e.ms=m.s;e.fish=m.f||null;if(typeof raceNetIn==='function'&&raceNetIn(e,m))return;   /* on the race track they are a car (race.js) */if(e.loc!==m.loc||Math.hypot(e.x-m.x,e.y-m.y)>48){e.loc=m.loc;e.x=m.x;e.y=m.y;e.path=[];e.walk=false;}
+    if(m.s!==e.ms){e.ms=m.s;e.fish=m.f||null;e.pet=m.pt||null;if(typeof raceNetIn==='function'&&raceNetIn(e,m))return;   /* on the race track they are a car (race.js) */if(e.loc!==m.loc||Math.hypot(e.x-m.x,e.y-m.y)>48){e.loc=m.loc;e.x=m.x;e.y=m.y;e.path=[];e.walk=false;}
       if(!!m.car!==!!e.car)carToggle(e,!!m.car);
       if(!e.ko&&!e.act){if(Math.hypot(m.tx-e.x,m.ty-e.y)>2)wlGo(e,m.tx,m.ty);else{e.path=[];e.walk=false;if(m.dir)e.dir=m.dir;}}
       const sk=SEATK.includes(m.seat)||/^(bj\d_\d|tv\d+)$/.test(m.seat||'')?m.seat:null,cur=e.seat&&!e.seat.out?e.seat.k:null;   /* the blackjack and tavern stools too, so a shared table shows who is sat at it */
       if(sk!==cur&&!e.ko&&e.loc>=0){if(sk){const s=wlSeat(sk,e);e.path=[];e.todo=null;e.walk=false;e.act=null;e.x=s.stand[0];e.y=s.stand[1];e.seat={k:sk,t:0};if(e.loc===WL.me.loc)sfx('sit');}else e.seat={k:cur,t:0,out:true};}}});
   for(const[u,e]of[...NET.ents])if(!keep.has(u)){if(e.bubEl)e.bubEl.remove();NET.ents.delete(u);wlSay(`${e.n||'Someone'} left.`);}
   WL.bots=others.map(([u])=>NET.ents.get(u));NET.sawRoster=true;gameLobbyUI();if(WL.sel&&!WL.bots.includes(WL.sel)){WL.sel=null;wlMenu();}}
-const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:m.joyT||[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,car:m.car?1:0,seat:m.seat&&!m.seat.out?m.seat.k:null,f:m.loc===LAKE&&FISH.on?{fc:FISH.face||'back',rd:(typeof KIT!=='undefined'&&KIT.rod)||'twig',ph:FISH.ph,bx:FISH.bob?Math.round(FISH.bob.x):null,by:FISH.bob?Math.round(FISH.bob.y):null}:null,r:typeof raceNetM==='function'?raceNetM():null,s:++NET.seq};};   /* r: on the race track, your car (race.js) */   /* f: fishing, so the others see your rod and float (his ask) */
+const netM=()=>{const m=WL.me,l=m.path.length?m.path[m.path.length-1]:m.joyT||[m.x,m.y];return{x:Math.round(m.x),y:Math.round(m.y),tx:Math.round(l[0]),ty:Math.round(l[1]),loc:m.loc,dir:m.dir,car:m.car?1:0,seat:m.seat&&!m.seat.out?m.seat.k:null,f:m.loc===LAKE&&FISH.on?{fc:FISH.face||'back',rd:(typeof KIT!=='undefined'&&KIT.rod)||'twig',ph:FISH.ph,bx:FISH.bob?Math.round(FISH.bob.x):null,by:FISH.bob?Math.round(FISH.bob.y):null}:null,r:typeof raceNetM==='function'?raceNetM():null,pt:window.petOut?petOut():null,s:++NET.seq};};   /* pt: the pet following you (pets.js), so the others see it */   /* r: on the race track, your car (race.js) */   /* f: fishing, so the others see your rod and float (his ask) */
 // tell everyone where I am and where I am walking to (at most about five times a second)
 function netMove(){if(!NET.on||!WL.me)return;clearTimeout(NET.mt);const send=()=>{NET.ml=performance.now();if(NET.on)NET.me.child('m').set(netM()).catch(()=>{});};
   if(performance.now()-(NET.ml||0)>180)send();else NET.mt=setTimeout(send,180);}
@@ -5994,7 +5996,7 @@ let OBJ_META={};
     if(!LAB&&/^[A-Z]{4}$/.test(back)){homeDo(()=>netBack(back),null,$('#homeJoin'),'Back to your game…').then(()=>{if(!NET.on)usual();else acctUI();});return;}   /* the tab was shut in the middle of a game */
     let lobby='';try{lobby=localStorage.getItem('m2_lobby')||'';}catch(e){}
     if(!LAB&&/^[A-Z]{4}$/.test(lobby)){homeDo(()=>netJoin(lobby),null,$('#homeJoin'),'Back to your lobby…').then(()=>{if(!NET.on){try{localStorage.removeItem('m2_lobby');}catch(e){}usual();}else acctUI();});return;}
-    if(!LAB&&/^w:/.test(lobby)){homeDo(()=>worldEnter(lobby.slice(2)),null,$('#homeJoin'),'Back to your world…').then(()=>{if(!NET.on){try{localStorage.removeItem('m2_lobby');}catch(e){}usual();}else acctUI();});return;}
+    if(!LAB&&/^w:/.test(lobby)){usual();if(window.worldBack)worldBack(lobby.slice(2));return;}   /* (28 Nov 2026, his call) the world you were last in is NOT walked into by itself any more: it is loaded and shown, and you choose (worlds.js worldBack) */
     usual();});   // an invite link: the code is already typed in
   requestAnimationFrame(loop);
 })();
