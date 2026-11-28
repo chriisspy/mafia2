@@ -8,10 +8,14 @@
 (() => {
   const KEEP_STREAK = [100, 150, 200, 250, 300, 400, 500];   // day 7 also gives a free case
   const KEEP_TASKS = {   // id: [what it says, how many, coins]
-    /* the middling task also gives 1 crystal shard, the hard one 2 (the server's SHARDS) */
+    /* the hard task also gives 1 crystal shard; all three done gives 1 more (the server's HARD_SHARDS, ALL_SHARDS) */
     fish3: ['Catch 3 fish', 3, 40], flip2: ['Flip the coin 2 times', 2, 40], slot5: ['Spin the slots 5 times', 5, 40], wheel1: ['Spin the town wheel', 1, 40], beer1: ['Have a beer', 1, 40], rock15: ['Break 15 rocks', 15, 40],
     fish8: ['Catch 8 fish', 8, 90], rock40: ['Break 40 rocks', 40, 90], slot15: ['Spin the slots 15 times', 15, 90], click2: ['Play Chrispy Clicker 2 times', 2, 90], flip5: ['Flip the coin 5 times', 5, 90],
-    fish20: ['Catch 20 fish', 20, 160], rock120: ['Break 120 rocks', 120, 160], slot40: ['Spin the slots 40 times', 40, 160], click5: ['Play Chrispy Clicker 5 times', 5, 160], case1: ['Open a case', 1, 160]};
+    fish20: ['Catch 20 fish', 20, 160], rock120: ['Break 120 rocks', 120, 160], slot40: ['Spin the slots 40 times', 40, 160], click5: ['Play Chrispy Clicker 5 times', 5, 160], case1: ['Open a case', 1, 160],
+    /* THE CRYSTAL CHALLENGE (his rule: a crystal only for something genuinely hard): the fourth task of the day, the only one that pays a crystal */
+    casino5k: ['Win 5,000 coins at the casino', 5000, 0], flipwin6: ['Win 6 coin flips', 6, 0], slotwin20: ['Win on the slots 20 times', 20, 0], fish40: ['Catch 40 fish', 40, 0],
+    fishrare10: ['Catch 10 rare fish', 10, 0], rock300: ['Break 300 rocks', 300, 0], gold400: ['Mine 400 gold', 400, 0], smelt600: ['Collect 600 coins from the Blacksmith', 600, 0],
+    click3: ['Score 50 in Chrispy Clicker 3 times', 3, 0], laps10: ['Drive 10 laps at the race track', 10, 0], case3: ['Open 3 cases', 3, 0]};
   const prevKey = k => new Date(Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10)) - 864e5).toISOString().slice(0, 10);
   const coin = n => ic('aCoin', 2, 'solo') + '<span>' + n + '</span>';
   const SHARD = (() => { const R = ['..KK.', '.KWCK', 'KWCDK', 'KCDK.', '.KK..'], C = {K: '#1a1430', W: '#eaffff', C: '#6fe3ff', D: '#2f9fd6'}, c = mk(5, 5), x = c.getContext('2d'); R.forEach((r, y) => [...r].forEach((ch, i) => { if (C[ch]) { x.fillStyle = C[ch]; x.fillRect(i, y, 1, 1); } })); return c.toDataURL(); })();
@@ -43,7 +47,7 @@
 
   const streak = () => { const t = dayKey(), c = WALLET.day.c, n = WALLET.day.n | 0; return c === t ? {day: n || 1, got: true} : c === prevKey(t) ? {day: (n % 7) + 1, got: false} : {day: 1, got: false}; };
   const tasks = () => { const T = WALLET.tk; return T && T.k === dayKey() && Array.isArray(T.ids) ? T : null; };
-  const ready = () => { const T = tasks(); if (!T) return 0; const p = T.p || {}, d = T.d || {}; let n = T.ids.filter(id => KEEP_TASKS[id] && (p[id] | 0) >= KEEP_TASKS[id][1] && !d[id]).length; if (!T.b && T.ids.every(id => d[id])) n++; return n; };
+  const ready = () => { const T = tasks(); if (!T) return 0; const p = T.p || {}, d = T.d || {}; let n = T.ids.filter(id => KEEP_TASKS[id] && (p[id] | 0) >= KEEP_TASKS[id][1] && !d[id]).length; if (!T.b && T.ids.slice(0, 3).every(id => d[id])) n++; return n; };
 
   function paint() {
     const S = streak(), T = tasks(), sig = JSON.stringify([S, T, coins > 0]);
@@ -54,17 +58,20 @@
     $('#dcCoins .dtx b').textContent = 'Day ' + S.day + (S.got ? '' : ' · ' + KEEP_STREAK[S.day - 1] + ' coins' + (S.day === 7 ? ' + a case' : ''));
     const box = $('#kpTasks'); if (!T) { box.innerHTML = ''; return; }
     const p = T.p || {}, d = T.d || {};
-    box.innerHTML = T.ids.map(id => { const k = KEEP_TASKS[id]; if (!k) return ''; const n = Math.min(p[id] | 0, k[1]), ok = n >= k[1], paid = !!d[id];
-      return `<div class="kpT${paid ? ' paid' : ''}"><div class="tx"><b>${k[0]}</b><div class="kpB"><i style="width:${Math.round(n / k[1] * 100)}%"></i></div></div><span class="n">${n}/${k[1]}</span>
-<button class="btn go" data-t="${id}" ${ok && !paid ? '' : 'disabled'}>${paid ? ic('check', 2, 'solo') : coin(k[2]) + (k[2] >= 160 ? ' ' + shard() + '<span>2</span>' : k[2] >= 90 ? ' ' + shard() + '<span>1</span>' : '')}</button></div>`; }).join('')
-      + `<div class="kpT all${T.b ? ' paid' : ''}"><span class="pic">${cry()}</span><div class="tx"><b>All three</b></div><button class="btn go" data-t="*" ${!T.b && T.ids.every(id => d[id]) ? '' : 'disabled'}>${T.b ? ic('check', 2, 'solo') : '1 crystal'}</button></div>`;
+    const row = (id, big) => { const k = KEEP_TASKS[id]; if (!k) return ''; const n = Math.min(p[id] | 0, k[1]), ok = n >= k[1], paid = !!d[id];
+      return `<div class="kpT${paid ? ' paid' : ''}${big ? ' all' : ''}">${big ? `<span class="pic">${cry()}</span>` : ''}<div class="tx"><b>${k[0]}</b><div class="kpB"><i style="width:${Math.round(n / k[1] * 100)}%"></i></div></div><span class="n">${n.toLocaleString()}/${k[1].toLocaleString()}</span>
+<button class="btn go" data-t="${id}" ${ok && !paid ? '' : 'disabled'}>${paid ? ic('check', 2, 'solo') : big ? '1 ' + cry() : coin(k[2]) + (k[2] >= 160 ? ' ' + shard() : '')}</button></div>`; };
+    const three = T.ids.slice(0, 3), ch = T.ids[3];
+    box.innerHTML = three.map(id => row(id)).join('')
+      + `<div class="kpT${T.b ? ' paid' : ''}"><div class="tx"><b>All three</b></div><button class="btn go" data-t="*" ${!T.b && three.every(id => d[id]) ? '' : 'disabled'}>${T.b ? ic('check', 2, 'solo') : '1 ' + shard()}</button></div>`
+      + (ch && KEEP_TASKS[ch] ? '<div class="kpH">CRYSTAL CHALLENGE</div>' + row(ch, true) : '');
   }
   $('#kpTasks').addEventListener('click', async e => { const b = e.target.closest('button[data-t]'); if (!b || b.disabled) return; const id = b.dataset.t, done = btnBusy(b, '…');
-    try { await srv(id === '*' ? 'tkBonus' : 'tkClaim', {id}); sfx(id === '*' ? 'rare' : 'coin'); } catch (er) { wlSay(er.message, 'bad'); } done(); paint.sig = null; paint(); });
+    try { await srv(id === '*' ? 'tkBonus' : 'tkClaim', {id}); sfx(KEEP_TASKS[id] && !KEEP_TASKS[id][2] ? 'rare' : 'coin'); } catch (er) { wlSay(er.message, 'bad'); } done(); paint.sig = null; paint(); });
 
   // the Daily screen paints these with its own cards, and asks the server for today's three the first time it opens each day
   const dp = dayPaint; dayPaint = function () { dp(); paint(); }; dayPaint.sig = null;
-  $('#townDaily').addEventListener('click', () => { paint.sig = null; paint(); if (!tasks() && !paint.ask) { paint.ask = true; srv('tkSync').catch(() => {}).then(() => { paint.ask = false; }); } });
+  $('#townDaily').addEventListener('click', () => { paint.sig = null; paint(); if ((!tasks() || tasks().ids.length < 4) && !paint.ask) { paint.ask = true; srv('tkSync').catch(() => {}).then(() => { paint.ask = false; }); } });
   setInterval(() => { if ($('#dailyModal').classList.contains('on') || !paint.sig) paint(); }, 1000);
   window.keepPaint = paint;
 

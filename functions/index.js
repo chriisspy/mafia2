@@ -66,7 +66,7 @@ async function tx(uid, fn) {
     err = null; c0 = c1 = 0;
     if (cur === null) return { probe: 1 };   // nothing cached yet: this guess never sticks (the wallet exists), the database answers with the real one
     try { const w = norm(cur); c0 = w.c | 0; out = fn(w); c1 = w.c | 0; did = false;
-      if (ctx && !ctx.bumped && KEEP) { KEEP.bump(w, uid, ctx.op); did = true; }   // the daily tasks count the op in this same write (functions/keep.js), once an op
+      if (ctx && !ctx.bumped && KEEP) { KEEP.bump(w, uid, ctx.op, ctx.d, out, c1 - c0); did = true; }   // the daily tasks count the op in this same write (functions/keep.js), once an op
       w.ts = Date.now(); delete w.probe; return w; }
     catch (e) { err = e; return; }   // abort: nothing changes
   });
@@ -430,7 +430,7 @@ exports.act = onCall({ region: 'asia-southeast1', maxInstances: 10 }, async req 
   else if (DEV_REQUIRED) throw new HttpsError('failed-precondition', 'Update the game first.');
   if (d.op !== 'init') { const has = (await db.ref('wallet/' + uid + '/ts').get()).exists(); if (!has) await OPS.init(uid, {}); }
   d._google = !!(req.auth.token && req.auth.token.firebase && req.auth.token.firebase.sign_in_provider === 'google.com');
-  const r = await ALS.run({ op: d.op }, () => f(uid, d)) || {};
+  const r = await ALS.run({ op: d.op, d }, () => f(uid, d)) || {};
   return r;
 });
 // BUYING COINS (27 Nov 2026): functions/coins.js. Its own two functions, so `act` never needs the Stripe secrets:

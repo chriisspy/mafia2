@@ -19,7 +19,7 @@ const MR = {
   goldMul: [1, 1.25, 1.5, 1.8, 2.1, 2.5, 3, 3.5, 4, 4.6, 5.3, 6],   // round 3 (his note): gold rocks and veins pay this many times more per level
   bait: { n: 5, price: 150, max: 20 },   // (26 Nov) GLIMMER BAIT, sold by Pip once he is mended (gbuy): this many for this many coins, and the most you can carry
   fallLoss: .2,       // (25 Nov) passing out in the mine (mfall) costs this share of the gold chunks you carry
-  dayGold: Infinity, dayCry: Infinity,   /* (26 Nov, his call) NO limit and no reset any more: was 1000 gold + 10 crystals an hour */ cryGold: 150, smeltIn: 10, smeltOut: 15, smeltMs: 300000, smeltPer: 60000, smeltMax: 1800000, smeltCool: 600000, swingMs: 520,   // smeltMs: the Blacksmith takes 5 minutes over 10 chunks, smeltPer more for every 10 after that, never over smeltMax; smeltCool: his rest after a job is done (26 Nov)
+  dayGold: Infinity, dayCry: Infinity,   /* (26 Nov, his call) NO limit and no reset any more: was 1000 gold + 10 crystals an hour */ cryGold: 1000, smeltIn: 10, smeltOut: 15, smeltMs: 300000, smeltPer: 60000, smeltMax: 1800000, smeltCool: 600000, swingMs: 520,   // smeltMs: the Blacksmith takes 5 minutes over 10 chunks, smeltPer more for every 10 after that, never over smeltMax; smeltCool: his rest after a job is done (26 Nov)
   quick: .7,          // a break may come this much sooner than its swings take (lag), no sooner
   wallsPerLevel: 140  // plain walls you can dig in one visit to a level (the cave is 22 x 17)
 };

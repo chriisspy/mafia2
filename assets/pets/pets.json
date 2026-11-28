@@ -1,0 +1,26 @@
+{
+ "alien": {
+  "s": 21,
+  "n": 18,
+  "squash": 0.55,
+  "rows": 2
+ },
+ "chicken": {
+  "s": 21,
+  "n": 19,
+  "squash": 0.55,
+  "rows": 3
+ },
+ "golem": {
+  "s": 21,
+  "n": 20,
+  "squash": 0.55,
+  "rows": 3
+ },
+ "dragon": {
+  "s": 21,
+  "n": 20,
+  "squash": 0.55,
+  "rows": 3
+ }
+}
