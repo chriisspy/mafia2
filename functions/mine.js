@@ -60,13 +60,15 @@ module.exports = ({ tx, spend, bad, dayKey, flag }) => {
       else {
         got = k === 's' ? (r < .2 ? 1 : 0) : k === 'w' ? (r < .08 ? 1 : 0) : k === 'g' ? 1 + (r < .35 ? 1 : 0) : k === 'r' ? 2 + Math.floor(r * 3) : k === 'G' ? 2 + (r < .3 ? 1 : 0) : 3 + Math.floor(r * 3);
         if ('grGR'.includes(k)) got = Math.floor(got * MR.goldMul[lv - 1] + Math.random());   // deeper: more in the same rock
+        if (got && w.perk && w.perk.miner && Math.random() < .1 * got) got += 1;   // a world's Miner's Statue (functions/build.js): one more chunk, one time in ten per chunk = 10% more
         got = Math.max(0, Math.min(got, MR.dayGold - w.day.m));
       }
       w.day.m += got; K.gold += got; w.day.mc += gc; K.cry += gc;
+      const st = k === 's' || k === 'w' ? 1 : 0; if (st) K.stone = (K.stone | 0) + 1;   // (28 Nov, batch 3) a plain rock or a wall is one STONE, for world projects (functions/build.js)
       // now and then, deep down, a crystal rock sits under what you broke. It is kept for you (kit.cs) until you break it.
       let grow = null;
       if (!isCry(k) && lv >= MR.cryFrom && K.cs.length < MR.cryKeep && M.k.length < 60 && Math.random() < MR.cryOdds[lv - 1]) { const c = 'eud'[roll(MR.cryMix[lv - 1])]; K.cs += c; grow = { i: M.k.length, k: c }; M.k += c; }
-      return { got, gc, gold: K.gold, cry: K.cry, grow, cap: w.day.m >= MR.dayGold };
+      return { got, gc, st, gold: K.gold, cry: K.cry, grow, cap: w.day.m >= MR.dayGold };
     }).catch(quick(uid)),
     // PASSED OUT (25 Nov, his ask: risk in the deep levels): no hearts left, so you drop a fifth of the gold chunks you carry (never
     // crystals, never coins) and are outside again. The phone only says that it happened: how much goes is worked out here.

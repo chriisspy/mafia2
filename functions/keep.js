@@ -74,7 +74,8 @@ module.exports = ({ tx, bad, C, dayKey, db }) => {
       if ((w.kit.cry | 0) < c) bad('You need ' + c + ' crystals.'); w.kit.cry -= c; w.pets[id] = 1; w.pet = id; return { pet: id, cry: w.kit.cry }; }),
     petSet: (uid, d) => tx(uid, w => { const id = String(d.id || ''); if (id && !(w.pets && w.pets[id])) bad('You do not have that pet.'); if (id) w.pet = id; else delete w.pet; return { pet: id }; }),
     daily: (uid) => tx(uid, w => { const k = dayKey(); if (w.day.c === k) bad('Already collected today.');
-      const n = w.day.c === prevKey(k) ? ((w.day.n | 0) % 7) + 1 : 1, got = STREAK[n - 1]; w.day.c = k; w.day.n = n; w.c += got;
+      const n = w.day.c === prevKey(k) ? ((w.day.n | 0) % 7) + 1 : 1, P = w.perk || {}, got = STREAK[n - 1] + (P.bakery ? 50 : 0); w.day.c = k; w.day.n = n; w.c += got;   // +50 with a world's Bakery (functions/build.js)
+      if (P.monument) w.kit.sh = (w.kit.sh | 0) + 1;   // a world's Crystal Monument: one shard a day
       let kase = null; if (n === 7) { kase = Object.keys(C.cases)[0]; w.fc = w.fc || {}; w.fc[kase] = (w.fc[kase] | 0) + 1; }
       return { got, day: n, kase }; }),
     tkSync: (uid) => tx(uid, w => { today(w, uid); return {}; }),   // makes today's tasks (the Daily screen asks when it opens)

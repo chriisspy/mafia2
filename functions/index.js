@@ -262,7 +262,8 @@ const OPS = {
     let got = 0; const keep = [];
     for (const b of K.bag) { const v = Math.round(b[2] * rod.pay); if ((w.day.f || 0) + got + v <= FISH_DAY) got += v; else keep.push(b); }
     if (!got) bad('Joe has bought enough fish for today. Come back tomorrow.');
-    w.day.f = (w.day.f || 0) + got; w.c += got; K.bag = keep; return { got, kept: keep.length };
+    w.day.f = (w.day.f || 0) + got; const hut = w.perk && w.perk.fishhut ? Math.round(got * .1) : 0;   // a world's Fishing Hut (functions/build.js): 10% on top, outside Joe's daily limit
+    w.c += got + hut; K.bag = keep; return { got: got + hut, kept: keep.length, hut };
   }),
   frod: (uid, d) => tx(uid, w => { const r = C.rods.find(x => x.id === d.id); if (!r) bad('No such rod.'); if (w.kit.rods[r.id]) return {}; spend(w, r.price); w.kit.rods[r.id] = 1; return {}; }),
   fbait: (uid) => tx(uid, w => {
@@ -417,6 +418,8 @@ Object.assign(OPS, BOARD.ops);
 // the 7-day streak (it replaces the flat `daily` above) and the daily tasks (28 Nov): functions/keep.js
 KEEP = require('./keep.js')({ tx, bad, C, dayKey, db });
 Object.assign(OPS, KEEP.ops);
+// materials for world projects (28 Nov, batch 3): the axe and chopping wood: functions/build.js (stone comes from functions/mine.js mbreak)
+Object.assign(OPS, require('./build.js')({ tx, bad, spend, db }).ops);
 
 exports.act = onCall({ region: 'asia-southeast1', maxInstances: 10 }, async req => {
   const uid = req.auth && req.auth.uid; if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
