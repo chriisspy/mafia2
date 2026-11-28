@@ -93,8 +93,13 @@ def skin(t):
             (H, 'calc(100% - 12px) 3px', f'6px calc(100% - {lip}px)')]                                                             # the highlight
 def layers(t):
     S = skin(t)
-    return ('background-image:' + ','.join(f'linear-gradient({c},{c})' for c, _, _ in S) + '!important;background-size:' + ','.join(z for _, z, _ in S)
-            + '!important;background-position:' + ','.join(p for _, _, p in S) + '!important')
+    # THE THIN LIGHT LINE ROUND A BUTTON (28 Nov 2026, his catch, the real cause at last): the button's own COLOUR is a background-color, and a background-color
+    # fills the whole box, right out to the outer edge, UNDER the dark outline. On a screen that is not at a whole-number scale (his preview, some phones) the
+    # outline's blocks land a fraction of a pixel inside the edge, and that fraction shows the colour underneath: a hairline of the button's colour outside its
+    # outline. Cutting the shape (clip-path) could not cure it: the cut lands on the same fraction. THE CURE: one more, empty, layer at the bottom whose clip is
+    # the PADDING box. A background-color is clipped by the bottom layer's clip, so the colour now stops where the outline begins and is never under the edge.
+    return ('background-image:' + ','.join(f'linear-gradient({c},{c})' for c, _, _ in S) + ',linear-gradient(transparent,transparent)!important;background-size:' + ','.join(z for _, z, _ in S)
+            + ',auto!important;background-position:' + ','.join(p for _, _, p in S) + ',0 0!important;background-clip:' + 'border-box,' * len(S) + 'padding-box!important')
 SK = '#phone :is(.btn,.hbig,.tbtn,.coinbtn,.gbtn,.bprice)'
 ARTLIST = ('#phone #menuBtn,#phone #playersBtn,#phone #chatBtn,#phone #boardBtn,'
            '#phone:not(.land) #townHud .tpanel .tbtn:is(.shop,.coll,.daily,.coinshop,.deco,.map),#phone.land #townHud.tmini .tbtn:is(.shop,.coll,.daily,.coinshop,.deco,.map)')
@@ -102,7 +107,7 @@ css = f'''/*BTN-CSS*/
 /* HIS BUTTONS: this whole block is written by tools/make_buttons.py (read its top). Do not edit it here: change that file and run it. */
 #phone{{--bo:#181425;--bl:rgba(20,14,36,.376);--bh:rgba(255,255,255,{HL/255:.3f});{''.join(f'--art-{k}:{v};' for k, v in uris.items())}}}
 {SK}{{border:3px solid transparent!important;border-radius:0!important;box-shadow:none!important;
-  background-origin:border-box!important;background-clip:border-box!important;background-repeat:no-repeat!important;
+  background-origin:border-box!important;background-repeat:no-repeat!important;
   {layers(0)};
   clip-path:{poly(0)}}}
 #phone .btn.dark,#phone .btn:has(>img[data-a=cross]:only-child){{background-color:#3a4467;color:#fff}}   /* his navy; a button that is only his close X is navy too, like his close.png */
