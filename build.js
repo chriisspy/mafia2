@@ -68,6 +68,8 @@
      3. ANYONE walks up to it: a panel pops up with what it needs, how far along each thing is, and a Give button for each (coins up to 500 a tap;
         stone, wood, gold and crystals all you carry, up to what it still needs). Walk away and the panel goes.
      4. All paid = BUILT, for good, and its perk is on for everyone in the world. Then the owner may pick the next. One at a time.
+     5. THE OWNER can MOVE it (the grid again, with the building lifted off the ground) or CANCEL it (tap twice): everyone gets back exactly what
+        they put in. A finished building can be moved too: tap its name under TOWN PROJECT in the world's panel.
    The server does all of it (functions/build.js: projStart, projGive, perkSync; worlds/{wid}/proj). PROJECTS mirrors the server's list.
    The pictures: assets/projects/<id>.png (tools/make_projects.py: made the Tavern's way, on the Tavern's own pixel grid). They join BUILDINGS (b.proj),
    so the town's own code draws them, sorts them with the people, and makes them solid. They have no inside. */
@@ -102,7 +104,8 @@
 .pjCard.cat{display:flex;align-items:center;gap:8px}.pjCard.cat img.pv{flex:none;width:52px;height:52px;object-fit:contain;image-rendering:pixelated}
 .pjCard.cat .tx{flex:1;min-width:0}.pjCard.cat .btn{flex:none;font-size:14px;padding:4px 10px 8px}
 .pjCard.built{opacity:.6}.pjDone{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.pjDone span{font:700 12px 'Pixelify Sans';color:#0f2a12;background:#63c74d;border:2px solid #0f0b1e;border-radius:4px;padding:1px 6px 2px}
+.pjDone span,.pjDone .pjMv{font:700 12px 'Pixelify Sans';color:#0f2a12;background:#63c74d;border:2px solid #0f0b1e;border-radius:4px;padding:1px 6px 2px}.pjDone .pjMv{cursor:pointer}
+.pjTools{display:flex;gap:8px;margin-top:10px}.pjTools .btn{flex:1;font-size:13px;padding:3px 6px 7px}.pjTools .btn.sure{background-color:#e43b44;color:#fff}
 #pjPop,#pjBar{position:absolute;left:10px;right:10px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:22;display:none;background:#2a2346;color:#fff;border:3px solid #0f0b1e;border-radius:6px;
   box-shadow:inset 0 -6px 0 #1b1532,inset 0 2px 0 #3d3466,0 6px 0 #0008;padding:8px 10px 12px;text-align:left;pointer-events:auto}
 #pjPop.on,#pjBar.on{display:block}#pjPop b{font:700 18px 'Pixelify Sans';color:#ffd25e}#pjPop small{display:block;font:600 13px 'Pixelify Sans';color:#c9c2e6}
@@ -121,18 +124,27 @@
       else { const r = await srv('projGive', {wid: NET.world, k: b.dataset.g, n: +b.dataset.n}); sfx(r.built ? 'rare' : 'coin'); if (r.built && PROJECTS[r.built]) wlSay(PROJECTS[r.built][0] + ' is built!', 'good'); } }
     catch (er) { wlSay(er.message, 'bad'); } done(); PJ.sig = ''; $('#wmProj').dataset.h = ''; $('#pjPop').dataset.h = ''; paint(); }
 
+  /* ---------- the owner's Move and Cancel ---------- */
+  const tools = () => owner() ? `<div class="pjTools"><button class="btn dark" data-t="move">Move</button><button class="btn dark" data-t="cancel">Cancel</button></div>` : '';
+  async function tool(b) { if (!b || !PJ.cur) return; if (b.dataset.t === 'move') { placeStart(PJ.cur.id, true); return; }
+    if (!b.classList.contains('sure')) { b.classList.add('sure'); b.textContent = 'Tap again: everyone is refunded'; clearTimeout(b.tm); b.tm = setTimeout(() => { b.classList.remove('sure'); b.textContent = 'Cancel'; }, 3500); return; }
+    const done = btnBusy(b, '…'); try { if (PJ.lab) PJ.cur = null; else await srv('projCancel', {wid: NET.world}); sfx('close'); wlSay('Cancelled. Everyone has their things back.', 'good'); } catch (er) { wlSay(er.message, 'bad'); }
+    done(); PJ.sig = ''; $('#wmProj').dataset.h = ''; $('#pjPop').dataset.h = ''; sync(); paint(); }
+
   /* ---------- the world's panel ---------- */
   function paint() { const box = $('#wmProj'); if (!box) return; if (!inWorld()) { box.innerHTML = ''; box.dataset.h = ''; return; }
     const own = owner(), cur = PJ.cur, built = Object.keys(PJ.done).filter(id => PROJECTS[id]); let h = '<h4>TOWN PROJECT</h4>';
-    if (cur && PROJECTS[cur.id]) h += `<div class="pjCard"><b>${PROJECTS[cur.id][0]}</b><small>${PROJECTS[cur.id][1]}</small>${rows(cur)}</div>`;
+    if (cur && PROJECTS[cur.id]) h += `<div class="pjCard"><b>${PROJECTS[cur.id][0]}</b><small>${PROJECTS[cur.id][1]}</small>${rows(cur)}${tools()}</div>`;
     else if (PJ.pick && own) h += Object.keys(PROJECTS).map(id => { const [n, what, C] = PROJECTS[id], done = !!PJ.done[id], im = pim(id);
       return `<div class="pjCard cat${done ? ' built' : ''}">${im ? `<img class="pv" src="${im.src}" alt="">` : ''}<div class="tx"><b>${n}</b><small>${what}</small>${cost(C)}</div><button class="btn go" data-s="${id}" ${done ? 'disabled' : ''}>${done ? 'Built' : 'Place'}</button></div>`; }).join('');
     else h += own ? '<button class="btn go wide" data-p="1">Pick a project</button>' : '<div class="small">The owner has not picked one yet.</div>';
-    if (built.length) h += '<div class="pjDone">' + built.map(id => `<span>${PROJECTS[id][0]}</span>`).join('') + '</div>';
+    if (built.length) h += '<div class="pjDone">' + built.map(id => own ? `<button class="pjMv" data-mv="${id}">${PROJECTS[id][0]}</button>` : `<span>${PROJECTS[id][0]}</span>`).join('') + '</div>';
     if (box.dataset.h !== h) { box.dataset.h = h; box.innerHTML = h; } }
   $('#wmProj').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return;
     if (b.dataset.p) { PJ.pick = true; sfx('click'); paint(); return; }
     if (b.dataset.s) { placeStart(b.dataset.s); return; }
+    if (b.dataset.mv) { placeStart(b.dataset.mv, true); return; }
+    if (b.dataset.t) { tool(b); return; }
     if (b.dataset.g) give(b); });
 
   /* ---------- 1. PLACING: the whole town is a grid, the ghost follows your finger ---------- */
@@ -143,14 +155,15 @@
     let hit = false; try { for (const o of dayImg('cabins')) if (x < o.x + o.img.width - 6 && x + w > o.x + 6 && y < o.y + o.img.height && y + h > o.y + 20) hit = true; } catch (e) {}
     for (const b of BUILDINGS) if (x < b.x + b.w && x + w > b.x && y < b.y + b.h + 12 && y + h > b.y) hit = true;   // never across a cabin, the Tavern, the Casino or another project
     return !hit; }
-  function placeStart(id) { const m = WL.me, im = pim(id); if (!m || !im) return; if (m.loc >= 0) { wlSay('Go out into the town first.'); return; }
+  function placeStart(id, move) { const m = WL.me, im = pim(id); if (!m || !im) return; if (m.loc >= 0) { wlSay('Go out into the town first.'); return; }
     document.querySelectorAll('.modal.on').forEach(q => q.classList.remove('on')); const [x, y] = snap(m.x - im.width / 2, m.y + 14 - im.height);
-    PJ.ghost = {id, x, y}; PJ.drag = null; $('#pjBarN').textContent = PROJECTS[id][0]; $('#pjBar').classList.add('on'); $('#townHud').classList.add('decorating'); bar(); sfx('click'); }
-  function placeStop() { PJ.ghost = null; PJ.drag = null; $('#pjBar').classList.remove('on'); $('#townHud').classList.remove('decorating'); }
+    const at0 = move && (PJ.cur && PJ.cur.id === id ? PJ.cur : PJ.done[id]); PJ.ghost = at0 && at0.x != null ? {id, x: at0.x | 0, y: at0.y | 0, move: true} : {id, x, y, move: !!move}; PJ.sig = ''; sync(); PJ.drag = null; $('#pjBarN').textContent = PROJECTS[id][0]; $('#pjBar').classList.add('on'); $('#townHud').classList.add('decorating'); bar(); sfx('click'); }
+  function placeStop() { PJ.ghost = null; PJ.drag = null; $('#pjBar').classList.remove('on'); $('#townHud').classList.remove('decorating'); PJ.sig = ''; sync(); }
   const bar = () => { const g = PJ.ghost; if (g) $('#pjYes').disabled = !fits(g.id, g.x, g.y); };
   $('#pjNo').onclick = () => { sfx('close'); placeStop(); };
   $('#pjYes').onclick = async () => { const g = PJ.ghost; if (!g || !fits(g.id, g.x, g.y)) return; const done = btnBusy($('#pjYes'), '…');
-    try { if (PJ.lab) PJ.cur = {id: g.id, x: g.x, y: g.y, have: {}}; else await srv('projStart', {wid: NET.world, id: g.id, x: g.x, y: g.y}); PJ.pick = false; sfx('rare'); placeStop(); }
+    try { if (g.move) { const t = PJ.cur && PJ.cur.id === g.id ? PJ.cur : PJ.done[g.id]; if (!PJ.lab) await srv('projMove', {wid: NET.world, id: g.id, x: g.x, y: g.y}); if (t && typeof t === 'object') { t.x = g.x; t.y = g.y; } }
+      else if (PJ.lab) PJ.cur = {id: g.id, x: g.x, y: g.y, have: {}}; else await srv('projStart', {wid: NET.world, id: g.id, x: g.x, y: g.y}); PJ.pick = false; sfx('rare'); placeStop(); }
     catch (er) { wlSay(er.message, 'bad'); } done(); PJ.sig = ''; sync(); };
   const at = e => { const [x, y] = wxy(e), im = pim(PJ.ghost.id); return snap(x - im.width / 2, y - im.height * .7); };   // your finger holds it a little above its foot
   cv.addEventListener('pointerdown', e => { if (!PJ.ghost || scene !== scenes.town) return; e.stopImmediatePropagation(); e.preventDefault(); PJ.drag = e.pointerId; [PJ.ghost.x, PJ.ghost.y] = at(e); try { cv.setPointerCapture(e.pointerId); } catch (_) {} bar(); }, true);
@@ -163,9 +176,9 @@
     x.clearRect(0, 0, c.width, c.height); x.globalAlpha = .3; x.drawImage(im, 0, 0); x.globalAlpha = 1;                     // all of it, faint: the plan
     if (cut < im.height) x.drawImage(im, 0, cut, im.width, im.height - cut, 0, cut, im.width, im.height - cut);              // solid from the ground up, as far as it is paid for
     return c; }
-  function sync() { if (typeof BUILDINGS === 'undefined') return; const want = [];
-    for (const id of Object.keys(PJ.done)) { const d = PJ.done[id]; if (PROJECTS[id] && pim(id) && d && typeof d === 'object') want.push({id, x: d.x | 0, y: d.y | 0, k: 1}); }
-    if (PJ.cur && PROJECTS[PJ.cur.id] && pim(PJ.cur.id)) want.push({id: PJ.cur.id, x: PJ.cur.x | 0, y: PJ.cur.y | 0, k: progress(PJ.cur)});
+  function sync() { if (typeof BUILDINGS === 'undefined') return; const want = [], up = PJ.ghost && PJ.ghost.move ? PJ.ghost.id : null;   // up = the one being carried: off the ground
+    for (const id of Object.keys(PJ.done)) { const d = PJ.done[id]; if (id !== up && PROJECTS[id] && pim(id) && d && typeof d === 'object') want.push({id, x: d.x | 0, y: d.y | 0, k: 1}); }
+    if (PJ.cur && PJ.cur.id !== up && PROJECTS[PJ.cur.id] && pim(PJ.cur.id)) want.push({id: PJ.cur.id, x: PJ.cur.x | 0, y: PJ.cur.y | 0, k: progress(PJ.cur)});
     const sig = JSON.stringify(want.map(w => [w.id, w.x, w.y, Math.round(w.k * 100)])); if (sig === PJ.sig) return; const moved = JSON.stringify(want.map(w => [w.id, w.x, w.y])) !== PJ.msig;
     PJ.sig = sig; PJ.msig = JSON.stringify(want.map(w => [w.id, w.x, w.y]));
     for (let i = BUILDINGS.length - 1; i >= 0; i--) if (BUILDINGS[i].proj) BUILDINGS.splice(i, 1);
@@ -185,8 +198,8 @@
     const near = !!(cur && im && m && m.loc < 0 && scene === scenes.town && inWorld() && !PJ.ghost && !document.querySelector('.modal.on') && !(typeof DECOR !== 'undefined' && DECOR.on) && !(typeof GAME !== 'undefined' && GAME.on)
       && m.x > cur.x - 18 && m.x < cur.x + im.width + 18 && m.y > cur.y + im.height * .4 && m.y < cur.y + im.height + 30);
     if (!near) { if (el.classList.contains('on')) { el.classList.remove('on'); el.dataset.h = ''; } return; }
-    const h = `<b>${PROJECTS[cur.id][0]}</b><small>${PROJECTS[cur.id][1]}</small>${rows(cur)}`; if (el.dataset.h !== h) { el.dataset.h = h; el.innerHTML = h; } el.classList.add('on'); }
-  $('#pjPop').addEventListener('click', e => give(e.target.closest('button[data-g]')));
+    const h = `<b>${PROJECTS[cur.id][0]}</b><small>${PROJECTS[cur.id][1]}</small>${rows(cur)}${tools()}`; if (el.dataset.h !== h && !el.querySelector('.sure')) { el.dataset.h = h; el.innerHTML = h; } el.classList.add('on'); }
+  $('#pjPop').addEventListener('click', e => { const t = e.target.closest('button[data-t]'); if (t) tool(t); else give(e.target.closest('button[data-g]')); });
   // tapping the site walks you up to it
   { const tapWrap = () => { if (typeof cv === 'undefined') return; cv.addEventListener('pointerdown', e => { const cur = PJ.cur, m = WL.me, im = cur && pim(cur.id); if (!cur || !im || !m || PJ.ghost || m.loc >= 0 || scene !== scenes.town || (typeof DECOR !== 'undefined' && DECOR.on)) return;
         const [x, y] = wxy(e); if (x > cur.x + 4 && x < cur.x + im.width - 4 && y > cur.y + 10 && y < cur.y + im.height) { e.stopImmediatePropagation(); e.preventDefault(); wlGo(m, cur.x + im.width / 2, cur.y + im.height + 10); } }, true); }; tapWrap(); }

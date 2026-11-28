@@ -20,6 +20,10 @@
 //   fishhut  fish sell for 10% more                      (functions/index.js fsell)
 //   miner    10% more gold from the mine                 (functions/mine.js mbreak)
 //   monument one crystal shard with your daily collect   (functions/keep.js daily)
+// MOVE AND CANCEL (28 Nov, his ask: "make it so the owner can move or cancel it (cancelling refunds the people that donated)"):
+//   cur.gave = { uid: {c, stone, wood, gold, cry} }: what each player has put in, kept so a cancel can hand every bit back to the one who gave it.
+//   projMove   the owner puts the site, or a finished building, somewhere else.
+//   projCancel the owner takes the site away: it is removed FIRST (so nothing can be refunded twice), then each giver gets back exactly what they gave.
 // The phone carries the same catalog for the words and the pictures (build.js: PROJECTS). Change one, change the other.
 module.exports = ({ tx, bad, spend, db }) => {
   const AXE = 300, REGROW = 5 * 60000, SWING = 1100, TREES = 400;   // coins; ms a stump lasts; least ms between two chops; the highest tree number the phone may name
@@ -60,7 +64,7 @@ module.exports = ({ tx, bad, spend, db }) => {
       let used = 0, built = null;
       const r = await db.ref(`worlds/${wid}/proj`).transaction(p => { used = 0; built = null; if (!p || !p.cur) return; const P = PROJECTS[p.cur.id]; if (!P) return;
         p.cur.have = p.cur.have || {}; const need = (P[k] | 0) - (p.cur.have[k] | 0); used = Math.max(0, Math.min(gave, need)); if (!used) return;
-        p.cur.have[k] = (p.cur.have[k] | 0) + used; p.cur.who = p.cur.who || {}; p.cur.who[uid] = (p.cur.who[uid] | 0) + 1;
+        p.cur.have[k] = (p.cur.have[k] | 0) + used; p.cur.gave = p.cur.gave || {}; const g = p.cur.gave[uid] = p.cur.gave[uid] || {}; g[k] = (g[k] | 0) + used;
         if (KINDS.every(q => (p.cur.have[q] | 0) >= (P[q] | 0))) { built = p.cur.id; p.done = p.done || {}; p.done[built] = { t: Date.now(), x: p.cur.x | 0, y: p.cur.y | 0 }; p.cur = null; }
         return p; }).catch(() => ({ committed: false }));
       if (!r.committed) used = 0;
@@ -68,6 +72,19 @@ module.exports = ({ tx, bad, spend, db }) => {
       if (!used) bad('The project does not need that.');
       if (built && PERKS.has(built)) { const mem = (await db.ref(`worlds/${wid}/members`).get()).val() || {}; await Promise.all(Object.keys(mem).slice(0, 12).map(u => grant(u, [built]).catch(() => {}))); }
       return { used, built }; },
+    projMove: async (uid, d) => { const wid = String(d.wid || ''), id = String(d.id || ''), x = Math.round(+d.x), y = Math.round(+d.y); if (!PROJECTS[id]) bad('No such building.');
+      if (!(x >= -200 && x <= 900 && y >= -50 && y <= 1100)) bad('It cannot go there.'); if (await world(wid, uid) !== uid) bad('Only the owner of the world can move it.');
+      const r = await db.ref(`worlds/${wid}/proj`).transaction(p => { if (!p) return; if (p.cur && p.cur.id === id) { p.cur.x = x; p.cur.y = y; return p; }
+        if (p.done && p.done[id]) { p.done[id] = typeof p.done[id] === 'object' ? p.done[id] : { t: +p.done[id] || Date.now() }; p.done[id].x = x; p.done[id].y = y; return p; } });
+      if (!r.committed) bad('That building is not in this town.'); return { id, x, y }; },
+    projCancel: async (uid, d) => { const wid = String(d.wid || ''); if (await world(wid, uid) !== uid) bad('Only the owner of the world can cancel it.');
+      let gone = null; const r = await db.ref(`worlds/${wid}/proj`).transaction(p => { gone = null; if (!p || !p.cur) return; gone = p.cur; p.cur = null; return p; });
+      if (!r.committed || !gone) bad('There is no project to cancel.');
+      const gave = gone.gave || {}, left = Object.assign({}, gone.have || {}); let back = 0;
+      for (const u of Object.keys(gave)) { const G = gave[u] || {}; await tx(u, w => { for (const k of KINDS) { const n = G[k] | 0; if (n > 0) take(w, k, -n); } return {}; }).then(() => { back++; for (const k of KINDS) left[k] = (left[k] | 0) - (G[k] | 0); }).catch(() => {}); }
+      // anything put in before gifts were written down by name (the first hour this was live) cannot be traced to its giver: it goes to the owner, who is cancelling
+      if (KINDS.some(k => (left[k] | 0) > 0) && !Object.keys(gave).length) await tx(uid, w => { for (const k of KINDS) if ((left[k] | 0) > 0) take(w, k, -(left[k] | 0)); return {}; }).catch(() => {});
+      return { id: gone.id, back }; },
     // walking into a world: its finished buildings' perks are yours too (someone who joined after it was built)
     perkSync: async (uid, d) => { const wid = String(d.wid || ''); await world(wid, uid); const done = (await db.ref(`worlds/${wid}/proj/done`).get()).val() || {};
       const ids = Object.keys(done).filter(id => PERKS.has(id)); if (ids.length) await grant(uid, ids); return { perks: ids }; },
